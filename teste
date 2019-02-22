@@ -1,0 +1,7 @@
+#!/bin/bash
+
+cvar="UM \
+DOIS \
+TRES"
+
+dialog --msgbox "$cvar" 0 0
