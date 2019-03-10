@@ -198,6 +198,11 @@ function maxcol(){
     return $COLUMNS
 }
 
+function inkey(){
+    read -t "$1" -n1 -r -p "" lastkey
+}
+
+
 function sh_main(){
     log_info_msg "mkdir -p $LIVE"
     mkdir -p $LIVE
@@ -364,6 +369,31 @@ function sh_main(){
     cp -vp $WORK/boot/memtest86+.bin $BASE/cd/boot/memtest 2> /dev/null
     evaluate_retval
 
+    log_info_msg "Copiando syslinux.bin"
+    find /boot -iname 'isolinux.bin' -exec cp -v {} $ISOLINUX \;
+    evaluate_retval
+
+    if [ $? != "0" ]; then
+        find /usr/lib/syslinux/ -iname 'isolinux.bin' -exec cp -v {} $ISOLINUX \;
+        evaluate_retval
+    fi
+
+    log_info_msg "Copiando vesamenu.c32"
+    find /boot -iname 'vesamenu.c32' -exec cp -v {} $ISOLINUX \;
+    evaluate_retval
+    if [ $? != "0" ]; then
+        find /usr/lib/syslinux/ -iname 'vesamenu.c32' -exec cp -v {} $ISOLINUX \;
+        evaluate_retval
+    fi
+
+    log_info_msg "Copiando menu.c32"
+    find /boot -iname 'menu.c32'     -exec cp -v {} $ISOLINUX \;
+    evaluate_retval
+    if [ $? != "0" ]; then
+        find /usr/lib/syslinux/ -iname 'menu.c32'     -exec cp -v {} $ISOLINUX \;
+        evaluate_retval
+    fi
+
     log_info_msg "cat > $GRUB/menu.lst"
     cat > $GRUB/menu.lst << "_EOF_"
     # By default, boot the first entry.
@@ -407,6 +437,7 @@ _EOF_
 
     log_info_msg "cat > $ISOLINUX/isolinux.cfg"
     cat > $ISOLINUX/isolinux.cfg << "_ISO_"
+    #DEFAULT vesamenu.c32
     DEFAULT menu.c32
     TIMEOUT 300
     PROMPT 0
