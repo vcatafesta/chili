@@ -1,0 +1,163 @@
+#!/bin/bash
+
+
+echo -e "##########################################################################"
+
+arr=(ola mundo)
+#arr[0]=Hello
+#arr[1]=World
+echo ${arr[0]} ${arr[1]}
+
+echo -e "##########################################################################"
+echo ${arr[*]}         # All of the items in the array
+echo ${!arr[*]}        # All of the indexes in the array
+echo ${#arr[*]}        # Number of items in the array
+echo ${#arr[0]}        # Length of item zero
+echo -e "##########################################################################"
+
+array=(one two three four [5]=five)
+echo "Array size: ${#array[*]}"
+echo "Array items:"
+for item in ${array[*]}
+do
+    printf "   %s\n" $item
+done
+echo "Array indexes:"
+for index in ${!array[*]}
+do
+    printf "   %d\n" $index
+done
+echo "Array items and indexes:"
+for index in ${!array[*]}
+do
+    printf "%4d: %s\n" $index ${array[$index]}
+done
+array=(one two three four [5]=five)
+
+echo -e "##########################################################################"
+
+arr[0]=0
+arr[1]=1
+arr[2]=20
+echo "Array size: ${#arr[*]}"
+for item in ${arr[*]}
+do
+    printf "   %s\n" $item
+done
+
+echo -e "##########################################################################"
+
+array=("first item" "second item" "third" "item")
+
+echo "Number of items in original array: ${#array[*]}"
+for ix in ${!array[*]}
+do
+    printf "   %s\n" "${array[$ix]}"
+done
+echo
+
+arr=(${array[*]})
+echo "After unquoted expansion: ${#arr[*]}"
+for ix in ${!arr[*]}
+do
+    printf "   %s\n" "${arr[$ix]}"
+done
+echo
+
+arr=("${array[*]}")
+echo "After * quoted expansion: ${#arr[*]}"
+for ix in ${!arr[*]}
+do
+    printf "   %s\n" "${arr[$ix]}"
+done
+echo
+
+arr=("${array[@]}")
+echo "After @ quoted expansion: ${#arr[*]}"
+for ix in ${!arr[*]}
+do
+    printf "   %s\n" "${arr[$ix]}"
+done
+
+echo -e "##########################################################################"
+
+## declare an array variable
+declare -a arr=("element1" "element2" "element3")
+
+## now loop through the above array
+for i in "${arr[@]}"
+do
+   echo "$i"
+   # or do whatever with individual element of the array
+done
+
+# You can access them using echo "${arr[0]}", "${arr[1]}" also
+
+echo -e "##########################################################################"
+
+declare -a arr=("element1"
+                "element2" "element3"
+                "element4"
+                )
+echo -e "##########################################################################"
+
+## declare an array variable
+declare -a array=("one" "two" "three")
+
+# get length of an array
+arraylength=${#array[@]}
+
+# use for loop to read all values and indexes
+for (( i=1; i<${arraylength}+1; i++ ));
+do
+  echo $i " / " ${arraylength} " : " ${array[$i-1]}
+done
+
+echo -e "##########################################################################"
+
+for databaseName in a b c d e f
+do
+  # do something like: echo $databaseName
+done
+
+echo -e "##########################################################################"
+
+function fontedialog(){
+while true
+do
+	dir="/usr/share/consolefonts/"
+	fontes=($(ls $dir | sort ))
+
+	array=()
+	n=0
+	for i in ${fontes[@]}
+	do
+#		(( n++ ))
+#    	n=($n+1); array[$n]=$i
+#	    n=($n+1); array[$n]=''
+    	array[((n++))]=$i
+	    array[((n++))]=''
+	done
+
+	sd=($(dialog --clear 														\
+				--backtitle	 	"$dir"						 					\
+				--cancel-label 	"Cancelar"										\
+				--menu 			"Escolha a fonte com enter:" 0 50 15 "${array[@]}" 2>&1 >/dev/tty 	))
+
+	exit_status=$?
+	case $exit_status in
+		1)
+			exit 1
+			;;
+		255)
+			exit 0
+			;;
+	esac
+	if [ $sd <> 0 ]; then
+		setfont $sd
+	fi
+done
+}
+clear
+fontedialog
+

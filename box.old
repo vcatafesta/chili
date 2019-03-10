@@ -1,0 +1,42 @@
+#!/bin/bash
+
+function sh_adduser(){
+	cpass=""
+	shell="/bin/bash"
+	#groups="audio,video,netdev"
+	groups="audio,video"
+	user=""
+	$home="/home"
+	exec 3>&1
+	dialog 	--separate-widget	$'\n'					\
+			--ok-label 			"Enviar" 				\
+			--backtitle 		"Linux User Managment"	\
+			--title 			"Useradd" 				\
+			--form 				"Create a new user" 	\
+	12 50 0 \
+	        " Username : " 1 1 "$user"         1 13 10 0 \
+	        "Password  : " 2 1 "$cpass"        2 13 40 0 \
+	        #"    Shell : " 3 1 "$shell"        3 13 15 0 \
+	        #"    Group : " 4 1 "$groups"       4 13 20 0 \
+	        #"     HOME : " 5 1 "$home"         5 13 40 0 \
+	2>&1 1>&3 | {
+	  read -r user
+	  read -r cpass
+	  read -r shell
+	  read -r groups
+	  read -r home
+
+	  #echo $user
+	  #echo $shell
+	  #echo $groups
+	  #echo $home
+
+	  #continue script here
+	  useradd -m -G $groups $user
+	  #$(echo $cpass ; echo $cpass) | passwd $user
+	  (echo $user:$cpass) | chpasswd
+	}
+	exec 3>&-
+}
+clear
+sh_adduser

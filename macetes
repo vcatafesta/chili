@@ -1,0 +1,181 @@
+#É muito raro vermos um script Shell que trabalhe devidamente com as opções de stdin, stdout e stderr, ou seja, entrada 
+#primária, saída primária e saída de erros primária. O script a seguir, habilita a captura dos dados de entrada pelo pipe (|), 
+#por um redirecionamento da entrada (<) ou por passagem de parâmetro e manda os erros para a saída de erros padrão, o que 
+#permite redirecionar os erros para onde você desejar, ou até trancar a saída de erro (2>&-) para evitar essas mensagens.
+
+$ cat colunador.sh 
+#!/bin/bash
+#  Recebe dados via pipe, arquivo ou passagem de parâmetros e
+#+ os coloca em coluna numerando-os
+
+if  [[ -t 0 ]]        # Testa se tem dado em stdin
+then
+	(($# == 0)) || {  # Testa se tem parâmetro
+		echo Passe os dados via pipe, arquivo ou passagem de parâmetros >&2  # Redirecionando para stderr
+		exit 1
+	}
+	Parms="$@"
+else
+    Parms=$(cat -)    # Seta parâmetros com conteúdo de stdin
+fi 
+set $Parms
+for ((i=1; i<="$#"; i++))
+{
+    Lista=$(for ((i=1; i<="$#"; i++)); { printf "%0${##}i %s\n" $i "${!i}"; })
+}
+echo "$Lista" | column -c $(tput cols)
+$ echo {A..Z} | colunador.sh
+01 A   05 E   09 I   12 L   15 O   18 R   21 U   24 X
+02 B   06 F   10 J   13 M   16 P   19 S   22 V   25 Y
+03 C   07 G   11 K   14 N   17 Q   20 T   23 W   26 Z
+04 D   08 H
+
+Esse script começa testando se o FD 0 (zero), que é o descritor da entrada primária, está aberto em um terminal e isso 
+ocorrerá se o programa não estiver recebendo dados por um pipe (|) ou por um redirecionamento de entrada (<). Assim sendo 
+vamos testar se a quantidade de parâmetros passados ($#) é zero, ou seja: os dados não vieram por stdin nem por passagem de 
+parâmetros quando então é indicado um erro, que é desviado para stderr (>&2).
+
+Bem, agora vamos tratar os dados que recebemos, passando-os para a variável $Parms. Caso eles tenham vindo por passagem de 
+parâmetros, aí é simples, é só atribuir a $Parms o valor de todos os parâmetros passados ($@).
+
+Caso os dados tenham vindo de stdin, temos mais 2 macetes:
+
+1. A quase totalidade dos utilitários do Shell, aceitam o hífen como representando os dados recebido de stdin. Veja isso:
+
+$ cat arq
+Isto é um teste
+Outra linha de teste
+$ echo Inserindo uma linha antes de arq | cat - arq
+Inserindo uma linha antes de arq
+Isto é um teste
+Outra linha de teste
+
+Ou seja, o comando primeiramente listou o que recebeu da entrada primária e em seguida o arquivo arq.
+
+2. O outro macete é o comando set. Para entendê-lo vá para o prompt e faça:
+
+$ set a b c
+$ echo $1:$2:$3
+a:b:c
+Conforme você viu, este comando atribuiu os valores passados como os parâmetros posicionais.
+
+Uma vez entendido isso, vimos que os valores recebidos de stdin foram colocados em $Parms que por sua vez teve seu conteúdo 
+passado para os parâmetros posicionais, unificando dessa forma, os dados de qualquer tipo de entrada recebida.
+
+O for terminará quando alcançar a quantidade de parâmetros passados ($#) e o comando printf, em seu primeiro parâmetro, 
+(%0${##}d), diz que a linha será formatada (%) com um decimal (d) com ${##} algarismos, preenchido com zeros à esquerda (0).
+
+Veja isso para entender melhor: ${#var} devolve o tamanho da variável var e também sabemos que $# retorna a quantidade de 
+parâmetros passados. Juntando os dois, vemos que ${##} devolve quantos algarismos tem a quantidade de parâmetros. Faça este 
+teste para você ver:
+
+$ set {a..k}            # Passando 11 parâmetros
+$ echo ${##} algarismos
+2 algarismos
+$ set a b c             # Passando 3 parâmetros
+$ echo ${##} algarismos
+1 algarismos
+Uma vez montada a lista, é só passá-la para o comando tr, cuja opção -T diz que a formatação não é para impressora e o -8 é 
+para dividir a saída em 8 colunas (trabalhar para que? O Shell já tem comando pronto para tudo!)
+
+
+MANIPULAÇÃO DE STRINGS NO BASH
+
+
+No bash, quando você usa um cifrão ($) seguido por um nome de variável, o shell expande a 
+variável com o seu valor. Este recurso é chamado de "expansão de parâmetros". 
+
+Mas a expansão de parâmetros tem muitas outras formas que permitem expandir um parâmetro e 
+modificar o valor, ou a substituir outros valores em processo de expansão. 
+
+Nesta dica, vamos ver como aplicar o conceito de expansão de parâmetros para operações de 
+manipulação de strings. 
+
+TAMANHO DE UMA STRING
+Para sabermos o tamanho da string, devemos colocar o caractere "#" no processo de expansão de 
+parâmetros: 
+
+${#string} 
+
+Vejamos um exemplo abaixo: 
+
+#!/bin/bash
+VAR="Bem vindo ao HOW TO Linux"
+echo ${#VAR}
+
+
+Devemos ter como saída o tamanho da string, que no caso, é 25. 
+
+EXTRAINDO UMA SUBSTRING
+O bash nos fornece diversos métodos para fazermos a extração de substrings, a primeira é mais 
+simples, fornecendo apenas a string e a posição de início: 
+
+${string:posicao} 
+
+E também podemos fornecer o tamanho da substring: 
+
+${string:posicao:tamanho} 
+
+Vejamos agora um exemplo de utilização: 
+
+#!/bin/bash
+STR="HOW TO Linux"
+echo ${STR:0:6}
+echo ${STR:7}
+
+
+Devemos ter uma saída como esta: 
+HOW TO
+Linux
+
+PROCURANDO E SUBSTITUINDO STRINGS
+O bash também suporta fazer o famoso "find and replace". E temos essa opção de dois modos, 
+substituindo a primeira ocorrência, e substituindo todas as ocorrências. Vejamos: 
+
+Substituindo a primeira ocorrência: 
+
+${string/procura/substitui} 
+
+Substituindo todas as ocorrências: 
+
+${string//pesquisa/substitui} 
+
+Vejamos agora, exemplos: 
+
+#! /bin/bash
+ARQ="bash.string.txt"
+echo "Depois da Substituição:" ${ARQ/str*./operacao.}
+
+
+Devemos ter uma saída como essa: 
+Depois da Substituição: bash.operacao.txt
+
+
+Agora, substituindo todas as ocorrências: 
+
+#! /bin/bash
+STR="Caminho do bash é /bin/bash"
+echo "Depois de Substituir:" ${STR//bash/sh}
+
+
+Devemos ter uma saída como essa: 
+Depois de Substituir: Caminho do sh é /bin/sh
+
+while read LINHA
+do
+   CP01=$(echo "$LINHA" | cut --bytes=1-6)
+   CP02=$(echo "$LINHA" | cut --bytes=8-9)
+   CP03=$(echo "$LINHA" | cut --bytes=10-12)
+   CP03=$(echo "$LINHA" | cut --bytes=13-15)
+   CP04=$(echo "$LINHA" | cut --bytes=16-28)
+   CP05=$(echo "$LINHA" | cut --bytes=29-31)
+   CP06=$(echo "$LINHA" | cut --bytes=32-)
+
+   echo "|$CP01| |$CP02|$CP03|$CP04|$CP05|$CP06" >> destino.txt
+
+done < original.txt
+ 
+meu_numero="341"
+echo ${#meu_numero}
+retorna tamanho 3
+

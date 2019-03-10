@@ -4,23 +4,11 @@ function fontedialog(){
 while true
 do
 	dir="/usr/share/consolefonts/"
-	fontes=($(ls $dir | sort ))
-
-	array=()
-	n=0
-	for i in ${fontes[@]}
-	do
-#		(( n++ ))
-#    	n=($n+1); array[$n]=$i
-#	    n=($n+1); array[$n]=''
-    	array[((n++))]=$i
-	    array[((n++))]=''
-	done
-
+	fontes=($(ls $dir))
 	sd=($(dialog --clear 														\
 				--backtitle	 	"$dir"						 					\
 				--cancel-label 	"Cancelar"										\
-				--menu 			"Escolha a fonte com enter:" 0 50 15 "${array[@]}" 2>&1 >/dev/tty 	))
+				--menu 			"Escolha a fonte com enter:" 0 50 15 "${fontes[@]}" 2>&1 >/dev/tty 	))
 
 	exit_status=$?
 	case $exit_status in

@@ -1,0 +1,11 @@
+#!/bin/bash
+cd /chili/github/mazonos/utilities/
+echo "# cp /packages/install install-mazon.sh"
+cp /chili/install install-mazon.sh
+echo "# git add install-mazon.sh"
+git add install-mazon.sh
+echo "# git commit -m "install-mazon.sh""
+git commit -m "install-mazon.sh"
+echo "# git push"
+git push
+cd /chili

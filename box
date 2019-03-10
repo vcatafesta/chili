@@ -1,43 +1,64 @@
 #!/bin/bash
 
-cNome="Vilmar Catafesta"
-cHostname="mazonos"
-dialog \
---backtitle "Dialog Form Example" 				\
---title 	"Dialog - Form" 					\
---form 		"\nDialog Sample Label and Values" 	\
-25 60 16 \
-"Nome do Usuario:" 1 1 "$cNome"     1 25 25 30	\
-"Hostname       :" 2 1 "$cHostname" 2 25 25 30	\
-"Form Label 3:" 3 1 "Value 3" 3 25 25 30		\
-"Form Label 4:" 4 1 "Value 4" 4 25 25 30 2>/tmp/form.$$
+#. $PWD/funcoes
 
+function sh_menu()
+{
+	#rm index.html*
+	#wget -q $url_mazon
 
-shell=""
-groups=""
-user=""
-home=""
-exec 3>&1
-dialog --separate-widget $'\n' --ok-label "Submit" \
-          --backtitle "Linux User Managment" \
-          --title "Useradd" \
-          --form "Create a new user" \
-15 50 0 \
-        "Username:" 1 1 "$user"         1 10 10 0 \
-        "Shell:"    2 1 "$shell"        2 10 15 0 \
-        "Group:"    3 1 "$groups"       3 10 8 0 \
-        "HOME:"     4 1 "$home"         4 10 40 0 \
-2>&1 1>&3 | {
-  read -r user
-  read -r shell
-  read -r groups
-  read -r home
+	cat index.html \
+	| grep .xz \
+	| awk '{print $2, $5}' \
+	| sed 's/<a href=\"//g' \
+	| cut -d'"' -f3 \
+	| sed 's/>//g' \
+	| sed 's/<\/a//g' >teste.txt
 
-  echo $user
-  echo $shell
-  echo $groups
-  echo $home
-
-  #continue script here
+	dialog --title "teste" --menu "x" 0 0 0 $(cat teste.txt)
 }
-exec 3>&-
+
+function sh_adduser()
+{
+	# open fd
+	exec 3>&1
+	dialog 															\
+			--separate-widget	$'\n'								\
+			--cancel-label 		"Cancelar"							\
+			--backtitle 		"MazonOS Linux User Managment"		\
+			--title 			"Useradd" 							\
+			--form 				"Criar um novo usuário"				\
+	12 50 0 														\
+		"Username : " 1 1 "$cuser"        1 13 10 0 				\
+		"Password : " 2 1 "$cpass"        2 13 20 0 				\
+		"Hostname : " 3 1 "$chost"        3 13 20 0					\
+	2>&1 1>&3 | {
+		read -r cuser
+		read -r cpass
+		read -r chost
+
+		if [ "$user" != "" ]; then
+			cinfo=`log_info_msg "Aguarde, criando usuario..."`
+		    msg "INFO" "$cinfo"
+			useradd -m -G $groups $cuser > /dev/null 2>&1
+		    evaluate_retval
+
+			if [ $? = $true ]; then
+				cinfo=`log_info_msg "Aguarde, definindo senha do usuario..."`
+			    msg "INFO" "$cinfo"
+				#$(echo $cpass ; echo $cpass) | passwd $cuser
+				(echo $cuser:$cpass) | chpasswd > /dev/null 2>&1
+			    evaluate_retval
+				if [ $? = $true ]; then
+					cinfo=`log_info_msg "OK, senha criada com sucesso..."`
+				    msg "INFO" "$cinfo"
+				fi
+			fi
+
+		fi
+	}
+
+	# close fd
+	exec 3>&-
+}
+#sh_adduser
