@@ -1,0 +1,8 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=JetBrains PyCharm
+Exec=/opt/pycharm/bin/pycharm.sh
+Icon=/opt/pycharm/bin/pycharm.png
+Type=Application
+Categories=Development;
+StartupWMClass=PyCharm
