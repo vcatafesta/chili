@@ -3,7 +3,7 @@
  # fetch - Search an Install packages in LFS
  #
  # Created: 2019/04/05
- # Altered: 2020/07/30
+ # Altered: 2020/07/31
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.02.26.20200730"
+_VERSION_="2.02.30.20200731"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -1068,24 +1068,79 @@ function sh_show()
 	sh_cdroot
 }
 
+
+function _PRE_REMOVE()
+{
+	(
+	local packname="$1"
+	local ntam=${#packname}
+	local pkgsearch="${packname:0:$((ntam-2))}"
+	local re="\b${pkgsearch}\b"
+	local inc=0
+	local count_occurrences=0
+	local search_pack
+
+	pushd $VARLIB_DESC 1>/dev/null
+#	local alldesc="$(echo *.desc | grep $pkgsearch)"
+	local alldesc=$(echo $pkgsearch*)
+
+	for search_pack in $alldesc; do
+		if [[ "$search_pack" =~ ^${re}.* ]]; then
+			for q in *; do
+				if [[ "$q" =~ ^${re}.* ]]; then
+					((count_occurrences++))
+				fi
+			done
+			source $VARLIB_DESC/${search_pack}
+#			local name_version_build="${pkgname}-${version}-${build}"
+			local name_version_build="${packname}"
+			AUTO_YES=$true
+			pushd "${VARLIB_LIST}" 1>/dev/null
+			search_pack="${search_pack/%.desc/.list}" # se terminar com .desc substitua por .list
+			[[ -e "${search_pack}" ]] && { _REMOVE_NOW "$name_version_build"; return 0 ;} || { log_failure_msg2 "ERROR: FILE NOT FOUND ${VARLIB_LIST}/${search_pack}"; return 1;}
+			continue
+		else
+			((inc++))
+		fi
+	done
+
+	[[ "$inc" -gt '0' ]] && { log_failure_msg2 "NOT FOUND ${packname}"; return 1 ;}
+	)
+	_SUBSHELL_STATUS
+}
+
+
+function sh_removepkg()
+{
+	shift
+	while [[ -n "$1" ]]; do
+		_PRE_REMOVE "$1" || return 1
+		retval=${?}
+		_pkginstalled=($(echo $VARCACHE_INSTALLED/${1}*| sed 's|/| |g'|awk '{print $5}'|sed 's/.'${PRG}'//g'))
+		[[ $retval = 0 ]] && _pkg=($(echo $VARCACHE_INSTALLED/${1}*| sed 's|/| |g'|awk '{print $5}'))
+		[[ $retval = 0 ]] && rm -f $VARCACHE_INSTALLED/${_pkg}
+		[[ $retval = 0 ]] && > $VARCACHE_REMOVED/${_pkg}
+		[[ $retval = 0 ]] && sed -i  '/'${_pkginstalled}'/d' $VARCACHE_SEARCH/packages-installed
+		[[ $retval = 0 ]] && sed -i  '/'${_pkginstalled}'/d' $VARCACHE_SEARCH/packages-installed-split
+		shift
+	done
+	return 0
+}
+
+
 function sh_doremove()
 {
 	local param=$@
 
-	if (( $LLIST )); then
-		log_wait_msg "Parsing..."
-	fi
-
-	log_info_msg "Removing package ${orange}${i}"
+	log_wait_msg "Wait, Removing package ${orange}${i}"
 #	ERROR=$(sh_removepkg -r $1 2>&1)
 	sh_removepkg -r $1
-	evaluate_retval
 	local error_value="${?}"
 	if [ ${error_value} != 0 ]; then
 		log_failure_msg2 "$ERROR"
 	else
 		if (( $LLIST )); then
-			log_success_msg2 "Removal of the package (${orange}${2}${reset}) successfully completed"
+			log_success_msg2 "${green}${2}${reset} Done. Removal of the package successfully completed"
 		fi
 	fi
 	return $error_value
@@ -2124,6 +2179,8 @@ function _CREATE_LIST()
 {
 	local packname="$1"
 
+#info "name_version_build: $name_version_build"
+
 	if ! tar --list --file "$packname" > "${VARLIB_LIST}/${name_version_build}.list"; then
 		log_failure_msg2 "ERROR! Can not create ${VARLIB_LIST}/${name_version_build}.list"
 		return 1
@@ -2238,19 +2295,15 @@ function sh_doinstallpkg()
 	local PRE_SH='pre.sh'
 	local INSTALL_SH='.INSTALL'
 
-#	if ! tar --extract --preserve-permissions --touch --file "${packname}" -C "/tmp/" "./${descme}" &>/dev/null; then
 	if ! tar --use-compress-program=zstd --extract --preserve-permissions --touch --file "${packname}" -C "/tmp/" "./${descme}"; then
 		log_failure_msg2 "${red}ERROR! ${reset}I could not unzip the file: ${orange}${packname}.desc${reset}"
 		return 1
 	fi
-#	source "/tmp/${descme}" || { log_failure_msg2 "ERROR! Not load ${descme}, ABORT."; return 1 ;}
 	source "/tmp/${descme}" || log_failure_msg2 "ERROR! Not load ${descme}"
 	if [[ ! -e "/tmp/${descme}" ]]; then
-		log_failure_msg2 "ERROR! Could not load /tmp/${descme}."
-		log_failure_msg2 "Archive not exist. ABORT!"
+		log_failure_msg2 "ERROR! Could not load /tmp/${descme}. Archive not exist. ABORT!"
 		return 1
 	fi
-	name_version_build="${pkgname}-${version}-${build}"
 
 	if tar --use-compress-program=zstd --list --file "${packname}" "./info/$PRE_SH" &>/dev/null; then
 		if ! tar --use-compress-program=zstd --extract --preserve-permissions --file "$packname" -C /tmp "./info/$PRE_SH" &>/dev/null; then
@@ -2267,10 +2320,15 @@ function sh_doinstallpkg()
 		fi
 	fi
 
+	#name_version_build="${pkgname}-${version}-${build}"
+	sh_splitpkg ${packname}
+	name_version_build=${aPKGSPLIT[$PKG_ARCH]}
+
 	tar --use-compress-program=zstd --extract --preserve-permissions --touch --file "${packname}" -C / | tee -a ${VARLIB_LIST}/"${name_version_build}.list" &>/dev/null || return 1
+
 	_CREATE_LIST "$1" || return 1
-#	_MANAGE_SCRIPTS_AND_ARCHIVES "${name_version_build}" || return 1
-	_MANAGE_SCRIPTS_AND_ARCHIVES "${1}" || return 1
+	_MANAGE_SCRIPTS_AND_ARCHIVES "${name_version_build}" || return 1
+#	_MANAGE_SCRIPTS_AND_ARCHIVES "${1}" || return 1
 	_LIST_ARCHIVES_DIRECTORIES "${name_version_build}"
 	)
 	_SUBSHELL_STATUS
@@ -2563,62 +2621,6 @@ function _CREATE_PKG()
 		fi
 	fi
 	evaluate_retval
-}
-
-function _PRE_REMOVE()
-{
-	(
-	local packname="$1"
-	local ntam=${#packname}
-	local pkgsearch="${packname:0:$((ntam-2))}"
-	local re="\b${pkgsearch}\b"
-	local inc=0
-	local count_occurrences=0
-	local search_pack
-
-	pushd $VARLIB_DESC 1>/dev/null
-	local alldesc=$(echo *.desc | grep $pkgsearch)
-
-	for search_pack in $alldesc; do
-		if [[ "$search_pack" =~ ^${re}.* ]]; then
-			for q in *; do
-				if [[ "$q" =~ ^${re}.* ]]; then
-					((count_occurrences++))
-				fi
-			done
-			source $VARLIB_DESC/${search_pack}
-			local name_version_build="${pkgname}-${version}-${build}"
-			AUTO_YES=$true
-			pushd "${VARLIB_LIST}" 1>/dev/null
-			search_pack="${search_pack/%.desc/.list}" # se terminar com .desc substitua por .list
-			[[ -e "${search_pack}" ]] && { _REMOVE_NOW "$name_version_build"; return 0 ;} || return 1
-			continue
-		else
-			((inc++))
-		fi
-	done
-
-	[[ "$inc" -gt '0' ]] && { log_failure_msg2 "NOT FOUND ${packname}"; return 1 ;}
-	)
-	_SUBSHELL_STATUS
-}
-
-
-function sh_removepkg()
-{
-	shift
-	while [[ -n "$1" ]]; do
-		_PRE_REMOVE "$1" || return 1
-		retval=${?}
-		_pkginstalled=($(echo $VARCACHE_INSTALLED/${1}*| sed 's|/| |g'|awk '{print $5}'|sed 's/.'${PRG}'//g'))
-		[[ $retval = 0 ]] && _pkg=($(echo $VARCACHE_INSTALLED/${1}*| sed 's|/| |g'|awk '{print $5}'))
-		[[ $retval = 0 ]] && rm -f $VARCACHE_INSTALLED/${_pkg}
-		[[ $retval = 0 ]] && > $VARCACHE_REMOVED/${_pkg}
-		[[ $retval = 0 ]] && sed -i  '/'${_pkginstalled}'/d' $VARCACHE_SEARCH/packages-installed
-		[[ $retval = 0 ]] && sed -i  '/'${_pkginstalled}'/d' $VARCACHE_SEARCH/packages-installed-split
-		shift
-	done
-	return 0
 }
 
 
