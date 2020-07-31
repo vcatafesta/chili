@@ -2239,7 +2239,7 @@ function sh_doinstallpkg()
 	local INSTALL_SH='.INSTALL'
 
 #	if ! tar --extract --preserve-permissions --touch --file "${packname}" -C "/tmp/" "./${descme}" &>/dev/null; then
-	if ! tar --extract --preserve-permissions --touch --file "${packname}" -C "/tmp/" "./${descme}"; then
+	if ! tar --use-compress-program=zstd --extract --preserve-permissions --touch --file "${packname}" -C "/tmp/" "./${descme}"; then
 		log_failure_msg2 "${red}ERROR! ${reset}I could not unzip the file: ${orange}${packname}.desc${reset}"
 		return 1
 	fi
@@ -2252,22 +2252,22 @@ function sh_doinstallpkg()
 	fi
 	name_version_build="${pkgname}-${version}-${build}"
 
-	if tar --list --file "${packname}" "./info/$PRE_SH" &>/dev/null; then
-		if ! tar --extract --preserve-permissions --file "$packname" -C /tmp "./info/$PRE_SH" &>/dev/null; then
+	if tar --use-compress-program=zstd --list --file "${packname}" "./info/$PRE_SH" &>/dev/null; then
+		if ! tar --use-compress-program=zstd --extract --preserve-permissions --file "$packname" -C /tmp "./info/$PRE_SH" &>/dev/null; then
 			log_failure_msg2 "ERROR! Cannot extract ${PRE_SH}, ABORT"
 			return 1
 		fi
 		bash "/tmp/info/$PRE_SH"
 	fi
 
-	if tar --list --file "${packname}" "./info/$INSTALL_SH" &>/dev/null; then
-		if ! tar --extract --preserve-permissions --file "$packname" -C /tmp "./info/$INSTALL_SH" &>/dev/null; then
+	if tar --use-compress-program=zstd --list --file "${packname}" "./info/$INSTALL_SH" &>/dev/null; then
+		if ! tar --use-compress-program=zstd --extract --preserve-permissions --file "$packname" -C /tmp "./info/$INSTALL_SH" &>/dev/null; then
 			log_failure_msg2 "ERROR! Cannot extract ${INSTALL_SH}, ABORT"
 			return 1
 		fi
 	fi
 
-	tar --extract --preserve-permissions --touch --file "${packname}" -C / | tee -a ${VARLIB_LIST}/"${name_version_build}.list" &>/dev/null || return 1
+	tar --use-compress-program=zstd --extract --preserve-permissions --touch --file "${packname}" -C / | tee -a ${VARLIB_LIST}/"${name_version_build}.list" &>/dev/null || return 1
 	_CREATE_LIST "$1" || return 1
 #	_MANAGE_SCRIPTS_AND_ARCHIVES "${name_version_build}" || return 1
 	_MANAGE_SCRIPTS_AND_ARCHIVES "${1}" || return 1
