@@ -3,7 +3,7 @@
  # fetch - Search an Install packages in LFS
  #
  # Created: 2019/04/05
- # Altered: 2020/07/26
+ # Altered: 2020/07/30
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.02.16.20200726"
+_VERSION_="2.02.26.20200730"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -41,7 +41,7 @@ _VERSION_="2.02.16.20200726"
 #cat <(echo xxx; sleep 3; echo yyy; sleep 3)
 #ls | cut -d. -sf2-  | sort | uniq -c
 #source=($pkgname-${pkgver//_/-}.tar.gz)
-readonly DEPENDENCIES=(tar zstd curl sed grep cat awk tput dialog)
+readonly DEPENDENCIES=(which tar zstd curl sed grep cat awk tput dialog)
 IFS=$' \t\n'
 SAVEIFS=$IFS
 
@@ -1381,6 +1381,7 @@ function sh_search()
 	LAUTO=$false
    LFORCE=$false
 
+	sh_checknet
 	sh_list $param
 
 	if [[ $pkg != " " ]]; then
@@ -1678,6 +1679,7 @@ function sh_listinstalled()
 	local LALL=$false
 	local cListSearch
 
+	[[ -e $VARCACHE_SEARCH/packages-installed ]] || > /$VARCACHE_SEARCH/packages-installed
 	public_ntotal_pkg_installed=$(grep ^ $VARCACHE_SEARCH/packages-installed | wc -l)
 	public_ntotal_pkg_listed=$public_ntotal_pkg_installed
 	pkginstalled=
@@ -1692,6 +1694,7 @@ function sh_listinstalled()
 	done
 
 	if (( $LALL )) || [[ "$cListSearch" == "" ]]; then
+		#pkginstalled=$(awk -F: '{print $1}' $VARCACHE_SEARCH/packages-installed-split | grep ^)
 		pkginstalled=$(grep ^ $VARCACHE_SEARCH/packages-installed)
 	else
 		for x in ${cListSearch}; do
@@ -1706,7 +1709,7 @@ function sh_listinstalled()
 
 	if (( $LLIST )); then
 		log_wait_msg "${green}Listing..."
-		if [[ $pkginstalled != "" ]]; then
+		if [[ "${#pkginstalled}" -gt 0 ]]; then # pacote?
 			pkgNumber=0
 			maxcol; replicate "=" $?
  			printf "%12sPacote%35sversao\n"
@@ -1720,10 +1723,10 @@ function sh_listinstalled()
 			public_ntotal_pkg_listed=$pkgNumber
 			log_success_msg2 "($pkgNumber) package(s) installed."
 		else
-			log_failure_msg2 "${red}$param NOT INSTALLED with $0${reset}"
-			log_failure_msg2 "($pkgNumber) package(s) found."
+#			log_failure_msg2 "${red}$param NOT INSTALLED with $0${reset}"
+			log_success_msg2 "($pkgNumber) package(s) found."
 			echo
-			echo -e "${reset}Use: # $0 update - to update with the repository${reset}"
+			echo -e "${reset}Use: # ${APP} -Sy - to update with the repository${reset}"
 		fi
 	else
 		pkgNumber=0
