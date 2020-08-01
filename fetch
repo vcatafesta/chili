@@ -3,7 +3,7 @@
  # fetch - Search an Install packages in LFS
  #
  # Created: 2019/04/05
- # Altered: 2020/07/31
+ # Altered: 2020/08/01
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.02.30.20200731"
+_VERSION_="2.02.31.20200801"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -2254,18 +2254,25 @@ function sh_generatepkg()
 	local param=$@
 	local inc=0
 
-	for s in ${param[@]}; do
-		if [[ $(toupper "${s}") = "-Y" ]]; then
-			LAUTO=$true
-		elif [[ $(toupper "${s}") = "-F" ]]; then
-			LFORCE=$true
-		elif [[ $(toupper "${s}") = "OFF" ]]; then
-			LLIST=$false
-		else
-			pkg="$s"
-			continue
-		fi
-	done
+	if [[ ${#param} -eq 0 ]]; then # run standalone
+		LAUTO=$true
+		LFORCE=$true
+		LLIST=$false
+		pkg="${PWD##*/}-2"
+	else
+		for s in ${param[@]}; do
+			if [[ $(toupper "${s}") = "-Y" ]]; then
+				LAUTO=$true
+			elif [[ $(toupper "${s}") = "-F" ]]; then
+				LFORCE=$true
+			elif [[ $(toupper "${s}") = "OFF" ]]; then
+				LLIST=$false
+			else
+				pkg="$s"
+				continue
+			fi
+		done
+	fi
 
 	log_info_msg "(${ncount}/${ntotalpkg}) Generating info for package $pkg"
 	if [[ ! -e "info/desc" ]]; then
