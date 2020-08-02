@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 echo "01140404040" >> sed.tmp
 echo "01120202020" >> sed.tmp

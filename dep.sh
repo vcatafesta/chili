@@ -15,10 +15,16 @@ for i in ${dep[*]}
 do
 	echo $i
 done
-
+echo "############################################################################"
 deps=$(grep ^depend -i .PKGINFO | cut -d= -f2 | sed "s/\"//g")
 #info $deps
+for i in ${deps[*]}
+do
+	echo $i
+done
 
+echo "############################################################################"
+deps=$(cat .PKGINFO | grep ^depend | awk -F'"' '{print $2}')
 for i in ${deps[*]}
 do
 	echo $i

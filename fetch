@@ -2191,7 +2191,7 @@ function _CREATE_LIST()
 
 function _GENERATE_DESC()
 {
-
+	local i
 	local DESC_PACKNAME="$1"
 	local DESC_VERSION="$2"
 	local DESC_BUILD="$3"
@@ -2216,7 +2216,12 @@ size='$SIZE'
 url='$URL'
 dep=('')
 EOF
-    return 0
+
+	for i in ${deps[*]}
+	do
+		echo depend="'$i'" >> $descme
+	done
+	return 0
 }
 
 
@@ -2836,6 +2841,8 @@ function sh_alienpkg_exec()
 		export       DESC_VERSION=$( echo $pkgver|cut -d '-' -f1)
 		export   ALIEN_DESC_BUILD=$( echo $pkgver|cut -d '-' -f2)
 		export         DESC_BUILD=$( echo $pkgver|cut -d '-' -f2)
+		export deps=$(cat $destdir/.PKGINFO | grep ^depend | awk -F'"' '{print $2}')
+
 
 #	 	log_info_msg "Generating DESC for package at $destdir"
 		pushd $destdir	>/dev/null 2>&1
