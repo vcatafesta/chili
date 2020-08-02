@@ -1247,9 +1247,49 @@ function sh_wgetdesc()
 	return $?
 }
 
+function DOT()
+{
+	printf "${blue}:: ${reset}"
+	return
+}
+
+function sh_getdeps()
+{
+	local ncontadep=0
+	local ncontapkgdep=0
+
+	echo "  $(DOT)${cyan}resolvendo dependencias..."
+	GETDEPS=($(cat $VARCACHE_ARCHIVES/${1} | grep ^depend | awk -F"'" '{print $2}'))
+	#Pacotes (22) bash-5.0.017-1  db-5.3.28-5  e2fsprogs-1.45.6-2  filesystem-2020.05.20-1  gcc-libs-10.1.0-2  gdbm-1.18.1-3  glibc-2.31-5  iana-etc-20200720-1  keyutils-1.6.3-1  krb5-1.18.2-1  libldap-2.4.50-2  libnsl-1.2.0-2  libsasl-2.1.27-3  libtirpc-1.2.6-1
+	#             libutil-linux-2.36-1  linux-api-headers-5.6.11-1  ncurses-6.2-1  openssl-1.1.1.g-2  perl-5.32.0-1  readline-8.0.004-1  tzdata-2020a-1  libuv-1.38.1-1
+
+	ncontapkgdep=${#GETDEPS[*]}
+	((ncontapkgdep++))
+#	printf "     Pacote (${ncontapkgdep}) "
+	printf "%12sPacote(${ncontapkgdep})%35sversao\n"
+	for i in ${GETDEPS[*]}
+	do
+		((ncontadep++))
+#		pkgdep=$(cat $VARCACHE_SEARCH/packages-split | grep ^${i} | awk -F":" '{print $1 "-" $2}')
+		pkgdep=$(cat $VARCACHE_SEARCH/packages-split | grep ^${i} | awk -F":" '{print $5}')
+		if [[ $pkgdep = "" ]]; then
+			printf "${red}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${i}" "WARNING! Dependencia nao localizada na base de dados. ${reset}Use: # ${APP} -Sy to update with the repository${reset}"
+		else
+#			sh_splitpkg $pkgdep
+			printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${pkgdep}"
+#			printf "${white}${yellow}${pkgdep} "
+		fi
+	done
+	((ncontadep++))
+	printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${1}"
+	printf "${reset}\n"
+	return $?
+}
+
 
 function sh_wgetfull()
 {
+	local cfullfilename=$1
 	local cRaw
 	if !(( $GITSITE )); then
 		#site normal
@@ -1262,11 +1302,9 @@ function sh_wgetfull()
 	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.sha256" ; curl -s -k -O "${cRaw}/packages/$i.sha256" ; evaluate_retval
 	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
 	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.sig"    ; curl -s -k -O "${cRaw}/packages/$i.sig"    ; evaluate_retval
-	#log_info_msg "${cyan}Fetching package ${orange}${cpacote}.sha256"; curl -k -O "${RAW}/packages/$i.sha256" ; evaluate_retval
-	#log_info_msg "${cyan}Fetching package ${orange}${cpacote}.desc"  ; curl -k -O "${RAW}/packages/$i.desc"   ; evaluate_retval
-	#log_info_msg "${cyan}Fetching package ${orange}${cpacote}.sig"   ; curl -k -O "${RAW}/packages/$i.sig"    ; evaluate_retval
 	return $?
 }
+
 
 function sh_wgetpartial()
 {
@@ -1501,6 +1539,8 @@ function sh_search()
 					exit 1
 				fi
 			fi
+
+			sh_getdeps "${cfullfilename}.desc"
 
 #			sh_checksha256sum
 #			local error_value="${?}"
