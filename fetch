@@ -1247,27 +1247,30 @@ function sh_wgetdesc()
 	return $?
 }
 
+
 function DOT()
 {
 	printf "${blue}:: ${reset}"
 	return
 }
 
+
 function sh_getdeps()
 {
 	local ncontadep=0
 	local ncontapkgdep=0
+	local	arr=()
+	local deps=
 
 	echo "  $(DOT)${cyan}resolvendo dependencias..."
-	GETDEPS=($(cat $VARCACHE_ARCHIVES/${1} | grep ^depend | awk -F"'" '{print $2}'))
-	#Pacotes (22) bash-5.0.017-1  db-5.3.28-5  e2fsprogs-1.45.6-2  filesystem-2020.05.20-1  gcc-libs-10.1.0-2  gdbm-1.18.1-3  glibc-2.31-5  iana-etc-20200720-1  keyutils-1.6.3-1  krb5-1.18.2-1  libldap-2.4.50-2  libnsl-1.2.0-2  libsasl-2.1.27-3  libtirpc-1.2.6-1
-	#             libutil-linux-2.36-1  linux-api-headers-5.6.11-1  ncurses-6.2-1  openssl-1.1.1.g-2  perl-5.32.0-1  readline-8.0.004-1  tzdata-2020a-1  libuv-1.38.1-1
-
-	ncontapkgdep=${#GETDEPS[*]}
+	deps=$(cat $VARCACHE_ARCHIVES/${1} | grep ^depend | awk -F"'" '{print $2}')
+	arr=(${deps[*]})
+	GETDEPS=
+	ncontapkgdep=${#arr[*]}
 	((ncontapkgdep++))
 #	printf "     Pacote (${ncontapkgdep}) "
 	printf "%12sPacote(${ncontapkgdep})%35sversao\n"
-	for i in ${GETDEPS[*]}
+	for i in ${deps[*]}
 	do
 		((ncontadep++))
 #		pkgdep=$(cat $VARCACHE_SEARCH/packages-split | grep ^${i} | awk -F":" '{print $1 "-" $2}')
@@ -1278,11 +1281,29 @@ function sh_getdeps()
 #			sh_splitpkg $pkgdep
 			printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${pkgdep}"
 #			printf "${white}${yellow}${pkgdep} "
+			GETDEPS="$GETDEPS $(echo $pkgdep)"
 		fi
 	done
 	((ncontadep++))
-	printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${1}"
+	printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${1%.desc*}"
 	printf "${reset}\n"
+	GETDEPS="$GETDEPS $(echo ${2})"
+	return $?
+}
+
+
+function sh_wgetdesc()
+{
+	local cfullfilename=$1
+	local cRaw
+	if !(( $GITSITE )); then
+		#site normal
+		cRaw=$SITE
+	else
+		#github
+		cRaw=$RAW
+	fi
+	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
 	return $?
 }
 
@@ -1478,13 +1499,13 @@ function sh_search()
 	sh_list $param
 
 	if [[ $pkg != " " ]]; then
-		if !(( $LAUTO )); then
-			echo
-			read -p "${blue}:: ${reset}Continue installation? [Y/n]" LDOWNLOAD
-			if [[ $(toupper "${LDOWNLOAD}") = "N" ]]; then
-				return
-			fi
-		fi
+#		if !(( $LAUTO )); then
+#			echo
+#			read -p "${blue}:: ${reset}Continue installation? [Y/n]" LDOWNLOAD
+#			if [[ $(toupper "${LDOWNLOAD}") = "N" ]]; then
+#				return
+#			fi
+#		fi
 #		pushd $VARCACHE_INSTALLED/ &>/dev/null
 #		local pkginstalled=$(echo *.${PRG})
 		local pkginstalled=$(cat ${VARCACHE_SEARCH}/packages-installed)
@@ -1527,12 +1548,12 @@ function sh_search()
 				continue
 			fi
 
-			test -e $VARCACHE_ARCHIVES/$cfullfilename || sh_wgetfull
+			test -e $VARCACHE_ARCHIVES/$cfullfilename.desc || sh_wgetdesc
 			local error_value="${?}"
 			if [ ${error_value} -ne 0 ]; then
 				log_failure_msg2 "ERROR: Downloading ${orange}${cfullfilename}"
 				log_wait_msg "Restarting download ${orange}${cfullfilename}"
-				sh_wgetfull
+				sh_wgetdesc
 				local error_value="${?}"
 				if [ ${error_value} -ne 0 ]; then
 					log_failure_msg2 "ERROR: Fatal error downloading ${orange}${cfullfilename}. ${reset}Aborting..."
@@ -1540,7 +1561,15 @@ function sh_search()
 				fi
 			fi
 
-			sh_getdeps "${cfullfilename}.desc"
+			sh_getdeps "${cfullfilename}.desc" "${i}"
+
+			if !(( $LAUTO )); then
+#				echo
+				read -p "${blue}:: ${reset}Continue installation? [Y/n]" LDOWNLOAD
+				if [[ $(toupper "${LDOWNLOAD}") = "N" ]]; then
+					return
+				fi
+			fi
 
 #			sh_checksha256sum
 #			local error_value="${?}"
@@ -1562,18 +1591,48 @@ function sh_search()
 				log_wait_msg "Wait, reinstalling package ${orange}$cpacote"
 			fi
 #			ERROR=$(sh_installpkg -i $cpacote 2>&1>/dev/null)
-			sh_installpkg -i $cpacote
-#			evaluate_retval
-			local error_value="${?}"
-			if [ ${error_value} -ne 0 ]; then
-				log_failure_msg2 "${red}ERROR:${reset} installing package: ${orange}${cpacote}${reset}"
-			else
-				log_success_msg2 "${green}${cpacote} ${reset}Done. package installation successfully."
+
+#			test -e $VARCACHE_ARCHIVES/$cfullfilename || sh_wgetfull
+#			local error_value="${?}"
+#			if [ ${error_value} -ne 0 ]; then
+#				log_failure_msg2 "ERROR: Downloading ${orange}${cfullfilename}"
+#				log_wait_msg "Restarting download ${orange}${cfullfilename}"
+#				sh_wgetfull
+#				local error_value="${?}"
+#				if [ ${error_value} -ne 0 ]; then
+#					log_failure_msg2 "ERROR: Fatal error downloading ${orange}${cfullfilename}. ${reset}Aborting..."
+#					exit 1
+#				fi
+#			fi
+
+			if [[ $GETDEPS != " " ]]; then
+				for i in $GETDEPS; do
+					sh_splitpkg ${i}
+					cpacote=${aPKGSPLIT[PKG_FULLNAME]}
+					test -e $VARCACHE_ARCHIVES/$cpacote || sh_wgetfull
+					sh_installpkg -i ${cpacote}
+					local error_value="${?}"
+					if [ ${error_value} -ne 0 ]; then
+						log_failure_msg2 "${red}ERROR:${reset} installing package: ${orange}${cpacote}${reset}"
+					else
+						log_success_msg2 "${green}${cpacote} ${reset}Done. package installation successfully."
+					fi
+				done
 			fi
+
+#			sh_installpkg -i $cpacote
+#			evaluate_retval
+#			local error_value="${?}"
+#			if [ ${error_value} -ne 0 ]; then
+#				log_failure_msg2 "${red}ERROR:${reset} installing package: ${orange}${cpacote}${reset}"
+#			else
+#				log_success_msg2 "${green}${cpacote} ${reset}Done. package installation successfully."
+#			fi
 		done
 	fi
 	sh_cdroot
 }
+
 
 function sh_listmeta()
 {
