@@ -29,3 +29,10 @@ for i in ${deps[*]}
 do
 	echo $i
 done
+
+echo "############################################################################"
+source ./samba.desc
+for i in ${dep[*]}
+do
+	echo $i
+done

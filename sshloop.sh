@@ -1,0 +1,6 @@
+# http://www.dicas-l.com.br/cantinhodoshell/cantinhodoshell_20070408.php
+
+while
+do ...
+	ssh -n ....
+done

@@ -3,7 +3,7 @@
  # fetch - Search an Install packages in LFS
  #
  # Created: 2019/04/05
- # Altered: 2020/08/01
+ # Altered: 2020/08/03
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.02.31.20200801"
+_VERSION_="2.02.51.20200803"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -1254,6 +1254,23 @@ function DOT()
 	return
 }
 
+function sh_adel()
+{
+	#removendo duplicados e ordenando
+	local arr=${1}
+	local item
+
+	[[ -e /tmp/.array ]] && rm /tmp/.array >/dev/null 2>&1 
+	for item in ${arr[*]}
+	do
+		echo $item >> /tmp/.array    #imprime o conteudo da matriz
+	done
+	unset arr
+	unset deps
+	deps=$(uniq --ignore-case <<< $(sort /tmp/.array))
+	rm ./tmp/.array >/dev/null 2>&1 
+	return $?
+}
 
 function sh_getdeps()
 {
@@ -1263,30 +1280,30 @@ function sh_getdeps()
 	local deps=
 
 	echo "  $(DOT)${cyan}resolvendo dependencias..."
-	deps=$(cat $VARCACHE_ARCHIVES/${1} | grep ^depend | awk -F"'" '{print $2}')
+	source ${1}
+	deps="${dep[*]}"
+	deps="$deps $(cat $VARCACHE_ARCHIVES/${1} | grep ^depend | awk -F"'" '{print $2}')"
+	sh_adel "$deps"
 	arr=(${deps[*]})
 	GETDEPS=
 	ncontapkgdep=${#arr[*]}
 	((ncontapkgdep++))
-#	printf "     Package (${ncontapkgdep}) "
 	printf "%12sPackage(${ncontapkgdep})%34sversion%8sfullname\n"
+
 	for i in ${deps[*]}
 	do
 		((ncontadep++))
-#		pkgdep=$(cat $VARCACHE_SEARCH/packages-split | grep ^${i} | awk -F":" '{print $1 "-" $2}')
 		pkgdep=$(cat $VARCACHE_SEARCH/packages-split | grep ^${i} | awk -F":" '{print $5}')
 		if [[ $pkgdep = "" ]]; then
 			printf "${red}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${i}" "WARNING! Dependencia nao localizada na base de dados. ${reset}Use: # ${APP} -Sy to update with the repository${reset}"
 		else
 			sh_splitpkg $pkgdep
-#			printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${pkgdep}"
 			printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$ncontadep" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}"
 			GETDEPS="$GETDEPS $(echo $pkgdep)"
 		fi
 	done
 	((ncontadep++))
 	sh_splitpkg ${1%.desc}
-#	printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${1%.desc*}"
 	printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$ncontadep" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FULLNAME]}"
 	printf "${reset}\n"
 	GETDEPS="$GETDEPS $(echo ${2})"
