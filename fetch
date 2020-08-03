@@ -1268,8 +1268,8 @@ function sh_getdeps()
 	GETDEPS=
 	ncontapkgdep=${#arr[*]}
 	((ncontapkgdep++))
-#	printf "     Pacote (${ncontapkgdep}) "
-	printf "%12sPacote(${ncontapkgdep})%35sversao\n"
+#	printf "     Package (${ncontapkgdep}) "
+	printf "%12sPackage(${ncontapkgdep})%34sversion%8sfullname\n"
 	for i in ${deps[*]}
 	do
 		((ncontadep++))
@@ -1278,14 +1278,16 @@ function sh_getdeps()
 		if [[ $pkgdep = "" ]]; then
 			printf "${red}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${i}" "WARNING! Dependencia nao localizada na base de dados. ${reset}Use: # ${APP} -Sy to update with the repository${reset}"
 		else
-#			sh_splitpkg $pkgdep
-			printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${pkgdep}"
-#			printf "${white}${yellow}${pkgdep} "
+			sh_splitpkg $pkgdep
+#			printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${pkgdep}"
+			printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$ncontadep" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}"
 			GETDEPS="$GETDEPS $(echo $pkgdep)"
 		fi
 	done
 	((ncontadep++))
-	printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${1%.desc*}"
+	sh_splitpkg ${1%.desc}
+#	printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${1%.desc*}"
+	printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$ncontadep" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FULLNAME]}"
 	printf "${reset}\n"
 	GETDEPS="$GETDEPS $(echo ${2})"
 	return $?
