@@ -1260,7 +1260,7 @@ function sh_adel()
 	local arr=${1}
 	local item
 
-	[[ -e /tmp/.array ]] && rm /tmp/.array >/dev/null 2>&1 
+	> /tmp/.array >/dev/null 2>&1
 	for item in ${arr[*]}
 	do
 		echo $item >> /tmp/.array    #imprime o conteudo da matriz
@@ -1268,7 +1268,7 @@ function sh_adel()
 	unset arr
 	unset deps
 	deps=$(uniq --ignore-case <<< $(sort /tmp/.array))
-	rm ./tmp/.array >/dev/null 2>&1 
+	[[ -e /tmp/.array ]] && rm /tmp/.array >/dev/null 2>&1
 	return $?
 }
 
