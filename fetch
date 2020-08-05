@@ -1325,7 +1325,7 @@ function sh_wgetdesc()
 		#github
 		cRaw=$RAW
 	fi
-	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
+	log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
 	return $?
 }
 
@@ -1342,28 +1342,29 @@ function sh_wgetfull()
 		cRaw=$RAW
 	fi
 	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}"        ; curl -s -k -O "${cRaw}/packages/$i"        ; evaluate_retval
-	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.sha256" ; curl -s -k -O "${cRaw}/packages/$i.sha256" ; evaluate_retval
-	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
-	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.sig"    ; curl -s -k -O "${cRaw}/packages/$i.sig"    ; evaluate_retval
+	log_info_msg "${cyan}Fetching file    ${cRaw}/packages/${orange}${i}.sha256" ; curl -s -k -O "${cRaw}/packages/$i.sha256" ; evaluate_retval
+	log_info_msg "${cyan}Fetching file    ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
+	log_info_msg "${cyan}Fetching filee   ${cRaw}/packages/${orange}${i}.sig"    ; curl -s -k -O "${cRaw}/packages/$i.sig"    ; evaluate_retval
 	return $?
 }
 
 
 function sh_wgetpartial()
 {
+	local cfullfilename=$1
+	local cRaw
 	if !(( $GITSITE )); then
 		#site normal
-		test -e $VARCACHE_ARCHIVES/$cpacote       || log_info_msg "${cyan}Fetching ${cpacote}"       ; evaluate_retval; curl -k -O -C - "${SITE}/packages/$i"
-		test -e $VARCACHE_ARCHIVES/$cpacote.sha26 || log_info_msg "${cyan}Fetching ${cpacote}.sha256"; evaluate_retval; curl -k -O -C - "${SITE}/packages/$i.sha256"
-		test -e $VARCACHE_ARCHIVES/$cpacote.desc  || log_info_msg "${cyan}Fetching ${cpacote}.desc"  ; evaluate_retval; curl -k -O -C - "${SITE}/packages/$i.desc"
-		test -e $VARCACHE_ARCHIVES/$cpacote.sig   || log_info_msg "${cyan}Fetching ${cpacote}.sig"   ; evaluate_retval; curl -k -O -C - "${SITE}/packages/$i.sig"
+		cRaw=$SITE
 	else
-   	#github
-		test -e $VARCACHE_ARCHIVES/$cpacote       || log_info_msg "${cyan}Fetching ${cpacote}"       ; evaluate_retval; curl -k -O -C - "${RAW}/packages/$i"
-		test -e $VARCACHE_ARCHIVES/$cpacote.sha26 || log_info_msg "${cyan}Fetching ${cpacote}.sha256"; evaluate_retval; curl -k -O -C - "${RAW}/packages/$i.sha256"
-		test -e $VARCACHE_ARCHIVES/$cpacote.desc  || log_info_msg "${cyan}Fetching ${cpacote}.desc"  ; evaluate_retval; curl -k -O -C - "${RAW}/packages/$i.desc"
-		test -e $VARCACHE_ARCHIVES/$cpacote.sig   || log_info_msg "${cyan}Fetching ${cpacote}.sig"   ; evaluate_retval; curl -k -O -C - "${RAW}/packages/$i.sig"
+		#github
+		cRaw=$RAW
 	fi
+	test -e $VARCACHE_ARCHIVES/$cpacote 			|| { log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}"     ; curl -s -k -O "${cRaw}/packages/$i"        ; evaluate_retval; }
+	test -e $VARCACHE_ARCHIVES/$cpacote.sha256	||	{ log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.sha256" ; curl -s -k -O "${cRaw}/packages/$i.sha256" ; evaluate_retval; }
+	test -e $VARCACHE_ARCHIVES/$cpacote.desc		||	{ log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval; }
+	test -e $VARCACHE_ARCHIVES/$cpacote.sig 		||	{ log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.sig"    ; curl -s -k -O "${cRaw}/packages/$i.sig"    ; evaluate_retval; }
+	return $?
 }
 
 
@@ -1617,7 +1618,7 @@ function sh_install()
 						glic)		continue;;
 						glic) 	continue;;
 					esac
-					test -e $VARCACHE_ARCHIVES/$cpacote || sh_wgetfull
+					test -e $VARCACHE_ARCHIVES/$cpacote || sh_wgetpartial
 					sh_installpkg -i ${cpacote}
 					local error_value="${?}"
 					if [ ${error_value} -ne 0 ]; then
@@ -1770,14 +1771,14 @@ function sh_meta()
 				cpacote=${aPKGSPLIT[$PKG_FULLNAME]}
 				cBaseVersion=${aPKGSPLIT[PKG_BASE_VERSION]}
 
-				test -e $VARCACHE_ARCHIVES/$cpacote || sh_wgetfull
+				test -e $VARCACHE_ARCHIVES/$cpacote || sh_wgetpartial
 				#sh_checksha256sum
 
 				local error_value="${?}"
 				if [ ${error_value} -ne 0 ]; then
 					log_failure_msg2 "ERROR: Checking sha256sum ${cpacote}.sha256... FAIL"
     				log_wait_msg "Restarting download ${cpacote}..."
-    				sh_wgetfull
+    				sh_wgetpartial
     				#sh_checksha256sum
 					local error_value="${?}"
 					if [ ${error_value} -ne 0 ]; then
