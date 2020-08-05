@@ -1246,6 +1246,7 @@ function sh_wgetdesc()
 		#github
 		cRaw=$RAW
 	fi
+	sh_checknet; [[ $? = $false ]] || { return 1;}
 	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
 	return $?
 }
@@ -1341,6 +1342,7 @@ function sh_wgetfull()
 		#github
 		cRaw=$RAW
 	fi
+	sh_checknet; [[ $? = $false ]] || { return 1;}
 	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}"        ; curl -s -k -O "${cRaw}/packages/$i"        ; evaluate_retval
 	log_info_msg "${cyan}Fetching file    ${cRaw}/packages/${orange}${i}.sha256" ; curl -s -k -O "${cRaw}/packages/$i.sha256" ; evaluate_retval
 	log_info_msg "${cyan}Fetching file    ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
@@ -1360,6 +1362,7 @@ function sh_wgetpartial()
 		#github
 		cRaw=$RAW
 	fi
+	sh_checknet; [[ $? = $false ]] || { return 1;}
 	test -e $VARCACHE_ARCHIVES/$cpacote 			|| { log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}"     ; curl -s -k -O "${cRaw}/packages/$i"        ; evaluate_retval; }
 	test -e $VARCACHE_ARCHIVES/$cpacote.sha256	||	{ log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.sha256" ; curl -s -k -O "${cRaw}/packages/$i.sha256" ; evaluate_retval; }
 	test -e $VARCACHE_ARCHIVES/$cpacote.desc		||	{ log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval; }
@@ -1517,7 +1520,7 @@ function sh_install()
 	LAUTO=$false
    LFORCE=$false
 
-	sh_checknet
+	#sh_checknet
 	sh_listforinstall ${param} "OFF" "EXACT"
 
 	if [[ $pkgforinstall != " " ]]; then
@@ -1651,7 +1654,7 @@ function sh_search()
 	LAUTO=$false
    LFORCE=$false
 
-	sh_checknet
+	#sh_checknet
 	sh_list $param
 	log_success_msg2 "${reset}Use ${APP} -S <package> for package installation."
 	sh_cdroot
