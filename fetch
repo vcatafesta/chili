@@ -1660,6 +1660,7 @@ function sh_search()
 
 	sh_checknet
 	sh_list $param
+	log_success_msg2 "${reset}Use ${APP} -S <package> for package installation."
 	sh_cdroot
 }
 
