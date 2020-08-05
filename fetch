@@ -380,6 +380,7 @@ LFS_VARCACHE='fetch'
 PKGDIR='/var/cache/fetch/archives'
 GITDIR='/github/ChiliOS'
 ALIEN_CACHE_DIR='/var/cache/pacman/pkg'
+IGNOREPKG=('glibc')
 
 # pacotes hospedado no repositorio do github: sim='1', nao='0'
 GITSITE='1'
@@ -1538,24 +1539,17 @@ function sh_search()
 			sh_splitpkg ${i}
 			local cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
 			local cpacote=${aPKGSPLIT[PKG_FULLNAME]}
+			local cpacotebase=${aPKGSPLIT[PKG_BASE]}
 			local cpacoteSemExt=${aPKGSPLIT[PKG_BASE_VERSION]}
 			local LINSTALLED=$NOK
 			local cpacoteinstalled=
 
-#			info "1-$cfullfilename\n2-$cbase\n3-$cpacote\n4-$cpacoteSemExt"
+			case $cpacotebase in
+				glic)		continue;;
+				flac) 	{ info $cpacotebase; continue;};;
+			esac
 
-#			{
-#				local item
-#				index=0
-#
-#				for item in ${pkginstalled[*]}
-#				do
-#					item=$(echo $item | cut -d/ -f2 | sed 's/.'${PRG}'//g')
-#					info $item
-#					[[ $item = $cpacoteSemExt ]] && { LINSTALLED=$OK; break; }
-#					((index++))
-#				done
-#			}
+#			info "1-$cfullfilename\n2-$cbase\n3-$cpacote\n4-$cpacoteSemExt"
 
 			cpacoteinstalled=$(grep ^$cpacoteSemExt ${VARCACHE_SEARCH}/packages-installed)
 			[[ $cpacoteinstalled = $cpacoteSemExt ]] && LINSTALLED=$OK
@@ -1628,6 +1622,11 @@ function sh_search()
 				for i in $GETDEPS; do
 					sh_splitpkg ${i}
 					cpacote=${aPKGSPLIT[PKG_FULLNAME]}
+					cpacotebase=${aPKGSPLIT[PKG_BASE]}
+					case $cpacotebase in
+						glic)		continue;;
+						glic) 	continue;;
+					esac
 					test -e $VARCACHE_ARCHIVES/$cpacote || sh_wgetfull
 					sh_installpkg -i ${cpacote}
 					local error_value="${?}"
