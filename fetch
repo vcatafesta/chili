@@ -3202,3 +3202,5 @@ fi
 sh_checkroot
 checkDependencies
 init $*
+
+# vim:set ts=3 sw=3 et:

@@ -1,0 +1,19 @@
+##################### SCRIPT SECUNDARIO #################
+#!/bin/bash
+# corretor.sh
+# Script para corrigir nomes de arquivos e diretorios
+# Gleisson Marin Bissa - 20-09-2006 11:03 h
+
+c=1
+for x in * ; do
+        y=`echo "$x" | tr -s ' ' '-' | tr [:lower:] [:upper:] | sed 'y/\[\]\(\)�&?ÇÁÀÃÂÄÉÈẼÊËÍÌĨÎÏÓÒÕÔÖÙÚŨÛüçáàãâäéèẽêëíìĩîïóòõôöùúũûü/----eeecaaaaaeeeeeiiiiiooooouuuuucaaaaaeeeeeiiiiiooooouuuuu/'`
+
+
+        if [ ! -e $y ]; then let c++
+                mv "$x" "$y" ; echo Renomeando... "$x" para "$y"
+        fi
+done
+echo
+echo `ls | wc -l` 'Arquivos submetidos!!!'
+echo -ne $(($c-1)) Arquivos corrigidos para minúsculo!!!
+echo
