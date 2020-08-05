@@ -687,11 +687,12 @@ function help()
 	echo -e "${pink}  -c  --create,         create         ${reset}- build package"
 	echo -e "${pink}  -Sg, --generate,      generate       ${reset}- generate info package from source"
 	echo -e "${pink}  -Sy, --update,        update         ${reset}- update list packages in repository online. Need Internet"
+	echo -e "${pink}  -S,  --install,       install        ${reset}- install packages"
 	echo -e "${pink}  -Si, --install,       install        ${reset}- install packages"
 	echo -e "${pink}  -m, --meta,           meta           ${reset}- install meta packages"
 	echo -e "${pink}  -r, --remove,         remove         ${reset}- remove packages"
 	echo -e "${pink}  -Sc, --clean,         clean          ${reset}- erase downloaded packages files"
-	echo -e "${pink}  -S, --search,         search         ${reset}- search for packages"
+	echo -e "${pink}  -Ss, --search,        search         ${reset}- search for packages"
 	echo -e "${pink}  -l, --list,           list           ${reset}- list avaiable packages based on package names"
 	echo -e "${pink}  -La,--list-avaiable,  list-avaiable  ${reset}- list avaiable packages based on package names"
 	echo -e "${pink}  -Lc,--list-cache,     list-cache     ${reset}- list downloaded packages in cache"
@@ -730,9 +731,9 @@ function init()
 		-Sy|--update|update)							shift;sh_update "$@";;
 		-Sg|-g|--generate|generate)				sh_generatepkg "$@";;
 		-c|--create|create)					    	sh_createpkg "$@";;
-		-m|--meta|meta)	                     shift;sh_meta   "$@";;
-		-s|-S|--search|search)	               shift;sh_search "$@";;
-		-Si|-i|--install|install)					shift;sh_search "$@";;
+		-m|--meta|meta)	                     shift;sh_meta "$@";;
+		-Ss|--search|search)	               	shift;sh_search "$@";;
+		-S|-Si|-i|--install|install)				shift;sh_install "$@";;
 		-r|--remove|remove) 							shift;sh_remove "$@";;
 		-R|--reinstall|reinstall) 					shift;sh_search "$@";;
 		-Sw|--download|download) 					shift;sh_download "$@";;
@@ -1508,8 +1509,7 @@ function sh_splitpkg()
 	return $?
 }
 
-
-function sh_search()
+function sh_install()
 {
 	local param=$@
 	LAUTO=$false
@@ -1648,6 +1648,18 @@ function sh_search()
 #			fi
 		done
 	fi
+	sh_cdroot
+}
+
+
+function sh_search()
+{
+	local param=$@
+	LAUTO=$false
+   LFORCE=$false
+
+	sh_checknet
+	sh_list $param
 	sh_cdroot
 }
 
@@ -2028,135 +2040,6 @@ function sh_removed()
 		fi
 		echo
 		echo "use $APP -S for install package"
-	fi
-	sh_cdroot
-}
-
-
-function sh_oldupgrade()
-{
-	local param="$@"
-	local LAUTO=$false
-	local LFORCE=$false
-	local LLIST=$false
-	local count=0
-	local s
-	local atemp=()
-	local item
-	local cfileInstalled cbaseInstalled cpacoteInstalled cPacoteSplitInstalled
-	local cPacoteNameInstalled cPacoteVersionInstalled cPacoteBuildInstalled
-	local cfile cbase cpacote cPacoteSplit cPacoteName cPacoteVersion cPacoteBuild
-	local ntotalinstalled
-	local ntotalconfered
-
-	#sh_recreatefilepackagesinstalled
-
-	for s in ${param[@]}; do
-		[[ $(toupper "${s}") = "-Y" ]]  && { LAUTO=$true;  param[$count]=;}
-		[[ $(toupper "${s}") = "-F" ]]  && { LFORCE=$true; param[$count]=;}
-		[[ $(toupper "${s}") = "OFF" ]] && { LLIST=$false; param[$count]=;}
-		((count++))
-	done
-
-	sh_listinstalled ${param} "OFF"
-
-#	if [[ $pkginstalled != "" ]]; then
-#		for item in ${pkginstalled[*]};do
-#			atemp="$atemp $(echo $item|sed 's/-/ /g'| awk '{print $1}')"
-#		done
-#		sh_list ${atemp} "OFF"
-#	fi
-	local ntotalinstalled=$(grep ^ $VARCACHE_SEARCH/packages-installed | wc -l)
-
-	for i in $pkginstalled; do
-		pkgname=
-		version=
-		build=
-		[[ -e $VARLIB_DESC/$i.desc ]] && source $VARLIB_DESC/$i.desc
-		cfileInstalled=$i &&
-		cbaseInstalled=$(echo $cfileInstalled | cut -d/ -f1) &&
-		cpacoteInstalled=$(echo $cfileInstalled | cut -d/ -f2) &&
-
-#		cPacoteSplitInstalled=$( echo $cfileInstalled | awk '{print $NF}'|sed 's/-/ /g') &&
-#		cPacoteNameInstalled=$( echo $cPacoteSplitInstalled | awk '{print $1}') &&
-#		cPacoteVersionInstalled=$( echo $cPacoteSplitInstalled | awk '{print $2}') &&
-#		cPacoteBuildInstalled=$( echo $cPacoteSplitInstalled | awk '{print $3}')
-
-		cPacoteSplitInstalled="${pkgname}"
-		cPacoteNameInstalled="${pkgname}"
-		cPacoteVersionInstalled="${version}"
-		cPacoteBuildInstalled="${build}"
-		pkg=
-		pkg="$pkg $(grep $cPacoteNameInstalled $VARCACHE_SEARCH/folders_packages)"
-		count=0
-
-		for x in $pkg; do
-			cfile=$x &&
-			cbase=$(echo $cfile | cut -d/ -f1)
-			cpacote=$(echo $cfile | cut -d/ -f2 | sed 's/.'${PRG}'//g')
-
-#			cPacoteSplit=$( echo $cpacote | awk '{print $NF}'|sed 's/-/ /g')
-#			cPacoteName=$( echo $cPacoteSplit | awk '{print $1}')
-#			cPacoteVersion=$( echo $cPacoteSplit | awk '{print $2}')
-#			cPacoteBuild=$( echo $cPacoteSplit | awk '{print $3}')
-
-			cPacoteSplit=$( echo $cpacote | awk '{print $NF}'|sed 's/-/ /g')
-			arr=($cPacoteSplit)
-
-#um 1.0.0 1
-#um dois 1.0.0 1
-#um dois tres 1.0.0 1
-#um dois tres quatro 1.0.0 1
-
-			[[ ${#arr[*]} -eq 4 ]] && cPacoteSplit="${arr[0]}-${arr[1]} ${arr[2]} ${arr[3]}"
-			[[ ${#arr[*]} -eq 5 ]] && cPacoteSplit="${arr[0]}-${arr[1]}-${arr[2]} ${arr[3]} ${arr[4]}"
-			[[ ${#arr[*]} -eq 6 ]] && cPacoteSplit="${arr[0]}-${arr[1]}-${arr[2]}-${arr[3]} ${arr[4]} ${arr[5]}"
-
-			arr=($cPacoteSplit)
-			cPacoteName="${arr[0]}"
-			cPacoteVersion="${arr[1]}"
-			cPacoteBuild="${arr[2]}"
-
-			((ntotalconfered++))
-
-			case $cPacoteName in
-				Python) continue;;
-				gtk+)   continue;;
-			esac
-
-			if [[ $cPacoteNameInstalled == $cPacoteName ]]; then
-				((count++))
-				if [[ "$cPacoteVersionInstalled-$cPacoteBuildInstalled" < "$cPacoteVersion-$cPacoteBuild" ]]; then
-					log_success_msg2 "[$ntotalconfered/$ntotalinstalled]${orange}${cPacoteName} ${reset}is being updated to newest version ($cPacoteVersionInstalled-$cPacoteBuildInstalled)."
-					sh_doremove $cpacoteInstalled $i "OFF"
-					sh_search "$cpacote" "-y" "-f" "OFF"
-				elif [[ "$cPacoteVersionInstalled-$cPacoteBuilInstalled" = "$cPacoteVersion-$cPacoteBuild" ]]; then
-					log_success_msg2 "[$ntotalconfered/$ntotalinstalled]${orange}${cPacoteName} ${reset}is already the newest version ($cPacoteVersionInstalled-$cPacoteBuildInstalled)."
-					continue
-				else
-					if (( $LFORCE )); then
-						sh_search "$cpacote" "-y" "-f" "OFF"
-					else
-    					log_success_msg2 "[$ntotalconfered/$ntotalinstalled]${orange}${cPacoteName} ${reset}is already the newest version ($cPacoteVersionInstalled-$cPacoteBuildInstalled)."
-					fi
-					if [ $count -gt 1 ]; then
-						log_warning_msg "${orange}${cPacoteName} ${red}WARNING!! there is more than one release of the package in the repo!"
-					fi
-				fi
-			else
-    			log_warning_msg "[$ntotalconfered/$ntotalinstalled]${orange}${cPacoteName} ${reset}not installed."
-            fi
-		done
-	done
-
-	if [[ "${#pkginstalled}" -le 1 ]]; then # nenhum pacote?
-		log_warning_msg "${orange}${@}${cyan} package not installed"
-		echo
-		conf "${blue}:: ${reset}Install Pakages(s)?"
-		LAUTO=$?
-		if (( $LAUTO )); then
-			sh_search $param -y -f
-		fi
 	fi
 	sh_cdroot
 }
