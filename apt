@@ -1325,7 +1325,7 @@ function sh_wgetdesc()
 		#github
 		cRaw=$RAW
 	fi
-	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
+	log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
 	return $?
 }
 
@@ -1342,9 +1342,9 @@ function sh_wgetfull()
 		cRaw=$RAW
 	fi
 	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}"        ; curl -s -k -O "${cRaw}/packages/$i"        ; evaluate_retval
-	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.sha256" ; curl -s -k -O "${cRaw}/packages/$i.sha256" ; evaluate_retval
-	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
-	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.sig"    ; curl -s -k -O "${cRaw}/packages/$i.sig"    ; evaluate_retval
+	log_info_msg "${cyan}Fetching file    ${cRaw}/packages/${orange}${i}.sha256" ; curl -s -k -O "${cRaw}/packages/$i.sha256" ; evaluate_retval
+	log_info_msg "${cyan}Fetching file    ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
+	log_info_msg "${cyan}Fetching filee   ${cRaw}/packages/${orange}${i}.sig"    ; curl -s -k -O "${cRaw}/packages/$i.sig"    ; evaluate_retval
 	return $?
 }
 
@@ -1360,10 +1360,10 @@ function sh_wgetpartial()
 		#github
 		cRaw=$RAW
 	fi
-	test -e $VARCACHE_ARCHIVES/$cpacote 			|| { log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}"        ; curl -s -k -O "${cRaw}/packages/$i"        ; evaluate_retval; }
-	test -e $VARCACHE_ARCHIVES/$cpacote.sha256	||	{ log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.sha256" ; curl -s -k -O "${cRaw}/packages/$i.sha256" ; evaluate_retval; }
-	test -e $VARCACHE_ARCHIVES/$cpacote.desc		||	{ log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval; }
-	test -e $VARCACHE_ARCHIVES/$cpacote.sig 		||	{ log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.sig"    ; curl -s -k -O "${cRaw}/packages/$i.sig"    ; evaluate_retval; }
+	test -e $VARCACHE_ARCHIVES/$cpacote 			|| { log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}"     ; curl -s -k -O "${cRaw}/packages/$i"        ; evaluate_retval; }
+	test -e $VARCACHE_ARCHIVES/$cpacote.sha256	||	{ log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.sha256" ; curl -s -k -O "${cRaw}/packages/$i.sha256" ; evaluate_retval; }
+	test -e $VARCACHE_ARCHIVES/$cpacote.desc		||	{ log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval; }
+	test -e $VARCACHE_ARCHIVES/$cpacote.sig 		||	{ log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.sig"    ; curl -s -k -O "${cRaw}/packages/$i.sig"    ; evaluate_retval; }
 	return $?
 }
 
@@ -1854,6 +1854,7 @@ function sh_listinstalled()
 	local LEXACT=$false
 	local LALL=$false
 	local cListSearch
+	local ntotalpkg=0
 
 	[[ -e $VARCACHE_SEARCH/packages-installed ]] || > /$VARCACHE_SEARCH/packages-installed
 	public_ntotal_pkg_installed=$(grep ^ $VARCACHE_SEARCH/packages-installed | wc -l)
@@ -1871,34 +1872,34 @@ function sh_listinstalled()
 
 	if (( $LALL )) || [[ "$cListSearch" == "" ]]; then
 		#pkginstalled=$(awk -F: '{print $1}' $VARCACHE_SEARCH/packages-installed-split | grep ^)
-		pkginstalled=$(grep ^ $VARCACHE_SEARCH/packages)
+		pkginstalled=$(grep ^ $VARCACHE_SEARCH/packages-installed)
 	else
 		for x in ${cListSearch}; do
 			if (( $LEXACT )); then
-				pkginstalled="$pkginstalled $(grep ^$x: $VARCACHE_SEARCH/packages-split | cut -d: -f4)"
+#				pkginstalled="$pkginstalled $(grep ^$x $VARCACHE_SEARCH/packages-installed-split)"
+				pkginstalled="$pkginstalled $(grep ^$x: $VARCACHE_SEARCH/packages-installed-split | cut -d: -f4)"
 			else
-				pkginstalled="$pkginstalled $(grep $x $VARCACHE_SEARCH/packages)"
+				pkginstalled="$pkginstalled $(grep $x $VARCACHE_SEARCH/packages-installed)"
 			fi
 		done
 	fi
 
 	if (( $LLIST )); then
 		log_wait_msg "${green}Listing..."
+		arr=(${pkginstalled[*]})
+		ntotalpkg=${#arr[*]}
 		if [[ "${#pkginstalled}" -gt 0 ]]; then # pacote?
 			pkgNumber=0
-			maxcol; replicate "=" $?
- 			printf "%12sPacote%35sversao\n"
-			maxcol; replicate "=" $?
-			for i in $pkg; do
+			printf "%12sPackage(${ntotalpkg})%33sversion%8sfullname\n"
+			for i in $pkginstalled; do
 				((pkgNumber++))
 				sh_splitpkg "${i}"
 #				log_success_msg2 "${green}FOUND ($pkgNumber) ${orange}${aPKGSPLIT[PKG_BASE]} ${aPKGSPLIT[PKG_VERSION]}${reset}"
- 				printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$pkgNumber" "${aPKGSPLIT[PKG_BASE]}" "${aPKGSPLIT[PKG_VERSION]}"
+				printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$pkgNumber" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}"
 			done
 			public_ntotal_pkg_listed=$pkgNumber
 			log_success_msg2 "($pkgNumber) package(s) installed."
 		else
-#			log_failure_msg2 "${red}$param NOT INSTALLED with $0${reset}"
 			log_success_msg2 "($pkgNumber) package(s) found."
 			echo
 			echo -e "${reset}Use: # ${APP} -Sy - to update with the repository${reset}"
@@ -1913,6 +1914,7 @@ function sh_listinstalled()
 	sh_cdroot
 	return $pkgNumber
 }
+
 
 function sh_listforinstall()
 {

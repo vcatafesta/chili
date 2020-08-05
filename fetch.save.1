@@ -1628,6 +1628,7 @@ function sh_install()
 					fi
 				done
 			fi
+
 #			sh_installpkg -i $cpacote
 #			evaluate_retval
 #			local error_value="${?}"
@@ -1637,9 +1638,6 @@ function sh_install()
 #				log_success_msg2 "${green}${cpacote} ${reset}Done. package installation successfully."
 #			fi
 		done
-	else
-		log_failure_msg2 "${red}NOT FOUND ${param}. ${reset}Use ${APP} -Ss for search packages."
-		#sh_list ${param}
 	fi
 	sh_cdroot
 }
@@ -1846,6 +1844,10 @@ function sh_recreatefilepackagesinstalled()
 	evaluate_retval
 }
 
+function sh_listinstalled()                                                                                                                                                                                                                                                                                                                                               68 {                                                                                                                                                                                                                                                                                                                                                                         67    local pkgNumber=0                                                                                                                                                                                                                                                                                                                                                      66    local s                                                                                                                                                                                                                                                                                                                                                                65    local param=$@                                                                                                                                                                                                                                                                                                                                                         64    local LLIST=$true                                                                                                                                                                                                                                                                                                                                                      63    local LEXACT=$false                                                                                                                                                                                                                                                                                                                                                    62    local LALL=$false                                                                                                                                                                                                                                                                                                                                                      61    local cListSearch                                                                                                                                                                                                                                                                                                                                                      60                                                                                                                                                                                                                                                                                                                                                                           59    [[ -e $VARCACHE_SEARCH/packages-installed ]] || > /$VARCACHE_SEARCH/packages-installed                                                                                                                                                                                                                                                                                 58    public_ntotal_pkg_installed=$(grep ^ $VARCACHE_SEARCH/packages-installed | wc -l)                                                                                                                                                                                                                                                                                      57    public_ntotal_pkg_listed=$public_ntotal_pkg_installed                                                                                                                                                                                                                                                                                                                  56    pkginstalled=                                                                                                                                                                                                                                                                                                                                                          55                                                                                                                                                                                                                                                                                                                                                                           54    for s in ${param[@]}; do                                                                                                                                                                                                                                                                                                                                               53       [[ $(toupper "${s}") = "-Y" ]]    && { LAUTO=$true; continue; }                                                                                                                                                                                                                                                                                                     52       [[ $(toupper "${s}") = "-F" ]]    && { LFORCE=$true; continue; }                                                                                                                                                                                                                                                                                                    51       [[ $(toupper "${s}") = "OFF" ]]   && { LLIST=$false; continue; }                                                                                                                                                                                                                                                                                                    50       [[ $(toupper "${s}") = "EXACT" ]] && { LEXACT=$true; continue; }                                                                                                                                                                                                                                                                                                    49       [[ $(toupper "${s}") = "ALL" ]]   && { LALL=$true; continue; }                                                                                                                                                                                                                                                                                                      48       cListSearch="$cListSearch $(echo ${s})"                                                                                                                                                                                                                                                                                                                             47    done                                                                                                                                                                                                                                                                                                                                                                   46                                                                                                                                                                                                                                                                                                                                                                           45    if (( $LALL )) || [[ "$cListSearch" == "" ]]; then                                                                                                                                                                                                                                                                                                                     44       #pkginstalled=$(awk -F: '{print $1}' $VARCACHE_SEARCH/packages-installed-split | grep ^)                                                                                                                                                                                                                                                                            43       pkginstalled=$(grep ^ $VARCACHE_SEARCH/packages-installed)                                                                                                                                                                                                                                                                                                          42    else                                                                                                                                                                                                                                                                                                                                                                   41       for x in ${cListSearch}; do                                                                                                                                                                                                                                                                                                                                         40          if (( $LEXACT )); then                                                                                                                                          
+
+
+
 
 function sh_listinstalled()
 {
@@ -1856,7 +1858,6 @@ function sh_listinstalled()
 	local LEXACT=$false
 	local LALL=$false
 	local cListSearch
-	local ntotalpkg=0
 
 	[[ -e $VARCACHE_SEARCH/packages-installed ]] || > /$VARCACHE_SEARCH/packages-installed
 	public_ntotal_pkg_installed=$(grep ^ $VARCACHE_SEARCH/packages-installed | wc -l)
@@ -1878,7 +1879,6 @@ function sh_listinstalled()
 	else
 		for x in ${cListSearch}; do
 			if (( $LEXACT )); then
-#				pkginstalled="$pkginstalled $(grep ^$x $VARCACHE_SEARCH/packages-installed-split)"
 				pkginstalled="$pkginstalled $(grep ^$x: $VARCACHE_SEARCH/packages-installed-split | cut -d: -f4)"
 			else
 				pkginstalled="$pkginstalled $(grep $x $VARCACHE_SEARCH/packages-installed)"
@@ -1888,20 +1888,21 @@ function sh_listinstalled()
 
 	if (( $LLIST )); then
 		log_wait_msg "${green}Listing..."
-		arr=(${pkginstalled[*]})
-		ntotalpkg=${#arr[*]}
 		if [[ "${#pkginstalled}" -gt 0 ]]; then # pacote?
 			pkgNumber=0
-			printf "%12sPackage(${ntotalpkg})%33sversion%8sfullname\n"
-			for i in $pkginstalled; do
+			maxcol; replicate "=" $?
+ 			printf "%12sPacote%35sversao\n"
+			maxcol; replicate "=" $?
+			for i in $pkg; do
 				((pkgNumber++))
 				sh_splitpkg "${i}"
 #				log_success_msg2 "${green}FOUND ($pkgNumber) ${orange}${aPKGSPLIT[PKG_BASE]} ${aPKGSPLIT[PKG_VERSION]}${reset}"
-				printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$pkgNumber" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}"
+ 				printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$pkgNumber" "${aPKGSPLIT[PKG_BASE]}" "${aPKGSPLIT[PKG_VERSION]}"
 			done
 			public_ntotal_pkg_listed=$pkgNumber
 			log_success_msg2 "($pkgNumber) package(s) installed."
 		else
+#			log_failure_msg2 "${red}$param NOT INSTALLED with $0${reset}"
 			log_success_msg2 "($pkgNumber) package(s) found."
 			echo
 			echo -e "${reset}Use: # ${APP} -Sy - to update with the repository${reset}"
@@ -1916,7 +1917,6 @@ function sh_listinstalled()
 	sh_cdroot
 	return $pkgNumber
 }
-
 
 function sh_listforinstall()
 {
