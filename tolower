@@ -1,16 +1,13 @@
-##################### SCRIPT SECUNDARIO #################
 #!/bin/bash
-# corretor.sh
 # Script para corrigir nomes de arquivos e diretorios
 
 c=1
 for x in * ; do
-        y=`echo "$x" | tr -s ' ' '-' | tr [:upper:] [:lower:] | sed 'y/\[\]\(\)�&?ÇÁÀÃÂÄÉÈẼÊËÍÌĨÎÏÓÒÕÔÖÙÚŨÛüçáàãâäéèẽêëíìĩîïóòõôöùúũûü/----eeecaaaaaeeeeeiiiiiooooouuuuucaaaaaeeeeeiiiiiooooouuuuu/'`
+   y=`echo "$x" | tr -s ' ' '-' | tr [:upper:] [:lower:] | sed 'y/\[\]\(\)�&?ÇÁÀÃÂÄÉÈẼÊËÍÌĨÎÏÓÒÕÔÖÙÚŨÛüçáàãâäéèẽêëíìĩîïóòõôöùúũûü/----eeecaaaaaeeeeeiiiiiooooouuuuucaaaaaeeeeeiiiiiooooouuuuu/'`
 
-
-        if [ ! -e $y ]; then let c++
-                mv "$x" "$y" ; echo Renomeando... "$x" para "$y"
-        fi
+   if [ ! -e $y ]; then let c++
+      sudo mv "$x" "$y" ; echo Renomeando... "$x" para "$y"
+   fi
 done
 echo
 echo `ls | wc -l` 'Arquivos submetidos!!!'
