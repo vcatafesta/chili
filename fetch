@@ -535,6 +535,7 @@ function sh_msgdoevangelho()
     echo -e "${blue}${msg}${reset}\n"
 }
 
+
 function sh_list()
 {
 	local param=$@
@@ -1516,26 +1517,15 @@ function sh_install()
    LFORCE=$false
 
 	sh_checknet
-	sh_list $param
+	sh_listforinstall ${param} "OFF" "EXACT"
 
-	if [[ $pkg != " " ]]; then
-#		if !(( $LAUTO )); then
-#			echo
-#			read -p "${blue}:: ${reset}Continue installation? [Y/n]" LDOWNLOAD
-#			if [[ $(toupper "${LDOWNLOAD}") = "N" ]]; then
-#				return
-#			fi
-#		fi
-#		pushd $VARCACHE_INSTALLED/ &>/dev/null
-#		local pkginstalled=$(echo *.${PRG})
-		local pkginstalled=$(cat ${VARCACHE_SEARCH}/packages-installed)
-#		popd &>/dev/null
-
+	if [[ $pkgforinstall != " " ]]; then
+#		local pkgforinstall=$(cat ${VARCACHE_SEARCH}/packages-split)
 
 		[[ -d $VARCACHE_ARCHIVES/ ]] || mkdir -p $VARCACHE_ARCHIVES/
 		cd $VARCACHE_ARCHIVES/
 
-		for i in $pkg; do
+		for i in $pkgforinstall; do
 			sh_splitpkg ${i}
 			local cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
 			local cpacote=${aPKGSPLIT[PKG_FULLNAME]}
@@ -1554,7 +1544,7 @@ function sh_install()
 			cpacoteinstalled=$(grep ^$cpacoteSemExt ${VARCACHE_SEARCH}/packages-installed)
 			[[ $cpacoteinstalled = $cpacoteSemExt ]] && LINSTALLED=$OK
 
-#			info "$cpacoteinstalled\n$cpacoteSemExt"
+#			info "1-cpacoteSemExt   : $cpacoteSemExt\n2-cpacoteinstalled: $cpacoteinstalled"
 
 			if (( $LINSTALLED )) && !(( $LFORCE )); then
 				log_failure_msg2 "${orange}${cfullfilename} ${reset}Package is already installed. Use the -f option to force reinstallation."
@@ -1880,14 +1870,13 @@ function sh_listinstalled()
 
 	if (( $LALL )) || [[ "$cListSearch" == "" ]]; then
 		#pkginstalled=$(awk -F: '{print $1}' $VARCACHE_SEARCH/packages-installed-split | grep ^)
-		pkginstalled=$(grep ^ $VARCACHE_SEARCH/packages-installed)
+		pkginstalled=$(grep ^ $VARCACHE_SEARCH/packages)
 	else
 		for x in ${cListSearch}; do
 			if (( $LEXACT )); then
-#				pkginstalled="$pkginstalled $(grep ^$x $VARCACHE_SEARCH/packages-installed-split)"
-				pkginstalled="$pkginstalled $(grep ^$x: $VARCACHE_SEARCH/packages-installed-split | cut -d: -f4)"
+				pkginstalled="$pkginstalled $(grep ^$x: $VARCACHE_SEARCH/packages-split | cut -d: -f4)"
 			else
-				pkginstalled="$pkginstalled $(grep $x $VARCACHE_SEARCH/packages-installed)"
+				pkginstalled="$pkginstalled $(grep $x $VARCACHE_SEARCH/packages)"
 			fi
 		done
 	fi
@@ -1895,6 +1884,74 @@ function sh_listinstalled()
 	if (( $LLIST )); then
 		log_wait_msg "${green}Listing..."
 		if [[ "${#pkginstalled}" -gt 0 ]]; then # pacote?
+			pkgNumber=0
+			maxcol; replicate "=" $?
+ 			printf "%12sPacote%35sversao\n"
+			maxcol; replicate "=" $?
+			for i in $pkg; do
+				((pkgNumber++))
+				sh_splitpkg "${i}"
+#				log_success_msg2 "${green}FOUND ($pkgNumber) ${orange}${aPKGSPLIT[PKG_BASE]} ${aPKGSPLIT[PKG_VERSION]}${reset}"
+ 				printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$pkgNumber" "${aPKGSPLIT[PKG_BASE]}" "${aPKGSPLIT[PKG_VERSION]}"
+			done
+			public_ntotal_pkg_listed=$pkgNumber
+			log_success_msg2 "($pkgNumber) package(s) installed."
+		else
+#			log_failure_msg2 "${red}$param NOT INSTALLED with $0${reset}"
+			log_success_msg2 "($pkgNumber) package(s) found."
+			echo
+			echo -e "${reset}Use: # ${APP} -Sy - to update with the repository${reset}"
+		fi
+	else
+		pkgNumber=0
+		for i in $pkginstalled; do
+			((pkgNumber++))
+		done
+		public_ntotal_pkg_listed=$pkgNumber
+	fi
+	sh_cdroot
+	return $pkgNumber
+}
+
+function sh_listforinstall()
+{
+	local pkgNumber=0
+	local s
+	local param=$@
+	local LLIST=$true
+	local LEXACT=$false
+	local LALL=$false
+	local cListSearch
+
+	[[ -e $VARCACHE_SEARCH/packages-installed ]] || > /$VARCACHE_SEARCH/packages-installed
+	public_ntotal_pkg_installed=$(grep ^ $VARCACHE_SEARCH/packages-installed | wc -l)
+	public_ntotal_pkg_listed=$public_ntotal_pkg_installed
+	pkgforinstall=
+
+	for s in ${param[@]}; do
+		[[ $(toupper "${s}") = "-Y" ]]    && { LAUTO=$true; continue; }
+     	[[ $(toupper "${s}") = "-F" ]]    && { LFORCE=$true; continue; }
+     	[[ $(toupper "${s}") = "OFF" ]]   && { LLIST=$false; continue; }
+		[[ $(toupper "${s}") = "EXACT" ]] && { LEXACT=$true; continue; }
+		[[ $(toupper "${s}") = "ALL" ]]   && { LALL=$true; continue; }
+		cListSearch="$cListSearch $(echo ${s})"
+	done
+
+	if (( $LALL )) || [[ "$cListSearch" == "" ]]; then
+		pkgforinstal=$(grep ^ $VARCACHE_SEARCH/packages-split)
+	else
+		for x in ${cListSearch}; do
+			if (( $LEXACT )); then
+				pkgforinstall="$pkginstalled $(grep ^$x: $VARCACHE_SEARCH/packages-split | cut -d: -f5)"
+			else
+				pkgforinstall="$pkginstalled $(grep $x $VARCACHE_SEARCH/packages-split)"
+			fi
+		done
+	fi
+
+	if (( $LLIST )); then
+		log_wait_msg "${green}Listing..."
+		if [[ "${#pkgforinstall}" -gt 0 ]]; then # pacote?
 			pkgNumber=0
 			maxcol; replicate "=" $?
  			printf "%12sPacote%35sversao\n"
@@ -1915,7 +1972,7 @@ function sh_listinstalled()
 		fi
 	else
 		pkgNumber=0
-		for i in $pkginstalled; do
+		for i in $pkgforinstall; do
 			((pkgNumber++))
 		done
 		public_ntotal_pkg_listed=$pkgNumber
