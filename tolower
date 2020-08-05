@@ -2,7 +2,6 @@
 #!/bin/bash
 # corretor.sh
 # Script para corrigir nomes de arquivos e diretorios
-# Gleisson Marin Bissa - 20-09-2006 11:03 h
 
 c=1
 for x in * ; do
