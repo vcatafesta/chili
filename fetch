@@ -726,30 +726,41 @@ function help()
 
 function init()
 {
+	local param=$@
+	local s
+
+	[[ $(toupper "${1}") = "-Y" ]] && { LAUTO=$true; shift; }
+	[[ $(toupper "${1}") = "-F" ]] && { LFORCE=$true; shift; }
+	[[ $(toupper "${1}") = "-Y" ]] && { LAUTO=$true; shift; }
+	[[ $(toupper "${1}") = "-F" ]] && { LFORCE=$true; shift; }
+	param="$@"
+	[[ $LAUTO  ]] && param+=" -Y"
+	[[ $LFORCE ]] && param+=" -F"
+
 	case "${1}" in
-		-Sl|--local|local)  							shift;sh_initinstallpkg "$@";;
-		-Sa|-a|--alienpkg|alienpkg)	  		   shift;sh_alienpkg_main "$@";;
-		-Sy|--update|update)							shift;sh_update "$@";;
-		-Sg|-g|--generate|generate)				sh_generatepkg "$@";;
-		-c|--create|create)					    	sh_createpkg "$@";;
-		-m|--meta|meta)	                     shift;sh_meta "$@";;
-		-Ss|--search|search)	               	shift;sh_search "$@";;
-		-S|-Si|-i|--install|install)				shift;sh_install "$@";;
-		-r|--remove|remove) 							shift;sh_remove "$@";;
-		-R|--reinstall|reinstall) 					shift;sh_search "$@";;
-		-Sw|--download|download) 					shift;sh_download "$@";;
-		-l|--list|list)    	 						shift;sh_list "$@";;
-		-La|--list-avaiable|list-avaiable) 		shift;sh_list "$@";;
-		-Lc|--list-cache|list-cache) 	        	shift;sh_FilesInCache "$@";;
+		-Sl|--local|local)  							shift;sh_initinstallpkg "${param}";;
+		-Sa|-a|--alienpkg|alienpkg)	  		   shift;sh_alienpkg_main "${param}";;
+		-Sy|--update|update)							shift;sh_update "${param}";;
+		-Sg|-g|--generate|generate)				sh_generatepkg "${param}";;
+		-c|--create|create)					    	sh_createpkg "${param}";;
+		-m|--meta|meta)	                     shift;sh_meta "${param}";;
+		-Ss|--search|search)	               	shift;sh_search "${param}";;
+		-S|-Si|-i|--install|install)				shift;sh_install "${param}";;
+		-r|--remove|remove) 							shift;sh_remove "${param}";;
+		-R|--reinstall|reinstall) 					shift;sh_search "${param}";;
+		-Sw|--download|download) 					shift;sh_download "${param}";;
+		-l|--list|list)    	 						shift;sh_list "${param}";;
+		-La|--list-avaiable|list-avaiable) 		shift;sh_list "${param}";;
+		-Lc|--list-cache|list-cache) 	        	shift;sh_FilesInCache "${param}";;
 		-Lr|--list-removed|list-removed)			sh_removed $2 $3;;
-		-Li|--list-installed|list-installed)	shift;sh_listinstalled "$@";;
-		-Pi|--in-cache|in-cache)	            shift;sh_FilesInCache "$@";;
-		-Po|--out-cache|out-cache)	            shift;sh_pkgoutcache "$@";;
+		-Li|--list-installed|list-installed)	shift;sh_listinstalled "${param}";;
+		-Pi|--in-cache|in-cache)	            shift;sh_FilesInCache "${param}";;
+		-Po|--out-cache|out-cache)	            shift;sh_pkgoutcache "${param}";;
 		-Sc|--clean|clean)  							sh_clean $2;;
-		-w|--show|show) 								shift;sh_show "$@";;
-		-Su|--upgrade|upgrade)						shift;sh_upgrade "$@";;
+		-w|--show|show) 								shift;sh_show "${param}";;
+		-Su|--upgrade|upgrade)						shift;sh_upgrade "${param}";;
 		-v|--version|version) 						exit;;
-		*) 												sh_search "$@";;
+		*) 												sh_search "${param}";;
 	esac
 }
 
@@ -1517,8 +1528,6 @@ function sh_splitpkg()
 function sh_install()
 {
 	local param=$@
-	LAUTO=$false
-   LFORCE=$false
 
 	#sh_checknet
 	sh_listforinstall ${param} "OFF" "EXACT"
