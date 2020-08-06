@@ -3075,7 +3075,7 @@ function sh_upgrade()
 					if [[ "$(vercmp $cBaseVersionInstalled $cBaseVersion)" -lt 0 ]]; then
 						log_success_msg2 "[$ntotalconfered/$ntotal_pkg_listed]${orange}${cBase} ${reset}is being updated to newest version ($cVersion)."
 						sh_doremove $cBaseVersionInstalled "OFF"
-						sh_search "$cBaseVersion" "-y" "-f" "OFF"
+						sh_install "$cBaseVersion" "-y" "-f" "OFF"
 					elif [[ "$cBaseVersionInstalled" = "$cBaseVersion" ]]; then
 						if (( $LFORCE )); then
 							sh_install "$cBaseVersion" "-y" "-f" "OFF"
