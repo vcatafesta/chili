@@ -753,7 +753,7 @@ function init()
 		-La|--list-avaiable|list-avaiable) 		shift;sh_list "${param}";;
 		-Lc|--list-cache|list-cache) 	        	shift;sh_FilesInCache "${param}";;
 		-Lr|--list-removed|list-removed)			sh_removed $2 $3;;
-		-Li|--list-installed|list-installed)	sh_listinstalled;;
+		-Li|--list-installed|list-installed)	shift;sh_listinstalled "${@}";;
 		-Pi|--in-cache|in-cache)	            shift;sh_FilesInCache "${param}";;
 		-Po|--out-cache|out-cache)	            shift;sh_pkgoutcache "${param}";;
 		-Sc|--clean|clean)  							sh_clean $2;;
