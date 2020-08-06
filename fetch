@@ -753,12 +753,12 @@ function init()
 		-La|--list-avaiable|list-avaiable) 		shift;sh_list "${param}";;
 		-Lc|--list-cache|list-cache) 	        	shift;sh_FilesInCache "${param}";;
 		-Lr|--list-removed|list-removed)			sh_removed $2 $3;;
-		-Li|--list-installed|list-installed)	shift;sh_listinstalled "${param}";;
+		-Li|--list-installed|list-installed)	sh_listinstalled;;
 		-Pi|--in-cache|in-cache)	            shift;sh_FilesInCache "${param}";;
 		-Po|--out-cache|out-cache)	            shift;sh_pkgoutcache "${param}";;
 		-Sc|--clean|clean)  							sh_clean $2;;
 		-w|--show|show) 								shift;sh_show "${param}";;
-		-Su|--upgrade|upgrade)						shift;sh_upgrade "${param}";;
+		-Su|--upgrade|upgrade)						sh_upgrade ${param};;
 		-v|--version|version) 						exit;;
 		*) 												sh_search "${param}";;
 	esac
@@ -1861,9 +1861,9 @@ function sh_recreatefilepackagesinstalled()
 
 function sh_listinstalled()
 {
+	local param=$@
 	local pkgNumber=0
 	local s
-	local param=$@
 	local LLIST=$true
 	local LEXACT=$false
 	local LALL=$false
@@ -1891,7 +1891,7 @@ function sh_listinstalled()
 		for x in ${cListSearch}; do
 			if (( $LEXACT )); then
 #				pkginstalled="$pkginstalled $(grep ^$x $VARCACHE_SEARCH/packages-installed-split)"
-				pkginstalled="$pkginstalled $(grep ^$x: $VARCACHE_SEARCH/packages-installed-split | cut -d: -f4)"
+				pkginstalled="$pkginstalled $(grep ^$x: $VARCACHE_SEARCH/packages-installed-split | cut -d: -f5)"
 			else
 				pkginstalled="$pkginstalled $(grep $x $VARCACHE_SEARCH/packages-installed)"
 			fi
@@ -3003,6 +3003,7 @@ function sh_alienpkg_main()
 
 function sh_upgrade()
 {
+	shift
 	local param="$@"
 	local LAUTO=$false
 	local LFORCE=$false
@@ -3020,20 +3021,22 @@ function sh_upgrade()
 
 	#sh_recreatefilepackagesinstalled
 
-	for s in ${param[@]}; do
+#	for s in ${param[@]}; do
 #		[[ $(toupper "${s}") = "-Y" ]]  && { LAUTO=$true;  param[$count]=;}
 #		[[ $(toupper "${s}") = "-F" ]]  && { LFORCE=$true; param[$count]=;}
 #		[[ $(toupper "${s}") = "OFF" ]] && { LLIST=$false; param[$count]=;}
 #		((count++))
-		[[ $(toupper "${s}") = "-Y" ]]  && LAUTO=$true
-		[[ $(toupper "${s}") = "-F" ]]  && LFORCE=$true
-		[[ $(toupper "${s}") = "OFF" ]] && LLIST=$false
-	done
+#		[[ $(toupper "${s}") = "-Y" ]]  && LAUTO=$true
+#		[[ $(toupper "${s}") = "-F" ]]  && LFORCE=$true
+#		[[ $(toupper "${s}") = "OFF" ]] && LLIST=$false
+#	done
 
 	sh_listinstalled ${param} "OFF" "EXACT"
 
 	local ntotal_pkg_installed=${public_ntotal_pkg_installed}
 	local ntotal_pkg_listed=${public_ntotal_pkg_listed}
+
+#info $pkginstalled
 
 	for i in $pkginstalled; do
 		sh_splitpkg "${i}"
@@ -3047,7 +3050,8 @@ function sh_upgrade()
 		((ntotalconfered++))
 
 		#debug
-		#info "pkginstalled: ${i}\npkgrepo: $pkgrepo"
+
+#info "pkginstalled: ${i}\npkgrepo: $pkgrepo"
 
 		if [[ "${#pkgrepo}" -gt 0 ]]; then # pacote?
 			for cPkg in ${pkgrepo}; do
@@ -3064,8 +3068,7 @@ function sh_upgrade()
 					gtk+)   continue;;
 				esac
 
-				#debug
-				#info "$cBaseInstalled == $cBase"
+#info "$cBaseInstalled == $cBase"
 
 				if [[ $cBaseInstalled == $cBase ]]; then
 					((count++))
@@ -3075,7 +3078,7 @@ function sh_upgrade()
 						sh_search "$cBaseVersion" "-y" "-f" "OFF"
 					elif [[ "$cBaseVersionInstalled" = "$cBaseVersion" ]]; then
 						if (( $LFORCE )); then
-							sh_search "$cBaseVersion" "-y" "-f" "OFF"
+							sh_install "$cBaseVersion" "-y" "-f" "OFF"
 							continue
 						else
 							log_success_msg2 "[$ntotalconfered/$ntotal_pkg_listed]${orange}${cBase} ${reset}is already the newest version ($cVersionInstalled). Use the -f option to force reinstallation."
@@ -3083,7 +3086,7 @@ function sh_upgrade()
 						fi
 					else
 						if (( $LFORCE )); then
-							sh_search "$cBaseVersion" "-y" "-f" "OFF"
+							sh_install "$cBaseVersion" "-y" "-f" "OFF"
 						else
 							log_success_msg2 "[$ntotalconfered/$ntotal_pkg_listed]${orange}${cBase} ${reset}is already the newest version ($cVersionInstalled)."
 						fi
