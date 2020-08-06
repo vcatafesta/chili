@@ -3,7 +3,7 @@
  # fetch - Search an Install packages in LFS
  #
  # Created: 2019/04/05
- # Altered: 2020/08/03
+ # Altered: 2020/08/06
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.02.51.20200803"
+_VERSION_="2.02.73.20200806"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -1890,8 +1890,7 @@ function sh_listinstalled()
 	else
 		for x in ${cListSearch}; do
 			if (( $LEXACT )); then
-#				pkginstalled="$pkginstalled $(grep ^$x $VARCACHE_SEARCH/packages-installed-split)"
-				pkginstalled="$pkginstalled $(grep ^$x: $VARCACHE_SEARCH/packages-installed-split | cut -d: -f5)"
+				pkginstalled="$pkginstalled $(grep ^$x: $VARCACHE_SEARCH/packages-split | cut -d: -f5)"
 			else
 				pkginstalled="$pkginstalled $(grep $x $VARCACHE_SEARCH/packages-installed)"
 			fi
@@ -3036,7 +3035,7 @@ function sh_upgrade()
 	local ntotal_pkg_installed=${public_ntotal_pkg_installed}
 	local ntotal_pkg_listed=${public_ntotal_pkg_listed}
 
-#info $pkginstalled
+# info $pkginstalled
 
 	for i in $pkginstalled; do
 		sh_splitpkg "${i}"
