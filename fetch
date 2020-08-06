@@ -1897,6 +1897,7 @@ function sh_listinstalled()
 		done
 	fi
 
+
 	if (( $LLIST )); then
 		log_wait_msg "${green}Listing..."
 		arr=(${pkginstalled[*]})
