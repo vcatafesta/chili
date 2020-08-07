@@ -3,7 +3,7 @@
  # fetch - Search an Install packages in LFS
  #
  # Created: 2019/04/05
- # Altered: 2020/08/06
+ # Altered: 2020/08/07
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.02.73.20200806"
+_VERSION_="2.02.75.20200807"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -545,23 +545,21 @@ function sh_list()
 	pkg=
 
 	sh_checkdir "OFF"
-	for s in ${param[@]}; do
-		[[ $(toupper "${s}") = "-Y" ]] && LAUTO=$true
-		[[ $(toupper "${s}") = "-F" ]] && LFORCE=$true
-		[[ $(toupper "${s}") = "OFF" ]] && LLIST=$false
-	done
 
 	if (( $LLIST )); then
 		log_wait_msg "${blue}Reading package lists in the repository..."
 	fi
 
 	if [[ "${param}" == "" ]] || [[ $(toupper "${param}") = "ALL" ]] || [[ $(toupper "${param}") = "ALL OFF" ]]; then
-		pkg=$(cat $VARCACHE_SEARCH/folders_packages)
+		LALL=$true
+		pkg=$(_CAT $VARCACHE_SEARCH/folders_packages)
 	else
 		for s in ${param[@]}; do
 			if [[ $(toupper "${s}") = "-Y" ]]; then
+				shift
 				LAUTO=$true
 			elif [[ $(toupper "${s}") = "-F" ]]; then
+				shift
 				LFORCE=$true
 			elif [[ $(toupper "${s}") = "OFF" ]]; then
 				LLIST=$false
@@ -570,6 +568,7 @@ function sh_list()
 			fi
 		done
 	fi
+	param="$@"
 
 	if (( $LLIST )); then
 		log_wait_msg "${blue}Listing..."
@@ -749,8 +748,8 @@ function init()
 		-r|--remove|remove) 							shift;sh_remove "${param}";;
 		-R|--reinstall|reinstall) 					shift;sh_search "${param}";;
 		-Sw|--download|download) 					shift;sh_download "${param}";;
-		-l|--list|list)    	 						shift;sh_list "${param}";;
-		-La|--list-avaiable|list-avaiable) 		shift;sh_list "${param}";;
+		-l|--list|list)    	 						shift;sh_list "$@";;
+		-La|--list-avaiable|list-avaiable) 		shift;sh_list "$@";;
 		-Lc|--list-cache|list-cache) 	        	shift;sh_FilesInCache "${param}";;
 		-Lr|--list-removed|list-removed)			sh_removed $2 $3;;
 		-Li|--list-installed|list-installed)	shift;sh_listinstalled "${@}";;
