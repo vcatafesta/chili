@@ -693,7 +693,7 @@ function help()
 	echo -e "${pink}  -r, --remove,         remove         ${reset}- remove packages"
 	echo -e "${pink}  -Sc, --clean,         clean          ${reset}- erase downloaded packages files"
 	echo -e "${pink}  -Ss, --search,        search         ${reset}- search for packages"
-	echo -e "${pink}  -l, --list,           list           ${reset}- list avaiable packages based on package names"
+	echo -e "${pink}  -L, --list,           list           ${reset}- list avaiable packages based on package names"
 	echo -e "${pink}  -La,--list-avaiable,  list-avaiable  ${reset}- list avaiable packages based on package names"
 	echo -e "${pink}  -Lc,--list-cache,     list-cache     ${reset}- list downloaded packages in cache"
 	echo -e "${pink}  -Li,--list-installed, list-installed ${reset}- list installed packages"
@@ -748,7 +748,7 @@ function init()
 		-r|--remove|remove) 							shift;sh_remove "${param}";;
 		-R|--reinstall|reinstall) 					shift;sh_search "${param}";;
 		-Sw|--download|download) 					shift;sh_download "${param}";;
-		-l|--list|list)    	 						shift;sh_list "$@";;
+		-L|-l|--list|list)    	 					shift;sh_list "$@";;
 		-La|--list-avaiable|list-avaiable) 		shift;sh_list "$@";;
 		-Lc|--list-cache|list-cache) 	        	shift;sh_FilesInCache "${param}";;
 		-Lr|--list-removed|list-removed)			sh_removed $2 $3;;
