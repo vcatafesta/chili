@@ -3,7 +3,7 @@
  # fetch - Search an Install packages in LFS
  #
  # Created: 2019/04/05
- # Altered: 2020/08/07
+ # Altered: 2020/08/10
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.02.75.20200807"
+_VERSION_="2.02.76.20200810"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -570,15 +570,18 @@ function sh_list()
 	fi
 	param="$@"
 
+
 	if (( $LLIST )); then
 		log_wait_msg "${blue}Listing..."
 		pkgCheckNumber=0
+		printf "%12sPackage(${ncontapkgdep})%34sversion%8sfullname\n"
 		if [[ $pkg ]]; then
 			for i in $pkg; do
 				((pkgCheckNumber++))
-				[[ $LLIST = $true ]] && log_success_msg2 "${blue}FOUND ${red}(#$pkgCheckNumber) ${orange}$i"
+				sh_splitpkg $i
+				[[ $LLIST = $true ]] && printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$pkgCheckNumber" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}"
 			done
-			[[ $LLIST = $true ]] && log_success_msg2 "${red}($pkgCheckNumber)${reset} package(s) found."
+			[[ $LLIST = $true ]] && log_success_msg2 "${green}($pkgCheckNumber)${reset} package(s) found."
 		else
 			log_failure_msg2 "${red}$param NOT FOUND ${reset} ${orange}$i${reset}"
 			log_failure_msg2 "($pkgCheckNumber) package(s) found."
