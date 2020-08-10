@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.02.76.20200810"
+_VERSION_="2.02.77.20200810"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -380,7 +380,7 @@ LFS_VARCACHE='fetch'
 PKGDIR='/var/cache/fetch/archives'
 GITDIR='/github/ChiliOS'
 ALIEN_CACHE_DIR='/var/cache/pacman/pkg'
-IGNOREPKG=('glibc')
+IGNOREPKG=('glibc' 'file')
 
 # pacotes hospedado no repositorio do github: sim='1', nao='0'
 GITSITE='1'
@@ -1550,7 +1550,8 @@ function sh_install()
 			local cpacoteinstalled=
 
 			case $cpacotebase in
-				glic)		continue;;
+				glibc)	continue;;
+				file)		continue;;
 				flac) 	{ info $cpacotebase; continue;};;
 			esac
 
