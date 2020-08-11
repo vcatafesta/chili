@@ -741,7 +741,7 @@ function init()
 
 	case "${1}" in
 		-Sl|--local|local)  							shift;sh_initinstallpkg "${param}";;
-		-Sa|-a|--alienpkg|alienpkg)	  		   shift;sh_alienpkg_main "${param}";;
+		-Sa|-a|--alienpkg|alienpkg)	  		   shift;sh_alienpkg_main "$@";;
 		-Sy|--update|update)							shift;sh_update "${param}";;
 		-Sg|-g|--generate|generate)				sh_generatepkg "${param}";;
 		-c|--create|create)					    	sh_createpkg "${param}";;
