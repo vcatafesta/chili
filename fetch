@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.02.88.20200819"
+_VERSION_="2.02.89.20200819"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -161,7 +161,7 @@ function plain()
 function msg()
 {
     local mesg=$1; shift
-    printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
+    printf "${GREEN}  =>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
 function msg2()
@@ -186,6 +186,12 @@ function timespec()
 {
    STAMP="$(echo `date +"%b %d %T %:z"` `hostname`) "
    return 0
+}
+
+function log_msg()
+{
+    echo -n -e "${BMPREFIX}${@}\n"
+    return 0
 }
 
 function log_info_msg()
@@ -740,7 +746,7 @@ function init()
 	[[ $LFORCE ]] && param+=" -F"
 
 	case "${1}" in
-		-Sl|--local|local)  							shift;sh_initinstallpkg "${param}";;
+		-Sl|--local|local)  							shift;sh_initinstallpkg "$@";;
 		-Sa|-a|--alienpkg|alienpkg)	  		   shift;sh_alienpkg_main "$@";;
 		-Sy|--update|update)							shift;sh_update "${param}";;
 		-Sg|-g|--generate|generate)				sh_generatepkg "${param}";;
@@ -2430,12 +2436,14 @@ function sh_initinstallpkg()
 	local pkg
 	local param=$@
 	local package
-	local xdir
+	local	xdir=$PWD/
 
 	shopt -s nullglob       # enable suppress error message of a command 
 	if [[ "${param}" == "" ]] || [[ $(toupper "${param}") = "ALL" ]] || [[ $(toupper "${param}") = "ALL OFF" ]]; then
-		xdir=$PWD/
-		pkg=$(ls -1 *.${PRG})
+		pkg=$(ls -1 "$VARCACHE_ARCHIVES/*.${PRG}" &>/dev/null)
+	   if [[ "${#pkg}" -eq 0 ]]; then # none?
+   		pkg=$(ls -1 *.${PRG} &>/dev/null)
+	   fi
 	else
 		for s in ${param[@]}; do
 			if [[ $(toupper "${s}") = "-Y" ]]; then
@@ -2472,8 +2480,9 @@ function sh_initinstallpkg()
 			fi
 		fi
 	else
-		log_failure_msg2 "${red}$param NOT FOUND local package in ${xdir} ${reset} ${orange}$i${reset}"
-		log_failure_msg2 "($pkgCheckNumber) package(s) found."
+		msg "${orange}$param ${red}NOT FOUND ${reset}local package in ${orange}${VARCACHE_ARCHIVES}${reset}"
+		msg "${orange}$param ${red}NOT FOUND ${reset}local package in ${orange}${xdir} ${reset}"
+		log_msg "($pkgCheckNumber) package(s) found."
 		echo
 		echo -e "${reset}Use: # $0 update - to update with the repository${reset}"
 	fi
