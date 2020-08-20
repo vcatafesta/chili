@@ -1,0 +1,20 @@
+######################################################################
+# Generated with fetch
+# Generated with alienpkg
+######################################################################
+maintainer='Vilmar Catafesta <vcatafesta@gmail.com>'
+pkgname='nano'
+version='5.0'
+build='1'
+license='GPL'
+lfs_version='8.4'
+lfs_init='SYSTEMD'
+arch='x86_64'
+distro='chili'
+desc='Pico editor clone with enhancements'
+size='2318669'
+url='https://www.nano-editor.org'
+dep=('')
+depend='ncurses'
+depend='file'
+depend='sh'

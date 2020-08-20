@@ -5,7 +5,7 @@
 function  sh_setfont()
 {
    local colddir=$PWD
-   cd /usr/share/consolefonts/
+   cd /usr/share/kbd/consolefonts/
    fonts="$(ls -1 *.gz)"
    array=()
    n=0
