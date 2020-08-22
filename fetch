@@ -587,7 +587,7 @@ function sh_list()
 				sh_splitpkg $i
 				[[ $LLIST = $true ]] && printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$pkgCheckNumber" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}"
 			done
-			[[ $LLIST = $true ]] && log_success_msg2 "${green}($pkgCheckNumber)${reset} package(s) found."
+			[[ $LLIST = $true ]] && log_msg "${green}($pkgCheckNumber)${reset} package(s) found."
 		else
 			log_failure_msg2 "${red}$param NOT FOUND ${reset} ${orange}$i${reset}"
 			log_failure_msg2 "($pkgCheckNumber) package(s) found."
@@ -1674,7 +1674,7 @@ function sh_search()
 
 	#sh_checknet
 	sh_list $param
-	log_success_msg2 "${reset}Use ${APP} -S <package> for package installation."
+	log_msg "${reset}Use ${APP} -S <package> for package installation."
 	sh_cdroot
 }
 
@@ -1921,9 +1921,9 @@ function sh_listinstalled()
 				printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$pkgNumber" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}"
 			done
 			public_ntotal_pkg_listed=$pkgNumber
-			log_success_msg2 "($pkgNumber) package(s) installed."
+			log_msg "($pkgNumber) package(s) installed."
 		else
-			log_success_msg2 "($pkgNumber) package(s) found."
+			log_msg "($pkgNumber) package(s) found."
 			echo
 			echo -e "${reset}Use: # ${APP} -Sy - to update with the repository${reset}"
 		fi
