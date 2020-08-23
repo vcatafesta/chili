@@ -753,7 +753,7 @@ function init()
 		-c|--create|create)					    	sh_createpkg "${param}";;
 		-m|--meta|meta)	                     shift;sh_meta "${param}";;
 		-Ss|--search|search)	               	shift;sh_search "$@";;
-		-S|-Si|-i|--install|install)				shift;sh_install "${param}";;
+		-S|-Si|-i|--install|install)				shift;sh_install "$@";;
 		-r|--remove|remove) 							shift;sh_remove "${param}";;
 		-R|--reinstall|reinstall) 					shift;sh_search "${param}";;
 		-Sw|--download|download) 					shift;sh_download "${param}";;
@@ -1536,9 +1536,8 @@ function sh_splitpkg()
 function sh_install()
 {
 	local param=$@
-
 	#sh_checknet
-	sh_listforinstall ${param} "OFF" "EXACT"
+	sh_listforinstall ${param} "ON" "EXACT"
 
 	if [[ $pkgforinstall != " " ]]; then
 #		local pkgforinstall=$(cat ${VARCACHE_SEARCH}/packages-split)
@@ -1947,7 +1946,9 @@ function sh_listforinstall()
 	local LLIST=$true
 	local LEXACT=$false
 	local LALL=$false
+	local ncontapkgforinstall=0
 	local cListSearch
+	local arr
 
 	[[ -e $VARCACHE_SEARCH/packages-installed ]] || > /$VARCACHE_SEARCH/packages-installed
 	public_ntotal_pkg_installed=$(grep ^ $VARCACHE_SEARCH/packages-installed | wc -l)
@@ -1968,30 +1969,31 @@ function sh_listforinstall()
 	else
 		for x in ${cListSearch}; do
 			if (( $LEXACT )); then
-				pkgforinstall="$pkginstalled $(grep ^$x: $VARCACHE_SEARCH/packages-split | cut -d: -f5)"
+				pkgforinstall="$pkgforinstall $(grep ^$x: $VARCACHE_SEARCH/packages-split | cut -d: -f5)"
 			else
-				pkgforinstall="$pkginstalled $(grep $x $VARCACHE_SEARCH/packages-split)"
+				pkgforinstall="$pkgforinstall $(grep $x $VARCACHE_SEARCH/packages-split)"
 			fi
 		done
 	fi
 
 	if (( $LLIST )); then
 		log_wait_msg "${green}Listing..."
+   	arr=(${pkgforinstall[*]})
+   	ncontapkgforinstall=${#arr[*]}
 		if [[ "${#pkgforinstall}" -gt 0 ]]; then # pacote?
 			pkgNumber=0
-			maxcol; replicate "=" $?
- 			printf "%12sPacote%35sversao\n"
-			maxcol; replicate "=" $?
-			for i in $pkginstalled; do
+      	printf "%12sPackage(${ncontapkgforinstall})%34sversion%8sfullname\n"
+			for i in $pkgforinstall; do
 				((pkgNumber++))
 				sh_splitpkg "${i}"
-#				log_success_msg2 "${green}FOUND ($pkgNumber) ${orange}${aPKGSPLIT[PKG_BASE]} ${aPKGSPLIT[PKG_VERSION]}${reset}"
- 				printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$pkgNumber" "${aPKGSPLIT[PKG_BASE]}" "${aPKGSPLIT[PKG_VERSION]}"
+			   local cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
+   			sh_getdeps "${cfullfilename}.desc" "${i}"
+# 				printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$pkgNumber" "${aPKGSPLIT[PKG_BASE]}" "${aPKGSPLIT[PKG_VERSION]}"
+         	printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$pkgNumbr" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FULLNAME]}"
 			done
 			public_ntotal_pkg_listed=$pkgNumber
 			log_success_msg2 "($pkgNumber) package(s) installed."
 		else
-#			log_failure_msg2 "${red}$param NOT INSTALLED with $0${reset}"
 			log_success_msg2 "($pkgNumber) package(s) found."
 			echo
 			echo -e "${reset}Use: # ${APP} -Sy - to update with the repository${reset}"
