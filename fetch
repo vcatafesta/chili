@@ -3,7 +3,7 @@
  # fetch - Search an Install packages in LFS
  #
  # Created: 2019/04/05
- # Altered: 2020/08/19
+ # Altered: 2020/08/23
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.02.89.20200819"
+_VERSION_="2.03.00.20200823"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -718,8 +718,8 @@ function help()
 	echo -e "${cyan}ex:"
 	echo -e "${yellow}  fetch update self - Update self fetch via internet"
 	echo -e "  fetch create [packname-version-build]"
-	echo -e "  fetch update"
-	echo -e "  fetch install <package> [...] [-y] [-f]"
+	echo -e "  fetch -Sy || fetch update"
+	echo -e "  fetch -S <package> [...] [-y] [-f] [--nodeps] || fetch install <package> [...] [-y] [-f] [--nodeps]"
 	echo -e "  fetch remove <package> [...] [-y] [-f]"
 	echo -e "  fetch <package> [...] [-y] [-f]"
 	echo -e "  fetch search <package> [...] [-y] [-f]"
@@ -752,8 +752,8 @@ function init()
 		-Sg|-g|--generate|generate)				sh_generatepkg "${param}";;
 		-c|--create|create)					    	sh_createpkg "${param}";;
 		-m|--meta|meta)	                     shift;sh_meta "${param}";;
-		-Ss|--search|search)	               	shift;sh_search "$@";;
-		-S|-Si|-i|--install|install)				shift;sh_install "$@";;
+		-Ss|-ss|-SS|-sS|--search|search)	     	shift;sh_search "$@";;
+		-S|-s|-Si|-i|--install|install)			shift;sh_install "$@";;
 		-r|--remove|remove) 							shift;sh_remove "${param}";;
 		-R|--reinstall|reinstall) 					shift;sh_search "${param}";;
 		-Sw|--download|download) 					shift;sh_download "${param}";;
@@ -1255,22 +1255,6 @@ function sh_download()
 }
 
 
-function sh_wgetdesc()
-{
-	local cRaw
-	if !(( $GITSITE )); then
-		#site normal
-		cRaw=$SITE
-	else
-		#github
-		cRaw=$RAW
-	fi
-	sh_checknet; [[ $? = $false ]] || { return 1;}
-	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
-	return $?
-}
-
-
 function DOT()
 {
 	printf "${blue}:: ${reset}"
@@ -1300,43 +1284,55 @@ function sh_getdeps()
 	local ncontadep=0
 	local ncontapkgdep=0
 	local	arr=()
-	local deps=
+	local pkgNumber=0
+   local cfullfilename
+   local x
+   local LDEPS=${1}
+	deps=
 
-	echo "  $(DOT)${cyan}resolvendo dependencias..."
-	source ${1}
-	deps="${dep[*]}"
-	deps="$deps $(cat $VARCACHE_ARCHIVES/${1} | grep ^depend | awk -F"'" '{print $2}')"
-	sh_adel "$deps"
-	arr=(${deps[*]})
-	GETDEPS=
-	ncontapkgdep=${#arr[*]}
-	((ncontapkgdep++))
-	printf "%12sPackage(${ncontapkgdep})%34sversion%8sfullname\n"
+	echo "$(DOT)${cyan}resolvendo dependencias..."
+  	GETDEPS=
 
-#	for i in ${deps[*]}
-#	do
-#		((ncontadep++))
-#		pkgdep=$(cat $VARCACHE_SEARCH/packages-split | grep ^${i} | awk -F":" '{print $5}')
-#		if [[ $pkgdep = "" ]]; then
-#			printf "${red}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${i}" "WARNING! Dependencia nao localizada na base de dados. ${reset}Use: # ${APP} -Sy to update with the repository${reset}"#
-#		else
-#			sh_splitpkg $pkgdep
-#			printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$ncontadep" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}"
-#			GETDEPS="$GETDEPS $(echo $pkgdep)"
-#		fi
-#	done
-	((ncontadep++))
-	sh_splitpkg ${1%.desc}
-	printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$ncontadep" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FULLNAME]}"
-	printf "${reset}\n"
-	GETDEPS="$GETDEPS $(echo ${2})"
-	return $?
+   for i in $pkgforinstall; do
+      sh_splitpkg "${i}"
+      cbase=${aPKGSPLIT[PKG_BASE]}
+      cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
+      test -e $VARCACHE_ARCHIVES/$cfullfilename.desc || sh_wgetdesc
+      source $VARCACHE_ARCHIVES/$cfullfilename.desc
+   	deps="$deps ${cbase}"
+      if (( $LDEPS )); then
+      	deps="$deps ${dep[*]}"
+      	deps="$deps $(cat $VARCACHE_ARCHIVES/${cfullfilename}.desc | grep ^depend | awk -F"'" '{print $2}')"
+      fi
+   done
+
+  	sh_adel "$deps"
+  	arr=(${deps[*]})
+  	ncontapkgdep=${#arr[*]}
+   printf "%12sPackage(${ncontapkgdep})%34sversion%8sfullname\n"
+
+  	for i in ${deps[*]}
+  	do
+  		((ncontadep++))
+  		pkgdep=$(cat $VARCACHE_SEARCH/packages-split | grep ^${i}: | awk -F":" '{print $5}')
+  		if [[ $pkgdep = "" ]]; then
+  			printf "${red}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${i}" "WARNING! Dependencia nao localizada na base de dados. ${reset}Use: # ${APP} -Sy to update with the repository${reset}"#
+  		else
+  			sh_splitpkg $pkgdep
+  			printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$ncontadep" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}"
+  			GETDEPS="$GETDEPS $(echo $pkgdep)"
+  		fi
+  	done
+  	pkgforinstall=$GETDEPS
+   return $?
 }
 
 
 function sh_wgetdesc()
 {
+   local cOldDir=$PWD
 	local cfullfilename=$1
+
 	local cRaw
 	if !(( $GITSITE )); then
 		#site normal
@@ -1345,7 +1341,10 @@ function sh_wgetdesc()
 		#github
 		cRaw=$RAW
 	fi
-	log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
+	cd $VARCACHE_ARCHIVES/
+#	log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/${i}.desc"   ; evaluate_retval
+	curl -s -k -O "${cRaw}/packages/${i}.desc"
+	cd $cOldDir
 	return $?
 }
 
@@ -1361,9 +1360,9 @@ function sh_wgetfull()
 		#github
 		cRaw=$RAW
 	fi
-	sh_checknet; [[ $? = $false ]] || { return 1;}
+#	sh_checknet; [[ $? = $false ]] || { return 1;}
 	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}"        ; curl -s -k -O "${cRaw}/packages/$i"        ; evaluate_retval
-	log_info_msg "${cyan}Fetching file    ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
+#	log_info_msg "${cyan}Fetching file    ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
 #	log_info_msg "${cyan}Fetching file    ${cRaw}/packages/${orange}${i}.sha256" ; curl -s -k -O "${cRaw}/packages/$i.sha256" ; evaluate_retval
 #	log_info_msg "${cyan}Fetching filee   ${cRaw}/packages/${orange}${i}.sig"    ; curl -s -k -O "${cRaw}/packages/$i.sig"    ; evaluate_retval
 	return $?
@@ -1381,7 +1380,7 @@ function sh_wgetpartial()
 		#github
 		cRaw=$RAW
 	fi
-	sh_checknet; [[ $? = $false ]] || { return 1;}
+#	sh_checknet; [[ $? = $false ]] || { return 1;}
 	test -e $VARCACHE_ARCHIVES/$cpacote 			|| { log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}"     ; curl -s -k -O "${cRaw}/packages/$i"        ; evaluate_retval; }
 	test -e $VARCACHE_ARCHIVES/$cpacote.desc		||	{ log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval; }
 #	test -e $VARCACHE_ARCHIVES/$cpacote.sha256	||	{ log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.sha256" ; curl -s -k -O "${cRaw}/packages/$i.sha256" ; evaluate_retval; }
@@ -1533,37 +1532,45 @@ function sh_splitpkg()
 	return $?
 }
 
-function sh_install()
+
+function sh_installdownload()
 {
-	local param=$@
-	#sh_checknet
-	sh_listforinstall ${param} "ON" "EXACT"
-
-	if [[ $pkgforinstall != " " ]]; then
-#		local pkgforinstall=$(cat ${VARCACHE_SEARCH}/packages-split)
-
-		[[ -d $VARCACHE_ARCHIVES/ ]] || mkdir -p $VARCACHE_ARCHIVES/
-		cd $VARCACHE_ARCHIVES/
-
 		for i in $pkgforinstall; do
 			sh_splitpkg ${i}
 			local cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
 			local cpacote=${aPKGSPLIT[PKG_FULLNAME]}
 			local cpacotebase=${aPKGSPLIT[PKG_BASE]}
-			local cpacoteSemExt=${aPKGSPLIT[PKG_BASE_VERSION]}
-			local LINSTALLED=$NOK
-			local cpacoteinstalled=
+			test -e $VARCACHE_ARCHIVES/$cpacote || sh_wgetpartial
+			local error_value="${?}"
+			if [ ${error_value} -ne 0 ]; then
+				log_failure_msg2 "ERROR: Downloading ${orange}${cfullfilename}"
+				log_wait_msg "Restarting download ${orange}${cfullfilename}"
+				sh_wgetfull
+				local error_value="${?}"
+				if [ ${error_value} -ne 0 ]; then
+					log_failure_msg2 "ERROR: Fatal error downloading ${orange}${cfullfilename}. ${reset}Aborting..."
+					exit 1
+				fi
+			fi
+		done
+}
 
+function sh_installdoinstallpkg()
+{
+		for i in $pkgforinstall; do
+			sh_splitpkg ${i}
+			local cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
+			local cpacote=${aPKGSPLIT[PKG_FULLNAME]}
+			local cpacotebase=${aPKGSPLIT[PKG_BASE]}
 			case $cpacotebase in
-				glibc)	continue;;
-				file)		continue;;
-				flac) 	{ info $cpacotebase; continue;};;
+				gcc)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+				gcc-libs)   log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+				glibc)	   log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+				file)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+				flac)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
 			esac
-
-#			info "1-$cfullfilename\n2-$cbase\n3-$cpacote\n4-$cpacoteSemExt"
-
 			cpacoteinstalled=$(grep ^$cpacoteSemExt ${VARCACHE_SEARCH}/packages-installed)
-			[[ $cpacoteinstalled = $cpacoteSemExt ]] && LINSTALLED=$OK
+			[[ $cpacoteinstalled = $cpacoteSemExt ]] && LINSTALLED=$true
 
 #			info "1-cpacoteSemExt   : $cpacoteSemExt\n2-cpacoteinstalled: $cpacoteinstalled"
 
@@ -1571,29 +1578,84 @@ function sh_install()
 				log_failure_msg2 "${orange}${cfullfilename} ${reset}Package is already installed. Use the -f option to force reinstallation."
 				continue
 			fi
-
-			test -e $VARCACHE_ARCHIVES/$cfullfilename.desc || sh_wgetdesc
+			sh_installpkg -i ${cpacote}
 			local error_value="${?}"
 			if [ ${error_value} -ne 0 ]; then
-				log_failure_msg2 "ERROR: Downloading ${orange}${cfullfilename}"
-				log_wait_msg "Restarting download ${orange}${cfullfilename}"
-				sh_wgetdesc
-				local error_value="${?}"
-				if [ ${error_value} -ne 0 ]; then
-					log_failure_msg2 "ERROR: Fatal error downloading ${orange}${cfullfilename}. ${reset}Aborting..."
-					exit 1
-				fi
+				log_failure_msg2 "${red}ERROR:${reset} installing package: ${orange}${cpacote}${reset}"
+			else
+				log_success_msg2 "${green}${cpacote} ${reset}Done. package installation successfully."
 			fi
+		done
+}
 
-			sh_getdeps "${cfullfilename}.desc" "${i}"
+function sh_install()
+{
+	local param=$@
+	#sh_checknet
 
-			if !(( $LAUTO )); then
-#				echo
-				read -p "${blue}:: ${reset}Continue installation? [Y/n]" LDOWNLOAD
-				if [[ $(toupper "${LDOWNLOAD}") = "N" ]]; then
-					return
-				fi
+	sh_listforinstall ${param} "ON" "EXACT"
+
+	if [[ $pkgforinstall != " " ]]; then
+		[[ -d $VARCACHE_ARCHIVES/ ]] || mkdir -p $VARCACHE_ARCHIVES/
+		cd $VARCACHE_ARCHIVES/
+
+		if !(( $LAUTO )); then
+			read -p "${blue}:: ${reset}Continue installation? [Y/n]" LDOWNLOAD
+			if [[ $(toupper "${LDOWNLOAD}") = "N" ]]; then
+				return
 			fi
+		fi
+
+		for i in $pkgforinstall; do
+			sh_splitpkg ${i}
+			local cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
+			local cpacote=${aPKGSPLIT[PKG_FULLNAME]}
+			local cpacotebase=${aPKGSPLIT[PKG_BASE]}
+			local cpacoteSemExt=${aPKGSPLIT[PKG_BASE_VERSION]}
+			local LINSTALLED=$false
+			local cpacoteinstalled=
+
+#			case $cpacotebase in
+#				gcc)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+#				gcc-libs)   log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+#				glibc)	   log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+#				file)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+#				flac)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+#			esac
+
+#			info "1-$cfullfilename\n2-$cbase\n3-$cpacote\n4-$cpacoteSemExt"
+
+#			cpacoteinstalled=$(grep ^$cpacoteSemExt ${VARCACHE_SEARCH}/packages-installed)
+#			[[ $cpacoteinstalled = $cpacoteSemExt ]] && LINSTALLED=$true
+
+#			info "1-cpacoteSemExt   : $cpacoteSemExt\n2-cpacoteinstalled: $cpacoteinstalled"
+
+#			if (( $LINSTALLED )) && !(( $LFORCE )); then
+#				log_failure_msg2 "${orange}${cfullfilename} ${reset}Package is already installed. Use the -f option to force reinstallation."
+#				continue
+#			fi
+
+#			test -e $VARCACHE_ARCHIVES/$cfullfilename.desc || sh_wgetdesc
+#			local error_value="${?}"
+#			if [ ${error_value} -ne 0 ]; then
+#				log_failure_msg2 "ERROR: Downloading ${orange}${cfullfilename}.desc"
+#				log_wait_msg "Restarting download ${orange}${cfullfilename}.desc"
+#				sh_wgetdesc
+#				local error_value="${?}"
+#				if [ ${error_value} -ne 0 ]; then
+#					log_failure_msg2 "ERROR: Fatal error downloading ${orange}${cfullfilename}.desc. ${reset}Aborting..."
+#					exit 1
+#				fi
+#			fi
+
+#			sh_getdeps
+
+#			if !(( $LAUTO )); then
+#				read -p "${blue}:: ${reset}Continue installation? [Y/n]" LDOWNLOAD
+#				if [[ $(toupper "${LDOWNLOAD}") = "N" ]]; then
+#					return
+#				fi
+#			fi
 
 #			sh_checksha256sum
 #			local error_value="${?}"
@@ -1609,14 +1671,15 @@ function sh_install()
 #				fi
 #			fi
 
-			if !(( $LINSTALLED )); then
-				log_wait_msg "Wait, installing package ${orange}$cpacote"
-			else
-				log_wait_msg "Wait, reinstalling package ${orange}$cpacote"
-			fi
-#			ERROR=$(sh_installpkg -i $cpacote 2>&1>/dev/null)
+#			if !(( $LINSTALLED )); then
+#				log_wait_msg "Wait, installing package ${orange}$cpacote"
+#			else
+#				log_wait_msg "Wait, reinstalling package ${orange}$cpacote"
+#			fi
 
-#			test -e $VARCACHE_ARCHIVES/$cfullfilename || sh_wgetfull
+#         sh_installdownload
+
+#			test -e $VARCACHE_ARCHIVES/$cpacote || sh_wgetpartial
 #			local error_value="${?}"
 #			if [ ${error_value} -ne 0 ]; then
 #				log_failure_msg2 "ERROR: Downloading ${orange}${cfullfilename}"
@@ -1629,27 +1692,37 @@ function sh_install()
 #				fi
 #			fi
 
-			if [[ $GETDEPS != " " ]]; then
-				for i in $GETDEPS; do
-					sh_splitpkg ${i}
-					cpacote=${aPKGSPLIT[PKG_FULLNAME]}
-					cpacotebase=${aPKGSPLIT[PKG_BASE]}
-					case $cpacotebase in
-						glic)		continue;;
-						glic) 	continue;;
-					esac
-					test -e $VARCACHE_ARCHIVES/$cpacote || sh_wgetpartial
-					sh_installpkg -i ${cpacote}
-					local error_value="${?}"
-					if [ ${error_value} -ne 0 ]; then
-						log_failure_msg2 "${red}ERROR:${reset} installing package: ${orange}${cpacote}${reset}"
-					else
-						log_success_msg2 "${green}${cpacote} ${reset}Done. package installation successfully."
-					fi
-				done
-			fi
-#			sh_installpkg -i $cpacote
-#			evaluate_retval
+#			if [[ $GETDEPS != " " ]]; then
+#				for i in $GETDEPS; do
+#					sh_splitpkg ${i}
+#					cpacote=${aPKGSPLIT[PKG_FULLNAME]}
+#					cpacotebase=${aPKGSPLIT[PKG_BASE]}
+#     			case $cpacotebase in
+#		      		gcc)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+#     				gcc-libs)   log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+#     				glibc)	   log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+#      				file)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+#  	   			flac)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+#      	      esac
+#					test -e $VARCACHE_ARCHIVES/$cpacote || sh_wgetpartial
+#      			if !(( $LINSTALLED )); then
+#		      		log_wait_msg "Wait, installing package ${orange}$cpacote"
+#     			else
+#    				log_wait_msg "Wait, reinstalling package ${orange}$cpacote"
+#      			fi
+#					sh_installpkg -i ${cpacote}
+#					local error_value="${?}"
+#					if [ ${error_value} -ne 0 ]; then
+#						log_failure_msg2 "${red}ERROR:${reset} installing package: ${orange}${cpacote}${reset}"
+#					else
+#						log_success_msg2 "${green}${cpacote} ${reset}Done. package installation successfully."
+#					fi
+#				done
+#			fi
+
+#         sh_installdoinstallpkg
+
+#			sh_installpkg -i ${cpacote}
 #			local error_value="${?}"
 #			if [ ${error_value} -ne 0 ]; then
 #				log_failure_msg2 "${red}ERROR:${reset} installing package: ${orange}${cpacote}${reset}"
@@ -1657,6 +1730,8 @@ function sh_install()
 #				log_success_msg2 "${green}${cpacote} ${reset}Done. package installation successfully."
 #			fi
 		done
+      sh_installdownload
+      sh_installdoinstallpkg
 	else
 		log_failure_msg2 "${red}NOT FOUND ${param}. ${reset}Use ${APP} -Ss for search packages."
 		#sh_list ${param}
@@ -1946,6 +2021,7 @@ function sh_listforinstall()
 	local LLIST=$true
 	local LEXACT=$false
 	local LALL=$false
+	local LDEPS=$true
 	local ncontapkgforinstall=0
 	local cListSearch
 	local arr
@@ -1956,6 +2032,7 @@ function sh_listforinstall()
 	pkgforinstall=
 
 	for s in ${param[@]}; do
+		[[ $(toupper "${s}") = "--NODEPS" ]]    && { LDEPS=$false; continue; }
 		[[ $(toupper "${s}") = "-Y" ]]    && { LAUTO=$true; continue; }
      	[[ $(toupper "${s}") = "-F" ]]    && { LFORCE=$true; continue; }
      	[[ $(toupper "${s}") = "OFF" ]]   && { LLIST=$false; continue; }
@@ -1977,24 +2054,30 @@ function sh_listforinstall()
 	fi
 
 	if (( $LLIST )); then
-		log_wait_msg "${green}Listing..."
+#		log_wait_msg "${green}Listing..."
    	arr=(${pkgforinstall[*]})
    	ncontapkgforinstall=${#arr[*]}
 		if [[ "${#pkgforinstall}" -gt 0 ]]; then # pacote?
 			pkgNumber=0
-      	printf "%12sPackage(${ncontapkgforinstall})%34sversion%8sfullname\n"
-			for i in $pkgforinstall; do
-				((pkgNumber++))
-				sh_splitpkg "${i}"
-			   local cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
-   			sh_getdeps "${cfullfilename}.desc" "${i}"
-# 				printf "${green}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$pkgNumber" "${aPKGSPLIT[PKG_BASE]}" "${aPKGSPLIT[PKG_VERSION]}"
-         	printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$pkgNumbr" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FULLNAME]}"
-			done
-			public_ntotal_pkg_listed=$pkgNumber
-			log_success_msg2 "($pkgNumber) package(s) installed."
+#      	printf "%12sPackage(${ncontapkgforinstall})%34sversion%8sfullname\n"
+  			sh_getdeps $LDEPS
+      	arr=(${pkgforinstall[*]})
+      	ncontapkgforinstall=${#arr[*]}
+
+#			for i in $pkgforinstall; do
+#				((pkgNumber++))
+#				sh_splitpkg "${i}"
+#			   local cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
+#   			sh_getdeps
+#         	printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$pkgNumbr" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FULLNAME]}"
+#			done
+
+#			public_ntotal_pkg_listed=$pkgNumber
+			public_ntotal_pkg_listed=$ncontapkgforinstall
+			#log_msg "($public_ntotal_pkg_listed) package(s) for install."
+			echo
 		else
-			log_success_msg2 "($pkgNumber) package(s) found."
+			log_msg "($pkgNumber) package(s) found."
 			echo
 			echo -e "${reset}Use: # ${APP} -Sy - to update with the repository${reset}"
 		fi

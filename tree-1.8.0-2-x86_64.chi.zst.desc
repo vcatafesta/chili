@@ -1,0 +1,18 @@
+######################################################################
+# Generated with fetch
+# Generated with alienpkg
+######################################################################
+maintainer='Vilmar Catafesta <vcatafesta@gmail.com>'
+pkgname='tree'
+version='1.8.0'
+build='2'
+license='GPL'
+lfs_version='8.4'
+lfs_init='SYSTEMD'
+arch='x86_64'
+distro='chili'
+desc='A directory listing program displaying a depth indented list of files'
+size='94661'
+url='http://mama.indstate.edu/users/ice/tree/'
+dep=('')
+depend='glibc'
