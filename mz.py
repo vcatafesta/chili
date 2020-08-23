@@ -31,10 +31,14 @@
 #------------------- VARIABLES ------------------------>
 
 # Paths
-url     = 'https://mazonos.com/packages/' # Official Repository
-filecsv = '/var/lib/mz/mz_base.csv'      # Repository package list
-dircsv  = '/var/lib/mz/'                 # Folder for the .csv file
-dirlist = '/var/lib/banana/list/'        # Folder for the .list file
+#url     = 'http://mazonos.com/packages/'       # Official Repository
+url     = 'http://localhost/packages/'           # Official Repository
+#filecsv = '/var/lib/fetch/database.db'           # Repository package list
+filecsv = 'database.db'           # Repository package list
+dircsv  = '/var/lib/fetch/'                      # Folder for the .csv file
+dirlist = '/var/lib/banana/list/'                # Folder for the .list file
+prg     = '.chi.zst'
+#prg     = '.mz'
 
 # Flags
 found = False
@@ -82,8 +86,10 @@ for module in modules:
         print('Installing modules...')
         os.system('pip3 install ' + str(module))
         os.system('clear')
-        
-import requests, requests_html, bs4
+
+import requests
+import requests_html
+import bs4
 
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
@@ -107,18 +113,17 @@ def check():
         print('Created file ' + filecsv + '.')
         os.system('clear')
         update()
-        
 
-def main():
+
+def mainInit():
     try:
         sys.argv[1]
     except IndexError:
         menu()
-        exit(0)
+        exit(1)
     else:
         global choose
         choose = str(sys.argv[1])
-        
 
 def menu():
     print(''' mz 1.0.0.1 (amd64)
@@ -132,7 +137,7 @@ def menu():
  u | update    - Update list packages in repositore online. Need Internet.
  g | upgrade   - Automatic updating of system base and bug fixes.
  c | checkdesc - Search for packages without description.
- 
+
  Usage: mz [option] package
 ''')
 
@@ -146,23 +151,22 @@ def internet_on():
 
 
 def animate():
-
     for c in itertools.cycle(['|', '/', '-', '\\']):
         if done:
             break
-
         sys.stdout.write('\r' + textAnimate + c)
         sys.stdout.flush()
         time.sleep(0.1)
-
     sys.stdout.write('\r' + textAnimate + 'complete!   \n')
 
 
 ##------------------ CHOOSE-FUNCTIONS ----------------->
 
+
 def s():
     search()
-        
+
+
 def search():
     try:
         sys.argv[2]
@@ -176,21 +180,21 @@ def search():
         ### OPEN CSV
         with open(filecsv, 'r') as csvfile:
             csv_reader = csv.reader(csvfile)
-
-            count = 0
+            count      = 0
             for line in csv_reader:
                 if package in line[1]:
                     count += 1
-                    print(line[1].replace('.mz', ''))
+                    print(count, line[1].replace(prg, ''))
                     found = True
-            print(str(count) + ' package(s) found.')
+            print('(' + str(count) + ') package(s) found.')
 
             if not found:
                 print(package_not_found)
-                
+
 def i():
-    install()
-                
+	install()
+
+
 def install():
     if internet_on():
         try:
@@ -218,9 +222,9 @@ def install():
                     pkglist = ''
 
                     if pkgcount == 1:
-                        install = input('Do you like install ' + packages[0].replace('.mz', '') + ' ? [Y/n] : ')
+                        install = input('Do you like install ' + packages[0].replace(prg, '') + ' ? [Y/n] : ')
                         if install == 'Y' or install == 'y':
-                            os.system('wget -O /tmp/' + packages[0] + ' ' + links[0])
+                            os.system('curl -# -k -O ' + links[0])
                             os.system('banana install ' + '/tmp/' + packages[0])
                             os.system('rm ' + '/tmp/' + packages[0])
                         else:
@@ -228,14 +232,14 @@ def install():
                     else:
                         # Make pkglist
                         if pkgcount == 2:
-                            pkglist = "'" + packages[0].replace('.mz', '') + "' and '" + packages[1].replace('.mz', '') + "'."
+                            pkglist = "'" + packages[0].replace(prg, '') + "' and '" + packages[1].replace(prg, '') + "'."
                         else:
                             for p in packages:
                                  pkglist += (p + ', ')
 
                             pkglist = pkglist[:-2] + '.'
 
-                        print(str(pkgcount) + ' packages found: ' + pkglist.replace('.mz', ''))
+                        print(str(pkgcount) + ' packages found: ' + pkglist.replace(prg, ''))
 
                         install = input('Do you like install ALL packages ? [Y/n] : ')
                         if install == 'Y' or install == 'y':
@@ -283,7 +287,7 @@ def remove():
 
 def w():
     show()
-    
+
 def show():
     try:
         sys.argv[2]
@@ -303,7 +307,7 @@ def show():
                     found = True
 
                     pkgname = line[1].split('-')[0]
-                    version = line[1].replace(pkgname + '-','').replace('.mz','')
+                    version = line[1].replace(pkgname + '-','').replace(prg,'')
 
                     # Trying obtains .desc
                     internet = internet_on()
@@ -339,59 +343,115 @@ def show():
 def u():
     update()
 
+def pause(xVar):
+    os.system('clear')
+    print( xVar )
+    resp = 'S'
+    resp = input('Continuar [Y/n] : ')
+    if resp == 'Y' or resp == 'y' or resp == 'S' or resp == 's':
+        return
+    exit(1)
+
+
+def updateOLD():
+    if internet_on():
+        global textAnimate
+        global done
+
+#        textAnimate = 'Updating '
+#        t           = threading.Thread(target=animate)
+#        t.start()
+
+        ### UPDATE WEB
+        # r     = requests.get(url)
+        session = HTMLSession()
+        r       = session.get(url)
+        html    = BeautifulSoup(r.content, 'html.parser')
+        folders = html.find_all('a')
+
+
+        if os.path.isfile(filecsv):
+            os.system('rm ' + filecsv)
+
+        for link in folders:
+            pause( link.text )
+            if '/' in link.text:
+                pause( link.get('href'))
+                urls   = url + link.text
+
+                #r     = requests.get(urls)
+                r      = session.get(urls)
+                soups  = BeautifulSoup(r.content, 'html.parser')
+                linkss = soups.find_all('a')
+
+                folder = link.text
+
+                pause( linkss )
+                mz     = ''
+                desc   = ''
+                sha256 = ''
+
+                for l in linkss:
+                    pause(l.text)
+                    #if prg in l.text:
+                    print( l.get('href'))
+                    if prg in l.get('href'):
+                        if l.text.endswith((prg)):
+                            mz = l.text
+                            mz = l.get('href')
+
+                        if l.text.endswith(('.desc')):
+                            desc = l.text
+                            desc = l.get('href')
+
+                        if l.text.endswith(('.sha256')):
+                            sha256 = l.text
+                            sha256 = l.get('href')
+
+                        if mz != '' and sha256 != '':
+#                            print(folder,mz,desc,sha256)
+                            with open(filecsv, 'a') as new_file:
+                                csv_writer = csv.writer(new_file)
+                                csv_writer.writerow([folder,mz,desc,sha256])
+                                mz     = ''
+                                desc   = ''
+                                sha256 = ''
+        done = True
+    else:
+        print(please_connect)
+
 def update():
     if internet_on():
         global textAnimate
         global done
 
-        textAnimate = 'Updating '
-
-        t = threading.Thread(target=animate)
-        t.start()
-
-        ### UPDATE WEB
-        # r = requests.get(url)
-        session = HTMLSession()
-
-        r = session.get('https://mazonos.com/packages/')
-        
-        soup = BeautifulSoup(r.content, 'html.parser')
-        links = soup.find_all('a')
-        
         if os.path.isfile(filecsv):
             os.system('rm ' + filecsv)
 
+        result  = requests.get(url)
+        src     = result.content
+        soup    = BeautifulSoup(src, 'html.parser')
+        links   = soup.find_all('a')
+
         for link in links:
+            if '../' in link.text:
+                continue
             if '/' in link.text:
-                urls = url + link.text
-                #r = requests.get(urls)
-                r = session.get(urls)
-                soups = BeautifulSoup(r.content, 'html.parser')
-                linkss = soups.find_all('a')
-                
-                folder = link.text
-                mz = ''
-                desc = ''
-                sha256 = ''
-
-                for l in linkss:
-                    if '.mz' in l.text:
-                        if l.text.endswith(('.mz')):
-                            mz = l.text
-                       
-                        if l.text.endswith(('.desc')):
-                            desc = l.text
-
-                        if l.text.endswith(('.sha256')):
-                            sha256 = l.text
-                        
-                        if mz != '' and sha256 != '':
-                            with open(filecsv, 'a') as new_file:
-                                csv_writer = csv.writer(new_file)
-                                csv_writer.writerow([folder,mz,desc,sha256])
-                                mz = ''
-                                desc = ''
-                                sha256 = ''
+                print('Updating: ' + link.text)
+                urls    = url + link.text
+                result  = requests.get(urls)
+                src     = result.content
+                soup    = BeautifulSoup(src, 'html.parser')
+                folders = soup.find_all('a')
+                folder  = link.text
+                for l in folders:
+                    pkg        = l.get('href')
+                    string     = ''
+                    if l.text.endswith((prg)):
+                        string = pkg
+                        with open(filecsv, 'a') as f:
+                            csv_writer = csv.writer(f)
+                            csv_writer.writerow([folder,string])
         done = True
     else:
         print(please_connect)
@@ -438,25 +498,38 @@ def checkdesc():
 
     else:
         print(please_connect)
-        exit(0)
+        exit(1)
 
 ##------------------ END CHOOSE-FUNCTIONS ------------->
 
 #------------------- END FUNCTIONS -------------------->
 
-try:
-    check()
+def start():
+    try:
+        check()
+        mainInit()
+        if choose in chooses:
+            functions = locals()
+            functions[choose]()
+        else:
+            menu()
+            print('Invalid \"' + choose + '\" operation!')
 
-    main()
+    except KeyboardInterrupt:
+        print('\n')
+        exit(0)
 
-    if choose in chooses:
-        functions = locals()
-        functions[choose]()
-    else:
-        menu()
-        print('Invalid \"' + choose + '\" operation!')
-
-except KeyboardInterrupt:
-    print('\n')
-    exit(0)
+if __name__ == '__main__':
+	import argparse
+	parser = argparse.ArgumentParser('Fetch')
+	parser.add_argument('--s', type=int, default=8, help='Quantidade de letras')
+	parser.add_argument('--i', type=int, default=4, help='Quantidade de numeros')
+	parser.add_argument('--upgrade', type=int, default=2, help='Quantidade de caracteres especiais')
+	args = parser.parse_args()
+#	print(start(
+#		letters=args.letters,
+#		numbers=args.numbers,
+#		punctuation=args.punctuation
+#	))
+	start()
 
