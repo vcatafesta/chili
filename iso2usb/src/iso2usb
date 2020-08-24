@@ -1,0 +1,209 @@
+#!/bin/bash
+# USO2USB - write iso to pendrive
+# Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
+# All rights reserved.
+#
+# Created: 2019/06/14
+# Altered: 2019/06/14
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. The name of the copyright holders or contributors may not be used to
+#    endorse or promote products derived from this software without
+#    specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
+# HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#########################################################################
+version="1.0.0.20190614"
+
+yad_message()
+{
+    msg="$1"
+    txt="<b><big>$1</big></b>"
+    yad "${comargs[@]}" --image=gtk-dialog-info --text="$txt" --button="Done":1
+}
+
+function info(){
+	dialog				\
+	--beep				\
+	--title     "$app"	\
+	--backtitle "$app"	\
+	--msgbox    "$*"	\
+	10 60
+}
+
+function sh_initvar()
+{
+	app="Chili iso2usb $version"
+	comargs=(
+		--title="$app"
+		--center
+		--width=400
+		--height=250
+	    --text-align=center
+	    --buttons-layout=center
+	    --borders=10
+	    --image=pendrive.png
+	)
+
+	declare -x COMARGS=$( printf "%q " "${comargs[@]}" )
+	gcomargs=( $( printf "%s " "${COMARGS}" ) )
+	# echo "${#gcomargs[@]} elements in gcomargs"
+
+	LINGUA=`echo "$LANG" | cut -c1-2`
+	case $LINGUA in
+		pt)
+			MSG=(
+				[0]="Selecione a ISO para copiar"
+				[1]="Sair $app"
+				[2]="N°"
+				[3]="Nome"
+				[4]="Tamanho em GB"
+				[5]="Selecione o seu USB drive"
+				[6]="Atenção tamanho muito grande"
+				[7]="ATENÇÃO !!!"
+				[8]="Poderia ser um disco rígido externo. \nContinuar ?"
+				[9]="Problema na ferramenta. Contactar o autor."
+				[10]="Progresso:"
+				[11]="Copiar de"
+				[12]="Você já pode remover o seu USB drive."
+				[13]="Fim de copiar"
+				);;
+		*)
+			MSG=(
+				[0]="Select the ISO to be copied"
+				[1]="Exit $app"
+				[2]="Nr"
+				[3]="Name"
+				[4]="Size in GB"
+				[5]="Select your USB drive"
+				[6]="Beware if size is too large"
+				[7]="WARNING !!!"
+				[8]="It could be an external hard drive.\nContinue ?"
+				[9]="Problem in the tool, contact the author."
+				[10]="Progress done:"
+				[11]="Copy of"
+				[12]="You can remove the key if you want."
+				[13]="End of copy"
+				);;
+		esac
+}
+
+function escolheiso()
+{
+	isofile=`zenity 			\
+			--file-selection	\
+			--title="${MSG[0]}"	\
+			--filename=$HOME/	\
+			--file-filter=*.iso`
+	[ $? -eq 0 ] || exit 0
+}
+
+function sh_choosedisk()
+{
+	local devices=$(ls -l /dev/disk/by-path/*-usb-* 2>/dev/null|sed -n -e 's/.*\//\/dev\//' -e /[a-z]$/p|sort -d)
+	local x
+	local modelo
+	local blkdsk
+	export USBDSK=()
+
+	for x in $devices
+	do
+		size=`fdisk -l $x | head -n1 | cut -d: -f2 | awk '{print $1$2}'`
+		modelo=$(fdisk -l ${x} | grep -E "(Modelo|Model)"|sed 's/^[:\t]*//'|cut -d':' -f2 | sed 's/^[ \t]*//;s/[ \t]*$//'|sed 's/ /_/')
+		#blkdsk=$(blkid | grep "$x")
+		blkdsk=$x
+		USBDSK+="${blkdsk} ${size} ${modelo}!"
+	done
+}
+
+function sh_write()
+{
+	local i=0
+	local l=0
+	local xtemp=$(mktemp)
+	local sectorsize=`fdisk -s "$isofile"`
+	(while [ $l -lt $sectorsize ]; do
+  		echo "dd if=${isofile} of=${sd} bs=8192000 count=1 skip=$i seek=$i oflag=direct" > $xtemp
+		dd if=$isofile of=${sd} bs=8192000 count=1 skip=$i seek=$i oflag=direct >>$xtemp 2>&1
+		[ $? -ne 0 ] && break
+		rm $xtemp
+		i=$(($i+1))
+		l=$(($l+8000))
+		q=$(($l*100/$sectorsize))
+		echo -e "$q \n#""${MSG[10]}"" : $q %"
+	done) | zenity --progress --width 650 --auto-close --title "${MSG[11]}" "$isofile"
+
+	if [ -f $xtemp ]; then
+  		zenity --error --text="$(cat $xtemp)"
+  		rm $xtemp
+  		exit 1
+	else
+  		sync
+		sync
+  		zenity --info --text="${MSG[12]}" --title="${MSG[13]}"
+  		exit 0
+	fi
+}
+
+function sh_main()
+{
+	sh_choosedisk
+	while true; do
+		cmdmain=(
+			"${comargs[@]}"
+			--text="<b><big><big>Drive Properties</big></big></b>\n"
+			--button="Refresh:3"
+			--button="gtk-close:1"
+			--button="Executar:2"
+			--form
+			--columns=1
+			--field="Device:":CB "$USBDSK"
+			--field="ISO File::FL"
+		)
+		result=$( yad "${cmdmain[@]}")
+		nchoice=$?
+
+		case $nchoice in
+			3) 	sh_choosedisk
+				continue
+				;;
+			1) 	exit 0;;
+			2)
+				export sd=$(echo "${result}" | cut -d"|" -f1|awk '{print $1}')
+				export isofile=$(echo "${result}" | cut -d"|" -f2)
+				if [[ $isofile == "" ]]; then
+					yad_message "${MSG[0]}"
+					continue
+				fi
+				if [[ $sd == "" ]]; then
+					yad_message "${MSG[5]}"
+					continue
+				fi
+				sh_write
+				;;
+		esac
+	done
+}
+colddir=$PWD
+cd /opt/iso2usb/
+sh_initvar
+sh_main
+cd $colddir
