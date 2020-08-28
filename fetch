@@ -410,6 +410,8 @@ VARCACHE_REMOVED="/var/cache/${APP}/removed"
 VARCACHE_INSTALLED="/var/cache/${APP}/installed"
 VARCACHE_SEARCH="/var/cache/${APP}/search"
 LIBRARY=${LIBRARY:-'/usr/share/${APP}'}
+TMP_DIR_BACKUP="/tmp/${APP}/${VARCACHE_SEARCH}"
+TMP_ROOT_BACKUP="/tmp/${APP}"
 #
 export descme='info/desc'
 export PKG_EXT="${PKG_EXT:='chi.zst'}"
@@ -861,6 +863,7 @@ function sh_update()
 	sh_checkdir "OFF"
 
 	cd $VARCACHE_SEARCH/
+	sh_backup
 
 	log_info_msg "Cleaning up $VARCACHE_SEARCH/"
 	> $VARCACHE_SEARCH/folders
@@ -3231,6 +3234,22 @@ checkDependencies() {
   fi
 }
 
+function cleanup()
+{
+	log_msg "Cleaning..."
+	cp -f $TMP_DIR_BACKUP/* $VARCACHE_SEARCH/
+	rm -rf $TMP_ROOT_BACKUP/
+	exit
+}
+trap cleanup SIGINT SIGTER
+
+function sh_backup()
+{
+	log_msg "Making backup: $VARCACHE_SEARCH/"
+	mkdir -p $TMP_DIR_BACKUP/
+	cp -f $VARCACHE_SEARCH/* $TMP_DIR_BACKUP/
+	evaluate_retval
+}
 
 #figlet
 function logo()
