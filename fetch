@@ -1492,6 +1492,7 @@ function sh_splitpkg()
 #	pkg_str=$(echo ${pkg_str%-x86_64*})      					# https://elmord.org/blog/?entry=20121227-manipulando-strings-bash
 
 	pkg_arch=$(echo ${pkg_fullname%-any.${PRG}*}) 			#remove extensao pacote (chi.zst/mz)
+	pkg_arch=$(echo ${pkg_arch%.arch1*}) 						#remove extensao pacote (chi.zst/mz)
 	pkg_arch=$(echo ${pkg_arch%-x86_64.${PRG}*}) 			#remove extensao pacote (chi.zst/mz)
 	pkg_arch=$(echo ${pkg_arch%.${PRG}*})  				  #remove extensao pacote (chi.zst/mz)
 	pkg_str=$pkg_arch
@@ -3241,7 +3242,7 @@ function cleanup()
 	rm -rf $TMP_ROOT_BACKUP/
 	exit
 }
-trap cleanup SIGINT SIGTER
+trap cleanup SIGINT SIGTERM
 
 function sh_backup()
 {
