@@ -1,0 +1,21 @@
+#!/bin/bash
+#  Diversos pequenos programas para
+#+ demonstrar o diálogo --icons
+
+#  Um exemplo bem simples
+yad --icons --read-dir . --width 380 --height 490
+
+#  Melhorando a apresentação do
+#+ exemplo acima
+yad --icons --title "Execução de programas" \
+    --no-buttons --width 492 --height 242   \
+	--item-width 150 --read-dir . --sort-by-name
+
+#  Usando a opção --stdin
+echo "GTK colors
+Show all the colors
+stock_color
+./testa.cor
+FALSE" | yad --icons --stdin --no-buttons \
+    --width 176 --height 95 --item-width 150
+

@@ -1,0 +1,16 @@
+#!/bin/bash
+#  Demo do uso do diálogo --list com campos
+#+ definidos com :IMG e saída filtrada pelo Shell
+#
+Sai=$(yad --list --column "Clique:IMG"  \
+	--column "Para"                     \
+	--image input-mouse                 \
+	--width 250 --height 130            \
+	utilities-terminal Terminal         \
+	preferences-desktop-accessibility Acessibilidade) &&
+	{
+		Sai=$(cut -f2 -d'|' <<< "$Sai")
+		yad --text "\nA saida foi $Sai" \
+	    	--image input-mouse         \
+			--button gtk-ok
+	}

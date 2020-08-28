@@ -1,0 +1,13 @@
+#!/bin/bash
+#  Troca de rótulo dos botões do diálogo --yesno
+
+Titulo="Melhor time"
+dialog --title "$Titulo" \
+    --yes-label Topo --no-label "Não topo" \
+    --yesno "Você topa participar de uma pesquisa?" 0 0
+case $? in
+    0) Msg="Qual o melhor time?";;
+    1) Msg="Não quer dizer que o mengão é o melhor?";;
+  255) Msg="Puxa, saiu com ESC..."
+esac
+dialog --title "$Titulo" --msgbox "$Msg" 5 $[${#Msg}+4]

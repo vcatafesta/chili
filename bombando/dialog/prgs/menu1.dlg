@@ -1,0 +1,21 @@
+#!/bin/bash
+# Exemplo do uso da caixa de diálogo --menu do dialog
+#    1a. Versão
+
+trap 'dialog --title "Resoluções" --infobox             \
+    "É pena que não queres\nparticipar da pesquisa" 0 0
+    exit 1' 2
+Resol=$(dialog --stdout --title "Resoluções"            \
+    --menu "Escolha a resolução de trabalho" 12 35 4    \
+    1 640x480 2 800x600 3 1024x768 4 1280x1024) || {
+    dialog --title "Resoluções" --infobox               \
+    "É pena não quereres\nparticipar da pesquisa" 0 0
+    exit 1
+    }
+case $Resol in
+    1) Saida='Teu trabalho é com\nbaixa resolução'      ;;
+    2) Saida='Teu trabalho é com\nmédia baixa resolução';;
+    3) Saida='Teu trabalho é com\nmédia alta resolução' ;;
+    *) Saida='Teu trabalho é com\nalta resolução'       ;;
+esac
+dialog --title "Resoluções" --infobox "$Saida" 0 0

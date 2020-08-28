@@ -1,0 +1,15 @@
+/dev/
+/proc
+/run
+/sys
+/blfs_root
+/chili
+/jhalfs
+/lfs
+/sources
+/src
+/tools
+/mnt/lfs
+/mnt/fs
+/home/vcatafesta
+/tmp

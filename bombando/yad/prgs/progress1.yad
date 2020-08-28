@@ -1,0 +1,69 @@
+#!/bin/bash
+#  Demo do diálogo --progress fazendo cópia
+#+ de diversos arquivos para um diretório
+#  Seleciona quantos arquivos quiser
+Arqs=$(yad --file-selection --multiple          \
+    --image filesave --image-on-top --width 600 \
+    --height 500 --text                         \
+    "<big><b>Escolha arquivos para copiar</b></big>") || 
+        exit
+
+#  Seleciona diretório destino
+Dest=$(yad --file-selection --directory         \
+    --image filesave --image-on-top --width 600 \
+    --height 500 --text                         \
+    "<big><b>Escolha o diretório destino</b></big>") || 
+        exit
+
+#  IFS será | porque este é o separador padrão
+#+ da saída do diálogo --file-selection
+IFS='|'
+
+#  Incr conterá o incremento (em bytes) que os
+#+ arquivos selecionados causarão no destino o sed
+#+ exclui a linha 'total' do ls -l (normalmente a 1ª)
+#+ o tr comprime os espaços, o cut pega os tamanhos dos
+#+ arquivos, o paste coloca um sinal de '+' entre cada
+#+ tamanho, montando uma operação de soma e o bc 
+#+ calcula esta soma
+Incr=$(ls -l $Arqs | sed '/^total/d' | tr -s ' '|
+    cut -f5 -d' ' | paste -sd+ | bc)
+
+#  BytesIni conterá o total de bytes no destino antes
+#+ da cópia. O sed além do que faz o anterior, também
+#+ remove linhas terminadas por ':' (nomes de 
+#+ subdiretórios) e linhas vazias. O resto é igual
+#+ ao anterior
+BytesIni=$(ls -lR "$Dest" |
+    sed '/:$/d;/^total/d;/^$/d' | tr -s ' ' |
+    cut -f5 -d' ' | paste -sd+ | bc)
+
+#  Se destino estava vazio, o tamanho passa a ser zero
+BytesIni=${BitesIni:-0}
+
+for Arq in $Arqs
+do
+    cp -R $Arq $Dest & # Cópia recursiva em background
+#  O while a seguir será executado enquanto o PID do
+#+ processo em background ($!) for encontrado no ps
+    while ps | grep -q $!
+    do
+#  TotCp conterá a cada momento o total atual do
+#+ destino menos o que tinha no início da cópia, isto
+#+ é, quantos bytes já foram copiados
+        TotCp=$[$(ls -lR "$Dest" |
+            sed '/:$/d;/^total/d;/^$/d' | tr -s ' ' |
+            cut -f5 -d' ' | paste -sd+ |
+            bc) - BitesIni]
+
+#  Na linha a seguir, o texto será escrito na barra de
+#+ progresso e na seguinte seu tamanho será atualizado
+        echo "# $[TotCp * 100 / Incr]% prontos"
+        echo $[TotCp * 100 / Incr]
+        sleep 0.3
+    done
+done | yad --progress --title "Copiando arquivos..." \
+    --text "<big><b>Copiando. Aguarde...</b></big>"  \
+    --image filesave --image-on-top --width 600      \
+    --auto-close --auto-kill
+

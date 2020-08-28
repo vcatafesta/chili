@@ -1,0 +1,6 @@
+#!/bin/bash
+#  Exemplo de uso do diálogo --info
+
+zenity --info                 \
+    --title="Fim de programa" \
+    --text="Tarefa concluída. Foram atualizados 5 arquivos."

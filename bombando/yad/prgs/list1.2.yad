@@ -1,0 +1,18 @@
+#!/bin/bash
+#  Demo do uso do diálogo --list com campos
+#+ definidos como :IMG e saída filtragem pela
+#+ opção --print-column
+#
+Sai=$(yad --list --column "Clique:IMG"  \
+	--column "Para"                     \
+	--image input-mouse                 \
+	--width 250 --height 130            \
+	--print-column 2                    \
+	utilities-terminal Terminal         \
+	preferences-desktop-accessibility Acessibilidade) &&
+	{
+		Sai=${Sai%?}
+		yad --text "\nA saida foi $Sai" \
+	    	--image input-mouse         \
+			--button gtk-ok
+	}

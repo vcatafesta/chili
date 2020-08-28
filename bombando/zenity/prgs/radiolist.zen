@@ -1,0 +1,48 @@
+#!/bin/bash
+#  Exemplos de uso do diálogo --list
+#+ com a opção --radioslists
+
+zenity --list                            \
+    --title "Programação Shell do Linux" \
+    --text "Que tal o livro do Julio?"   \
+    --radiolist                          \
+    --column "Escolha"                   \
+    --column "Sua Opinião"               \
+        true  "Excelente"                \
+        false "Bom demais"               \
+        false "Muito bom"
+
+#  Escondendo a coluna 2 com a opção --hide-column
+Resolucao=$(zenity --list         \
+    --height 230                  \
+    --title "Resolução"           \
+    --text "Resoluções Possíveis" \
+    --radiolist                   \
+    --hide-column 2               \
+    --column "Marque"             \
+    --column ""                   \
+    --column "Resolução"          \
+        TRUE  0 "640x480"         \
+        FALSE 1 "800x600"         \
+        FALSE 2 "1152x864"        \
+        FALSE 3 "1280x1024")
+echo $Resolucao
+
+#  Escolhendo qual coluna mandar para a saída
+#+ com a opção --print-column
+SO=$(zenity --list                                   \
+    --title "Sistemas Operacionais"                  \
+    --text "Opine sobre o melhor Sistema Operacional"\
+    --radiolist                                      \
+    --width 350                                      \
+    --height 265                                     \
+    --print-column 3                                 \
+    --column "Escolha"                               \
+    --column "Fabricante"                            \
+    --column "Sistema Operacional"                   \
+        TRUE  IBM        AIX                         \
+        FALSE HP         HP-UX                       \
+        FALSE MicroSoft  rWindows                    \
+        FALSE Comunidade Linux                       \
+        FALSE Apple      MacOSx )
+echo $SO

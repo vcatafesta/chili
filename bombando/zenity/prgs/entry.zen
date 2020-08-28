@@ -1,0 +1,40 @@
+#!/bin/bash
+#  Scripts exemplo do diálogo --entry
+
+#  Demo de uso da opção --hide-text
+if  zenity --question  \
+    --title "Responda" \
+    --text "Deseja mudar para root?"
+then
+    Senha=$(zenity --entry                \
+        --title "Captura de Senha"        \
+        --text "Informe a senha de root:" \
+        --hide-text)
+fi
+echo $Senha
+
+#  Demo de uso da opção --entry-text
+Usuario=$(zenity --entry                         \
+    --title "Captura nome de usuário"            \
+    --text "Informe seu nome na máquina remota:" \
+    --entry-text $LOGNAME)
+
+#  Demos de uso do diáçogo --entry,
+#+ montando ComboBoxes
+Pet=$(zenity --entry                      \
+    --title "Escolha de Animais"          \
+    --text "Escolha seu animal predileto" \
+    Cachorro Gato Cavalo "Odeio Animais")
+echo $Pet
+
+zenity --entry                                     \
+    --title "Desmontar Volume"                     \
+    --text "Escolha o volume que deseja desmontar" \
+    --entry-text Nenhum                            \
+    $(mount | sed -r 's/.* on //;s/([/A-Za-z0-9]+) .*/\1/')
+
+zenity --entry                  \
+    --title "Usuários"          \
+    --text "Escolha um usuário" \
+    --entry-text Nenhum         \
+    $(cut -f1 -d: /etc/passwd | sort)

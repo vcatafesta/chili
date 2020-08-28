@@ -1,0 +1,21 @@
+#!/bin/bash
+## Script para testar o diálogo --gauge
+
+Perc=
+Pont='|/—\'  # Para fazer um hélice do lado direito
+m=m     # Somente para alterar o verbo falta/faltam
+while ((Perc <= 100))
+do
+    echo XXX  # Marca início de msgs para o gauge
+    echo $Perc
+    echo Incremento a cada 20 centésimos de segundo
+    echo -n "   Falta$m \Zb\Z1$[100-Perc]%\ZB\Zn "
+    echo para completar a tarefa ${Pont:((Perc%4)):1}
+    echo XXX     # Marca fim de msgs para o gauge
+    let Perc++
+## quando estiver acabando 'faltam' perde o 'm'
+#+ e a hélice é desligada
+    ((Perc>98)) && { m=; unset Pont; }
+    sleep 0.20
+done | dialog --clear --colors --title "Teste Gauge no dialog" \
+        --gauge "" 7 46 0

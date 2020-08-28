@@ -1,0 +1,24 @@
+#!/bin/bash
+#  Demo simples do dialogo --progress
+
+for ((i=1; i<=100; i++))
+{
+    echo $i
+    echo "# Já cumprimos $i% da tarefa"
+    sleep 0.2;
+} | yad --progress                                \
+        --image gtk-sort-ascending --image-on-top \
+        --text "Contando lentamente até 100"
+
+#  Demo simples do dialogo --progress
+#+ usando a opção --rtl (right-to-left)
+
+for ((i=1; i<=100; i++))
+{
+    echo $i
+    echo "# Faltam $[100-i]%"
+    sleep 0.2;
+} | yad --progress                                 \
+        --image gtk-sort-descending --image-on-top \
+        --text "Contando lentamente até 100" --rtl \
+		--no-buttons --auto-close

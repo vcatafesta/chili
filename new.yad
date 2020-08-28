@@ -1,0 +1,8 @@
+#!/bin/bash
+
+function sh_() {
+	yad --center 		\
+		--text="$# $@"
+ }
+
+sh_ teste 121 2121 2121

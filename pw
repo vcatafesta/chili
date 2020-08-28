@@ -1,0 +1,4 @@
+sddm:x:124:124:Simple Desktop Display Manager:/var/lib/sddm:/bin/false
+gdm:x:21:21:GDM Daemon Owner:/var/lib/gdm:/bin/false
+named:x:20:20:BIND Owner:/home/named:/bin/false
+exim:x:31:31:Exim Daemon:/dev/null:/bin/false

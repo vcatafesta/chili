@@ -1,0 +1,14 @@
+#!/bin/bash
+#  Script exemplo do uso do diálogo
+#+ --form com uso de CheckBoxes
+#
+Sai=$(yad --title "Lojas YAD"                    \
+	--text "Preencha os campos a seguir"         \
+	--image stock_creditcard                     \
+	--form --align right --field Nome            \
+	--field "Endereço de e-mail"                 \
+	--field "Me informem sobre as promoções":CHK \
+	"" "" TRUE) && yad
+		--text "Sua entrada de dados gerou:\n$Sai\t" \
+    	--image stock_creditcard                     \
+		--button gtk-ok

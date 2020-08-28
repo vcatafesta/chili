@@ -1,0 +1,6 @@
+#!/bin/bash
+Data=$(yad --calendar          \
+    --date-format="%Y/%m/%d"   \
+    --button "_Aceitar data:0" \
+	--button "gtk-cancel:1")
+echo $Data

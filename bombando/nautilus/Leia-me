@@ -1,0 +1,8 @@
+ATENÇÃO!
+Os arquivos desta pastas, exceto este que você está lendo, devem:
+- Ser copiados para ~/.gnome2/nautilus-scripts;
+- Receber permissão de execução.
+
+Depois disso, basta clicar com o botão direito em cima de um ou mais arquivo(s) e escolher "scripts" e clicar no script que se deseja executar sobre o(s) arquivo(s) selecionado(s).
+
+OBS: A pasta Varios tem alguns scripts que achei na Internet. Confesso que testei a maioria, mas não todos. Coloquei-os no CD como uma fonte de inspiração para que você os use, ou os aprimorem adaptando-os às suas necessidades (coisas que só nós que usamos Software Livre podemos fazer. OBA!!!!)

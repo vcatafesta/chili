@@ -1,0 +1,30 @@
+#!/bin/bash
+#  Demo do uso do diálogo --list com diversos campos
+#+ campos :CHK e usando a opção --print-all
+#
+while :
+do
+	Saida=$(yad --list                                \
+    	--title "Manutenção do catálogo de telefones" \
+		--print-all --width 400 --height 333          \
+		--image stock_landline-phone --image-on-top   \
+		--column Nome     --column Telefone           \
+		--column Residencia:CHK                       \
+		--column Escritório:CHK                       \
+		--column Celular:CHK                          \
+		--button _OK:0 --button _Cancelar:1           \
+		--button "começar de _Novo":2                 \
+		$(sed 's/ .*\t/ /' telefones | 
+	        	xargs -i echo {} FALSE FALSE FALSE))
+	case $? in
+		0)		yad --text "Recebi na saída\n$Saida" \
+					--image stock_landline-phone     \
+					--button gtk-ok
+				break ;;
+		1|252)	yad --text "Usuário abandonou"       \
+					--image stock_landline-phone     \
+					--button gtk-ok
+				break ;;
+		*)		continue
+	esac
+done

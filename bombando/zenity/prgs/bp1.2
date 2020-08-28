@@ -1,0 +1,13 @@
+#!/bin/bash
+
+for ((int=1; int<=100; int++))
+do
+    echo $int             # Atualizou percentagem
+## A próxima linha *não pode* ter comentário pois
+#+ ele apareceria na tela.
+    echo "# Decorridos $int% da tarefa"
+    sleep 0.13
+done | zenity --progress                        \
+    --auto-close                                \
+    --width 300                                 \
+    --title="Exemplo de Progress"

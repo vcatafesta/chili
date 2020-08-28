@@ -1,0 +1,21 @@
+#! /bin/bash
+#  Exemplos básicos de uso do diálogo --text-info
+
+#  Diálogo recebendo dados via pipe:
+ping -c4 $(yad --title "Ping"                \
+    --entry                                  \
+    --text "Enter the IP or URL to ping...") |
+        yad --text-info                      \
+            --width=600                      \
+            --height 300                     \
+            --title Pingando...
+
+#  Diálogo usando substituição de processos
+yad --text-info                                \
+    --width=600                                \
+    --height 300                               \
+    --title Pingando...                        \
+    --filename <(ping -c4 $(yad --title "Ping" \
+        --entry                                \
+        --text "Enter the IP or URL to ping..."))
+

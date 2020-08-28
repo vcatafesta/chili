@@ -1,0 +1,15 @@
+#! /bin/bash
+#  Demo do diálogo --entry usando a
+#+ opção --numeric
+
+yad --entry --title "Avaliação do treinamento"     \
+    --entry-label "Informe seu grau de satisfação:"\
+    --image help-faq --numeric 50 100 5
+
+#  Demo das opções --ricon e --ricon-action
+#+ e das genéricas --geometry e --on-top
+yad --entry --entry-label Usuário --on-top         \
+    --ricon help --ricon-action 'cut -f1 -d:       \
+    /etc/passwd |
+        yad --geometry 150x250+310+140 --text-info \
+            --button gtk-ok'

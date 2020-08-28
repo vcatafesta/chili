@@ -1,0 +1,11 @@
+#!/bin/bash
+until data=$(yad --calendar                     \
+    --title "Datas dos vôos"                    \
+    --text "Escolha uma data para o vôo de ida" \
+    --day $(date +%_d)                          \
+    --month $(date +%_m)                        \
+    --year $(date +%Y))
+do
+    :
+done
+echo $data

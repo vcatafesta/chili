@@ -1,0 +1,113 @@
+#!/bin/sh
+#
+# Chili Installer Network Configuration and Startup Script
+# Written by Vilmar Catafesta <vcatafesta@gmail.com>
+# Welcome script, check internet connection and download the installer from Github.com.
+
+title="Chili Installer Network Tool"
+width=700
+height=200
+
+
+function sh_tailyad()
+{
+	exec 5> >(yad 	--text-info 	\
+					--width=600 	\
+					--heigth=300 	\
+					--tail 			\
+					--no-buttons
+	)
+}
+
+
+function sh_mensagem()
+{
+	msg="$1"
+	titulo="$2"
+	txt="\n<b><big>${msg}</big></b>\n"
+	zenity --text="${txt}" --timeout=1 --progress --title="$titulo" --width=$width --pulsate
+}
+
+
+function sh_error()
+{
+	msg="$1"
+	titulo="$2"
+	txt="\n<b><big>${msg}</big></b>\n"
+	zenity --error --text="${txt}" --title="$titulo" --width=$width
+}
+
+
+function sh_info()
+{
+	msg="$1"
+	titulo="$2"
+	txt="<b><big>\n${msg}</big></b>\n"
+	yad "${comargs[@]}" --width=$width --image=gtk-dialog-info --title="${titulo}" --text="$txt" --button="Done":1
+}
+
+function sh_welcome()
+{
+		yad					\
+		--question			\
+		--title="$title" 	\
+		--center 			\
+		--image="chili.png"	\
+		--width=$width		\
+		--text="\n\nBem-vindo\n\n\
+Este script irá guia-lo nos proximos passos da instalação do Chili Gnu/Linux.\n\n\
+Primeiro passo será verificar se a internet está online, em estando, será baixado do github, um script atualizado para continuação da instalação. \n\n\
+Caso não tenha internet, poderá continuar com o script local.\n\n\
+Clique em OK ou Cancelar para sair."
+		if [ "$?" = "1" ]
+			then exit
+		fi
+}
+
+function sh_download_installer()
+{
+#	git clone --depth 5 https://github.com/spookykidmm/zen_installer
+	chmod +x gtk
+}
+
+
+function sh_run_installer()
+{
+	sudo ./gtk
+	result=$(yad					\
+				--list 				\
+				--center			\
+				--width=$width		\
+				--title="$title" 	\
+				--radiolist 		\
+				--text "What would you like to do now?"  \
+				--column "Select" 	\
+				--column "Option"	\
+				False Restart 		\
+				False Close 		\
+				False "Chroot into new system")
+
+	case $ans in
+		"Restart" 					) 	reboot;;
+		"Close" 					) 	exit;;
+		"Chroot into new system"	)	sudo mount $(cat root_part.txt) /mnt; lxterminal -e sudo arch-chroot /mnt;	umount -R /mnt;;
+		*							) 	exit ;;
+	esac
+}
+
+
+function sh_checknet()
+{
+	sh_mensagem "Aguarde, testando internet"
+	if ! ping -c 3 10.0.0.1 >&5; then
+		sh_error "A conexão com a internet não foi detectada, verifique e tente novamente."
+		sh_welcome
+	fi
+}
+sh_mensagem "Aguarde, inicializando"
+sh_welcome
+sh_tailyad
+sh_checknet
+sh_download_installer
+sh_run_installer
+

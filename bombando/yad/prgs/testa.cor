@@ -1,0 +1,16 @@
+#!/bin/bash
+#  Demo do arquivo cores.txt
+
+while true
+do
+    Cor=$(yad --list --height 500 --image stock_color \
+        --image-on-top --text "<b>Escolha uma cor</b>"\
+        --column Cor                                  \
+        $(tail -n +6 cores.txt | cut -f1 -d' ')) ||
+            exit
+    [ -n "$Cor" ] && export Cor=${Cor%?} || continue
+    xterm -bg $Cor -T "Cor de fundo $Cor"             \
+        -e 'read -n1 -p "Esta cor de fundo é $Cor.
+Tecle algo para prosseguir..."' 
+done
+

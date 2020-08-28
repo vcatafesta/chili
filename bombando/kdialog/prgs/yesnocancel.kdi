@@ -1,0 +1,14 @@
+#! /bin/bash
+#  Exemplos do diálogo --yesnocancel
+
+kdialog --title "Exemplo de yesnocancel" \
+    --yesnocancel "O trabalho não foi salvo. Você deseja salvá-lo?
+- Clicle Yes para salvá-lo, ou
+- Clicle No para descartar as alterações, ou
+- Clicle Cancel para permanecer usando"
+
+case $? in
+    0) kdialog --msgbox "Clicou Yes";;
+    1) kdialog --msgbox "Clicou No";;
+    2) kdialog --msgbox "Clicou Cancel ou abortou o diálogo"
+esac

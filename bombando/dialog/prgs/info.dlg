@@ -1,0 +1,12 @@
+#! /bin/bash
+# Exemplo de --infobox temporizado
+
+S=s   # Só para fazer o plural de segundo
+Faltam=11
+while (( Faltam-- ))
+do
+((Faltam==1)) && S=  # Agora no singular
+dialog --sleep 1 --title "Mensagem temporizada" \
+    --infobox "Esta caixa não tem botões, então você
+tem $Faltam segundo$S para ler esta mensagem." 4 42
+done

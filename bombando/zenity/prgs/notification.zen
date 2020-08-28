@@ -1,0 +1,31 @@
+#!/bin/bash
+#  Exemplos de uso do diálogo --notification
+
+zenity --notification       \
+    --window-icon alert.ico \
+    --text "Fim do script em background"
+
+exec 5> >(zenity --notification \
+    --window-icon alert.ico     \
+    --listen)
+zenity --info --text 'Tecle <b>OK</b> para mudar msg'
+echo "tooltip: Inicie novo script em background" >&5
+zenity --info --text 'Tecle <b>OK</b> para receber uma message '
+echo "message: Fim do job em background" >&5
+zenity --info --text 'Tecle <b>OK</b> para mudar o ícone '
+echo "icon: error.ico" >&5
+zenity --info --text 'Tecle <b>OK</b> para esconder o ícone '
+echo "visible: false" >&5
+zenity --info --text 'Tecle <b>OK</b> para exibir o ícone novamente '
+echo "visible: true" >&5
+zenity --info --text 'Tecle <b>OK</b> para encerrar o exemplo '
+exec 5>&-    # Para fechar o dispositivo 5
+
+#  Exemplo inútil para listar os emoticons
+exec 8> >(zenity --notification --listen)
+for file in /usr/share/icons/gnome/scalable/emotes/*;
+do
+    echo icon:$file >&8
+    echo message:$file >&8; sleep 0.2;
+done
+exec 8>&-

@@ -1,0 +1,69 @@
+#!/bin/bash
+#  Este arquivo contém diversos exemplos
+#+ de uso do diálogo --form
+#
+#  Um exemplo bem simples emulando um
+#+ diálogo --entry
+yad --form --field "Nome do usuário:"
+
+#  Exemplo com um só campo, com entrada
+#+ de dados escondida
+yad --form --field "Senha:":H
+
+#  Exemplo envolvendo os dois campos
+#+ dos exemplos anteriores
+yad --form                     \
+    --field 'Nome do Usuário:' \
+	--field Senha::H
+
+#  Exemplo anterior com melhor estética
+yad --form --align right       \
+    --field 'Nome do Usuário:' \
+	--field Senha::H           \
+	--image dialog-password
+
+#  Usando campos Read Only
+yad --form --align right         \
+    --image dialog-password      \
+	--field "User name::RO"      \
+	--field "Informe a senha::H" \
+	$LOGNAME
+
+#  Exemplo usando caixa de cores e de fontes
+yad --form --text "Exemplo bobo" \
+    --field "Escolha a cor:CLR"  \
+	--field "Escolha a fonte:FN" 
+
+#  Exemplo da opção --separator
+Sai=$(yad --form      \
+    --field Nome      \
+	--field Sobrenome \
+	--separator ' ') &&
+		yad --text                             \
+			"\tO nome completo é:\t\n\t- $Sai" \
+			--button gtk-ok
+
+#  Exemplo da opção --item-separator
+yad --form --field "Escolha um campo:CB" \
+    --image utilities-terminal           \
+	--item-separator :                   \
+	$(grep ^root /etc/passwd)
+
+#  Exemplo usando campos dos tipos
+#+ :DT, :MFL e :CBE
+#  Captura dos dados
+IFS='|' read Data Todos Email <<<             \
+    "$(yad --form --field 'Data do email:DT'  ""\
+    --field 'Arquivos que serão anexados:MFL' ""\
+    --field 'Endereço de destino:CBE' \
+    $(cat emails.txt) ||
+       yad --text 'Usuário abortou' --button gtk-ok)"
+#  Criando a array Arqs com os caminhos completos
+#+ dos arquivos
+IFS='!' read -a Arqs <<< "$Todos"
+#  Atualizando o arquivo que contém os
+#+ endereços de email
+grep -q "$Email" emails.txt || {
+    echo $Email >> emails.txt
+    sort emails.txt -o emails.txt
+}

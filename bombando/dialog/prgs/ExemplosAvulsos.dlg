@@ -1,0 +1,141 @@
+#! /bin/bash
+#  Os scripts a seguir, são compostos por fragmentos
+#+ que não estão associados a nenhum aplicativo. Estão
+#+ aqui somente para facilitar o seu aprendizado, já
+#+ que desta forma basta copiar e colar para reproduzir
+#+ cada exemplo direto na linha de comandos.
+
+######## Opções --and-widget, --clear e --keep-window
+# Exemplo 1
+Senhas=$(dialog --stdout --begin 2 2        \
+    --passwordbox "Informe sua senha" 0 0   \
+    --and-widget --begin 2 35 --passwordbox \
+    "Tecle novamente sua senha" 0 0)
+echo $Senhas
+
+# Exemplo 2
+dialog --keep-window --begin 0 0     \
+    --yesno "Texto 1" 0 0            \
+    --and-widget --clear --begin 7 0 \
+    --yesno "Texto 2" 0 0            \
+    --and-widget --begin 14 0        \
+    --yesno "Texto 3" 0 0
+
+######## Diálogos --msgbox, --infobox e --yesno
+# Exemplo 1
+until (( $(date +%H%M%S) >= 230000 ))
+do
+    sleep 30
+done
+dialog --infobox                                   \
+    "São $(date '+%Hh:%Mmin...')\nHora do remédio" \
+    4 20
+
+# Exemplo 2
+until (( $(date +%H%M) >= 2310 ))
+do
+   sleep 30
+done
+dialog --defaultno \
+    --yesno "Já tomou o remédio?" 5 24 ||
+    dialog --infobox "Então eu desisto" 0 0
+
+# Exemplo 3
+dialog --title "Usando --msgbox" \
+    --ok-label "Já tomei"          \
+    --msgbox "Se ainda não tomou o remédio,\
+ vou encher teu saco até você tomar e clicar\
+ em <Já tomei>" 7 34
+
+######## Diálogo --calendar
+# Exemplo 1
+Data=$(dialog --stdout --calendar \
+    "Informe a data da compra" 0 0)
+
+# Exemplo 2
+Data=$(dialog --stdout --calendar  \
+    "Informe a data da compra" 0 0 \
+    $(date -d "+1 month" "+%d %m %Y"))
+
+######## Diálogo --timebox
+# Exemplo 1
+Hora=$(dialog --stdout --title "Hora do remédio"     \
+    --timebox "Informe a hora da próxima pílula" 3 0 \
+    $(date -d "+8 hour" "+%H %M %S"))
+
+######## Diálogos --inputbox e --passwordbox
+# Exemplo 1
+Lindona=$(dialog --stdout --timeout 60 --inputbox   \
+    "Qual a cidade mais linda do mundo?" 0 0        \
+    "Cidade Maravilhosa") ||
+        Lindona="Cidade Maravilhosa"
+
+# Exemplo 2
+Idade=$(dialog --insecure --stdout --passwordbox \
+    "Senhora, sua idade será mantida em sigilo.
+    Favor informá-la." 0 0)
+
+######## Diálogo --gauge
+# Exemplo 1
+Perc=
+while ((Perc <= 100))
+do
+    echo $Perc
+    ((Perc++))
+    sleep 0.05
+done |
+dialog --clear --title "Teste do --gauge no dialog" \
+    --gauge 'Se segura ...' 7 30 0
+
+######## Diálogos --fselect e --dselect
+# Diálogo --fselect
+Arq=$(dialog --stdout \
+    --fselect ~/InterfacesGraficas/Dialog/ 10 60)
+
+# Diálogo --dselect
+Dir=$(dialog --stdout \
+    --dselect ~/InterfacesGraficas 8 50)
+
+######## Diálogos --textbox e --editbox
+# Diálogo --Editbox
+dialog --stdout --editbox QuebraLingua.txt \
+    16 62 > QuebraLinguaEditado.txt
+
+# Diálogo --textbox
+dialog --textbox QuebraLinguaEditado.txt 0 0
+
+######## Diálogo --pause
+# Exemplo 1
+dialog --pause "  Te dou 20 segundos para me\n\
+    <Aceitar> ou <Cancelar>" 9 35 20
+
+######## Mostrando texto explicativo
+Escolha=$(dialog --item-help --separate-output \
+    --stdout --checklist                       \
+    "Quais dentre esses podem ser chamados \
+de Sistema Operacional?" 0 0 0                 \
+    Maçã    "É frutinha"              off      \
+        "Nunca vi nada tão proprietário"       \
+    Linux   "Tá botando prá quebrar"  on       \
+        "BBB - Bom, Bonito e Barato"           \
+    Janelas "Coisas de decorador"     off      \
+        "Cuidado! As janelas emperram"         \
+    Unix    "Encontrou um substituto" on       \
+        "Estável mas com poucas atualizações")
+
+######## Criando um botão de ajuda
+Escolha=$(dialog --item-help --help-button     \
+    --separate-output --stdout --checklist     \
+    "Quais dentre esses podem ser chamados \
+de Sistema Operacional?" 0 0 0                 \
+    Maçã    "É frutinha"              off      \
+        "Nunca vi nada tão proprietário"       \
+    Linux   "Tá botando prá quebrar"  on       \
+        "BBB - Bom, Bonito e Barato"           \
+    Janelas "Coisas de decorador"     off      \
+        "Cuidado! As janelas emperram"         \
+    Unix    "Encontrou um substituto" on       \
+        "Estável mas com poucas atualizações")
+
+
+

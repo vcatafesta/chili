@@ -1,0 +1,23 @@
+#!/bin/bash
+## Demo do diálogo --progressbox exibindo o
+#+ Mapa de uso de memória.
+#+ Uso: progress2.dia [seg]
+#+ Onde seg informa tempo de monitoração
+#+ Default=10
+
+## O test abaixo usa uma regexp para
+#+ verificar se foi passado um parametro
+#+ e ele é numérico
+
+Seg="$1"
+[[ $1 =~ ^[0-9]+$ ]] || Seg=10
+
+for ((i=1; i<=$Seg; i++))
+do
+    cat /proc/meminfo | column -c 96|
+    dialog --progressbox \
+        "Dinâmica do uso de memória  --  $i/$Seg" 19 96
+    sleep 1
+done
+clear
+

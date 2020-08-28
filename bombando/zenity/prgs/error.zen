@@ -1,0 +1,6 @@
+#!/bin/bash
+#  Exemplo de uso do diálogo --error
+
+zenity --error              \
+    --title "Erro na senha" \
+    --text "Senha não confere com a do root"

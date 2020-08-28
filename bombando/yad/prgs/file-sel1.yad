@@ -1,0 +1,25 @@
+#!/bin/bash
+#  Demo do diálogo --file-selection, usando as
+#+ opções --multiple, --separador e --text com
+#+ a lib Pango Markup.
+
+Arquivos=$(yad --file-selection                \
+    --title "Seleção de arquivo"               \
+    --text "\n<big><b>                         \
+        Escolha um ou mais arquivos\n          \
+        </b></big>"                            \
+    --width 600 --height 400 --multiple        \
+    --separator "^") || {
+        yad --image=dialog-error               \
+            --button=Ok                        \
+            --text "Nenhum arquivo foi selecionado"
+         exit 1
+         }
+IFS=^
+Cmd='yad --button gtk-ok --title "YAD + Pango MarkUp" \
+    --text "\n<big><b>Arquivos Selecionados</b></big>\n'
+for Arq in $Arquivos
+{
+	Cmd="$Cmd\n\t$Arq\t"
+}
+eval $Cmd\"

@@ -1,0 +1,54 @@
+#!/bin/bash
+## Script para demonstrar o uso do diálogo --inputmenu
+
+function FazMsgBox
+{
+	## As próximas 6 linhas servem para calcular
+	#+ o maior tamanho dos dados, com a finalidade
+	#+ de dimensionar a largura da caixa
+	Maior=0
+	for Txt in "$Shell" "$Lang" "$Pwd" "$Logname"
+	do
+	    Maior=$[Maior>${#Txt}?$Maior:${#Txt}]
+	done
+	let Maior+=19
+	dialog --title "$Titulo" \
+        --msgbox "  Shell:     $Shell \n\
+		Linguagem: $Lang \n\
+		Diretório: $Pwd \n\
+		Usuário:   $Logname" 8 $Maior
+}
+Titulo="Demo do inputmenu"
+Escolha="$(dialog --stdout --title "$Titulo" --inputmenu  \
+	" Exibição de alguns dados do seu ambiente atual\n
+	Se você quiser alterar algum deles,\n
+	posicione sobre o item e escolha < Rename >" 21 52 12 \
+    Shell $BASH Linguagem $LANG \
+    Diretório $PWD Usuário $LOGNAME)"
+
+CodRet=$?
+Shell=$SHELL
+Lang=$LANG
+Pwd=$PWD
+Logname=$LOGNAME
+
+case $CodRet in
+    0)  FazMsgBox
+        ;;
+    1)  dialog --title "$Titulo" --msgbox \
+            "Hasta la vista baby" 0 0
+	;;
+    3)  Rot=$(sed -r 's/^RENAMED (.*) .*/\1/' <<< "$Escolha")
+        Val=$(sed 's/.* //' <<< "$Escolha")
+        case "$Rot" in
+            Shell) Shell="$Val" ;;
+	    Linguagem) Lang="$Val" ;;
+	    Diretório) Pwd="$Val" ;;
+	    Usuário) Logname="$Val" ;;
+	esac
+	FazMsgBox
+	;;
+    255) dialog --title "$Titulo" --msgbox \
+                "Hasta la vista baby" 0 0
+	 exit 1 ;;
+esac

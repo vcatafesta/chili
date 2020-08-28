@@ -1,0 +1,12 @@
+#!/bin/bash
+#  Gera uma combo box ordenada para que
+#+ se faça a escolha de um usuário
+#
+User=$(yad --entry --title Usuários     \
+    --text "Escolha o usuário desejado" \
+	--image stock_people                \
+	--entry-text nenhum                 \
+	$(cut -f1 -d: /etc/passwd | sort)) &&
+	yad --text "O usuário escolhido foi $User" \
+		--image stock_people                   \
+    	--button gtk-ok

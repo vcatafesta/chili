@@ -1,0 +1,17 @@
+#! /bin/bash
+#  Exemplos de uso do diálogo msgbox e suas
+#+ variações --sorry e --error
+
+kdialog --title "Exemplo bobo de msgbox" --msgbox \
+    "Sua mãe subiu no telhado"
+
+#  Usando a opção --sorry
+kdialog --title "Exemplo de sorry" --sorry \
+    "O servidor está sobrecarregado.
+Tente mais tarde."
+
+# Usando a opção --error
+kdialog --title "Exemplo de error" \
+    --error "Endereço de IP inválido.
+Impossível conectar."
+

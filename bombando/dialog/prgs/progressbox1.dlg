@@ -1,0 +1,14 @@
+#!/bin/bash
+## Exemplo de uso do diálogo --progress
+
+[ -d "$1" ] || {
+    dialog --title "Erro" \
+        --msgbox "Não conheço este diretório" 5 30
+    exit 1
+    }
+cd "$1"
+Dir=$(pwd)
+ls | column -c $[$(tput cols)-6] | 
+dialog --tab-correct --tab-len 8               \
+    --progressbox "Arquivos do diretório $Dir" \
+    $(tput lines) $(tput cols)

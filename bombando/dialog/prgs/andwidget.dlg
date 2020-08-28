@@ -1,0 +1,13 @@
+#!/bin/bash
+## Caixa sobre outra
+
+Titulo="Regulamento de Botequim"
+Tam=$(dialog --stdout --print-maxsize |
+    sed -r 's/.*: ([0-9]+), +([0-9]+)/\1 \2/')
+
+dialog --title "$Titulo"                  \
+    --infobox "$(cat regulamento)" $Tam   \
+    --and-widget --clear --title "$Titulo"\
+    --yesno "Deseja ler todo o regulamento?" 5 34 && 
+        dialog --title "$Titulo" \
+	    --textbox regulamento $Tam

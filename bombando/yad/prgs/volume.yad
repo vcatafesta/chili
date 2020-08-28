@@ -1,0 +1,13 @@
+!#/bin/bash
+#  Altera o volume master do computador com alsa-mixer
+
+#  Captura volume atual
+VolAtu=$(amixer sget 'Master',0 |
+    sed -rn 's/.*\[([0-9]{1,3})%\].*/\1/p')
+
+# Agora é escrever o yad e correr para o abraço
+yad --scale --text "Volume\nMaster" --undecorated \
+    --no-buttons --vertical --height 300          \
+    --min-value 0 --max-value 100 --value $VolAtu \
+    --print-partial | 
+        xargs -i amixer -q set Master {}%

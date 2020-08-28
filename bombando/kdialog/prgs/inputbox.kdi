@@ -1,0 +1,8 @@
+#! /bin/bash
+#  Exemplo de uso do diálogo --inputbox
+
+LogNam=$(kdialog --title \
+    "Exemplo básico de inputbox" --inputbox \
+    "Informe o login na máquina remota" $LOGNAME) || 
+        kdialog --title Cancelamento --error \
+            "Diálogo cancelado"

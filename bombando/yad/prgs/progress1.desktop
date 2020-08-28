@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Copia arquivos
+Comment=Copia arquivos com barra de progresso
+Icon=filesave
+Exec=./progress1.yad
+Terminal=FALSE

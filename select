@@ -1,0 +1,109 @@
+#!/bin/bash
+
+PS3='Please enter your choice: '
+options=("Option 1" "Option 2" "Option 3" "Quit")
+select opt in "${options[@]}"
+do
+    case $opt in
+        "Option 1")
+            echo "you chose choice 1"
+            ;;
+        "Option 2")
+            echo "you chose choice 2"
+            ;;
+        "Option 3")
+            echo "you chose choice $REPLY which is $opt"
+            ;;
+        "Quit")
+            break
+            ;;
+        *) echo "invalid option $REPLY";;
+    esac
+done
+
+
+menu_from_array ()
+{
+
+select item; do
+# Check the selected menu item number
+if [ 1 -le "$REPLY" ] && [ "$REPLY" -le $# ];
+
+then
+echo "The selected operating system is $item"
+break;
+else
+echo "Wrong selection: Select any number from 1-$#"
+fi
+done
+}
+
+# Declare the array
+linux=('Ubuntu' 'Linux Mint' 'CentOS')
+
+# Call the subroutine to create the menu
+menu_from_array "${linux[@]}"
+
+
+
+select result in Yes No Cancel Exit
+    do
+        if [ "$result" = "Exit" ]; then
+        echo $result
+        exit 0
+        fi
+        echo $reslt
+    done
+
+
+
+select opt in "${options[@]}" "Quit"
+do
+
+    if [[ -z $opt ]]; then
+        echo "Didn't understand \"$REPLY\" "
+        REPLY=
+    else
+        case "$opt" in
+
+        docker)
+            echo "Update Docker"
+            break;;
+        IdontExist)
+            echo "Update IdontExist"
+            break;;
+        pushover)
+            echo "Update mytest"
+            break;;
+        IdontexistEither)
+            echo "Update IdontExistEither"
+            break;;
+        Quit)
+            echo "Goodbye!"
+            break;;
+        *)
+           echo "Invalid option <$opt>. Try another one."
+           ;;
+        esac
+    fi
+done
+
+
+select o in opt{1..6}; do
+    case "${o}" in
+        opt[1-6])
+            break
+            ;;
+        *)
+            echo "Invalid choice '${REPLY}', please pick one of the above"
+            ;;
+    esac
+done
+echo "You picked: ${o}"
+
+
+select fname in *;
+do
+   echo you picked $fname \($REPLY\)
+   break;
+done

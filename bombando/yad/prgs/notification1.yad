@@ -1,0 +1,10 @@
+#!/bin/bash
+#  Demo do diálogo notification com
+#+ o uso das opção --listen e menu:
+#
+trap "rm yad.fifo; exit" 0 2 3 15
+
+[ -p yad.fifo ] || mkfifo yad.fifo
+exec 3<> yad.fifo
+yad --notification --listen <&3 &
+echo menu:'Calendário!yad --calendar|Escolha de Arquivos!yad --file-selection --width 700 --height 400|Fim!quit' >&3

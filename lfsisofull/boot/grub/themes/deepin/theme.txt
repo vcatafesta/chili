@@ -1,0 +1,55 @@
+#version:13
+#lang:en_US.UTF-8
+#themeInputDir:/usr/share/dde-api/data/grub-themes/deepin
+#screenWidth:1920
+#screenHeight:1080
+#head end
+title-text: ""
+desktop-image: "background.jpg"
+desktop-color: "#000000"
+terminal-font: "Unifont Regular 17"
+terminal-box: "terminal_box_*.png"
+terminal-left: "0"
+terminal-top: "0"
+terminal-width: "100%"
+terminal-height: "100%"
+terminal-border: "0"
++ boot_menu {
+    left = 28%
+    top = 27%
+    width = 852
+    height = 501
+    item_font = "Noto Sans CJK SC Regular 17"
+    item_color = "#dddddd"
+    selected_item_color = "#ffffff"
+    item_height = 52
+    item_spacing = 11
+    item_padding = 11
+    icon_width = 37
+    icon_height = 26
+    item_icon_space = 22
+    item_pixmap_style = "item_*.png"
+    selected_item_pixmap_style = "selected_item_*.png"
+    menu_pixmap_style = "menu_*.png"
+    scrollbar_thumb = "scrollbar_thumb_*.png"
+    scrollbar_width = 8
+}
++ label {
+    left = 0
+    top = 98%
+    width = 100%
+    align = "center"
+    id = "__timeout__"
+    color = "#99E53E"
+    font = "Noto Sans CJK SC Regular 14"
+    text = "Booting in %d seconds"
+}
++ label {
+    left = 0
+    top = 95%
+    width = 100%
+    align = "center"
+    color = "#99E53E"
+    font = "Noto Sans CJK SC Regular 14"
+    text = "Use ↑ and ↓ keys to change selection, Enter to confirm, E to edit the commands before booting or C for a command-line"
+}

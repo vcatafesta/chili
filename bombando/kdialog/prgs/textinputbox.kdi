@@ -1,0 +1,21 @@
+#! /bin/bash
+#  Exemplo do Diálogo --textinputbox
+
+Texto=$(kdialog --title "Exemplo de textinputbox" \
+   --textinputbox "Escreva seu e-mail e tecle em OK" "Caro Julio,
+Gostaria de saber se o telefone correto para obter mais detalhes e receber informações sobre o seu curso de Shell é (11)2125-4747.")
+
+if [ -z "$Texto" ]
+then
+    kdialog --title "Falha no preenchimento" \
+        --error "O e-mail não será enviado."
+fi
+
+#  Usando a opção --caption e --geometry
+kdialog --caption "Animais prediletos" --geometry \
+    235x175+350+300 --textinputbox                \
+    "Escreva seus animais prediletos" "1 - 
+2 - 
+3 - 
+4 - 
+5 -"

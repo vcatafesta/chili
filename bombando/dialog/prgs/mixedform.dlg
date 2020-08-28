@@ -1,0 +1,22 @@
+#!/bin/bash
+#  Exemplo de uso do diálogo --mixedform
+#+ para fazer uma entrada de dados
+
+Titulo="Cadastramento de usuários"
+Saida=$(dialog --stdout                           \
+    --title "$Titulo"                             \
+    --insecure                                    \
+    --mixedform "\nInforme os dados a seguir:"    \
+    12 34 0                                       \
+    "Identificação  :" 1 1 "$UID"     1 18  5 0 2 \
+    "Username       :" 2 1 "$LOGNAME" 2 18 10 0 0 \
+    "Senha          :" 3 1 ""         3 18 10 0 1 \
+    "Senha novamente:" 4 1 ""         4 18 10 0 1) ||
+    {
+	dialog --title "$Titulo"                  \
+            --infobox "Diálogo abortado" 0 0
+        exit 1
+    }
+dialog --title "$Titulo"                          \
+    --msgbox "Foram digitados:
+$Saida" 0 0

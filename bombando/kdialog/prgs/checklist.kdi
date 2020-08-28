@@ -1,0 +1,7 @@
+#! /bin/bash
+#  Exemplos de uso do diálogo --checklist
+
+Usus=$(kdialog --caption "Seleção de usuários"      \
+    --checklist "Escolha os usuário(s) desejado(s)" \
+    $(paste -d' ' <(echo "$uids") <(echo "$unames") |
+        xargs -i echo {} off))

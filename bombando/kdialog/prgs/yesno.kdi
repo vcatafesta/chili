@@ -1,0 +1,17 @@
+#! /bin/bash
+#  Exemplos do diálogo --yesno
+
+kdialog --title "Exemplo bobo de yesno" --yesno \
+    "Sua mãe subiu no telhado.\nDeseja tirá-la?"
+
+#  Um outro exemplo um pouco mais sério ;)
+kdialog --title "Exemplo de yesno" --yesno \
+    "O programa com PID = $pid está demorando muito para terminar.\nDeseja encerrá-lo?" && kill $pid
+
+#  Outra forma de fazer o exemplo acima
+if kdialog --title "Exemplo de yesno" --yesno \
+    "O programa com PID = $pid está demorando muito para terminar.\nDeseja encerrá-lo?"
+then
+    kill $pid
+fi
+

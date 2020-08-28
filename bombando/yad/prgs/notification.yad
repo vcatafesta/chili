@@ -1,0 +1,6 @@
+yad --notification                                   \
+    --text "A hora certa a cada click"               \
+    --image gnome-panel-clock                        \
+    --command "bash -c 'xterm -geometry 30x5+300+200 \
+    -bg darkred -fg lightgray -T Hora                \
+    -e cat <(date +%H:%M:%S; sleep 3)'"

@@ -1,0 +1,8 @@
+#! /bin/bash
+#  Exemplos de uso do diálogo --radiolist
+
+Res=$(kdialog --caption "Resoluções"                 \
+    --radiolist "Clique na resolução do seu monitor" \
+        0 "640 x 480" off                            \
+        1 "800 x 600" off                            \
+        2 "1024 x 768" on)

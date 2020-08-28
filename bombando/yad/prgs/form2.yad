@@ -1,0 +1,18 @@
+#!/bin/bash
+#  Exemplo de uso do diálogo --form
+#+ para capturar ano e mês ComboBoxes
+#
+#  Vamos pegar uma faixa de 10 anos a \
+#+ partir do ano atual:
+Anos=$(seq -s! $(date +%Y) $[$(date +%Y) + 10])
+Meses=$(seq -ws! 12)
+Sai=$(yad --form --title "Monta data"   \
+	--image stock_web-calendar          \
+	--field Ano:CB                      \
+	--field Mês:CB                      \
+	"$Anos"                             \
+	"$Meses") && {
+	IFS='|' read Ano Mes <<< "$Sai"
+	yad --text "A data escolhida foi:\t\n\t-  $Mes/$Ano" \
+		--button gtk-ok --image stock_web-calendar
+	}

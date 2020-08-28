@@ -1,0 +1,18 @@
+#!/bin/bash
+#  Este arquivo contém diversos exemplos
+#+ de uso do diálogo --file-selection
+
+#  Um exemplo bem simples para ver
+#+ seu funcionamento básico
+
+yad --file-selection           \
+	--title Seleção de arquivo \
+	--width 600 --height 400
+
+#  Um exemplo para ver o funcionamento
+#+ das opções --save e --confirm-overwrite
+
+yad --file-selection --title "Selecão de arquivo" \
+    --text "\nEsse YAD é bom demais\n"            \
+    --image filesave --width 650 --height 400     \
+    --save --confirm-overwrite

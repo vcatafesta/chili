@@ -1,0 +1,35 @@
+#!/bin/bash
+#  Diálogo yesno com um botão extra
+
+Titulo="Teste de botão extra"
+
+function FazMsgBox
+{
+    Larg=$[${#2}+4]
+    dialog --ok-label "$1" --title "$Titulo" \
+        --msgbox "$2" 5 $Larg
+}
+
+trap "Flag=;FazMsgBox 'Tá bem' 'Use botões ou \
+ESC para abortar'" 2 3 15
+
+until [ "$Flag" ]
+do
+    Flag=1
+    #  Se tentar abortar com sinal 2 3 15,
+    #+ Flag volta a ficar vazia (veja a trap)
+    dialog --extra-button --extra-label "Depende" \
+        --title "Teste de botão extra"            \
+        --yesno "Vamos jogar uma peladinha?" 5 36
+    CodRet=$?
+done
+case $CodRet in
+    0) FazMsgBox Falô \
+           "OK, então te vejo mais tarde"      ;;
+    1) FazMsgBox "Sou sim" \
+           "Ainda bem, você é um perna de pau" ;;
+    3) FazMsgBox Poizé \
+           "Só se a sua mulher deixar, né?"    ;;
+  255) FazMsgBox "Não enche" \
+           "Puxa que desprezo, porque deu ESC?"
+esac

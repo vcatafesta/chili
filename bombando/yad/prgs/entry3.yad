@@ -1,0 +1,11 @@
+#!/bin/bash
+#  Script para captura de senha.
+#+ para capturar user name e senha
+#+ ou senha e redigite senha,
+#+ prefira usar o diálogo --form
+#
+Senha=$(yad --entry --title Senha \
+	--text "Informe sua senha"    \
+	--image dialog-password --hide-text) &&
+	yad --text "A senha informada foi $Senha" \
+		--image dialog-password --button gtk-ok

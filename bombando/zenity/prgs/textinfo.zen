@@ -1,0 +1,33 @@
+#!/bin/bash
+#  Exemplos de uso do diálogo --text-info
+
+#  Recebendo os dados da entrada primária
+#+ via pipe
+ping -c4 `zenity --title "Ping"  \
+    --entry                      \
+    --text "Enter the IP or URL to ping..."` |
+        zenity --text-info       \
+            --width=600          \
+            --height 300         \
+            --title Pingando...
+
+#  Recebendo dados vindos de um arquivo temporário
+#+ produzido pela substituição de processos
+zenity --text-info                               \
+    --width=600                                  \
+    --height 300                                 \
+    --title Pingando...                          \
+    --filename <(ping -c4 `zenity --title "Ping" \
+        --entry                                  \
+        --text "Enter the IP or URL to ping..."`)
+
+#  Recebendo dados da entrada primaria via um
+#+ named pipe associado a um dispositivo lógico de I/O
+mkfifo zen.fifo       # Cria o named pipe
+exec 5<> zen.fifo     # Associa FIFO ao dispositivo 5 como I/O
+ping -c4 `zenity --title "Ping" --entry        \
+    --text "Enter the IP or URL to ping..."` >&5 # Manda saída do ping para 5
+cat <&5 | zenity --text-info --width=600       \
+    --height 300 --title Pingando...
+exec 5>&-
+rm zen.fifo

@@ -1,0 +1,22 @@
+#!/bin/bash 
+## Exemplo de uso de um botão de ajuda
+
+CodRet=2
+while ((CodRet == 2))
+do
+    dialog --help-button --yesno \
+        "Escolha Sim ou Não. Na dúvida escolha Ajuda" \
+         5 50
+    CodRet=$? 
+    case $CodRet in 
+        0) dialog --msgbox \
+            "Eu sabia que podia contar contigo" 5 40;;
+        1) dialog --msgbox \
+            "Então tá bem... Fica prá próxima" 5 40;;
+        2) dialog --msgbox \
+            "Estás na dúvida? Eu também" 5 40;;
+        *) dialog --msgbox \
+            "Vais ter de escolher um dos botões" 5 40
+           CodRet=2
+    esac
+done

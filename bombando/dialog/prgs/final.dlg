@@ -1,0 +1,122 @@
+#!/bin/bash
+## Exemplo final. Coloca marca dágua em imagens.
+#+ Um programa usando diversos recursos do Dialog.
+#+ Não esqueça de estudar a suíte ImageMagick ela é
+#+ sensacional!
+
+function FazMsgBox
+{
+	dialog --title "$Titulo" --msgbox "$1" \
+		$[$(wc -l <<< "$1")+4]             \
+		$[$((${#1}>${#Titulo}?${#1}:${#Titulo}))+4] 
+}
+
+Titulo=" Colocação de marca dágua"
+Brilho=20
+MarDag="Não def"  # Só para ter um valor inicial
+CodRet=0
+
+## Pegando a intensidade (quanto maior for o \
+#+ número, mais visível é a marca dágua) e   \
+#+ o arquivo que tem a imagem da marca dágua
+while :
+do
+    Escolha="$(dialog --stdout --title "$Titulo" \
+    --aspect 90 --inputmenu 'Informe os dados a seguir'\
+    13 50 7 \
+        'Intensidade (10 <-> 100)' $Brilho\
+        'Arquivo da marca dágua:' "$MarDag")"
+    CodRet=$?
+    case $CodRet in
+        0) ((Brilho < 10 || Brilho > 100)) && {
+               FazMsgBox \
+               "A intensidade deve ser entre 10 e 100"
+               continue
+           }
+           [ -f "$MarDag" ] || {
+               FazMsgBox "$MarDag: Arquivo não existe"
+               continue
+           }
+           break   ;;
+        1) FazMsgBox "Diálogo Abortado"
+           exit 1  ;;
+        3) Rot=$(sed -r 's/^RENAMED (.*) .*/\1/' \
+               <<< "$Escolha")
+           Val=$(sed 's/.* //' <<< "$Escolha")
+           case "$Rot" in
+               Int*) Brilho="$Val"  ;;
+               Arq*) MarDag="$Val"
+           esac    ;;
+        *) FazMsgBox "Diálogo Abortado com <ESC>"
+           exit 255
+    esac
+done
+
+## Seleção do diretório das fotos
+Dir=$(dialog --stdout --title \
+    'Escolha o diretório das imagens' --dselect ~ \
+    0 0) || {
+    FazMsgBox "Diálogo encerrado"
+    exit 1
+}
+
+## Agora vamos procurar os arquivos de imagem
+cd $Dir
+Trab=$(identify * 2> /dev/null) ## Pulo do gato! Entre
+                              #+ um diretório que tenha
+                              #+ imagens e outros, dê
+                              #+ este comando e veja o
+                              #+ conteúdo de $Trab
+
+## Montando linhas com <nome da imagem> <tamanho> OFF
+#+ para serem usadas no diálogo --checklist
+Trab=$(paste -d' ' <(echo "$Trab" | sed 's/[[ ].*//') \
+    <(echo "$Trab" | grep -Eo ' [0-9]+x[0-9]+ ') | 
+    sed 's/$/ OFF/')
+
+## Checklist com as linhas selecionadas para $Trab
+Imag=$(dialog --stdout --title "$Titulo" --separate-output --checklist \
+    "Escolha as imagens que receberão a marca dágua" \
+    0 0 0 $Trab) || {
+    FazMsgBox "Diálogo encerrado"
+    exit 1
+}
+IFS='
+'   ## Somente o <ENTER> como separador entre campos
+    #+ para evitar quebras em arquivos com espaço no nome
+
+dialog --title "$Titulo" --cr-wrap --colors --yesno \
+    "\ZuConfirma a escolha de\ZU:\n\Z1$(echo "$Imag" |
+	xargs -n1 echo -e '\t')\Zn" 0 0 || {
+    FazMsgBox "Nada será feito nos arquivos"
+    exit 1
+}
+## Aqui pode-se fazer um --radiolist para escolher o
+#+ local da imagem onde irá a marca dágua. Porém como
+#+ o canto inferior direito é, disparado o mais usado,
+#+ preferi colocá-lo como padrão. Se quiser troque. As
+#+ posições possíveis (opção gravity) são as seguintes:
+#+ center	north	east	northeast	northwest
+#+  tile	south	west	southeast	southwest
+Local="-gravity southeast"
+i=0
+TotArqs=$(wc -l <<< "$Imag")                   
+## No for a seguir, no trecho entre os 2 XXX, um echo
+#+ numérico atualiza a barra de progresso e o outro echo
+#+ atualiza o texto do cabeçalho.
+## Agora a mágica do ImageMagick junto com dialog
+for Arq in $Imag
+do
+    ## Os echo entre os 2 XXX são para atualizar o gauge
+    echo XXX
+    echo $((++i * 100 / $TotArqs))
+    echo "Colocando marca d'agua em \Z1$Arq\Zn"
+    echo XXX
+    Arq=$(sed 's/ /\\ /g' <<< "$Arq") # Escapa espaços (por causa do eval)
+	ArqNew=${Arq%%.*}.jn.${Arq#*.}    # Colocando jn antes da extensão
+    eval composite "$MarDag" -watermark $Brilho "$Local" "$Arq" "$ArqNew"
+done | dialog --title "$Titulo" --colors \
+        --gauge "" 7 46 0
+dialog --title "$Titulo" --msgbox \
+    "Os nomes foram mantidos e foi\n\
+	acrescentado jn antes da extensão" 0 0

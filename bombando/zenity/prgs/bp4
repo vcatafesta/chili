@@ -1,0 +1,16 @@
+$ cat bp4
+#!/bin/bash 
+sleep $1 & 
+Seg=$(date +%S) 
+i=0 
+exec 8> >(zenity 2>/dev/null --progress --width 300 --auto-kill --title 'Contagem de Segundos') 
+while pidof -s sleep > /dev/null 2>&1 
+do 
+    Seg1=$(date +%S) 
+    [ $Seg -ne $Seg1 ] && { 
+        Seg=$Seg1 
+        echo $((++i*100/$1)) >&8 
+        echo "# Passaram $i segundos" >&8 
+        } 
+done 
+exec 8>&-

@@ -1,0 +1,14 @@
+#!/bin/bash
+## O dialogo --gauge fazendo contagem regressiva,
+#+ para se fingir de --pause.
+
+for ((i=100; i >= 0; i-=10))
+{
+    echo $i; sleep 1; } | 
+    dialog --cr-wrap --colors --gauge "\Z1\Zb\
+	Atenção Agente 007\n
+	======= ====== ===\ZB\Zn\n
+	Você tem 10 segundos para ler esta men-
+	sagem e se mandar correndo, pois ela se
+	auto-destruirá e logo após este tempo o
+	computador  irá  explodir no seu nariz." 11 45
