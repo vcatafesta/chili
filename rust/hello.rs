@@ -8,3 +8,21 @@ fn main()
    println!("Hello, {}, você tem {} anos", nome, idade);
 } 
 
+
+   let mut idade = "Eu";
+   let mut idade = "Eu";
+   let mut idade = "Eu";
+   let mut idade = "Eu";
+   let mut idade = "Eu";
+   let mut idade = "Eu";
+   let mut idade = "Eu";
+   let mut idade = "Eu";
+   let mut idade = "Eu";
+   let mut idade = "Eu";
+   let mut idade = "Eu";
+   let mut idade = "Eu";
+   let mut idade = "Eu";
+   let mut idade = "Eu";
+
+
+
