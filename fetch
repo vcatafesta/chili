@@ -3,7 +3,7 @@
  # fetch - search, install, create, remove, upgrade packages in ChiliOS
  #
  # Created: 2019/04/05
- # Altered: 2020/08/24
+ # Altered: 2020/08/29
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.03.01.20200824"
+_VERSION_="2.03.02.20200829"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -3246,10 +3246,9 @@ trap cleanup SIGINT SIGTERM
 
 function sh_backup()
 {
-	log_msg "Making backup: $VARCACHE_SEARCH/"
+	log_wait_msg "Making backup: $VARCACHE_SEARCH/"
 	mkdir -p $TMP_DIR_BACKUP/
 	cp -f $VARCACHE_SEARCH/* $TMP_DIR_BACKUP/
-	evaluate_retval
 }
 
 #figlet
