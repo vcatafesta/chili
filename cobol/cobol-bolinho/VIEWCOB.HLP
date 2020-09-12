@@ -1,0 +1,284 @@
+----------------------------------- H e l p -----------------------------------
+  
+   To choose any of the Help subcommands listed in the menu below, type the
+   first letter of the subcommand's name, or use the SPACEBAR to highlight
+   the subcommand and then press ENTER.
+  
+   Command              Description
+   ------------------   -----------------------------------------------------
+   Resume               Leave help, and resume debuging.
+
+   Next,Previous        Move forward and backward through help information.
+
+   Keys,Marks,Windows   Provides help on keys, bookmarks, and windows.
+
+   Commands             Displays a submenu of commands for which there is
+                        help information.
+---------------------------------- K e y s ---------------------------- Page 1
+                                                                        (more)
+   Key   Function        Description
+   ---   -------------   ----------------------------------------------------
+   F1    Label           Displays, on the message line, the functions
+                         associated with the function keys 2 through 7.
+  
+   F2    Next Window     Move the input focus to the next window.
+  
+   F3    Page Up         Scrolls the contents of the current window up one
+                         page.
+  
+   F4    Page Down       Scrolls the contents of the current window down one
+                         page.
+  
+   F5    Select Word     Selects the word that the cursor is on as text for
+                         the next command requiring a text argument.
+---------------------------------- K e y s ---------------------------- Page 2
+                                                                        (more)
+   Key   Function        Description
+   ---   -------------   ----------------------------------------------------
+   F6    Set Mark        Sets a bookmark where the cursor is.  To set a
+                         bookmark: press F6 followed by a letter. (See Marks)
+  
+   F7    Go to Mark      Positions the contents of the current window to the
+                         specified bookmark. To go to a bookmark: press F7
+                         followed by the bookmark's name. (See Marks)
+
+   F9    Cursor Left     Moves the cursor left one character.
+
+   F10   Cursor Right    Moves the cursor right one character.
+
+   Note: F9 and F10 are only active when entering text in response
+         to a command prompt.
+---------------------------------- K e y s ---------------------------- Page 3
+
+   Key   Function        Description
+   ---   -------------   ----------------------------------------------------
+   .     Single Step     Equivalent to Go command with a step count of one.
+
+   ,     Single Step     Equivalent to Go command with a step count of one, and
+                         `trace through PERFORMs and CALLs' option disabled.
+
+   *     Set Breakpoint  Sets a Breakpoint at the line indicated by the cursor.
+                         Cursor must be in a Source window.
+
+   +     Inactivate      Inactivates the breakpoint at the line indicated
+         Breakpoint      by the cursor. Cursor must be in a Source window.
+
+   -     Remove          Removes the breakpoint at the line indicated by
+         Breakpoint      the cursor. Cursor must be in a Source window.
+
+---------------------------- B o o k m a r k s -------------------------------
+
+   Bookmarks are used to mark information that will be displayed often.
+   Anything that can be displayed in a window may be marked by a bookmark.
+   The Mark key (see Keys) is used to define a bookmark, and the Goto Mark
+   key is used to redisplay the information at the bookmark.
+
+   The letters a through z may be used as bookmark names.
+   The numbers 0, 1, and 2 are predefined bookmark names, which
+   correspond to: the next source line that will be executed,
+   the begining of the window, and the end of the window.
+
+   To display the information at a bookmark:
+      Press the Goto Mark key followed by the name of the bookmark.
+
+   To define a bookmark:
+      Move cursor to where the bookmark is to be set.
+      Press the Mark key followed by the letter that is to be the name
+      of the bookmark.
+-------------------------------- W i n d o w s ------------------------ Page 1
+                                                                        (more)
+   Windows are used to display information on the screen.
+
+   The following may be displayed in windows:
+      - source code
+      - variables and their values
+      - dumps of memory
+      - a list of the most recently entered procedures
+      - a list of breakpoints
+
+   The View command is used to change what is displayed in the current window.
+
+   Up to 10 windows may be opened at a time.
+
+   The Window command may be used to open, close, move, and specify the trace
+   state of windows.
+
+-------------------------------- W i n d o w s ------------------------ Page 2 
+
+   The following operations may be performed on any window, regardless of
+   what is being viewed:
+
+      - The information may be scrolled using the direction keys, and
+        the Page Up and Page Down keys (see Keys).
+
+      - Text may be searched for using the Find command.
+
+      - Text may be selected for later use in commands using the
+        Word Select key (see Keys).
+
+      - Bookmarks may be set (set Marks).
+
+      - The window may be positioned to a bookmark (see Marks).
+
+      - The window may be traced (see Command Window).
+
+------------------------------ B r e a k p o i n t ---------------------------
+
+   The Breakpoint command displays a submenu of commands.
+
+   Command       Description
+   -----------   ------------------------------------------------------------
+   OnStatement   Set a breakpoint on a line.
+   Change        Set a breakpoint when a variable changes value.
+   Procedure     Set a breakpoint on entry and/or exit of a procedure.
+
+   Edit          Edit an existing beakpoint.  The skip count and active state
+                 may be changed.
+
+   Remove        Remove an existing breakpoint.
+
+   A skip count may be specified when setting or editing breakpoints,
+   so that the breakpoint will be ignored until it has been triggered more
+   than `skip count' times.
+-------------------------------- D i s p l a y -------------------------------
+
+   Displays or changes values in a window viewing values or dump.
+
+      Parameter    Description
+      ---------    ----------------------------------------------------------
+      Data name    The name of the variable to display.
+      or address   If viewing dump then an address may be specified in hex
+                   (preceeded by `@').
+
+      change       Specify `Yes' to change the value of the variable.
+
+      remove       Specify `Yes' to remove the variable from the display.
+
+      Note: change and remove are only available when viewing values.
+
+   For values windows, the variable is displayed/removed and/or changed.
+   For dump windows, the cursor is positioned just before the specified
+   location in the dump.
+----------------------------------- F i n d ----------------------------------
+
+   Searches for text strings in the current window.     
+
+   Parameter     Description
+   -----------   ------------------------------------------------------------
+   text string   The string to search for. This value may be entered
+                 using the Word Select key to save typing (see Keys).
+
+   direction     The direction to search (Up or Down).
+
+   from          Where to begin searching (Top, Bottom, or Cursor).
+                 If Cursor is specified the search is started in the line
+                 containing the cursor.
+
+   Case          Specify `No' if upper and lower case are to be considered
+                 equivalent
+------------------------------------- G o ------------------------------------
+
+   Starts or continues program execution.
+
+   Parameter      Description
+   -----------    -----------------------------------------------------------
+   step count     The number of statements to execute.
+
+   pause          The number of time units to wait between statements.
+
+   start at       The line from which execution continues.
+   line number                 
+
+   Trace during   Specifies whether or not PERFORMed statements and CALLed
+   PERFORMs and   subroutines are to be traced.  If `No' is specified then
+   CALLs          PERFORM and CALL behave like single statements.
+-------------------------------- O p t i o n s ------------------------ Page 1
+                                                                        (more)
+   Sets up the overall debugging environment.
+
+   Parameter      Description
+   ------------   -----------------------------------------------------------
+   Trace          Specify `No' to disable all tracing.
+
+   CallTrace      Specify `No' to disable tracing of CALLs.
+
+   PerformTrace   Specify `No' to disable tracing of PERFORMed procedures.
+
+   UseColor       Specify `No' if color is not to be used.
+                  It may be useful to set this to `No' if a monochrome display
+                  is used with a color card. This option may be disabled
+                  when Viewcob is started by using the /m or -m command line
+                  argument.
+
+
+-------------------------------- O p t i o n s ------------------------ Page 2
+
+   Parameter      Description
+   ------------   -----------------------------------------------------------
+   Display        Specify `Yes' if the user screen is to be shown whenever a
+                  DISPLAY statement is executed.
+
+   KeyBreak       Specify `Yes' if keyboard input is to halt program execution.
+                  Only effective when not executing an ACCEPT statement.
+
+   Margin lines   When a window must be repositioned, this is the number of
+                  extra lines to leave at the top.
+----------------------------------- Q u i t ----------------------------------
+
+   Closes all files and ends the debugging session.
+
+   QUIT prompts for confirmation.
+------------------------------- T r a n s f e r ------------------------------
+
+   Loads and restarts COBOL programs.
+
+   Command   Description
+   -------   ----------------------------------------------------------------
+   Load      Load a program, filling Window 1 with source code
+
+   Restart   Restart the currently loaded program at the beginning, saving
+             any windows, breakpoints, and bookmarks currently set.
+----------------------------------- U s e r ----------------------------------
+
+   Displays the `User Screen'.
+
+   When a COBOL program is run under Viewcob, DISPLAY and EXHIBIT statements
+   write to a virtual screen called the `User Screen'. The User Screen may
+   be viewed using this command. Note: the User Screen is automatically
+   displayed when the COBOL program executes an ACCEPT statement.
+
+   To leave the user screen, press any key.       
+
+----------------------------------- V i e w ----------------------------------
+
+   Displays specified information in the current window.
+
+   Command      Description
+   ----------   -------------------------------------------------------------
+   Breakpoint   Displays breakpoints
+
+   Dump         Display a memory dump
+
+   Procedures   Display a list of the most recently entered procedures
+
+   Source       Display source code
+
+   Values       Display variables and their values
+
+--------------------------------- W i n d o w --------------------------------
+
+   Creates, removes, moves, or specifies the tracing of windows.
+   The default window is the current window, and the default row is the row
+   where the cursor is.  To specify a row number, either enter the number or
+   move the cursor to the desired row.
+
+   Command   Description
+   -------   ----------------------------------------------------------------
+   Open      Create a new window, which becomes the current window 
+
+   Close     Close a window
+
+   Move      Change the size of a window by moving the top row up or down 
+
+   Trace     Turns tracing of a window on or off.
+

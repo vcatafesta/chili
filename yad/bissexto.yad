@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Capturar ano e mes
+
+result=$( yad 						\
+		--form 						\
+		--center 					\
+		--title "Monta data"		\
+		--image stock_web-calendar	\
+		--field Ano:NUM				\
+		--field Mês:NUM				\
+		'2000!2000..2100!3'			\
+		'1!1..12')
+
+		echo $result

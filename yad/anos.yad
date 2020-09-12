@@ -1,0 +1,19 @@
+#!/bin/bash
+
+Anos=$(seq -s! $(date +%Y) $[$(date +%Y) +10])
+Meses=$(seq -ws! 12)
+
+result=$(yad --form --center --title "Montar data" \
+	--image gtk-connect \
+	--field Ano:CB \
+	--field Mês:CB \
+	"$Anos" \
+	"$Meses")
+
+	IFS='|' read Ano Mes <<< "$result"
+
+	yad \
+		--text "A data escolhida foi:\t\n\t $Mes/$Ano" \
+		--center \
+		--button gtk-ok \
+		--image stock_web-calendar

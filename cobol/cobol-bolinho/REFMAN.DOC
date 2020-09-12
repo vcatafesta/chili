@@ -1,0 +1,123 @@
+Microsoft-COBOL  MS-DOS Release 2.20
+
+REFMAN.DOC
+
+Additions to the Microsoft COBOL Compiler
+Reference Manual
+
+January, 1987
+
+
+
+
+
+   The following information was not available when the
+   Microsoft COBOL Compiler Reference Manual was printed,
+   but will appear in future versions of that document.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                   CONTENTS
+
+CHAPTER  6     DATA DIVISION
+
+         6.2   Record Description Entry
+
+         6.2.5 Numeric Items
+             
+               3. Binary Item
+
+
+CHAPTER  7     PROCEDURE DIVISION
+
+         7.2   Arithmetic Statements
+
+         7.2.1 SIZE ERROR Option
+
+
+
+
+CHAPTER  6     DATA DIVISION
+
+         6.2   Record Description Entry
+
+         6.2.5 Numeric Items
+             
+               3. Binary Item
+
+      Warning: Regardless of the number of digits
+               specified in the PICTURE clause for
+               a COMP-0 or COMP-4 item, truncation
+               and the SIZE ERROR condition occur 
+               only when a value moved to such an
+               item exceeds the range (described
+               above) for a 2-byte (COMP-0) or 4-
+               byte (COMP-4) SIGNED binary integer.
+               A COMP-0 item has an implicit PICTURE
+               S9(5), and a COMP-4 item has an 
+               implicit PICTURE S9(10).
+ 
+               Binary items are always considered
+               to be signed, even if the PICTURE 
+               omits the sign character S.
+
+
+
+CHAPTER 7      PROCEDURE DIVISION
+
+
+        7.2    Arithmetic Statements
+
+        7.2.1  SIZE ERROR Option
+
+      Warning: For binary items, defined with 
+               USAGE COMP-0 or COMP-4, truncation
+               and the SIZE ERROR condition occur 
+               only when a value moved to such an 
+               item exceeds the range for a 2-byte
+               (COMP-0) or 4-byte (COMP-4) SIGNED 
+               binary integer. A COMP-0 item has 
+               an implicit PICTURE S9(5), and a 
+               COMP-4 item has an implicit PICTURE
+               S9(10), regardless of the number of
+               digits specified in the PICTURE
+               clause.
+
+Corrections To the Manual
+
+Page   Correction
+
+179    The example on page 179 is incorrect.  UNIT-PRICE OF ITEM-A
+       will not ADD CORESPONDING to UNIT-PRICE OF ITEM-B because they
+       do not have the same group qualifiers. 
+
+239    The example of the INSPECT statement is incorrect.  The example
+       makes use of the word "DELIMITER".  This is a reserved word
+       in COBOL and will generate compile time errors.  To correct the
+       example, change "DELIMITER" to "NEW-DELIMITER" and the example
+       will work correctly.
+
+250    This page contains an example of PERFORM... VARYING.  In the
+       next to the last line of the example, the "VARYING" after the
+       "AFTER" should be removed.  Otherwise the example will give
+       a syntax error at compile time.
+
+375    The SORT example starting on this page is in error.  The 
+       following two lines need to be changed:
+
+       Line 125 should be "READ INPUT-FILE NEXT RECORD INTO INPUT-RECORD"
+       Line 158 should be "RETURN SORT-FILE RECORD INTO OUTPUT-RECORD"
+       
+
