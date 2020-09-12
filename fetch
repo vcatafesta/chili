@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.03.14.20200912"
+_VERSION_="2.03.15.20200912"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -2463,11 +2463,17 @@ function sh_generatepkg()
 		#	let inc++
 		#	eval $take="$(echo "$pkg" | cut -d '-' -f ${inc})" # Expanda e pegue o seu devido valor
 		#done
-		#[[ -z "$field_build" ]] && field_build=$DESC_BUILD
-		#[[ -z "$DESC"        ]] && DESC="$field_pkgname-$field_version-$field_build"
-		field_pkgname=${DESC_PACKNAME}
-		field_version=${DESC_VERSION}
-		field_build=${DESC_BUILD}
+		if [[ -z "$DESC_PACKNAME" ]]; then
+			sh_splitpkg ${pkg}
+			field_pkgname=${aPKGSPLIT[$PKG_BASE]}
+			field_version=${aPKGSPLIT[$PKG_BASE_VERSION]}
+			field_build=${aPKGSPLIT[$PKG_BUILD]}
+	    else
+    		field_pkgname=${DESC_PACKNAME}
+    		field_version=${DESC_VERSION}
+	    	field_build=${DESC_BUILD}
+	    fi
+	    [[ -z "$field_build" ]] && field_build=$DESC_BUILD
 		[[ -z "$DESC" ]] && DESC="$field_pkgname-$field_version-$field_build"
 		_GENERATE_DESC "$field_pkgname" "$field_version" "$field_build" || return 1
 	fi
