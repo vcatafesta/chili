@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.03.15.20200912"
+_VERSION_="2.03.20.20200913"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -731,47 +731,51 @@ function help()
 	echo -e "  fetch -a <package> [...] [-y] [-f] [-ctime=<n>]"
 	echo -e "  fetch -a -ctime=<n>"
 	exit
-
 }
+
 
 function init()
 {
 	local param=$@
 	local s
 
-	[[ $(toupper "${1}") = "-Y" ]] && { LAUTO=$true; shift; }
-	[[ $(toupper "${1}") = "-F" ]] && { LFORCE=$true; shift; }
-	[[ $(toupper "${1}") = "-Y" ]] && { LAUTO=$true; shift; }
-	[[ $(toupper "${1}") = "-F" ]] && { LFORCE=$true; shift; }
-	param="$@"
-	[[ $LAUTO  ]] && param+=" -Y"
-	[[ $LFORCE ]] && param+=" -F"
+	# Parse Command Line Options.
+	for s in ${param[@]}; do
+		[[ $(toupper "${s}") = "-Y" ]]  && { LAUTO=$true;  continue;}
+		[[ $(toupper "${s}") = "-F" ]]  && { LFORCE=$true; continue;}
+		[[ $(toupper "${s}") = "OFF" ]] && { LLIST=$false; continue;}
+	done
+#	[[ $LAUTO  ]] && param+=" -Y"
+#	[[ $LFORCE ]] && param+=" -F"
 
-	case "${1}" in
-		-Sl|--local|local)  							shift;sh_initinstallpkg "$@";;
-		-Sa|-a|--alienpkg|alienpkg)	  		   shift;sh_alienpkg_main "$@";;
-		-Sy|--update|update)							shift;sh_update "${param}";;
-		-Sg|-g|--generate|generate)				sh_generatepkg "${param}";;
-		-c|--create|create)					    	sh_createpkg "${param}";;
-		-m|--meta|meta)	                     shift;sh_meta "${param}";;
-		-Ss|-ss|-SS|-sS|--search|search)	     	shift;sh_search "$@";;
-		-S|-s|-Si|-i|--install|install)			shift;sh_install "$@";;
-		-r|--remove|remove) 							shift;sh_remove "${param}";;
-		-R|--reinstall|reinstall) 					shift;sh_search "${param}";;
-		-Sw|--download|download) 					shift;sh_download "${param}";;
-		-L|-l|--list|list)    	 					shift;sh_list "$@";;
-		-La|--list-avaiable|list-avaiable) 		shift;sh_list "$@";;
-		-Lc|--list-cache|list-cache) 	        	shift;sh_FilesInCache "${param}";;
-		-Lr|--list-removed|list-removed)			sh_removed $2 $3;;
-		-Li|--list-installed|list-installed)	shift;sh_listinstalled "${@}";;
-		-Pi|--in-cache|in-cache)	            shift;sh_FilesInCache "${param}";;
-		-Po|--out-cache|out-cache)	            shift;sh_pkgoutcache "${param}";;
-		-Sc|--clean|clean)  							sh_clean $2;;
-		-w|--show|show) 								shift;sh_show "${param}";;
-		-Su|--upgrade|upgrade)						sh_upgrade ${param};;
-		-v|--version|version) 						exit;;
-		*) 												sh_search "${param}";;
-	esac
+	while true; do
+		case "${1}" in
+			-Sl|--local|local)  							shift;sh_initinstallpkg "$@";exit;;
+			-Sa|-a|--alienpkg|alienpkg)	  		   shift;sh_alienpkg_main "$@";exit;;
+			-Sy|--update|update)							shift;sh_update "${param}";exit;;
+			-Sg|-g|--generate|generate)				sh_generatepkg "$@";exit;;
+			-c|--create|create)					    	sh_createpkg "${param}";exit;;
+			-m|--meta|meta)	                     shift;sh_meta "${param}";exit;;
+			-Ss|-ss|-SS|-sS|--search|search)	     	shift;sh_search "$@";exit;;
+			-S|-s|-Si|-i|--install|install)			shift;sh_install "$@";exit;;
+			-r|--remove|remove) 							shift;sh_remove "${param}";exit;;
+			-R|--reinstall|reinstall) 					shift;sh_search "${param}";exit;;
+			-Sw|--download|download) 					shift;sh_download "${param}";exit;;
+			-L|-l|--list|list)    	 					shift;sh_list "$@";exit;;
+			-La|--list-avaiable|list-avaiable) 		shift;sh_list "$@";exit;;
+			-Lc|--list-cache|list-cache) 	        	shift;sh_FilesInCache "${param}";exit;;
+			-Lr|--list-removed|list-removed)			sh_removed $2 $3;exit;;
+			-Li|--list-installed|list-installed)	shift;sh_listinstalled "${@}";exit;;
+			-Pi|--in-cache|in-cache)	            shift;sh_FilesInCache "${param}";exit;;
+			-Po|--out-cache|out-cache)	            shift;sh_pkgoutcache "${param}";exit;;
+			-Sc|--clean|clean)  							sh_clean $2;exit;;
+			-w|--show|show) 								shift;sh_show "${param}";exit;;
+			-Su|--upgrade|upgrade)						sh_upgrade ${param};exit;;
+			-v|--version|version) 						exit;;
+			*) 												help;exit;;
+		esac
+		shift
+	done
 }
 
 
@@ -2363,43 +2367,6 @@ function _CREATE_LIST()
 }
 
 
-function _GENERATE_DESC()
-{
-	local i
-	local DESC_PACKNAME="$1"
-	local DESC_VERSION="$2"
-	local DESC_BUILD="$3"
-	DESC=$(echo "${DESC//\'}") 		## remove apostrofe. ex: let´s => lets
-
-	[[ ! -d "info" ]] && mkdir info
-    _CAT > "info/desc" << EOF
-######################################################################
-# Generated with fetch
-# Generated with alienpkg
-######################################################################
-maintainer='$MAINTAINER'
-pkgname='$DESC_PACKNAME'
-version='$DESC_VERSION'
-build='$DESC_BUILD'
-license='$LICENSE'
-lfs_version='$LFS_VERSION'
-lfs_init='$LFS_INIT'
-arch='$ARCH'
-distro='$DISTRO'
-desc='$DESC'
-size='$SIZE'
-url='$URL'
-dep=('')
-EOF
-
-	for i in ${deps[*]}
-	do
-		echo depend="'$i'" >> $descme
-	done
-	return 0
-}
-
-
 function _INPUT_NULL_PARAMETER()
 {
 	pkg=$1
@@ -2427,6 +2394,54 @@ function _NAME_FORMAT_PKG()
 	return 0
 }
 
+
+function _GENERATE_DESC()
+{
+	local i
+	local DESC_PACKNAME="$1"
+	local DESC_VERSION="$2"
+	local DESC_BUILD="$3"
+	DESC=$(echo "${DESC//\'}") 		## remove apostrofe. ex: let´s => lets
+
+	[[ ! -d "info" ]] && mkdir info
+
+	if [ -e info/desc ]; then
+		evaluate_retval
+		if !(( $LFORCE )); then
+			log_info_msg "${orange}info/desc ${reset}already exist. Skipping... Use the -f option to force recreate."
+			return
+		else
+			log_info_msg "${orange}info/desc ${reset}already exist. Rewriting"
+		fi
+	fi
+	_CAT > "info/desc" << EOF
+######################################################################
+# Generated with fetch
+# Generated with alienpkg
+######################################################################
+maintainer='$MAINTAINER'
+pkgname='$DESC_PACKNAME'
+version='$DESC_VERSION'
+build='$DESC_BUILD'
+license='$LICENSE'
+lfs_version='$LFS_VERSION'
+lfs_init='$LFS_INIT'
+arch='$ARCH'
+distro='$DISTRO'
+desc='$DESC'
+size='$SIZE'
+url='$URL'
+dep=('')
+EOF
+
+	for i in ${deps[*]}
+	do
+		echo depend="'$i'" >> $descme
+	done
+	return 0
+}
+
+
 function sh_generatepkg()
 {
 
@@ -2436,9 +2451,9 @@ function sh_generatepkg()
 
 	if [[ ${#param} -eq 0 ]]; then # run standalone
 		LAUTO=$true
-		LFORCE=$true
+#		LFORCE=$true
 		LLIST=$false
-		pkg="${PWD##*/}-2"
+		pkg="${PWD##*/}"
 	else
 		for s in ${param[@]}; do
 			if [[ $(toupper "${s}") = "-Y" ]]; then
@@ -2463,17 +2478,18 @@ function sh_generatepkg()
 		#	let inc++
 		#	eval $take="$(echo "$pkg" | cut -d '-' -f ${inc})" # Expanda e pegue o seu devido valor
 		#done
+
 		if [[ -z "$DESC_PACKNAME" ]]; then
 			sh_splitpkg ${pkg}
 			field_pkgname=${aPKGSPLIT[$PKG_BASE]}
-			field_version=${aPKGSPLIT[$PKG_BASE_VERSION]}
+			field_version=${aPKGSPLIT[$PKG_VERSION]}
 			field_build=${aPKGSPLIT[$PKG_BUILD]}
 	    else
     		field_pkgname=${DESC_PACKNAME}
     		field_version=${DESC_VERSION}
 	    	field_build=${DESC_BUILD}
-	    fi
-	    [[ -z "$field_build" ]] && field_build=$DESC_BUILD
+	   fi
+	   [[ -z "$field_build" ]] && field_build=$DESC_BUILD
 		[[ -z "$DESC" ]] && DESC="$field_pkgname-$field_version-$field_build"
 		_GENERATE_DESC "$field_pkgname" "$field_version" "$field_build" || return 1
 	fi
@@ -2851,8 +2867,8 @@ function sh_createpkg()
 	fi
 
 	log_wait_msg "(${ncount}/${ntotalpkg}) Building package $pkg"
-	#sh_generatepkg $pkg $pkg $LAUTO $LFORCE
-	sh_generatepkg $pkg $pkg -Y -F $4 $5
+	#sh_generatepkg $pkg $pkg -Y -F $4 $5
+	sh_generatepkg $pkg $pkg -Y $4 $5
 	_NAME_FORMAT_PKG "$pkg.${PKG_EXT}" || exit 1
 	_VERIFY_ON "$pkg"
 	ret=$?
@@ -2862,6 +2878,7 @@ function sh_createpkg()
 	_CREATE_PKG "$pkg" || exit 1
 	log_info_msg "(${ncount}/${ntotalpkg}) Generating package $pkg"
 	unset check_var
+	evaluate_retval
 }
 
 
