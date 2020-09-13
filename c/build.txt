@@ -1,3 +1,23 @@
+https://terminalroot.com.br/2020/03/como-compilar-programas-com-meson-build.html
+
+vim main.cpp
+
+#include <iostream>
+int main(){
+    std::cout << "Hello, World! Meson Build!" << '\n';
+    return 0;
+}
+
+vim meson.build
+project('tutorial', 'cpp')
+executable('demo', 'main.cpp')
+
 meson build
-meson build --reconfigure
-meson build --wipe
+
+#meson build --reconfigure
+#meson build --wipe
+
+cd build
+ninja
+
+./demo
