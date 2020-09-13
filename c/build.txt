@@ -1,0 +1,3 @@
+meson build
+meson build --reconfigure
+meson build --wipe
