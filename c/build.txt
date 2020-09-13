@@ -19,6 +19,8 @@ meson build
 #meson build --wipe
 
 cd build
-ninja
+meson compile
+#ou
+#ninja
 
 ./demo

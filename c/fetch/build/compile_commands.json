@@ -1,0 +1,8 @@
+[
+  {
+    "directory": "/github/chili/c/fetch/build",
+    "command": "cc -Ifetch.p -I. -I.. -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -g -mtune=generic -fPIC -Os -fomit-frame-pointer -Wunused-local-typedefs -Wunused-but-set-variable -Wunused-function -Wno-declaration-after-statement -Wno-error=deprecated-declarations -Wno-deprecated-declarations -Wno-suggest-attribute=format -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-parentheses -MD -MQ fetch.p/fetch.x.c.o -MF fetch.p/fetch.x.c.o.d -o fetch.p/fetch.x.c.o -c ../fetch.x.c",
+    "file": "../fetch.x.c",
+    "output": "fetch.p/fetch.x.c.o"
+  }
+]
