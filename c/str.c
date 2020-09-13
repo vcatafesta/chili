@@ -5,7 +5,7 @@
 int main()
 {
     int targetStrLen = 10;           // Target output length
-    const char *myString="Monkey";   // String for output
+    const char *myString="Vilmar";   // String for output
     const char *padding="#####################################################";
 
     int padLen = targetStrLen - strlen(myString); // Calc Padding length
