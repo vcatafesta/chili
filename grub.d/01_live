@@ -1,9 +1,0 @@
-#!/bin/sh
-cat <<EOF
-if [ ! -z \${boot_once} ];then
-  set timeout_style=countdown
-  set load_config=load-config
-else
-  set load_config=
-fi
-EOF
