@@ -381,13 +381,13 @@ function quit()
 function sh_checkdisk()
 {
 	local nchoice=0
-	dsk=$(df -h | grep "$sd" | awk '{print $1, $2, $3, $4, $5, $6, $7}')
+	dsk=$(df -h | grep "$sddest" | awk '{print $1, $2, $3, $4, $5, $6, $7}')
 	if [ "$dsk" <> " " ]; then
 		conf "$cwarning" "\n$cmsg_all_mounted_part\n\n$dsk\n\n$cmsg_dismount"
 		nchoice=$?
 		if [ $nchoice = 0 ]; then
 			for i in $(seq 1 10); do
-				umount -f -rl $sd$i 2> /dev/null
+				umount -f -rl $sddest$i 2> /dev/null
 			done
 		fi
 	fi
@@ -529,9 +529,14 @@ function choosediskdestin()
 				init
 				return
 			fi
+			sh_checkdisk
+			local nmontada=$?
+			if [ $nmontada = 1 ]; then
+				alerta "CHOOSEDISK" "$cmsg_nec_dismount"
+			fi
 			sh_confclone
-    	fi
-    	break
+		fi
+		break
     done
 }
 
