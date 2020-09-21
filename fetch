@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.03.20.20200913"
+_VERSION_="2.03.22.20200914"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -3057,14 +3057,14 @@ function sh_alienpkg_exec()
 
 #		as_root genalien $pkg >/dev/null 2>&1
 #		sh_generatepkg $pkg $pkg
-		mv $destdir/.BUILDINFO $destdir/info/ >/dev/null 2>&1
-		mv $destdir/.MTREE     $destdir/info/ >/dev/null 2>&1
-		mv $destdir/.PKGINFO   $destdir/info/ >/dev/null 2>&1
-		mv $destdir/.INSTALL   $destdir/info/ >/dev/null 2>&1
+#		mv $destdir/.BUILDINFO $destdir/info/ >/dev/null 2>&1
+#		mv $destdir/.MTREE     $destdir/info/ >/dev/null 2>&1
+#		mv $destdir/.PKGINFO   $destdir/info/ >/dev/null 2>&1
+#		mv $destdir/.INSTALL   $destdir/info/ >/dev/null 2>&1
 
-#		rm -f $destdir/.BUILDINFO >/dev/null 2>&1
-#		rm -f $destdir/.MTREE     >/dev/null 2>&1
-#		rm -f $destdir/.PKGINFO   >/dev/null 2>&1
+		rm -f $destdir/.BUILDINFO >/dev/null 2>&1
+		rm -f $destdir/.MTREE     >/dev/null 2>&1
+		rm -f $destdir/.PKGINFO   >/dev/null 2>&1
 
 #		log_info_msg "Building $destdir package"
 #		as_root bcpalien  >/dev/null 2>&1

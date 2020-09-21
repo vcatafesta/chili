@@ -237,7 +237,7 @@ function sh_initvars()
 		else
 			paises+=( False "$cod" "$nat" )
 		fi
-	done < <(grep -v "#" /usr/share/zoneinfo/iso3166.tab)
+	done << (grep -v "#" /usr/share/zoneinfo/iso3166.tab)
 }
 
 
