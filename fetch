@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.03.22.20200914"
+_VERSION_="2.03.24.20200923"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -99,7 +99,7 @@ LREMOVED=3
 # flag's para split package
 : ${aPKGSPLIT=()}
 : ${aPKGLIST=}
-: ${PKG_FOLDER_DIR=0}
+: ${PKG_FOLDER_DIR0}
 : ${PKG_FULLNAME=1}
 : ${PKG_ARCH=2}
 : ${PKG_BASE=3}
@@ -692,30 +692,28 @@ function sh_version()
 function help()
 {
 	echo -e "${cyan}Most used commands:"
-	echo -e "${pink}  -h, --help,           help           ${reset}- display this help and exit"
-	echo -e "${pink}  -Sa, --alienpkg,      alienpkg       ${reset}- import package from ARCH"
-	echo -e "${pink}  -Sl, --local,         local          ${reset}- install local package"
-	echo -e "${pink}  -c  --create,         create         ${reset}- build package"
-	echo -e "${pink}  -Sg, --generate,      generate       ${reset}- generate info package from source"
-	echo -e "${pink}  -Sy, --update,        update         ${reset}- update list packages in repository online. Need Internet"
-	echo -e "${pink}  -S,  --install,       install        ${reset}- install packages"
-	echo -e "${pink}  -Si, --install,       install        ${reset}- install packages"
-	echo -e "${pink}  -m, --meta,           meta           ${reset}- install meta packages"
-	echo -e "${pink}  -r, --remove,         remove         ${reset}- remove packages"
-	echo -e "${pink}  -Sc, --clean,         clean          ${reset}- erase downloaded packages files"
-	echo -e "${pink}  -Ss, --search,        search         ${reset}- search for packages"
-	echo -e "${pink}  -L, --list,           list           ${reset}- list avaiable packages based on package names"
-	echo -e "${pink}  -La,--list-avaiable,  list-avaiable  ${reset}- list avaiable packages based on package names"
-	echo -e "${pink}  -Lc,--list-cache,     list-cache     ${reset}- list downloaded packages in cache"
-	echo -e "${pink}  -Li,--list-installed, list-installed ${reset}- list installed packages"
-	echo -e "${pink}  -Lr,--list-removed,   list-removed   ${reset}- list packages removed by $0"
-	echo -e "${pink}  -Pi,--in-cache,       in-cache       ${reset}- list packages in-cache"
-	echo -e "${pink}  -Po,--out-cache,      out-cache      ${reset}- list packages out-cache"
-	echo -e "${pink}  -w, --show,           show           ${reset}- show package details"
-	echo -e "${pink}  -Sw, --download,      download       ${reset}- only download the binary package into cache directory"
-	echo -e "${pink}  -R, --reinstall,      reinstall      ${reset}- reinstal packages"
-	echo -e "${pink}  -Su, --upgrade,       upgrade        ${reset}- upgrade packages"
-	echo -e "${pink}  -v, --version,        version        ${reset}- output version information and exit"
+	echo -e "${pink}  -h,  --help,           help           ${reset}- display this help and exit"
+	echo -e "${pink}  -v,  --version,        version        ${reset}- output version information and exit"
+	echo -e "${pink}  -Sa, --alienpkg,       alienpkg       ${reset}- import package from ARCH"
+	echo -e "${pink}  -Sl, --local,          local          ${reset}- install local package"
+	echo -e "${pink}  -C   --create,         create         ${reset}- build package"
+	echo -e "${pink}  -Sg, --generate,       generate       ${reset}- generate info package from source"
+	echo -e "${pink}  -Sy, --update,         update         ${reset}- update list packages in repository online. Need Internet"
+	echo -e "${pink}  -S,  --install,        install        ${reset}- install packages"
+	echo -e "${pink}  -m,  --meta,           meta           ${reset}- install meta packages"
+	echo -e "${pink}  -R,  --remove,         remove         ${reset}- remove packages"
+	echo -e "${pink}  -L,  --list,           list           ${reset}- list avaiable packages based on package names"
+	echo -e "${pink}  -La, --list-avaiable,  list-avaiable  ${reset}- list avaiable packages based on package names"
+	echo -e "${pink}  -Lc, --list-cache,     list-cache     ${reset}- list downloaded packages in cache"
+	echo -e "${pink}  -Li, --list-installed, list-installed ${reset}- list installed packages"
+	echo -e "${pink}  -Lr, --list-removed,   list-removed   ${reset}- list packages removed by $0"
+	echo -e "${pink}  -Pi, --in-cache,       in-cache       ${reset}- list packages in-cache"
+	echo -e "${pink}  -Po, --out-cache,      out-cache      ${reset}- list packages out-cache"
+	echo -e "${pink}  -w,  --show,           show           ${reset}- show package details"
+	echo -e "${pink}  -Sc, --clean,          clean          ${reset}- erase downloaded packages files"
+	echo -e "${pink}  -Ss, --search,         search         ${reset}- search for packages"
+	echo -e "${pink}  -Su, --upgrade,        upgrade        ${reset}- upgrade packages"
+	echo -e "${pink}  -Sw, --download,       download       ${reset}- only download the binary package into cache directory"
 	echo
 	echo -e "${cyan}ex:"
 	echo -e "${yellow}  fetch update self - Update self fetch via internet"
@@ -754,12 +752,11 @@ function init()
 			-Sa|-a|--alienpkg|alienpkg)	  		   shift;sh_alienpkg_main "$@";exit;;
 			-Sy|--update|update)							shift;sh_update "${param}";exit;;
 			-Sg|-g|--generate|generate)				sh_generatepkg "$@";exit;;
-			-c|--create|create)					    	sh_createpkg "${param}";exit;;
-			-m|--meta|meta)	                     shift;sh_meta "${param}";exit;;
+			-C|-c|--create|create)					   sh_createpkg "${param}";exit;;
+			-M|-m|--meta|meta)	                  shift;sh_meta "${param}";exit;;
 			-Ss|-ss|-SS|-sS|--search|search)	     	shift;sh_search "$@";exit;;
 			-S|-s|-Si|-i|--install|install)			shift;sh_install "$@";exit;;
-			-r|--remove|remove) 							shift;sh_remove "${param}";exit;;
-			-R|--reinstall|reinstall) 					shift;sh_search "${param}";exit;;
+			-R|-r|--remove|remove) 						shift;sh_remove "$@";exit;;
 			-Sw|--download|download) 					shift;sh_download "${param}";exit;;
 			-L|-l|--list|list)    	 					shift;sh_list "$@";exit;;
 			-La|--list-avaiable|list-avaiable) 		shift;sh_list "$@";exit;;
@@ -769,7 +766,7 @@ function init()
 			-Pi|--in-cache|in-cache)	            shift;sh_FilesInCache "${param}";exit;;
 			-Po|--out-cache|out-cache)	            shift;sh_pkgoutcache "${param}";exit;;
 			-Sc|--clean|clean)  							sh_clean $2;exit;;
-			-w|--show|show) 								shift;sh_show "${param}";exit;;
+			-w|-W|--show|show) 							shift;sh_show "${param}";exit;;
 			-Su|--upgrade|upgrade)						sh_upgrade ${param};exit;;
 			-v|--version|version) 						exit;;
 			*) 												help;exit;;
