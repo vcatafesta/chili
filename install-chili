@@ -1,5 +1,5 @@
 #!/bin/bash
-declare -r version="v2.0.10-20200725"
+declare -r version="v2.1.1-20200726"
 ################################################################
 #       install dialog Chili OS - $version                     #
 #								                                       #
@@ -163,7 +163,7 @@ cfstab=$dir_install"/etc/fstab"
 # usuario/senha/hostmame/group
 : ${cuser=""}
 : ${cpass=""}
-: ${cgroups="users,wheel,audio,video"}
+: ${cgroups="wheel,audio,video"}
 
 wiki=$(cat << _WIKI
 Wiki
@@ -612,17 +612,6 @@ function sh_testsha256sum(){
     return $?
 }
 
-function sh_confkeyboard()
-{
-	cinfo=`log_info_msg "Setting keyboard layout"`
-	msg "INFO" "$cinfo"
-
-	if [[ "$keymap" != "" ]]; then
-		sed -i 's|KEYMAP|#KEYMAP|g'  $cvconsole
-		echo 'KEYMAP=$keymap" >> $cvconsole
-		return $?
-	fi
-}
 
 function sh_confhost()
 {
@@ -670,51 +659,6 @@ function sh_adduser()
 		sh_confhost
 		sh_confkeyboard
 	fi
-}
-
-function sh_confadduser()
-{
-	while true
-	do
-		# open fd
-		exec 3>&1
-		dialog 														\
-			--separate-widget	$'\n'								\
-			--cancel-label 	"$buttonback"					\
-			--backtitle 		"$cmsgusermanager"			\
-			--title 				"USERADD" 						\
-			--form 				"$ccreatenewuser"				\
-			12 50 0 													\
-			"Username : " 1 1 "$cuser"        1 13 20 0	\
-			"Password : " 2 1 "$cpass"        2 13 20 0	\
-			"Hostname : " 3 1 "$chostname"    3 13 20 0	\
-		2>&1 1>&3 | {
-			read -r cuser
-			read -r cpass
-			read -r chostname
-
-			if [ "$cuser" == "root" ]; then
-				conf "*** USER ***" "\nUsuario não pode ser root! Novamente?"
-				local retval=$?
-				if [ $retval = $false ]; then
-					alerta "*** USER *** " "Cadastramnto de usuario cancelado"
-	  				return
-	  			fi
-				sh_confadduser
-		  	fi
-			rm -f /tmp/root-cuser     ; echo $cuser > /tmp/root-cuser
-			rm -f /tmp/root-cpass     ; echo $cpass > /tmp/root-cpass
-			rm -f /tmp/root-chostname ; echo $chostname > /tmp/root-chostname
-			#sh_adduser
-			cinfo=`log_info_msg "Cadastro efetuado com sucesso"`
-		   msg "INFO" "$cinfo"
-			inkey 30
-		}
-
-		# close fd
-		exec 3>&-
-		return
-	done
 }
 
 function sh_confstartx()
@@ -1136,71 +1080,6 @@ function grubinstall()
 	if [ $STANDALONE = $false ]; then
 		sh_finish
 	fi
-}
-
-function sh_fstab()
-{
-	cinfo=`log_info_msg "$cmsgAlterar_FSTAB"`
-	msg "INFO" "$cinfo"
-
-	if [ $LAUTOMATICA = $false ]; then
-		if [ $STANDALONE = $true ]; then
-			conf "*** FSTAB ***" "\n$cmsgAlterar_FSTAB?"
-    		fstabyes=$?
-    		if [ $fstabyes = $false ]; then
-    			STANDALONE=$false
-    			return $STANDALONE
-    		fi
-    	fi
-    	if [ $LPARTITION -eq 0 ]; then
-	    	choosepartition
-    		if [ $LPARTITION -eq 0 ]; then
-    			info "\n$cancelinst"
-    			return 1
-    		fi
-    	fi
-    	if [ $LMOUNT -eq 0 ]; then
-    		sh_mountpartition
-    	fi
-    fi
-
-    sh_testlive
-    live=$?
-
-	mkdir -p $dir_install/etc >/dev/null
-	xuuid=$(blkid | grep $part | awk '{print $3}')
-	label="/            ext4     defaults            1     1"
-
-	if [ $live = $false ]; then
-		sed -ir "/<xxx>/ i $xuuid $label" $cfstab
-		sed -i 's|/dev/<xxx>|#'$part'|g' $cfstab
-    else
-       echo -e "$xuuid $label" >> $cfstab
-    fi
-
-	if [ $xUUIDSWAP != "" ]; then
-		label="swap         swap     pri=1               0     0"
-        if [ $live = $false ]; then
-        	sed -ir "/<yyy>/ i $xUUIDSWAP $label" $cfstab
-    		sed -i 's|/dev/<yyy>|'$xPARTSWAP'|g' $cfstab
-        else
-            echo -e "$xUUIDSWAP $label" >> $cfstab
-        fi
-	fi
-
-	if [ $STANDALONE = $true ]; then
-		nano $cfstab
-		local result=$( cat $cfstab )
-		display_result "$result" "$cfstab"
-		STANDALONE=$false
-	else
-    	if [ $LAUTOMATICA = $false ]; then
-	    	local result=$( cat $cfstab )
-    		display_result "$result" "$cfstab"
-	    	STANDALONE=$false
-        fi
-	fi
-
 }
 
 function sh_finish()
@@ -2545,6 +2424,53 @@ function sh_pvexecrunsquashfs(){
     |dialog --title "** UNQUASHING **" --backtitle "$ccabec" --gauge "\n$cmsg_extracting:$dir_install" 7 60
 }
 
+function sh_confadduser()
+{
+	while true
+	do
+		# open fd
+		exec 3>&1
+		dialog 														\
+			--separate-widget	$'\n'								\
+			--cancel-label 	"$buttonback"					\
+			--backtitle 		"$cmsgusermanager"			\
+			--title 				"USERADD" 						\
+			--form 				"$ccreatenewuser"				\
+			12 50 0 													\
+			"Username : " 1 1 "$cuser"        1 13 20 0	\
+			"Password : " 2 1 "$cpass"        2 13 20 0	\
+			"Hostname : " 3 1 "$chostname"    3 13 20 0	\
+		2>&1 1>&3 | {
+			read -r cuser
+			read -r cpass
+			read -r chostname
+
+			if [ "$cuser" == "root" ]; then
+				conf "*** USER ***" "\nUsuario não pode ser root! Novamente?"
+				local retval=$?
+				if [ $retval = $false ]; then
+					alerta "*** USER *** " "Cadastramnto de usuario cancelado"
+	  				return
+	  			fi
+				sh_confadduser
+		  	fi
+			rm -f /tmp/root-cuser     ; echo $cuser > /tmp/root-cuser
+			rm -f /tmp/root-cpass     ; echo $cpass > /tmp/root-cpass
+			rm -f /tmp/root-chostname ; echo $chostname > /tmp/root-chostname
+			#sh_adduser
+			cinfo=`log_info_msg "Cadastro efetuado com sucesso"`
+		   msg "INFO" "$cinfo"
+			inkey 30
+		}
+
+		# close fd
+		exec 3>&-
+		return
+	done
+}
+
+
+
 function sh_tailexecrsync(){
     {
         cd $dir_install
@@ -2705,6 +2631,84 @@ sh_checkDependencies()
 		exit 1
 	fi
 }
+
+function sh_fstab()
+{
+	cinfo=`log_info_msg "$cmsgAlterar_FSTAB"`
+	msg "INFO" "$cinfo"
+
+	if [ $LAUTOMATICA = $false ]; then
+		if [ $STANDALONE = $true ]; then
+			conf "*** FSTAB ***" "\n$cmsgAlterar_FSTAB?"
+			fstabyes=$?
+    		if [ $fstabyes = $false ]; then
+    			STANDALONE=$false
+    			return $STANDALONE
+    		fi
+    	fi
+    	if [ $LPARTITION -eq 0 ]; then
+	    	choosepartition
+    		if [ $LPARTITION -eq 0 ]; then
+    			info "\n$cancelinst"
+    			return 1
+    		fi
+    	fi
+    	if [ $LMOUNT -eq 0 ]; then
+    		sh_mountpartition
+    	fi
+   fi
+
+	sh_testlive
+   live=$?
+
+	mkdir -p $dir_install/etc >/dev/null
+	xuuid=$(blkid | grep $part | awk '{print $3}')
+	label="/            ext4     defaults            1     1"
+
+#	if [ $live = $false ]; then
+#		sed -ir "/<xxx>/ i $xuuid $label" $cfstab
+#		sed -i 's|/dev/<xxx>|#'$part'|g' $cfstab
+#   else
+#       echo -e "$xuuid $label" >> $cfstab
+#    fi
+
+	if [ $xUUIDSWAP != "" ]; then
+		label="swap         swap     pri=1               0     0"
+        if [ $live = $false ]; then
+        	sed -ir "/<yyy>/ i $xUUIDSWAP $label" $cfstab
+    		sed -i 's|/dev/<yyy>|'$xPARTSWAP'|g' $cfstab
+        else
+            echo -e "$xUUIDSWAP $label" >> $cfstab
+        fi
+	fi
+
+	if [ $STANDALONE = $true ]; then
+		nano $cfstab
+		local result=$( cat $cfstab )
+		display_result "$result" "$cfstab"
+		STANDALONE=$false
+	else
+    	if [ $LAUTOMATICA = $false ]; then
+	    	local result=$( cat $cfstab )
+    		display_result "$result" "$cfstab"
+	    	STANDALONE=$false
+        fi
+	fi
+
+}
+
+function sh_confkeyboard()
+{
+	cinfo=`log_info_msg "Setting keyboard layout"`
+	msg "INFO" "$cinfo"
+
+	if [ "$keymap" != "" ]; then
+		sed -i 's|KEYMAP|#KEYMAP|g'  $cvconsole
+		echo "KEYMAP=$keymap" >> $cvconsole
+		return $?
+	fi
+}
+
 
 # Init - configuracao inicial
 sh_checkDependencies
