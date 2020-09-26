@@ -124,7 +124,7 @@ else
 fi
 
 # variavel comuns
-grafico=$false
+grafico=$true
 site="$chost$ptcom"
 chostname=$calias
 ccabec="$cdistro Linux installer $version"
@@ -163,7 +163,7 @@ cfstab=$dir_install"/etc/fstab"
 # usuario/senha/hostmame/group
 : ${cuser=""}
 : ${cpass=""}
-: ${cgroups="wheel,audio,video"}
+: ${cgroups="users,wheel,audio,video"}
 
 wiki=$(cat << _WIKI
 Wiki
@@ -664,6 +664,8 @@ function sh_adduser()
 	   msg "INFO" "$cinfo"
 	   chroot . /bin/bash -c "useradd -m -G ${cgroups} ${cuser} -p ${cpass} > /dev/null 2>&1"
 	   chroot . /bin/bash -c "(echo $cuser:$cpass) | chpasswd -m > /dev/null 2>&1"
+	   chroot . /bin/bash -c "cp /home/live/.xinitrc /home/$cuser > /dev/null 2>&1"
+	   chroot . /bin/bash -c "userdel -R live > /dev/null 2>&1"
 	   evaluate_retval
 		sh_confhost
 		sh_confkeyboard
