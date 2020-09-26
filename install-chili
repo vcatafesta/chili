@@ -9,7 +9,7 @@ declare -r version="v2.0.10-20200725"
 #      altered: 				2020/25/09	   			            #
 ################################################################
 #. /lib/lsb/init-functions
-
+readonly DEPENDENCIES=(which tar curl sed grep cat awk tput dialog whiptail tree)
 # flag dialog exit status codes
 : ${D_OK=0}
 : ${D_CANCEL=1}
@@ -124,16 +124,17 @@ else
 fi
 
 # variavel comuns
+grafico=$false
 site="$chost$ptcom"
 chostname=$calias
-grafico=$true
 ccabec="$cdistro Linux installer $version"
 ctitle="$cdistro Linux"
-welcome="Welcome to the $ccabec"
+welcome="Welcome to the $ctitle"
 export dir_install="/mnt/lfs"
 url_release="http://$site/releases"
 url_distro="http://$site/releases/"
 pwd=$PWD
+cvconsole=$dir_install"/etc/vconsole.conf"
 cfstab=$dir_install"/etc/fstab"
 : ${tarball_min=$cnick"_minimal-0.3.tar.xz"}
 : ${sha256_min=$cnick"_minimal-0.3.tar.xz.sha256sum"}
@@ -464,24 +465,40 @@ function info()
 
 function conf()
 {
-    dialog								\
-			--title 	"$1" 			\
+    dialog									\
+			--title 		"$1" 				\
 			--backtitle	"$ccabec"		\
 			--yes-label "$yeslabel"		\
 			--no-label  "$nolabel"		\
-			--yesno 	"$2" 			\
+			--yesno 		"$2" 				\
+			10 100
+			return $?
+}
+
+function conf2()
+{
+	xtitle="$1"
+	shift
+   dialog									\
+			--title 		"$xtitle" 		\
+			--backtitle	"$ccabec"		\
+			--yes-label "$yeslabel"		\
+			--no-label  "$nolabel"		\
+			--yesno 		"$*" 				\
 			10 100
 			return $?
 }
 
 function confmulti()
 {
-    dialog								\
-			--title 	"$1" 			\
+	xtitle="$1"
+	shift
+   dialog									\
+			--title 		"$xtitle" 		\
 			--backtitle	"$ccabec"		\
 			--yes-label "$yeslabel"		\
 			--no-label  "$nolabel"		\
-			--yesno 	"$*" 			\
+			--yesno 		"$*" 				\
 			10 100
 			return $?
 }
@@ -489,9 +506,9 @@ function confmulti()
 function inkey1()
 {
     dialog								\
-			--title 	"$2" 			\
-			--backtitle	"$ccabec"		\
-			--pause 	"$2" 			\
+			--title 	"$2" 				\
+			--backtitle	"$ccabec"	\
+			--pause 	"$2" 				\
 			0 0 "$1"
 }
 
@@ -595,6 +612,18 @@ function sh_testsha256sum(){
     return $?
 }
 
+function sh_confkeyboard()
+{
+	cinfo=`log_info_msg "Setting keyboard layout"`
+	msg "INFO" "$cinfo"
+
+	if [[ "$keymap" != "" ]]; then
+		sed -i 's|KEYMAP|#KEYMAP|g'  $cvconsole
+		echo 'KEYMAP=$keymap" >> $cvconsole
+		return $?
+	fi
+}
+
 function sh_confhost()
 {
 	cinfo=`log_info_msg "$cmsgaddhost"`
@@ -637,6 +666,7 @@ function sh_adduser()
 	   chroot . /bin/bash -c "(echo $cuser:$cpass) | chpasswd -m > /dev/null 2>&1"
 	   evaluate_retval
 		sh_confhost
+		sh_confkeyboard
 	fi
 }
 
@@ -834,79 +864,81 @@ function sh_exectar(){
 	return $TARSUCCESS
 }
 
-function sh_stopbind(){
-    local xproc="$dir_install/proc"
+function sh_stopbind()
+{
+	local xproc="$dir_install/proc"
 	local xsys="$dir_install/sys"
-    local xdev="$dir_install/dev"
-    local xpts="$dir_install/dev/pts"
-    local xshm="$dir_install/dev/shm"
-    local xqueue="$dir_install/dev/mqueue"
-    local xrun="$dir_install/run"
-    local lproc=$false
-    local lsys=$false
-    local ldev=$false
-    local lpts=$false
-    local lrun=$false
-    local lshm=$false
-    local lqueue=$false
+	local xdev="$dir_install/dev"
+	local xpts="$dir_install/dev/pts"
+	local xshm="$dir_install/dev/shm"
+	local xqueue="$dir_install/dev/mqueue"
+	local xrun="$dir_install/run"
+	local lproc=$false
+	local lsys=$false
+	local ldev=$false
+	local lpts=$false
+	local lrun=$false
+	local lshm=$false
+	local lqueue=$false
 
-    pushd $pwd &>/dev/null
-   	mensagem "umount $xshm"
-   	umount -Rl $xshm > /dev/null 2>&1
-    lresultbind=$true
-    if [ $? = 0 ] ; then lshm="OK"; else lshm="FAIL" lresultbind=$false; fi
+	pushd $pwd &>/dev/null
+	mensagem "umount $xshm"
+	umount -Rl $xshm > /dev/null 2>&1
+	lresultbind=$true
 
-   	mensagem "umount $xqueue"
-   	umount -Rl $xqueue > /dev/null 2>&1
-    lresultbind=$true
-    if [ $? = 0 ] ; then lqueue="OK"; else lqueue="FAIL" lresultbind=$false; fi
+	if [ $? = 0 ] ; then lshm="OK"; else lshm="FAIL" lresultbind=$false; fi
+	mensagem "umount $xqueue"
+	umount -Rl $xqueue > /dev/null 2>&1
+	lresultbind=$true
 
-   	mensagem "umount $xpts"
-   	umount -Rl $xpts > /dev/null 2>&1
-    lresultbind=$true
-    if [ $? = 0 ] ; then lpts="OK"; else lpts="FAIL" lresultbind=$false; fi
+  	if [ $? = 0 ] ; then lqueue="OK"; else lqueue="FAIL" lresultbind=$false; fi
+	mensagem "umount $xpts"
+	umount -Rl $xpts > /dev/null 2>&1
+	lresultbind=$true
 
-   	mensagem "umount $xproc"
-   	umount -Rl $xproc > /dev/null 2>&1
-    lresultbind=$true
-    if [ $? = 0 ] ; then lproc="OK"; else lproc="FAIL" lresultbind=$false; fi
+	if [ $? = 0 ] ; then lpts="OK"; else lpts="FAIL" lresultbind=$false; fi
+	mensagem "umount $xproc"
+	umount -Rl $xproc > /dev/null 2>&1
+	lresultbind=$true
 
+	if [ $? = 0 ] ; then lproc="OK"; else lproc="FAIL" lresultbind=$false; fi
 	mensagem "umount $xsys"
 	umount -Rl $xsys > /dev/null 2>&1
-    if [ $? = 0 ] ; then lsys="OK"; else lsys="FAIL" lresultbind=$false; fi
 
-    mensagem "umount $xrun"
-    umount -Rl $xrun > /dev/null 2>&1
-    if [ $? = 0 ] ; then lrun="OK"; else lrun="FAIL" lresultbind=$false; fi
+	if [ $? = 0 ] ; then lsys="OK"; else lsys="FAIL" lresultbind=$false; fi
+	mensagem "umount $xrun"
+	umount -Rl $xrun > /dev/null 2>&1
 
-    mensagem "umount $xdev"
-    umount -Rl $xdev > /dev/null 2>&1
-    if [ $? = 0 ] ; then ldev="OK"; else ldev="FAIL" lresultbind=$false; fi
+	if [ $? = 0 ] ; then lrun="OK"; else lrun="FAIL" lresultbind=$false; fi
+	mensagem "umount $xdev"
+	umount -Rl $xdev > /dev/null 2>&1
 
-    mensagem "umount $xdev"
-    umount -Rl $xdev > /dev/null 2>&1
-    if [ $? = 0 ] ; then ldev="OK"; else ldev="FAIL" lresultbind=$false; fi
+	if [ $? = 0 ] ; then ldev="OK"; else ldev="FAIL" lresultbind=$false; fi
+	mensagem "umount $xdev"
+	umount -Rl $xdev > /dev/null 2>&1
 
-    mensagem "umount $xdev"
-    umount -Rl $xdev > /dev/null 2>&1
-    if [ $? = 0 ] ; then ldev="OK"; else ldev="FAIL" lresultbind=$false; fi
+	if [ $? = 0 ] ; then ldev="OK"; else ldev="FAIL" lresultbind=$false; fi
+	mensagem "umount $xdev"
+	umount -Rl $xdev > /dev/null 2>&1
 
-    xstrbind="mount $xproc : $lproc    \
+	if [ $? = 0 ] ; then ldev="OK"; else ldev="FAIL" lresultbind=$false; fi
+	xstrbind="mount $xproc : $lproc    \
             \nmount $xsys : $lsys     \
             \nmount $xdev : $ldev     \
             \nmount $xrun : $lrun"
-    popd  &>/dev/null
+   popd  &>/dev/null
 }
 
-function sh_initbind(){
-    local xproc="--type proc /proc $dir_install/proc/"
+function sh_initbind()
+{
+	local xproc="--type proc /proc $dir_install/proc/"
 	local xsys="--rbind /sys $dir_install/sys/"
-    local xdev="--rbind /dev $dir_install/dev/"
-    local xrun="--rbind /run $dir_install/run/"
-    local lproc=$false
-    local lsys=$false
-    local ldev=$false
-    local lrun=$false
+   local xdev="--rbind /dev $dir_install/dev/"
+   local xrun="--rbind /run $dir_install/run/"
+   local lproc=$false
+   local lsys=$false
+   local ldev=$false
+   local lrun=$false
 
 	cd $dir_install
 	mkdir -p $dir_install/home > /dev/null 2>&1
@@ -1137,11 +1169,11 @@ function sh_fstab()
 	xuuid=$(blkid | grep $part | awk '{print $3}')
 	label="/            ext4     defaults            1     1"
 
-    if [ $live = $false ]; then
-    	sed -ir "/<xxx>/ i $xuuid $label" $cfstab
-	    sed -i 's|/dev/<xxx>|#'$part'|g' $cfstab
+	if [ $live = $false ]; then
+		sed -ir "/<xxx>/ i $xuuid $label" $cfstab
+		sed -i 's|/dev/<xxx>|#'$part'|g' $cfstab
     else
-        echo -e "$xuuid $label" >> $cfstab
+       echo -e "$xuuid $label" >> $cfstab
     fi
 
 	if [ $xUUIDSWAP != "" ]; then
@@ -1166,6 +1198,7 @@ function sh_fstab()
 	    	STANDALONE=$false
         fi
 	fi
+
 }
 
 function sh_finish()
@@ -1946,6 +1979,7 @@ function scrmain()
 function pt_BR()
 {
 	lang="pt_BR"
+	cmsgSetKeyboardLayout="Definir layout do teclado"
 	buttonback="Voltar"
 	cmsg000="Sair"
 	cmsg001=$ccabec
@@ -2086,6 +2120,7 @@ function pt_BR()
 function en_US()
 {
 	lang="en_US"
+	cmsgSetKeyboardLayout="Set keyboard layout"
 	buttonback="Back"
 	cmsg000="Exit"
 	cmsg001=$ccabec
@@ -2239,13 +2274,13 @@ function sh_checkroot()
 
 function sh_testdialog()
 {
-    local xswap_grafico=$grafico
+	local xswap_grafico=$grafico
 	grafico=$false
-    clear
+	clear
 	cinfo=`log_info_msg "Wait, verifying dialog..."`
-    msg "INFO" "$cinfo"
-    test -e /usr/bin/dialog > /dev/null 2>&1
-    evaluate_retval
+	msg "INFO" "$cinfo"
+	test -e /usr/bin/dialog > /dev/null 2>&1
+	evaluate_retval
 
 	if [ $? = $false ]; then
 		echo "You must install the dialog package to run $0"
@@ -2266,53 +2301,53 @@ function init()
 {
 	sh_testdialog
 	sh_checkroot
-    sh_testlive
-    live=$?
+	sh_testlive
+	live=$?
 
 	while true; do
-		i18=$(dialog													\
-			--stdout                                                  	\
-			--backtitle	 	"$ccabec"				                    \
-			--title 		"$welcome"				                    \
-			--cancel-label	"Exit"	 									\
-	        --menu			'\nChoose the language of the installer:'	\
-	        0 80 0                                 						\
-	        1 'Português'						 						\
-	       	2 'English'							  						\
-		   	3 'Wiki'													)
+		i18=$(dialog																\
+			--stdout                                                	\
+			--backtitle	 	"$ccabec"				                    	\
+			--title 			"$welcome"				                    	\
+			--cancel-label	"Exit"	 											\
+	      --menu			'\nChoose the language of the installer:'	\
+	      0 80 0                                 						\
+	      1 'Português'						 									\
+			2 'English'							  									\
+		   3 'Wiki'																	)
 
-			exit_status=$?
-			case $exit_status in
-				$ESC)
-                    clear
-					scrend 1
-					;;
-				$CANCEL)
-                    clear
-					scrend 0
-					;;
-			esac
-			case $i18 in
-				1)
-					pt_BR
-                    if [ $live = $true ]; then
-                        sh_liveinstall
-                    else
-    					scrmain
-                    fi
-					;;
-				2)
-					en_US
-                    if [ $live = $true ]; then
-                        sh_liveinstall
-                    else
-    					scrmain
-                    fi
-					;;
-				3)
-					dialog --no-collapse --title "$cdistro Wiki" --msgbox "$wiki" 0 0
-					;;
-			esac
+		exit_status=$?
+		case $exit_status in
+			$ESC)
+				clear
+				scrend 1
+				;;
+			$CANCEL)
+         	clear
+				scrend 0
+				;;
+		esac
+		case $i18 in
+			1)
+				pt_BR
+				if [ $live = $true ]; then
+					sh_liveinstall
+				else
+    				scrmain
+            fi
+				;;
+			2)
+				en_US
+				if [ $live = $true ]; then
+					sh_liveinstall
+				else
+					scrmain
+				fi
+				;;
+			3)
+				dialog --no-collapse --title "$cdistro Wiki" --msgbox "$wiki" 0 0
+				;;
+		esac
 	done
 }
 
@@ -2535,55 +2570,65 @@ function sh_wgetsqfs(){
 	#sh_pvexecrunsquashfs
 }
 
-function sh_liveinstall(){
-	confmulti 	"$cmsgInstalacao_Automatica"                  		\
-				"\n$cmsgNeste_modo_a_instalacao_sera_automatizada"	\
-        		"\n\n$cmsgDeseja_continuar_e_escolher_o_disco_destino?"
+function sh_liveinstall()
+{
+	confmulti	"$cmsgInstalacao_Automatica"                  		\
+					"\n$cmsgNeste_modo_a_instalacao_sera_automatizada"	\
+        			"\n\n$cmsgDeseja_continuar_e_escolher_o_disco_destino?"
 
-    local nChoice=$?
-    if [ $nChoice = $false ]; then
-        LAUTOMATICA=$false
-        scrmain
-    fi
+	local nChoice=$?
+	if [ $nChoice = $false ]; then
+		LAUTOMATICA=$false
+		scrmain
+	fi
+
 	FULLINST=$true
 	LADDUSER=$false
-    LAUTOMATICA=$true
-    choosedisk
-    nChoice=$?
-    if [ $nChoice = $false ]; then
-        info "$cmsgInstalacao_Automatica" "\n$cmsgInstalacao_Automatica_cancelada"
-        zeravar
-        sh_tools
-    fi
-    mbr=$(dialog --radiolist 'Instalacao do GRUB:'      \
-        0 0 0                                           \
-        EFI     "Interface de Firmaware Extensivel" off \
-        BIOS    "Sistema Básico de Entrada e Saída" on 	\
-        2>&1 >/dev/tty )
+	LAUTOMATICA=$true
 
-    exit_status=$?
-    case $exit_status in
-    $ESC)
-        info "$cmsgInstalacao_Automatica" "\n$cmsgInstalacao_Automatica_cancelada"
-        zeravar
-        sh_tools
-        ;;
-    $CANCEL)
-        info "$cmsgInstalacao_Automatica" "\n$cmsgInstalacao_Automatica_cancelada"
-        zeravar
-        sh_tools
-        ;;
-    esac
-    LGRUB=$mbr
+	choosedisk
+	nChoice=$?
+	if [ $nChoice = $false ]; then
+		info "$cmsgInstalacao_Automatica" "\n$cmsgInstalacao_Automatica_cancelada"
+		zeravar
+		sh_tools
+	fi
 
-   	conf "*** ADDUSER ***" "\n$cconfusernow?"
-   	if [ $? = $true ]; then
+	mbr=$(dialog --radiolist 'Instalacao do GRUB:'      \
+		0 0 0                                           \
+      EFI     "Interface de Firmaware Extensivel" off \
+      BIOS    "Sistema Básico de Entrada e Saída" on 	\
+      2>&1 >/dev/tty )
+
+	exit_status=$?
+	case $exit_status in
+		$ESC)
+			info "$cmsgInstalacao_Automatica" "\n$cmsgInstalacao_Automatica_cancelada"
+			zeravar
+			sh_tools
+			;;
+		$CANCEL)
+			info "$cmsgInstalacao_Automatica" "\n$cmsgInstalacao_Automatica_cancelada"
+			zeravar
+			sh_tools
+			;;
+	esac
+	LGRUB=$mbr
+
+	keymap=$(grep ^KEYMAP /etc/vconsole.conf | cut -d= -f2)
+	conf2 "*** KEYBOARD ***" "Current layout : $keymap" "\n\nSet new keyboard layout?"
+	if [ $? = $true ]; then
+		setkeymap
+	fi
+
+	conf "*** ADDUSER ***" "\n$cconfusernow?"
+	if [ $? = $true ]; then
 		LADDUSER=$true
-   		sh_confadduser
-   	fi
+		sh_confadduser
+	fi
 
-    conf "$cmsgInstalacao_Automatica" "\nTudo pronto para iniciar a instalação. Continuar?"
-    nChoice=$?
+	conf "$cmsgInstalacao_Automatica" "\nTudo pronto para iniciar a instalação. Continuar?"
+	nChoice=$?
     if [ $nChoice = $false ]; then
         info "$cmsgInstalacao_Automatica" "\n$cmsgInstalacao_Automatica_cancelada"
         zeravar
@@ -2603,22 +2648,65 @@ function sh_liveinstall(){
         zeravar
         sh_tools
     fi
+
 	sh_mkswap
-    sh_wgetsqfs
-    sh_fstab
+	sh_wgetsqfs
+	sh_fstab
 	sh_initbind
-    if [ $LADDUSER = $true ]; then
+
+	if [ $LADDUSER = $true ]; then
 		sh_adduser
 	fi
 	grubinstall
-    sh_stopbind
-    sh_stopbind
-    sh_stopbind
-    zeravar
+	sh_stopbind
+   sh_stopbind
+   sh_stopbind
+   zeravar
+}
+
+
+function setkeymap()
+{
+	items=$(find /usr/share/kbd/keymaps/ -type f -printf "%f\n" | sort -V)
+	options=()
+
+	for item in ${items}; do
+		options+=("${item%%.*}" "")
+	done
+
+	keymap=$(whiptail --backtitle "${ccabec}" --title "Set keyboard layout" --menu "" 0 0 0 \
+	"${options[@]}" \
+	3>&1 1>&2 2>&3)
+	nchoice=$?
+	if [ "{nchoice}" = "0" ]; then
+		clear
+		echo "loadkeys ${keymap}"
+		loadkeys ${keymap}
+		#alerta "KEYBOARD" "\n\nkeyboard: ${keymap}"
+	fi
+	return $nchoice
+}
+
+sh_checkDependencies()
+{
+	local errorFound=0
+	for command in "${DEPENDENCIES[@]}"; do
+	if ! which "$command"  &> /dev/null ; then
+		echo "ERRO: não encontrei o comando '$command'" >&2
+		errorFound=1
+		fi
+	done
+	if [[ "$errorFound" != "0" ]]; then
+		echo "---IMPOSSÍVEL CONTINUAR---"
+		echo "Esse script precisa dos comandos listados acima" >&2
+		echo "Instale-os e/ou verifique se estão no seu \$PATH" >&2
+		exit 1
+	fi
 }
 
 # Init - configuracao inicial
-sh_stopbind
+sh_checkDependencies
+#sh_stopbind
 init
 
 :<<'LIXO'
@@ -2628,4 +2716,4 @@ Passagem padrão original de Lorem Ipsum, usada desde o século XVI.
 Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
 dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
 proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-'LIXO'
+:'LIXO'
