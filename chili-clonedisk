@@ -1,11 +1,11 @@
 #!/bin/bash
 #################################################################
-#             Vilmar Catafesta 	<vcatafesta@gmail.com>      	 #
+#      Vilmar Catafesta 			<vcatafesta@gmail.com>      	 #
 #      license: 						MIT		                      #
 #      created: 						2020/09/20   	                #
 #      altered:                  2020/09/20	                   #
 #################################################################
-declare -r version="v1.0.00-20200920"
+declare -r version="v1.0.00-20200927"
 readonly DEPENDENCIES=(which dialog pv grep sed cat awk tput)
 #. /lib/lsb/init-functions
 
@@ -16,12 +16,6 @@ readonly DEPENDENCIES=(which dialog pv grep sed cat awk tput)
 : ${D_EXTRA=3}
 : ${D_ITEM_HELP=4}
 : ${D_ESC=255}
-
-# sfdisk type
-nEFI=1
-nBIOS=4
-nSWAP=19
-nLINUX=20
 
 # vars bool
 trancarstderr=2>&-
@@ -92,9 +86,10 @@ xdistro=$(uname -n)
 
 # variavel comuns
 grafico=$true
+xapp="Chili clone disk"
 ccabec="Chili clone disk $version"
 ctitle="$cdistro Linux"
-welcome="Welcome to the $ccabec"
+welcome="Welcome to the $xapp"
 export dir_install="/mnt/lfs"
 url_release="http://$site/releases"
 url_distro="http://$site/releases/"
