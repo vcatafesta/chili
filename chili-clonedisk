@@ -90,18 +90,6 @@ xapp="Chili clone disk"
 ccabec="Chili clone disk $version"
 ctitle="$cdistro Linux"
 welcome="Welcome to the $xapp"
-export dir_install="/mnt/lfs"
-url_release="http://$site/releases"
-url_distro="http://$site/releases/"
-pwd=$PWD
-cfstab=$dir_install"/etc/fstab"
-: ${tarball_min=$cnick"_minimal-0.3.tar.xz"}
-: ${sha256_min=$cnick"_minimal-0.3.tar.xz.sha256sum"}
-: ${tarball_full=$cnick"_beta-1.3.tar.xz"}
-: ${sha256_full=$cnick"_beta-1.3.tar.xz.sha256sum"}
-: ${FULLINST=$true}
-: ${tarball_default=$tarball_full}
-: ${sha256_default=$sha256_full}
 
 # flag para disco/particao/formatacao/montagem
 : ${LDISK=0}
@@ -119,10 +107,45 @@ cfstab=$dir_install"/etc/fstab"
 : ${LAUTOMATICA=$false}
 : ${xLABEL=$cdistro}
 
-# usuario/senha/hostmame/group
-: ${cuser=""}
-: ${cpass=""}
-: ${cgroups="audio,video"}
+function setvarcolors()
+{
+   if tput setaf 1 &> /dev/null; then
+      tput sgr0; # reset colors
+      bold=$(tput bold);
+      reset=$(tput sgr0);
+      black=$(tput setaf 0);
+      blue=$(tput setaf 33);
+      cyan=$(tput setaf 37);
+      green=$(tput setaf 64);
+      orange=$(tput setaf 166);
+      purple=$(tput setaf 125);
+      red=$(tput setaf 124);
+      violet=$(tput setaf 61);
+      white=$(tput setaf 15);
+      yellow=$(tput setaf 136);
+      pink="\033[35;1m";
+   else
+      bold='';
+      reset="\e[0m";
+      black="\e[1;30m";
+      blue="\e[1;34m";
+      cyan="\e[1;36m";
+      green="\e[1;32m";
+      orange="\e[1;33m";
+      purple="\e[1;35m";
+      red="\e[1;31m";
+      violet="\e[1;35m";
+      white="\e[1;37m";
+      yellow="\e[1;33m";
+      pink="\033[35;1m";
+   fi
+}
+
+function DOT()
+{
+	printf "${blue}:: ${reset}"
+	return
+}
 
 function inkey()
 {
@@ -348,12 +371,13 @@ function conf()
 
 function confmulti()
 {
+	shift
 	dialog							\
-		--title 	"$1" 				\
+		--title 		"$1" 			\
 		--backtitle	"$ccabec"	\
 		--yes-label "$yeslabel"	\
 		--no-label  "$nolabel"	\
-		--yesno 	"$*" 				\
+		--yesno 		"$*"			\
 		10 100
 		return $?
 }
@@ -393,7 +417,7 @@ function choosedisk()
 {
 	while true
 	do
-		# escolha o disco a ser particionado // Choose disk to be parted
+		# Choose disk to be parted
 		################################################################
 		devices=($(fdisk -l | egrep -o '/dev/sd[a-z]'|uniq))
 		size=($(fdisk -l|sed -n '/sd[a-z]:/p'|awk '{print $3$4}'|sed 's/://p'|sed 's/[,\t]*$//'|awk '{printf "%10s\n", $1}'))
@@ -558,9 +582,14 @@ function sh_domkclone()
 	return $nchoice
 }
 
-function pt_BR(){
+function pt_BR()
+{
 	lang="pt_BR"
+  	cmsgErro="ERRO"
 	buttonback="Voltar"
+  	cmsgNaoEncontreiOComando="não encontrei o comando "
+  	cmsgEsseScriptPrecisaDosComandosListadosAcima="Esse script precisa dos comandos listados acima"
+   cmsgInstaleOuVerifique="Instale-os e/ou verifique se estão no seu \$PATH"
 	cmsg000="Sair"
 	cmsg001=$ccabec
 	cmsg002=$ctitle
@@ -695,9 +724,14 @@ function pt_BR(){
 	cmsgDeseja_continuar_e_escolher_o_disco_destino="Deseja continuar e escolher o disco destino"
 }
 
-function en_US(){
+function en_US()
+{
 	lang="en_US"
 	buttonback="Back"
+  	cmsgErro="ERROR"
+  	cmsgNaoEncontreiOComando="não encontrei o comando "
+  	cmsgEsseScriptPrecisaDosComandosListadosAcima="Esse script precisa dos comandos listados acima"
+   cmsgInstaleOuVerifique="Instale-os e/ou verifique se estão no seu \$PATH"
 	cmsg000="Exit"
 	cmsg001=$ccabec
 	cmsg002=$ctitle
@@ -834,15 +868,15 @@ function en_US(){
 	cmsgDeseja_continuar_e_escolher_o_disco_destino="Do you want to continue and choose the destination disk"
 }
 
-function scrend(){
-	#info "By"
-	#clear
+function scrend()
+{
 	exit $1
 }
 
-function sh_checkroot(){
+function sh_checkroot()
+{
 	if [ "$(id -u)" != "0" ]; then
-		alerta "$cdistro Linux installer" "\nYou should run this script as root!"
+		alerta "$ctitle" "\nYou should run this script as root!"
 		scrend 0
 	fi
 }
@@ -855,9 +889,9 @@ function init()
 		i18=$(dialog															\
 			--stdout                                              \
 			--backtitle	 	"$ccabec"				                  \
-			--title 		"$welcome"				                    	\
+			--title 			"$welcome"			                    	\
 			--cancel-label	"Exit"	 										\
-	        --menu			'\nChoose the language:'					\
+			--menu			'\nChoose the language:'					\
 	        	0 80 0                                 				\
 				1 'Português'						 							\
 	       	2 'English'							  							)
@@ -890,24 +924,24 @@ function init()
 function checkDependencies()
 {
 	local errorFound=0
-
 	for command in "${DEPENDENCIES[@]}"; do
    if ! which "$command"  &> /dev/null ; then
-   	echo "ERRO: não encontrei o comando '$command'" >&2
+   	printf "%s\n" "$(DOT)${red}$cmsgErro: $cmsgNaoEncontreiOComando ${yellow}'$command'${reset}"
      	errorFound=1
 	fi
   	done
 
   	if [[ "$errorFound" != "0" ]]; then
-   	echo "---IMPOSSÍVEL CONTINUAR---"
-    	echo "Esse script precisa dos comandos listados acima" >&2
-    	echo "Instale-os e/ou verifique se estão no seu \$PATH" >&2
+   	echo
+    	printf "%s\n" "$cmsgEsseScriptPrecisaDosComandosListadosAcima"
+    	printf "%s\n" "$cmsgInstaleOuVerifique"
     	exit 1
   	fi
 }
 
-# Init - configuracao inicial
-
+# entrypoint - configuracao inicial
+setvarcolors
+en_US
 sh_checkroot
 checkDependencies
 init
