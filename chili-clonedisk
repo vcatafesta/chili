@@ -329,7 +329,7 @@ function display_result()
 	fi
 
 	dialog 								\
-		--title 	"$2"					\
+		--title 		"$2"				\
 		--beep                     \
 		--no-collapse					\
 		--no-cr-wrap               \
@@ -359,21 +359,24 @@ function info()
 
 function conf()
 {
+	xtitle="$1"
+	shift
 	dialog								\
-		--title 	"$1" 					\
+		--title 		"$xtitle" 		\
 		--backtitle	"$ccabec"		\
 		--yes-label "$yeslabel"		\
 		--no-label  "$nolabel"		\
-		--yesno 	"$2" 					\
-		10 100
+		--yesno 		"$*" 				\
+		0 0
 		return $?
 }
 
 function confmulti()
 {
+	xtitle="$1"
 	shift
 	dialog							\
-		--title 		"$1" 			\
+		--title 		"$xtitle"	\
 		--backtitle	"$ccabec"	\
 		--yes-label "$yeslabel"	\
 		--no-label  "$nolabel"	\
@@ -385,10 +388,10 @@ function confmulti()
 function inkey1()
 {
 	dialog							\
-		--title 	"$2" 				\
+		--title 		"$2" 			\
 		--backtitle	"$ccabec"	\
-		--pause 	"$2" 				\
-		0 0 "$1"
+		--pause 		"$2"			\
+		0 0 			"$1"
 }
 
 function quit()
@@ -561,7 +564,13 @@ function choosediskdestin()
 
 function sh_confclone()
 {
-	conf " *** WARNING *** " "\n   $cmsgTodos_os_dados_serao_perdidos \n\n      SOURCE DISK : $MODELO_ORIGEM \n  DISK DESTINATION: $MODELO_DESTINO"
+	conf 	" *** WARNING *** " 								\
+			"\n$cmsgTodos_os_dados_serao_perdidos\n" 	\
+			"${MODELO_DESTINO}" 								\
+			"\n\n       SOURCE DISK: $MODELO_ORIGEM \n  DISK DESTINATION: $MODELO_DESTINO" \
+			"\n\n" 																								\
+     		"Continuar com o clone?\n"
+
 	format=$?
 	if [ $format = 0 ] ; then
 		sh_domkclone
@@ -617,7 +626,7 @@ function pt_BR()
 	cmsgversion=$cmsg015
 	cmsg018="Baixar pacote full (X)"
 	cmsg019="Baixar pacote minimal"
-	cmsgTodos_os_dados_serao_perdidos="** AVISO ** Todos os dados serão perdidos!"
+	cmsgTodos_os_dados_serao_perdidos="** AVISO ** Todos os dados disco DESTINO abaixo serão perdidos!"
 	cmsg021="Formatar partição"
 	menuquit="Sair"
 	menustep="Passo a passo"
