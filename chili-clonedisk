@@ -3,7 +3,7 @@
 #      Vilmar Catafesta 			<vcatafesta@gmail.com>      	 #
 #      license: 						MIT		                      #
 #      created: 						2020/09/20   	                #
-#      altered:                  2020/09/20	                   #
+#      altered:                  2020/09/27	                   #
 #################################################################
 declare -r version="v1.0.00-20200927"
 readonly DEPENDENCIES=(which dialog pv grep sed cat awk tput)
@@ -304,7 +304,7 @@ function msg()
 function mensagem()
 {
 	dialog                  	\
-		--title 	"$ctitle"   	\
+		--title 		"$ctitle"  	\
 		--backtitle	"$ccabec"	\
 		--infobox 	"$*"        \
     	6 60
@@ -315,7 +315,7 @@ function tolower()
 	$1 | tr 'A-Z' 'a-z'
 }
 
-function toloupper()
+function toupper()
 {
 	$1 | tr 'a-z' 'Z-A'
 }
@@ -485,7 +485,7 @@ function choosediskdestin()
 {
 	while true
 	do
-		# escolha o disco a ser particionado // Choose disk to be parted
+		# Choose disk to be parted
 		################################################################
 		devices=($(fdisk -l | egrep -o '/dev/sd[a-z]'|uniq))
 		size=($(fdisk -l|sed -n '/sd[a-z]:/p'|awk '{print $3$4}'|sed 's/://p'|sed 's/[,\t]*$//'|awk '{printf "%10s\n", $1}'))
