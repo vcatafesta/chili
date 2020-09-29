@@ -115,7 +115,7 @@ if [ "${xdistro}" = "mazonos" ]; then
 else
     cdistro="ChiliOS"
     # servidor local
-    chost="201.7.66.107"
+    chost="locahost"
     ptcom=""
     oldspkg="/"
     calias="chili"
@@ -1819,20 +1819,19 @@ function scrmain()
 {
 	while true
 	do
-		#sd=$(ls /dev/sd*)
-		main=$(dialog 														\
-				--stdout                                                  	\
-				--backtitle 	"$ccabec"									\
-				--title 		"$cmsg001"						  			\
-				--cancel-label	"$buttonback"								\
-		        --menu 			"\n\n$cmsg004" 	 							\
-		        0 0 0                                 						\
-		        1 "$cmsgBaixar_pacote_de_instalacao"						\
-		        2 "$cmsg006"						  						\
-		        3 "$cmsg007"												\
-			   	4 "Install"	   					     						\
-			   	5 "$ctools"							     					\
-			   	6 "Live install"					     					)
+		main=$(dialog 										\
+			--stdout                               \
+			--backtitle 	"$ccabec"					\
+			--title 			"$cmsg001"					\
+			--cancel-label	"$buttonback"				\
+			--menu 			"\n\n$cmsg004" 	 		\
+			0 0 0                                 	\
+			1 "$cmsgBaixar_pacote_de_instalacao"	\
+			2 "$cmsg006"						  			\
+			3 "$cmsg007"									\
+			4 "Install"	   					     		\
+			5 "$ctools"							     		\
+			6 "Live install"					     		)
 
 				exit_status=$?
 				case $exit_status in
@@ -2279,42 +2278,41 @@ sh_tools()
 {
 	while true
 	do
-		tools=$(dialog 														\
-				--stdout                                                  	\
-				--backtitle 	"$ccabec"									\
-				--title 		"$cmsg001"						  			\
-				--cancel-label	"$buttonback"								\
-		        --menu 			"\n\n$cmsg004" 		 						\
-		        0 0 0                                 						\
-		        1 "$cmsgInstalar_GRUB"					    				\
-		        2 "$cmsgAlterar_FSTAB"				  						\
-		        3 "$cinitbind"												\
-		        4 "$cconfuser"												\
-		        5 "$cmsgPacotes_disponiveis"								\
-		        6 "$cmsg_part_disk"											\
-		        7 "$cmsgInstalacao_Automatica"							    )
+		tools=$(dialog 							\
+			--stdout                         \
+			--backtitle 	"$ccabec"			\
+			--title 			"$cmsg001"			\
+			--cancel-label	"$buttonback"		\
+			--menu 			"\n\n$cmsg004" 	\
+			0 0 0                            \
+			1 "$cmsgInstalar_GRUB"				\
+			2 "$cmsgAlterar_FSTAB"				\
+			3 "$cinitbind"							\
+			4 "$cconfuser"							\
+			5 "$cmsgPacotes_disponiveis"		\
+			6 "$cmsg_part_disk"					\
+			7 "Clone Disk"							\
+			8 "$cmsgInstalacao_Automatica"	)
 
-				exit_status=$?
-				case $exit_status in
-					$ESC)
-						#scrend 1
-						#exit 1
-						scrmain
-						;;
-					$CANCEL)
-						#scrend 0
-						scrmain
-						;;
-				esac
-		        case $tools in
-					1) STANDALONE=$true; grubinstall;;
-					2) STANDALONE=$true; sh_fstab;;
-					3) STANDALONE=$true; LDISK=0; LPARTITION=0; sh_bind;;
-					4) STANDALONE=$true; sh_confadduser;;
-					5) sh_packagedisp;;
-					6) choosedisk "SEE";;
-					7) sh_automated_install;;
-				esac
+			exit_status=$?
+			case $exit_status in
+				$ESC)
+					scrmain
+					;;
+				$CANCEL)
+					scrmain
+					;;
+			esac
+			case $tools in
+				1) STANDALONE=$true; grubinstall;;
+				2) STANDALONE=$true; sh_fstab;;
+				3) STANDALONE=$true; LDISK=0; LPARTITION=0; sh_bind;;
+				4) STANDALONE=$true; sh_confadduser;;
+				5) sh_packagedisp;;
+				6) choosedisk "SEE";;
+				7) exec chili-clonedisk;;
+				8) sh_automated_install;;
+			esac
 	done
 }
 
