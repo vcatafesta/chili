@@ -1,0 +1,28 @@
+#!/usr/bin/bash
+
+. /lib/lsb/init-functions
+
+{
+   if [ $# -gt 0 ]; then
+      CHROOTDIR="$1"
+      log_wait_msg "Criando CHROOT on $CHROOTDIR"
+      mkdir -pv $CHROOTDIR
+      for i in /dev /dev/pts /proc /sys /run; do
+         log_wait_msg "Binding $CHROOTDIR$i"
+         sudo mount -B ${i} ${CHROOTDIR}${i}
+      done
+      log_wait_msg "Iniciando CHROOT at $CHROOTDIR"
+      sudo chroot ${CHROOTDIR}
+      log_wait_msg "Unbinding $CHROOTDIR"
+      sudo umount -rl ${CHROOTDIR}/run
+      sudo umount -rl ${CHROOTDIR}/sys
+      sudo umount -rl ${CHROOTDIR}/proc
+      sudo umount -rl ${CHROOTDIR}/dev/pts
+      sudo umount -rl ${CHROOTDIR}/dev
+      #sudo grub-install /dev/sdb
+      #sudo update-grub /dev/sdb
+   else
+      echo "Uso: chili-chroot /mnt/full"
+   fi
+}
+
