@@ -5,7 +5,7 @@
 #      created: 						2020/09/20   	                #
 #      altered:                  2020/09/27	                   #
 #################################################################
-declare -r version="v1.0.00-20200927"
+declare -r version="v1.0.01-20201001"
 readonly DEPENDENCIES=(which dialog pv grep sed cat awk tput)
 #. /lib/lsb/init-functions
 
@@ -424,7 +424,7 @@ function choosedisk()
 		################################################################
 		devices=($(fdisk -l | egrep -o '/dev/sd[a-z]'|uniq))
 		size=($(fdisk -l|sed -n '/sd[a-z]:/p'|awk '{print $3$4}'|sed 's/://p'|sed 's/[,\t]*$//'|awk '{printf "%10s\n", $1}'))
-		modelo=($(fdisk -l | grep -E "(Modelo|Model)"|sed 's/^[:\t]*//'|cut -d':' -f2 | sed 's/^[ \t]*//;s/[ \t]*$//'|sed 's/ /_/'))
+		modelo=($(fdisk -l | grep -E "(Modelo|Model)"|sed 's/^[:\t]*//'|cut -d':' -f2 | sed 's/^[ \t]*//;s/[ \t]*$//'|sed 's/[[:space:]]\+/_/g'))
 
     	LDISK=0
 		local xmsg=$cdisco
