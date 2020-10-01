@@ -492,7 +492,7 @@ function choosediskdestin()
 		################################################################
 		devices=($(fdisk -l | egrep -o '/dev/sd[a-z]'|uniq))
 		size=($(fdisk -l|sed -n '/sd[a-z]:/p'|awk '{print $3$4}'|sed 's/://p'|sed 's/[,\t]*$//'|awk '{printf "%10s\n", $1}'))
-		modelo=($(fdisk -l | grep -E "(Modelo|Model)"|sed 's/^[:\t]*//'|cut -d':' -f2 | sed 's/^[ \t]*//;s/[ \t]*$//'|sed 's/ /_/'))
+		modelo=($(fdisk -l | grep -E "(Modelo|Model)"|sed 's/^[:\t]*//'|cut -d':' -f2 | sed 's/^[ \t]*//;s/[ \t]*$//'|sed 's/[[:space:]]\+/_/g'))
 
     	LDISK=0
 		local xmsg=$cdisco
@@ -509,7 +509,7 @@ function choosediskdestin()
 			array[((n++))]="[${size[((x++))]}]  ${modelo[((y++))]}"
 		done
 
-    	sddest=$(dialog 		 																			\
+    	sddest=$(dialog 		 																		\
     				--title 			"$xmsg"	  			  			  							   \
     				--backtitle	 	"$ccabec"					 									\
     				--cancel-label "$buttonback"													\
