@@ -1,5 +1,5 @@
 #!/bin/bash
-declare -r version="v2.1.1-20200726"
+declare -r version="v2.1.2-20201001"
 ################################################################
 #       install dialog Chili OS - $version                     #
 #								                                       #
@@ -1552,8 +1552,8 @@ function choosedisk()
     	#disks=($(ls /dev/sd* | grep -o '/dev/sd[a-z]' | cat | sort | uniq | sed "s/$/ '*' /"))
     	#disks=($(fdisk -l|sed -n '/sd[a-z]:/p'|awk '{print $2,$3$4}'|sed 's/://p'|sed 's/[,\t]*$//'))
     	devices=($(fdisk -l | egrep -o '/dev/sd[a-z]'|uniq))
-        size=($(fdisk -l|sed -n '/sd[a-z]:/p'|awk '{print $3$4}'|sed 's/://p'|sed 's/[,\t]*$//'|awk '{printf "%10s\n", $1}'))
-        modelo=($(fdisk -l | grep -E "(Modelo|Model)"|sed 's/^[:\t]*//'|cut -d':' -f2 | sed 's/^[ \t]*//;s/[ \t]*$//'|sed 's/ /_/'))
+		size=($(fdisk -l|sed -n '/sd[a-z]:/p'|awk '{print $3$4}'|sed 's/://p'|sed 's/[,\t]*$//'|awk '{printf "%10s\n", $1}'))
+		modelo=($(fdisk -l | grep -E "(Modelo|Model)"|sed 's/^[:\t]*//'|cut -d':' -f2 | sed 's/^[ \t]*//;s/[ \t]*$//'|sed 's/[[:space:]]\+/_/g'))
 
     	LDISK=0
     	local xmsg=$cdisco
