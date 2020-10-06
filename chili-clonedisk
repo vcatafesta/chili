@@ -5,7 +5,7 @@
 #      created: 						2020/09/20   	                #
 #      altered:                  2020/09/27	                   #
 #################################################################
-declare -r version="v1.0.01-20201001"
+declare -r version="v1.0.04-20201005"
 readonly DEPENDENCIES=(which dialog pv grep sed cat awk tput)
 #. /lib/lsb/init-functions
 
@@ -444,6 +444,7 @@ function choosedisk()
     	sd=$(dialog 		 																			\
     				--title 			"$xmsg"								  							\
     				--backtitle	 	"$ccabec"					 									\
+					--ok-label		"$cmsgOK"	 													\
     				--cancel-label "$buttonback"													\
     				--menu 			"\n$cmsg009" 0 0 0 "${array[@]}" 2>&1 >/dev/tty 	)
 
@@ -512,6 +513,7 @@ function choosediskdestin()
     	sddest=$(dialog 		 																		\
     				--title 			"$xmsg"	  			  			  							   \
     				--backtitle	 	"$ccabec"					 									\
+					--ok-label		"$cmsgOK"	 													\
     				--cancel-label "$buttonback"													\
     				--menu 			"\nSOURCE DISK: $MODELO_ORIGEM\n\n$cmsgdest" 0 0 0 "${array[@]}" 2>&1 >/dev/tty 	)
 
@@ -521,7 +523,7 @@ function choosediskdestin()
     			init
     			;;
     		$CANCEL)
-    			init
+    			choosedisk
     			;;
     	esac
 
@@ -599,6 +601,7 @@ function pt_BR()
   	cmsgNaoEncontreiOComando="não encontrei o comando "
   	cmsgEsseScriptPrecisaDosComandosListadosAcima="Esse script precisa dos comandos listados acima"
    cmsgInstaleOuVerifique="Instale-os e/ou verifique se estão no seu \$PATH"
+	cmsgOK="Aceitar"
 	cmsg000="Sair"
 	cmsg001=$ccabec
 	cmsg002=$ctitle
@@ -741,6 +744,7 @@ function en_US()
   	cmsgNaoEncontreiOComando="não encontrei o comando "
   	cmsgEsseScriptPrecisaDosComandosListadosAcima="Esse script precisa dos comandos listados acima"
    cmsgInstaleOuVerifique="Instale-os e/ou verifique se estão no seu \$PATH"
+	cmsgOK="Accept"
 	cmsg000="Exit"
 	cmsg001=$ccabec
 	cmsg002=$ctitle
@@ -899,7 +903,8 @@ function init()
 			--stdout                                              \
 			--backtitle	 	"$ccabec"				                  \
 			--title 			"$welcome"			                    	\
-			--cancel-label	"Exit"	 										\
+			--ok-label		"$cmsgOK"	 									\
+			--cancel-label	"$cmsg000"	 									\
 			--menu			'\nChoose the language:'					\
 	        	0 80 0                                 				\
 				1 'Português'						 							\
