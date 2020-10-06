@@ -174,7 +174,7 @@ selectdisk(){
 		IFS_ORIG=$IFS
 		IFS=$'\n'
 		for item in ${items}
-		do  
+		do
 				options+=("${item}" "")
 		done
 		IFS=$IFS_ORIG
@@ -184,7 +184,7 @@ selectdisk(){
 				return 1
 		fi
 		echo ${result%%\ *}
-		return 0    
+		return 0
 }
 
 diskpartmenu(){
@@ -240,8 +240,9 @@ diskpartmenu(){
 }
 
 
-diskpartautodos(){
-		device=$(selectdisk "${txtautoparts} (dos)")
+diskpartautodos()
+{
+	device=$(selectdisk "${txtautoparts} (dos)")
 	if [ "$?" = "0" ]; then
 		if (whiptail --backtitle "${apptitle}" --title "${txtautoparts} (dos)" --yesno "${txtautopartsconfirm//%1/${device}}" --defaultno 0 0) then
 			clear
@@ -275,8 +276,9 @@ diskpartautodos(){
 	fi
 }
 
-diskpartautogpt(){
-		device=$(selectdisk "${txtautoparts} (gpt)")
+diskpartautogpt()
+{
+	device=$(selectdisk "${txtautoparts} (gpt)")
 	if [ "$?" = "0" ]; then
 		if (whiptail --backtitle "${apptitle}" --title "${txtautoparts} (gpt)" --yesno "${txtautopartsconfirm//%1/${device}}" --defaultno 0 0) then
 			clear
@@ -308,8 +310,9 @@ diskpartautogpt(){
 	fi
 }
 
-diskpartautoefi(){
-		device=$(selectdisk "${txtautoparts} (gpt,efi)")
+diskpartautoefi()
+{
+	device=$(selectdisk "${txtautoparts} (gpt,efi)")
 	if [ "$?" = "0" ]; then
 		if (whiptail --backtitle "${apptitle}" --title "${txtautoparts} (gpt,efi)" --yesno "${txtautopartsconfirm//%1/${device}}" --defaultno 0 0) then
 			clear
@@ -339,8 +342,9 @@ diskpartautoefi(){
 	fi
 }
 
-diskpartautoefiusb(){
-		device=$(selectdisk "${txtautoparts} (gpt,efi)")  
+diskpartautoefiusb()
+{
+	device=$(selectdisk "${txtautoparts} (gpt,efi)")
 	if [ "$?" = "0" ]; then
 		if (whiptail --backtitle "${apptitle}" --title "${txtautoparts} (gpt,efi)" --yesno "${txtautopartsconfirm//%1/${device}}" --defaultno 0 0) then
 			clear
@@ -370,16 +374,18 @@ diskpartautoefiusb(){
 	fi
 }
 
-diskpartcfdisk(){
-		device=$( selectdisk "${txteditparts} (cfdisk)" )
+diskpartcfdisk()
+{
+	device=$( selectdisk "${txteditparts} (cfdisk)" )
 	if [ "$?" = "0" ]; then
 		clear
 		cfdisk ${device}
 	fi
 }
 
-diskpartcgdisk(){
-		device=$( selectdisk "${txteditparts} (cgdisk)" )
+diskpartcgdisk()
+{
+	device=$( selectdisk "${txteditparts} (cgdisk)" )
 	if [ "$?" = "0" ]; then
 		clear
 		cgdisk ${device}
@@ -390,7 +396,8 @@ diskpartcgdisk(){
 
 
 # --------------------------------------------------------
-selectparts(){
+selectparts()
+{
 	items=$(lsblk -p -n -l -o NAME -e 7,11)
 	options=()
 	for item in ${items}; do
@@ -505,7 +512,9 @@ formatdevices(){
 		fi
 	fi
 }
-formatbootdevice(){
+
+formatbootdevice()
+{
 	options=()
 	if [ "${efimode}" == "1" ]||[ "${efimode}" = "2" ]; then
 		options+=("fat32" "(EFI)")
@@ -547,7 +556,9 @@ formatbootdevice(){
 	echo ""
 	pressanykey
 }
-formatswapdevice(){
+
+formatswapdevice()
+{
 	options=()
 	options+=("swap" "")
 	sel=$(whiptail --backtitle "${apptitle}" --title "${txtformatdevice}" --menu "${txtselectpartformat//%1/${1} (${2})}" 0 0 0 \
@@ -569,7 +580,9 @@ formatswapdevice(){
 	esac
 	clear
 }
-formatdevice(){
+
+formatdevice()
+{
 	options=()
 	options+=("btrfs" "")
 	options+=("ext4" "")
@@ -730,7 +743,8 @@ mountparts(){
 
 
 # --------------------------------------------------------
-installmenu(){
+installmenu()
+{
 	if [ "${1}" = "" ]; then
 		nextitem="${txtinstallarchlinux}"
 	else
@@ -770,7 +784,8 @@ installmenu(){
 	fi
 }
 
-selectmirrorsbycountry() {
+selectmirrorsbycountry()
+{
 		if [[ ! -f /etc/pacman.d/mirrorlist.backup ]]; then
 				cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
 		fi    
@@ -789,7 +804,8 @@ selectmirrorsbycountry() {
 		sed "s/^\(Server .*\)/\#\1/;/^## $country/N; {s/^\(## .*\n\)\#Server \(.*\)/\1Server \2/}" < /etc/pacman.d/mirrorlist.backup > /etc/pacman.d/mirrorlist
 }
 
-installbase(){
+installbase()
+{
 	pkgs="base"
 	options=()
 	options+=("linux" "")
@@ -804,7 +820,7 @@ installbase(){
 	else
 		return 1
 	fi
-	
+
 	options=()
 	options+=("linux-firmware" "(${txtoptional})" on)
 	sel=$(whiptail --backtitle "${apptitle}" --title "${txtinstallarchlinuxfirmwares}" --checklist "" 0 0 0 \
