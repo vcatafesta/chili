@@ -341,7 +341,7 @@ function display_result()
 function alerta()
 {
 	dialog 								      \
-		--title 	"$1" 			        		\
+		--title 		"$1" 			     		\
 		--backtitle	"$ccabec"		      \
 		--msgbox 	"$2\n$3\n$4\n$5\n$6"	\
 		10 60
@@ -351,7 +351,7 @@ function info()
 {
 	dialog 			 				\
 		--beep                  \
-		--title 	"$cmsg002"		\
+		--title 		"$cmsg002"	\
 		--backtitle	"$ccabec"	\
 		--msgbox 	"$*" 			\
 		10 60
@@ -588,6 +588,7 @@ function sh_domkclone()
 	"Running dd command (cloning), please wait...\n\n     SOURCE DISK : $MODELO_ORIGEM \n DISK DESTINATION: $MODELO_DESTINO" 10 70 0
 	local nchoice=$?
 	if [ $nchoice = $true ]; then
+		display_result "$(fdisk -l $sddest)"
 		LFORMAT=1
    fi
 	return $nchoice

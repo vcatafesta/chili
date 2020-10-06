@@ -29,7 +29,8 @@ pkgurl1=http://archdi.sourceforge.net/archdi-pkg
 pkgurl2=https://raw.githubusercontent.com/MatMoul/archdi-pkg/master/pkg.tar
 
 
-help(){
+help()
+{
   echo "-h | --help                   : this screen"
   echo "-i | --install                : install"
   echo "-l | --local dir              : run local archdi-pkg dir"
@@ -37,7 +38,8 @@ help(){
   echo "no args                       : start archdi"
 }
 
-install(){
+install()
+{
   dependencies
   echo "Install $apptitle ..."
   echo ""
@@ -48,12 +50,13 @@ install(){
   echo "type archdi to start."
 }
 
-run(){
+run()
+{
   dependencies
   rm -R $cachedir 2>/dev/null
   mkdir -p $cachedir 2>/dev/null
   cd $cachedir 2>/dev/null
-  
+
   if [ ! "$pkgdir" = "" ]; then
     cp -r $pkgdir/* . >/dev/null
   else
@@ -97,13 +100,14 @@ run(){
       fi
     fi
   fi
-  
-  
+
+
   cd 2>/dev/null
   rm -R $cachedir 2>/dev/null
 }
 
-dependencies(){
+dependencies()
+{
   needinstall="false"
   clear
   echo "Checking internet and server connexion ..."
@@ -153,7 +157,8 @@ dependencies(){
   chkupgrade
 }
 
-chkupgrade(){
+chkupgrade()
+{
   if [ "$0" = "/usr/bin/archdi" ]; then
     if [ ! "$version" = "$lastver" ]; then
       if (whiptail --backtitle "$apptitle" --yesno "New version found !\n\nInstall last version ?" 0 0) then
@@ -202,4 +207,4 @@ version="2019.07.03.22.44.21"
   shift
 done
 
-run
+run4
