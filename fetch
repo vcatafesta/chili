@@ -3,7 +3,7 @@
  # fetch - search, install, create, remove, upgrade packages in ChiliOS
  #
  # Created: 2019/04/05
- # Altered: 2020/09/12
+ # Altered: 2020/10/30
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.03.24.20200923"
+_VERSION_="2.03.25.20201030"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -2959,17 +2959,13 @@ function sh_alienpkg_exec()
 	log_success_msg2 "${red}(${ntotalpkg}) ${green}file(s) found."
 	LFORCELOCAL=$LFORCE
 
-#	for package in $ALIEN_CACHE_DIR/$*
 	for package in $pkg
 	do
-#		echo
-#		packagedir=${package%$EXT}
 		packagedir=${package}
 		file=${package}
 		FULLDIR=$BUILDDIR/$packagedir
 		((ncount++))
 
-#	   pkgtar=$(echo $packagedir |sed 's/\// /g'|awk '{print $NF}'|sed 's/.pkg.tar\|.zst\|.xz//g'|sed 's/.pkg.tar\|.zst\|.xz//g'|sed 's/1://g'|sed 's/2://g')
 		pkgtar=$(echo ${file##*/})                   #remove diretorio deixando somente nome do pacote
 		pkgtar=$(echo ${pkgtar%%.pkg.tar.zst})       #remove .pkg.tar.zst
 		pkgtar=$(echo ${pkgtar%%.pkg.tar.xz})        #remove .pkg.tar.xz
@@ -2979,7 +2975,6 @@ function sh_alienpkg_exec()
 
 		if !(( $LFORCELOCAL )); then
 			local firstletter=${pkgtar::1}
-#			local FilteredPackage=$(echo $pkgtar | sed 's/\(.*\)-/\1*/'|cut -d* -f1).chi.zst
 			local FilteredPackage=$pkgtar.chi.zst
 			local destpkgGIT="${GITDIR}/packages/${firstletter}/${FilteredPackage}"
 			local destpkgCORE="${GITDIR}/packages/core/${FilteredPackage}"
@@ -3073,7 +3068,7 @@ function sh_alienpkg_exec()
 		popd >/dev/null 2>&1
 		unset size
 
-		#removeoldpkgchili $cPacoteSemExt
+		removeoldpkgchili $cPacoteSemExt
 		echo
 	done
 	unset ncount
