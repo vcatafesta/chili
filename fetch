@@ -99,7 +99,7 @@ LREMOVED=3
 # flag's para split package
 : ${aPKGSPLIT=()}
 : ${aPKGLIST=}
-: ${PKG_FOLDER_DIR0}
+: ${PKG_FOLDER_DIR=0}
 : ${PKG_FULLNAME=1}
 : ${PKG_ARCH=2}
 : ${PKG_BASE=3}

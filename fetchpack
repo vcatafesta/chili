@@ -1,0 +1,266 @@
+#!/usr/bin/bash
+
+export LC_ALL="pt_BR.utf8"
+IFS=$' \t\n'
+SAVEIFS=$IFS
+source /etc/fetch/fetch.conf &> /dev/null
+PKGDIR="${PKGDIR:=/var/cache/fetch/archives}"
+BOOTLOG=/tmp/fetchlog-$USER
+
+# log messages
+NORMAL="\\033[0;39m"         # Standard console grey
+SUCCESS="\\033[1;32m"        # Success is green
+WARNING="\\033[1;33m"        # Warnings are yellow
+FAILURE="\\033[1;31m"        # Failures are red
+INFO="\\033[1;36m"           # Information is light cyan
+BRACKET="\\033[1;34m"        # Brackets are blue
+BMPREFIX="     "
+SUCCESS_PREFIX="${SUCCESS}  *  ${NORMAL}"
+FAILURE_PREFIX="${FAILURE}*****${NORMAL}"
+WARNING_PREFIX="${WARNING}  W  ${NORMAL}"
+SKIP_PREFIX="${INFO}  S  ${NORMAL}"
+SUCCESS_SUFFIX="${BRACKET}[${SUCCESS}  OK  ${BRACKET}]${NORMAL}"
+FAILURE_SUFFIX="${BRACKET}[${FAILURE} FAIL ${BRACKET}]${NORMAL}"
+WARNING_SUFFIX="${BRACKET}[${WARNING} WARN ${BRACKET}]${NORMAL}"
+SKIP_SUFFIX="${BRACKET}[${INFO} SKIP ${BRACKET}]${NORMAL}"
+WAIT_PREFIX="${WARNING}  R  ${NORMAL}"
+WAIT_SUFFIX="${BRACKET}[${WARNING} WAIT ${BRACKET}]${NORMAL}"
+FAILURE_PREFIX="${FAILURE}  X  ${NORMAL}"
+KILLDELAY=3
+SCRIPT_STAT="0"
+
+if [ -z "${COLUMNS}" ]; then
+   COLUMNS=$(stty size)
+   COLUMNS=${COLUMNS##* }
+fi
+if [ "${COLUMNS}" = "0" ]; then
+   COLUMNS=80
+fi
+
+COL=$((${COLUMNS} - 8))
+WCOL=$((${COL} - 2))
+SET_COL="\\033[${COL}G"      # at the $COL char
+SET_WCOL="\\033[${WCOL}G"    # at the $WCOL char
+CURS_UP="\\033[1A\\033[0G"   # Up one line, at the 0'th char
+CURS_ZERO="\\033[0G"
+
+# flag's para split package
+: ${aPKGSPLIT=()}
+: ${aPKGLIST=}
+: ${PKG_FOLDER_DIR=0}
+: ${PKG_FULLNAME=1}
+: ${PKG_ARCH=2}
+: ${PKG_BASE=3}
+: ${PKG_BASE_VERSION=4}
+: ${PKG_VERSION=5}
+: ${PKG_BUILD=6}
+
+function info()
+{
+	dialog 						\
+		--beep					\
+		--title     "$0"		\
+		--backtitle "$0"		\
+		--msgbox    "$*"		\
+		15 70
+}
+
+function timespec()
+{
+	STAMP="$(echo `date +"%b %d %T %:z"` `hostname`) "
+	return 0
+}
+
+function log_info_msg()
+{
+	echo -n -e "${BMPREFIX}${@}"
+	logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
+	timespec
+	echo -n -e "${STAMP} ${logmessage}" >> ${BOOTLOG}
+	return 0
+}
+
+function evaluate_retval()
+{
+	local error_value="${?}"
+
+	if [ ${error_value} = 0 ]; then
+		log_success_msg2
+	else
+		log_failure_msg2
+	fi
+	return ${error_value}
+}
+
+function log_failure_msg2()
+{
+	echo -n -e "${BMPREFIX}${@}"
+	echo -e "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}"
+	echo "FAIL" >> ${BOOTLOG}
+	return 0
+}
+
+function log_wait_msg()
+{
+	echo -n -e "${BMPREFIX}${@}"
+	echo -e "${CURS_ZERO}${WAIT_PREFIX}${SET_COL}${WAIT_SUFFIX}"
+	echo " OK" >> ${BOOTLOG}
+	return 0
+}
+
+function die()
+{
+	local mesg=$1; shift
+   log_failure_msg2 $mesg "$@" >&2
+	exit 1
+}
+
+function sh_splitpkg()
+{
+	local PRG='chi.zst'
+	local file=${1}
+	local pkg_folder_dir
+	local pkg_fullname
+	local pkg_arch
+	local pkg_base
+	local pkg_base_version
+	local pkg_version
+	local pkg_build
+	local pkg_str
+	local nconta=0
+	local char="-"
+	local var
+	local ra
+	local re
+
+	aPKGSPLIT=()
+	pkg_folder_dir=$(echo ${file%/*})							#remove arquivo deixando somente o diretorio/repo
+	pkg_fullname=$(echo ${file##*/})    						#remove diretorio deixando somente nome do pacote
+#	pkg_arch=$(echo ${pkg_fullname%.${PRG}*})  					#remove extensao pacote (chi.zst/mz)
+#	pkg_str=$(echo ${pkg_arch%-any*})      						# https://elmord.org/blog/?entry=20121227-manipulando-strings-bash
+#	pkg_str=$(echo ${pkg_str%-x86_64*})      					# https://elmord.org/blog/?entry=20121227-manipulando-strings-bash
+
+	pkg_arch=$(echo ${pkg_fullname%-any.${PRG}*}) 				#remove extensao pacote (chi.zst/mz)
+	pkg_arch=$(echo ${pkg_arch%.arch1*}) 							#remove extensao pacote (chi.zst/mz)
+	pkg_arch=$(echo ${pkg_arch%.arch2*}) 							#remove extensao pacote (chi.zst/mz)
+	#pkg_arch=$(echo ${pkg_arch%-x86_64.${PRG}*}) 				#remove extensao pacote (chi.zst/mz)
+	pkg_arch=$(echo ${pkg_arch%-x86_64*}) 							#remove extensao pacote (chi.zst/mz)
+	pkg_arch=$(echo ${pkg_arch%.${PRG}*})  				  		#remove extensao pacote (chi.zst/mz)
+	pkg_str=$pkg_arch
+
+	#debug
+	#info "file: $file\npkg_folder_dir: $pkg_folder_dir\npkg_fullname: $pkg_fullname\npkg_arch: $pkg_arch\npkg_str: $pkg_str"
+
+	IFS='-' 									# hyphen (-) is set as delimiter
+	read -ra ADDR <<< "$pkg_str"		# str is read into an array as tokens separated by IFS
+	for var in "${ADDR[@]}"; do 		# access each element of array
+		re='[a-zA-Z]'
+		if [[ "$var" =~ $re ]]; then
+			pkg_base="$pkg_base${var}$char"
+		else
+			((nconta++))
+			[[ $nconta -eq 1 ]] && pkg_version=$var || pkg_build=$var
+			#debug
+			#info "pkg_version: $pkg_version\npkg_build: $pkg_build"
+		fi
+	done
+ 	IFS=$SAVEIFS # reset to default value after usage
+	pkg_base=${pkg_base%-*}
+	pkg_version="${pkg_version}-${pkg_build}"
+	pkg_base_version="${pkg_base}-${pkg_version}"
+	[[ $pkg_folder = "" ]] && pkg_folder=$pkg_fullname
+
+	#debug
+#  info " pkg_folder      : $pkg_folder\n" \
+#	 	  "pkg_fullname    : $pkg_fullname\n" \
+#	 	  "pkg_arch        : $pkg_arch\n" \
+#	 	  "pkg_base        : $pkg_base\n" \
+#		  "pkg_base_version: $pkg_base_version\n" \
+#		  "pkg_version     : $pkg_version\n" \
+#		  "pkg_build       : $pkg_build"
+
+	aPKGSPLIT=($pkg_folder_dir $pkg_fullname $pkg_arch $pkg_base $pkg_base_version $pkg_version $pkg_build)
+	aPKGLIST=${aPKGSPLIT[*]}
+	arr=(${aPKGSPLIT[*]})
+#	echo -e "${arr[0]}\n${arr[1]}\n${arr[2]}\n${arr[3]}\n${arr[4]}\n${arr[5]}\n${arr[6]}\n${arr[7]}"
+#	info "${arr[0]}\n${arr[1]}\n${arr[2]}\n${arr[3]}\n${arr[4]}\n${arr[5]}\n${arr[6]}\n${arr[7]}"
+	return $?
+}
+
+function ropch()
+{
+	local arr=
+	local cdir=
+	local nfiles=
+	local pkg=
+	local cOldDir=
+	local AllFilesPackages=
+	local pkg=
+	local pkgInAll=
+	local FilteredPackages=
+	local AllFilteredPackages=
+
+	shopt -s nullglob       # enable suppress error message of a command
+	pushd "$PKGDIR" &>/dev/null || die "failed to chdir to $PKGDIR"
+
+#	for cdir in {a..z}
+#	do
+		#echo -e "${white}Verifying packages in ${green}$cdir"
+		cOldDir=$PWD
+		pkgInAll=
+		FilteredPackages=
+		AllFilesPackages=
+		AllFilteredPackages=
+
+#		pushd $cdir >/dev/null 2>&1
+		if [ $# -lt 1 ]; then
+			find "$PWD" -maxdepth 100 -name '*.chi.zst' -type f
+		else
+			find "$PWD" -name '*.chi' -prune -o \( -name '*.chi.zst' \) | grep ^$1
+		fi
+
+		#log_wait_msg "wait, working on it..."
+		for pkgInAll in $AllFilesPackages
+		do
+			sh_splitpkg ${pkgInAll}
+			#pkgtar=$(echo $pkgInAll |sed 's/\// /g'|awk '{print $NF}'|sed 's/-x86_64.chi.\|zst\|xz//g'|sed 's/-any.chi.\|zst\|xz//g'|sed 's/.chi.\|zst\|xz//g'|sed 's/1://g'|sed 's/2://g')
+			#FilteredPackages=$(echo $pkgtar | sed 's/\(.*\)-\(.*-\)/\1*\2/' |cut -d* -f1)
+			#FilteredPackages=$FilteredPackages"-"
+
+			FilteredPackages=${aPKGSPLIT[$PKG_BASE]}
+			AllFilteredPackages=$(ls -1 $FilteredPackages*.{zst,xz} 2> /dev/null)
+			#info "$pkgInAll \n $FilteredPackages \n $AllFilteredPackages"
+			pkg=
+  			arr=(${AllFilteredPackages[*]})
+		  	nfiles=${#arr[*]}
+
+			#log_wait_msg "${white}Verifying package ${purple}($nfiles) ${green}$pkgInAll"
+			if [[ $nfiles -gt 1 ]]; then
+				log_wait_msg "${white}Verifying candidate package ${purple}($nfiles) ${green}$FilteredPackages"
+				for pkg in $AllFilteredPackages
+				do
+					#info "$pkgInAll \n$pkg"
+					if [[ "$(vercmp $pkgInAll $pkg)" -lt 0 ]]; then
+						#maxcol; replicate "=" $?
+						log_info_msg "Removing ${red}OLD ${reset}package ${yellow}$pkgInAll"
+						rm $pkgInAll*  >/dev/null 2>&1
+						evaluate_retval
+						#maxcol; replicate "=" $?
+						if [[ $nfiles -eq 2 ]]; then
+							break
+						fi
+					elif [[ "$(vercmp $pkgInAll $pkg)" -gt 0 ]]; then
+						continue
+					elif [[ "$(vercmp $pkgInAll $pkg)" -eq 0 ]]; then
+						continue
+					fi
+				done
+			fi
+		done
+#		popd >/dev/null 2>&1
+#	done
+	popd >/dev/null 2>&1
+	shopt -u nullglob       # disable suppress error message of a command
+}
+
+ropch "$@"
