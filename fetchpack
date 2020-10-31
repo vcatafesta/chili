@@ -275,7 +275,7 @@ function ropch()
 			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort )
 		else
 			#AllFilesPackages=$(find "$PWD" -name '*.chi' -prune -o \( -name '*.chi.zst' \) | grep ^$1)
-			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep ^$1 | sort)
+			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort)
 		fi
 
 		arr=(${AllFilesPackages[*]})
@@ -291,7 +291,7 @@ function ropch()
 			pkgInAll=$(echo "${pkgInAll##*/}") 		# remove directory
 			sh_splitpkg ${pkgInAll}
 			FilteredPackages=${aPKGSPLIT[$PKG_BASE]}
-			AllFilteredPackages=$(find "$PWD" -iname "$FilteredPackages*.zst" | grep ^$1)
+			AllFilteredPackages=$(find "$PWD" -type f -iname "$FilteredPackages*.zst" | sort )
 			#info "1-$pkgInAll \n2-$FilteredPackages \n3-$AllFilteredPackages"
 			pkg=
   			arr=(${AllFilteredPackages[*]})
