@@ -291,7 +291,7 @@ function ropch()
 			pkgInAll=$(echo "${pkgInAll##*/}") 		# remove directory
 			sh_splitpkg ${pkgInAll}
 			FilteredPackages=${aPKGSPLIT[$PKG_BASE]}
-			AllFilteredPackages=$(find "$PWD" -type f -iname "$FilteredPackages*.zst" | sort )
+			AllFilteredPackages=$(find "$PWD" -type f -iname "$FilteredPackages*.zst")
 			#info "1-$pkgInAll \n2-$FilteredPackages \n3-$AllFilteredPackages"
 			pkg=
   			arr=(${AllFilteredPackages[*]})
