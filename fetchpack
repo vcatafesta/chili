@@ -272,10 +272,10 @@ function ropch()
 #		pushd $cdir >/dev/null 2>&1
 		if [ $# -lt 1 ]; then
 			#AllFilesPackages=$(find "$PWD" -maxdepth 100 -name '*.chi.zst' -type f)
-			 AllFilesPackages=$(find "$PWD" -iname "*.chi.zst")
+			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort )
 		else
 			#AllFilesPackages=$(find "$PWD" -name '*.chi' -prune -o \( -name '*.chi.zst' \) | grep ^$1)
-			 AllFilesPackages=$(find "$PWD" -iname "*.chi.zst" | grep ^$1)
+			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep ^$1 | sort)
 		fi
 
 		arr=(${AllFilesPackages[*]})
