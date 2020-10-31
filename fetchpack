@@ -298,8 +298,8 @@ function ropch()
 		  	nfiles=${#arr[*]}
 
 			#log_wait_msg "${white}Verifying package ${purple}($nfiles) ${green}$pkgInAll"
+			log_wait_msg "${white}Verifying candidate package ${purple}($nfiles) ${green}$FilteredPackages"
 			if [[ $nfiles -gt 1 ]]; then
-				log_wait_msg "${white}Verifying candidate package ${purple}($nfiles) ${green}$FilteredPackages"
 				for pkg in $AllFilteredPackages
 				do
 					pkgFullName=${pkg}
@@ -323,7 +323,7 @@ function ropch()
 		done
 #		popd >/dev/null 2>&1
 #	done
-	echo $candidates
+	info $candidates
 	popd >/dev/null 2>&1
 }
 
