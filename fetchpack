@@ -1,11 +1,22 @@
 #!/usr/bin/bash
-
 export LC_ALL="pt_BR.utf8"
 IFS=$' \t\n'
 SAVEIFS=$IFS
 source /etc/fetch/fetch.conf &> /dev/null
 PKGDIR="${PKGDIR:=/var/cache/fetch/archives}"
 BOOTLOG=/tmp/fetchlog-$USER
+
+# Expand to nothing if there are no matches
+shopt -s nullglob
+shopt -s extglob
+
+declare -r myname='fetchpack'
+declare -r myver='1.0.0'
+
+LIBRARY=${LIBRARY:-'/usr/share/makepkg'}
+# Import libmakepkg
+source "$LIBRARY"/util/message.sh
+source "$LIBRARY"/util/parseopts.sh
 
 # log messages
 NORMAL="\\033[0;39m"         # Standard console grey
@@ -54,6 +65,40 @@ CURS_ZERO="\\033[0G"
 : ${PKG_BASE_VERSION=4}
 : ${PKG_VERSION=5}
 : ${PKG_BUILD=6}
+
+function setvarcolors()
+{
+	if tput setaf 1 &> /dev/null; then
+		tput sgr0; # reset colors
+		bold=$(tput bold);
+		reset=$(tput sgr0);
+		black=$(tput setaf 0);
+		blue=$(tput setaf 33);
+		cyan=$(tput setaf 37);
+		green=$(tput setaf 64);
+		orange=$(tput setaf 166);
+		purple=$(tput setaf 125);
+		red=$(tput setaf 124);
+		violet=$(tput setaf 61);
+		white=$(tput setaf 15);
+		yellow=$(tput setaf 136);
+		pink="\033[35;1m";
+	else
+		bold='';
+		reset="\e[0m";
+		black="\e[1;30m";
+		blue="\e[1;34m";
+		cyan="\e[1;36m";
+		green="\e[1;32m";
+		orange="\e[1;33m";
+		purple="\e[1;35m";
+		red="\e[1;31m";
+		violet="\e[1;35m";
+		white="\e[1;37m";
+		yellow="\e[1;33m";
+		pink="\033[35;1m";
+	fi
+}
 
 function info()
 {
@@ -104,6 +149,14 @@ function log_wait_msg()
 {
 	echo -n -e "${BMPREFIX}${@}"
 	echo -e "${CURS_ZERO}${WAIT_PREFIX}${SET_COL}${WAIT_SUFFIX}"
+	echo " OK" >> ${BOOTLOG}
+	return 0
+}
+
+function log_success_msg2()
+{
+	echo -n -e "${BMPREFIX}${@}"
+	echo -e "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${SUCCESS_SUFFIX}"
 	echo " OK" >> ${BOOTLOG}
 	return 0
 }
@@ -200,8 +253,10 @@ function ropch()
 	local FilteredPackages=
 	local AllFilteredPackages=
 
-	shopt -s nullglob       # enable suppress error message of a command
-	pushd "$PKGDIR" &>/dev/null || die "failed to chdir to $PKGDIR"
+	[[ -d $PKGDIR ]] ||
+		die "cachedir '%s' does not exist or is not a directory" "$cachedir"
+	pushd "$PKGDIR" &>/dev/null ||
+		die "failed to chdir to $PKGDIR"
 
 #	for cdir in {a..z}
 #	do
@@ -211,25 +266,33 @@ function ropch()
 		FilteredPackages=
 		AllFilesPackages=
 		AllFilteredPackages=
+		candidates=()
+#		echo "${PWD##*/}"
 
 #		pushd $cdir >/dev/null 2>&1
 		if [ $# -lt 1 ]; then
-			find "$PWD" -maxdepth 100 -name '*.chi.zst' -type f
+			#AllFilesPackages=$(find "$PWD" -maxdepth 100 -name '*.chi.zst' -type f)
+			 AllFilesPackages=$(find "$PWD" -iname "*.chi.zst")
 		else
-			find "$PWD" -name '*.chi' -prune -o \( -name '*.chi.zst' \) | grep ^$1
+			#AllFilesPackages=$(find "$PWD" -name '*.chi' -prune -o \( -name '*.chi.zst' \) | grep ^$1)
+			 AllFilesPackages=$(find "$PWD" -iname "*.chi.zst" | grep ^$1)
 		fi
 
-		#log_wait_msg "wait, working on it..."
+		arr=(${AllFilesPackages[*]})
+		if (( !${#arr[*]} )); then
+			msg 'no candidate packages found for pruning'
+			exit 0
+		fi
+
+		log_wait_msg "wait, searching candidates for pruning..."
 		for pkgInAll in $AllFilesPackages
 		do
+			pkgInFullName=${pkgInAll}
+			pkgInAll=$(echo "${pkgInAll##*/}") 		# remove directory
 			sh_splitpkg ${pkgInAll}
-			#pkgtar=$(echo $pkgInAll |sed 's/\// /g'|awk '{print $NF}'|sed 's/-x86_64.chi.\|zst\|xz//g'|sed 's/-any.chi.\|zst\|xz//g'|sed 's/.chi.\|zst\|xz//g'|sed 's/1://g'|sed 's/2://g')
-			#FilteredPackages=$(echo $pkgtar | sed 's/\(.*\)-\(.*-\)/\1*\2/' |cut -d* -f1)
-			#FilteredPackages=$FilteredPackages"-"
-
 			FilteredPackages=${aPKGSPLIT[$PKG_BASE]}
-			AllFilteredPackages=$(ls -1 $FilteredPackages*.{zst,xz} 2> /dev/null)
-			#info "$pkgInAll \n $FilteredPackages \n $AllFilteredPackages"
+			AllFilteredPackages=$(find "$PWD" -iname "$FilteredPackages*.zst" | grep ^$1)
+			#info "1-$pkgInAll \n2-$FilteredPackages \n3-$AllFilteredPackages"
 			pkg=
   			arr=(${AllFilteredPackages[*]})
 		  	nfiles=${#arr[*]}
@@ -239,13 +302,14 @@ function ropch()
 				log_wait_msg "${white}Verifying candidate package ${purple}($nfiles) ${green}$FilteredPackages"
 				for pkg in $AllFilteredPackages
 				do
+					pkgFullName=${pkg}
+					pkg=$(echo "${pkg##*/}") 		# remove directory
 					#info "$pkgInAll \n$pkg"
 					if [[ "$(vercmp $pkgInAll $pkg)" -lt 0 ]]; then
-						#maxcol; replicate "=" $?
-						log_info_msg "Removing ${red}OLD ${reset}package ${yellow}$pkgInAll"
-						rm $pkgInAll*  >/dev/null 2>&1
-						evaluate_retval
-						#maxcol; replicate "=" $?
+						#log_info_msg "Removing ${red}OLD ${reset}package ${yellow}$pkgInAll"
+						#rm $pkgInAll*  >/dev/null 2>&1
+						candidates+=("${pkgInFullName}")
+						#evaluate_retval
 						if [[ $nfiles -eq 2 ]]; then
 							break
 						fi
@@ -259,8 +323,54 @@ function ropch()
 		done
 #		popd >/dev/null 2>&1
 #	done
+	echo $candidates
 	popd >/dev/null 2>&1
-	shopt -u nullglob       # disable suppress error message of a command
 }
 
+function version()
+{
+	printf "%s %s\n" "$myname" "$myver"
+	echo 'Copyright (C) 2020 Vilmar Catafesta <vcatafesta@gmail.com>'
+}
+
+usage() {
+	cat <<EOF
+${myname} v${myver}
+
+A flexible pacman cache cleaning utility.
+
+Usage: ${myname} <operation> [options] [targets...]
+
+  Operations:
+    -d, --dryrun          perform a dry run, only finding candidate packages.
+    -m, --move <dir>      move candidate packages to "dir".
+    -r, --remove          remove candidate packages.
+
+  Options:
+    --min-atime <time>
+    --min-mtime <time>    keep packages with an atime/mtime that is not older
+                          than the time given, even if this means keeping more
+                          than specified through the '--keep' option. Accepts
+                          arguments according to 'info "Date input formats"',
+                          e.g. '30 days ago'.
+    -a, --arch <arch>     scan for "arch" (default: all architectures).
+    -c, --cachedir <dir>  scan "dir" for packages. can be used more than once.
+                          (default: read from /etc/pacman.conf).
+    -f, --force           apply force to mv(1) and rm(1) operations.
+    -h, --help            display this help message and exit.
+    -i, --ignore <pkgs>   ignore "pkgs", comma-separated. Alternatively, specify
+                          "-" to read package names from stdin, newline-
+                          delimited.
+    -k, --keep <num>      keep "num" of each package in the cache (default: 3).
+        --nocolor         remove color from output.
+    -q, --quiet           minimize output
+    -u, --uninstalled     target uninstalled packages.
+    -v, --verbose         increase verbosity. specify up to 3 times.
+    -z, --null            use null delimiters for candidate names (only with -v
+                          and -vv).
+
+EOF
+}
+
+setvarcolors
 ropch "$@"
