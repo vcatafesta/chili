@@ -3,7 +3,7 @@
  # fetch - search, install, create, remove, upgrade packages in ChiliOS
  #
  # Created: 2019/04/05
- # Altered: 2020/10/30
+ # Altered: 2020/11/01
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.03.25.20201030"
+_VERSION_="2.03.27.20201101"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -1468,8 +1468,41 @@ function sh_oldsplitpkg()
 	return $?
 }
 
-
 function sh_splitpkg()
+{
+	file=${1}
+	#pkg_re='^([a-z-]+)(-)([0-9\\.]+)(-)([0-9])(-)(.*)(.chi.zst)$'
+	#pkg_re='([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)-(([0-9]+(\.[0-9]+)*)(-([0-9]+))?)-([^.]+).*'
+	pkg_re='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 	#SOEN
+	aPKGSPLIT=()
+
+	pkg_folder_dir=$(echo ${file%/*})							#remove arquivo deixando somente o diretorio/repo
+	pkg_fullname=$(echo ${file##*/})    						#remove diretorio deixando somente nome do pacote
+
+	[[ $pkg_fullname =~ $pkg_re ]] &&
+		pkg_fullname=${BASH_REMATCH[0]}
+		pkg_base=${BASH_REMATCH[1]}
+		pkg_version_build=${BASH_REMATCH[2]}
+		pkg_version=${BASH_REMATCH[3]}
+		pkg_build=${BASH_REMATCH[4]}
+		pkg_arch=${BASH_REMATCH[5]}
+		pkg_base_version=${pkg_base}-${pkg_version_build}
+
+#debug
+#  info " file            : $file\n" \
+#        "pkg_folder      : $pkg_folder\n" \
+#	 	  "pkg_fullname    : $pkg_fullname\n" \
+#	 	  "pkg_arch        : $pkg_arch\n" \
+#	 	  "pkg_base        : $pkg_base\n" \
+#		  "pkg_base_version: $pkg_base_version\n" \
+#		  "pkg_version     : $pkg_version\n" \
+#		  "pkg_build       : $pkg_build"
+
+	aPKGSPLIT=($pkg_folder_dir $pkg_fullname $pkg_arch $pkg_base $pkg_base_version $pkg_version $pkg_build)
+	return $?
+}
+
+function sh_splitpkgOLD()
 {
 	local file=${1}
 	local pkg_folder_dir
@@ -1532,8 +1565,8 @@ function sh_splitpkg()
 #		  "pkg_build       : $pkg_build"
 
 	aPKGSPLIT=($pkg_folder_dir $pkg_fullname $pkg_arch $pkg_base $pkg_base_version $pkg_version $pkg_build)
-	aPKGLIST=${aPKGSPLIT[*]}
-	arr=(${aPKGSPLIT[*]})
+#	aPKGLIST=${aPKGSPLIT[*]}
+#	arr=(${aPKGSPLIT[*]})
 #	echo -e "${arr[0]}\n${arr[1]}\n${arr[2]}\n${arr[3]}\n${arr[4]}\n${arr[5]}\n${arr[6]}\n${arr[7]}"
 #	info "${arr[0]}\n${arr[1]}\n${arr[2]}\n${arr[3]}\n${arr[4]}\n${arr[5]}\n${arr[6]}\n${arr[7]}"
 	return $?
