@@ -383,8 +383,9 @@ LFS_INIT='SYSTEMD'
 ARCH='x86_64'
 DISTRO='chili'
 LFS_VARCACHE='fetch'
-PKGDIR='/var/cache/fetch/archives'
-GITDIR='/github/ChiliOS'
+GITDIR='/github/ChiliOS/packages'
+#PKGDIR='/var/cache/fetch/archives'
+PKGDIR="$GITDIR/core'
 ALIEN_CACHE_DIR='/var/cache/pacman/pkg'
 IGNOREPKG=('glibc' 'file')
 

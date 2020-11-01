@@ -7,7 +7,7 @@ declare    delim=$'\n' keep=3 movedir= scanarch=
 IFS=$' \t\n'
 SAVEIFS=$IFS
 source /etc/fetch/fetch.conf &> /dev/null
-PKGDIR="${PKGDIR:=/var/cache/fetch/archives}"
+PKGDIR="${GITDIR:=/var/cache/fetch/archives}"
 BOOTLOG=/tmp/fetchlog-$USER
 
 # Expand to nothing if there are no matches
@@ -108,7 +108,7 @@ function info()
 		--title     "$0"		\
 		--backtitle "$0"		\
 		--msgbox    "$*"		\
-		15 70
+		15 100
 }
 
 function timespec()
@@ -188,20 +188,30 @@ function sh_splitpkg()
 {
 	file=${1}
 	#pkg_re='^([a-z-]+)(-)([0-9\\.]+)(-)([0-9])(-)(.*)(.chi.zst)$'
-	pkg_re='([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)-(([0-9]+(\.[0-9]+)*)(-([0-9]+))?)-([^.]+).*'
+	#pkg_re='([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)-(([0-9]+(\.[0-9]+)*)(-([0-9]+))?)-([^.]+).*'
+	pkg_re='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 	#SOEN
 	aPKGSPLIT=()
 
 	pkg_folder_dir=$(echo ${file%/*})							#remove arquivo deixando somente o diretorio/repo
 	pkg_fullname=$(echo ${file##*/})    						#remove diretorio deixando somente nome do pacote
 
 	[[ $pkg_fullname =~ $pkg_re ]] &&
-	    pkg_fullname=${BASH_REMATCH[0]}
-	    pkg_base=${BASH_REMATCH[1]}
-	    pkg_base_version=${BASH_REMATCH[1]}-${BASH_REMATCH[3]}
-	    pkg_version=${BASH_REMATCH[3]}
-	    pkg_build=${BASH_REMATCH[7]}
-	    pkg_arch=${BASH_REMATCH[8]}
+		pkg_fullname=${BASH_REMATCH[0]}
+		pkg_base=${BASH_REMATCH[1]}
+		pkg_version_build=${BASH_REMATCH[2]}
+		pkg_version=${BASH_REMATCH[3]}
+		pkg_build=${BASH_REMATCH[4]}
+		pkg_arch=${BASH_REMATCH[5]}
+		pkg_base_version=${pkg_base}-${pkg_version_build}
 
+  info " file            : $file\n" \
+        "pkg_folder      : $pkg_folder\n" \
+	 	  "pkg_fullname    : $pkg_fullname\n" \
+	 	  "pkg_arch        : $pkg_arch\n" \
+	 	  "pkg_base        : $pkg_base\n" \
+		  "pkg_base_version: $pkg_base_version\n" \
+		  "pkg_version     : $pkg_version\n" \
+		  "pkg_build       : $pkg_build"
 	aPKGSPLIT=($pkg_folder_dir $pkg_fullname $pkg_arch $pkg_base $pkg_base_version $pkg_version $pkg_build)
 	return $?
 }
@@ -331,9 +341,9 @@ function ropch()
 		do
 			pkgInFullName=${pkgInAll}
 			pkgInAll=$(echo "${pkgInAll##*/}") 		# remove directory
-			#sh_splitpkg ${pkgInAll}
-			#FilteredPackages=${aPKGSPLIT[$PKG_BASE]}
-			FilteredPackages=$(echo $pkgInAll | sed 's/-[[:digit:]].*$//')
+			sh_splitpkg ${pkgInAll}
+			FilteredPackages=${aPKGSPLIT[$PKG_BASE]}
+			#FilteredPackages=$(echo $pkgInAll | sed 's/-[[:digit:]].*$//')
 
 #info $FilteredPackages
 
