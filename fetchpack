@@ -1,5 +1,9 @@
 #!/usr/bin/bash
 export LC_ALL="pt_BR.utf8"
+declare -r myname='fetchpack'
+declare -r myver='1.0.1'
+declare    delim=$'\n' keep=3 movedir= scanarch=
+
 IFS=$' \t\n'
 SAVEIFS=$IFS
 source /etc/fetch/fetch.conf &> /dev/null
@@ -9,9 +13,6 @@ BOOTLOG=/tmp/fetchlog-$USER
 # Expand to nothing if there are no matches
 shopt -s nullglob
 shopt -s extglob
-
-declare -r myname='fetchpack'
-declare -r myver='1.0.0'
 
 LIBRARY=${LIBRARY:-'/usr/share/makepkg'}
 # Import libmakepkg
@@ -168,7 +169,44 @@ function die()
 	exit 1
 }
 
+function runcmd()
+{
+	if (( EUID != 0 )); then
+		msg "Privilege escalation required"
+		if sudo -v &>/dev/null && sudo -l &>/dev/null; then
+			sudo "$@"
+		else
+			die 'Unable to escalate privileges using sudo'
+		fi
+	else
+		"$@"
+	fi
+}
+
+
 function sh_splitpkg()
+{
+	file=${1}
+	#pkg_re='^([a-z-]+)(-)([0-9\\.]+)(-)([0-9])(-)(.*)(.chi.zst)$'
+	pkg_re='([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)-(([0-9]+(\.[0-9]+)*)(-([0-9]+))?)-([^.]+).*'
+	aPKGSPLIT=()
+
+	pkg_folder_dir=$(echo ${file%/*})							#remove arquivo deixando somente o diretorio/repo
+	pkg_fullname=$(echo ${file##*/})    						#remove diretorio deixando somente nome do pacote
+
+	[[ $pkg_fullname =~ $pkg_re ]] &&
+	    pkg_fullname=${BASH_REMATCH[0]}
+	    pkg_base=${BASH_REMATCH[1]}
+	    pkg_base_version=${BASH_REMATCH[1]}-${BASH_REMATCH[3]}
+	    pkg_version=${BASH_REMATCH[3]}
+	    pkg_build=${BASH_REMATCH[7]}
+	    pkg_arch=${BASH_REMATCH[8]}
+
+	aPKGSPLIT=($pkg_folder_dir $pkg_fullname $pkg_arch $pkg_base $pkg_base_version $pkg_version $pkg_build)
+	return $?
+}
+
+function sh_splitpkgOLD()
 {
 	local PRG='chi.zst'
 	local file=${1}
@@ -233,8 +271,8 @@ function sh_splitpkg()
 #		  "pkg_build       : $pkg_build"
 
 	aPKGSPLIT=($pkg_folder_dir $pkg_fullname $pkg_arch $pkg_base $pkg_base_version $pkg_version $pkg_build)
-	aPKGLIST=${aPKGSPLIT[*]}
-	arr=(${aPKGSPLIT[*]})
+#	aPKGLIST=${aPKGSPLIT[*]}
+#	arr=(${aPKGSPLIT[*]})
 #	echo -e "${arr[0]}\n${arr[1]}\n${arr[2]}\n${arr[3]}\n${arr[4]}\n${arr[5]}\n${arr[6]}\n${arr[7]}"
 #	info "${arr[0]}\n${arr[1]}\n${arr[2]}\n${arr[3]}\n${arr[4]}\n${arr[5]}\n${arr[6]}\n${arr[7]}"
 	return $?
@@ -252,6 +290,8 @@ function ropch()
 	local pkgInAll=
 	local FilteredPackages=
 	local AllFilteredPackages=
+	local pkg_re='(.+)-[^-]+-[0-9]+-([^.]+)\.pkg.*'
+
 
 	[[ -d $PKGDIR ]] ||
 		die "cachedir '%s' does not exist or is not a directory" "$cachedir"
@@ -272,10 +312,12 @@ function ropch()
 #		pushd $cdir >/dev/null 2>&1
 		if [ $# -lt 1 ]; then
 			#AllFilesPackages=$(find "$PWD" -maxdepth 100 -name '*.chi.zst' -type f)
-			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort )
+			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort -r )
+			#AllFilesPackages=$(printf '%s\n' "$PWD"/*.chi.zst | sort -r)
 		else
 			#AllFilesPackages=$(find "$PWD" -name '*.chi' -prune -o \( -name '*.chi.zst' \) | grep ^$1)
-			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort)
+			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort -r)
+			#AllFilesPackages=$(printf '%s\n' "$PWD"/*.chi.zst | grep $1 | sort -r )
 		fi
 
 		arr=(${AllFilesPackages[*]})
@@ -289,10 +331,17 @@ function ropch()
 		do
 			pkgInFullName=${pkgInAll}
 			pkgInAll=$(echo "${pkgInAll##*/}") 		# remove directory
-			sh_splitpkg ${pkgInAll}
-			FilteredPackages=${aPKGSPLIT[$PKG_BASE]}
+			#sh_splitpkg ${pkgInAll}
+			#FilteredPackages=${aPKGSPLIT[$PKG_BASE]}
+			FilteredPackages=$(echo $pkgInAll | sed 's/-[[:digit:]].*$//')
+
+#info $FilteredPackages
+
 			AllFilteredPackages=$(find "$PWD" -type f -iname "$FilteredPackages*.zst")
-			#info "1-$pkgInAll \n2-$FilteredPackages \n3-$AllFilteredPackages"
+			#AllFilteredPackages=$(printf '%s\n' "$PWD"/$FilteredPackages*.chi.zst)
+
+#info "1-$pkgInAll \n2-$FilteredPackages \n3-$AllFilteredPackages"
+
 			pkg=
   			arr=(${AllFilteredPackages[*]})
 		  	nfiles=${#arr[*]}
@@ -306,10 +355,10 @@ function ropch()
 					pkg=$(echo "${pkg##*/}") 		# remove directory
 					#info "$pkgInAll \n$pkg"
 					if [[ "$(vercmp $pkgInAll $pkg)" -lt 0 ]]; then
-						#log_info_msg "Removing ${red}OLD ${reset}package ${yellow}$pkgInAll"
-						#rm $pkgInAll*  >/dev/null 2>&1
+#						log_info_msg "Removing ${red}OLD ${reset}package ${yellow}$pkgInAll"
+#						rm $pkgFullName*  >/dev/null 2>&1
 						candidates+=("${pkgInFullName}")
-						#evaluate_retval
+#						evaluate_retval
 						if [[ $nfiles -eq 2 ]]; then
 							break
 						fi
@@ -323,8 +372,77 @@ function ropch()
 		done
 #		popd >/dev/null 2>&1
 #	done
-	info $candidates
 	popd >/dev/null 2>&1
+
+	if (( ! ${#candidates[*]} )); then
+		msg 'no candidate packages found for pruning'
+		exit 0
+	fi
+
+	pkgcount=${#candidates[*]}
+	totalsaved=$(printf '%s\0' "${candidates[@]}" | xargs -0 stat -c %s | awk '{ sum += $1 } END { print sum }')
+	set -o errexit # Exit immediately if a pipeline returns non-zero.
+
+	cmdopts=(-f)
+	verbose=1
+	delete=1
+
+	(( verbose )) && cmdopts+=(-v)
+	if (( delete )); then
+		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 rm "${cmdopts[@]}"
+	elif (( move )); then
+		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
+	fi
+	#summary "$pkgcount" "${candidates[@]}"
+	echo
+	msg "$output (disk space saved: %s)" "$(size_to_human "$totalsaved")"
+}
+
+
+function summary()
+{
+			local -i filecount=$1; shift
+			local seenarch= seen= arch= name=
+			local -r pkg_re='(.+)-[^-]+-[0-9]+-([^.]+)\.pkg.*'
+			msg "Candidate packages:"
+			while read -r pkg; do
+				if (( verbose >= 3 )); then
+					[[ $pkg =~ $pkg_re ]] && name=${BASH_REMATCH[1]} arch=${BASH_REMATCH[2]}
+					if [[ -z $seen || $seenarch != "$arch" || $seen != "$name" ]]; then
+						seen=$name seenarch=$arch
+						printf '%s (%s):\n' "${name##*/}" "$arch"
+					fi
+					printf '  %s\n' "${pkg##*/}"
+				elif (( verbose >= 2 )); then
+					printf "%s$delim" "$pkg"
+				else
+					printf "%s$delim" "${pkg##*/}"
+				fi
+			done < <(printf '%s\n' "$@" | pacsort --files)
+}
+
+function size_to_human()
+{
+	awk -v size="$1" '
+	BEGIN {
+		suffix[1] = "B"
+		suffix[2] = "KiB"
+		suffix[3] = "MiB"
+		suffix[4] = "GiB"
+		suffix[5] = "TiB"
+		suffix[6] = "PiB"
+		suffix[7] = "EiB"
+		count = 1
+
+		while (size > 1024) {
+			size /= 1024
+			count++
+		}
+
+		sizestr = sprintf("%.2f", size)
+		sub(/\.?0+$/, "", sizestr)
+		printf("%s %s", sizestr, suffix[count])
+	}'
 }
 
 function version()
