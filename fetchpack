@@ -103,13 +103,19 @@ function setvarcolors()
 
 function info()
 {
-	dialog 						\
-		--beep					\
-		--title     "$0"		\
-		--backtitle "$0"		\
-		--msgbox    "$*"		\
+	whiptail							\
+		--title     "[debug]$0"	\
+		--backtitle "$0"			\
+		--msgbox    "$*"			\
 		15 100
 }
+
+function debug()
+{
+	info "$*"
+	return $?
+}
+
 
 function timespec()
 {
@@ -183,7 +189,6 @@ function runcmd()
 	fi
 }
 
-
 function sh_splitpkg()
 {
 	file=${1}
@@ -204,14 +209,14 @@ function sh_splitpkg()
 		pkg_arch=${BASH_REMATCH[5]}
 		pkg_base_version=${pkg_base}-${pkg_version_build}
 
-  info " file            : $file\n" \
-        "pkg_folder      : $pkg_folder\n" \
-	 	  "pkg_fullname    : $pkg_fullname\n" \
-	 	  "pkg_arch        : $pkg_arch\n" \
-	 	  "pkg_base        : $pkg_base\n" \
-		  "pkg_base_version: $pkg_base_version\n" \
-		  "pkg_version     : $pkg_version\n" \
-		  "pkg_build       : $pkg_build"
+#  info " file            : $file\n" \
+#        "pkg_folder      : $pkg_folder\n" \
+#	 	  "pkg_fullname    : $pkg_fullname\n" \
+#	 	  "pkg_arch        : $pkg_arch\n" \
+#	 	  "pkg_base        : $pkg_base\n" \
+#		  "pkg_base_version: $pkg_base_version\n" \
+#		  "pkg_version     : $pkg_version\n" \
+#		  "pkg_build       : $pkg_build"
 	aPKGSPLIT=($pkg_folder_dir $pkg_fullname $pkg_arch $pkg_base $pkg_base_version $pkg_version $pkg_build)
 	return $?
 }
@@ -288,7 +293,102 @@ function sh_splitpkgOLD()
 	return $?
 }
 
-function ropch()
+
+
+function summary()
+{
+	local -i filecount=$1; shift
+	local seenarch= seen= arch= name=
+	local -r pkg_re='(.+)-[^-]+-[0-9]+-([^.]+)\.pkg.*'
+
+	msg "Candidate packages:"
+	while read -r pkg; do
+		if (( verbose >= 3 )); then
+			pkg =~ $pkg_re ]] && name=${BASH_REMATCH[1]} arch=${BASH_REMATCH[2]}
+			if [[ -z $seen || $seenarch != "$arch" || $seen != "$name" ]]; then
+				seen=$name seenarch=$arch
+				printf '%s (%s):\n' "${name##*/}" "$arch"
+			fi
+			printf '  %s\n' "${pkg##*/}"
+		elif (( verbose >= 2 )); then
+			printf "%s$delim" "$pkg"
+		else
+			printf "%s$delim" "${pkg##*/}"
+		fi
+	done < <(printf '%s\n' "$@" | pacsort --files)
+}
+
+function size_to_human()
+{
+	awk -v size="$1" '
+	BEGIN {
+		suffix[1] = "B"
+		suffix[2] = "KiB"
+		suffix[3] = "MiB"
+		suffix[4] = "GiB"
+		suffix[5] = "TiB"
+		suffix[6] = "PiB"
+		suffix[7] = "EiB"
+		count = 1
+
+		while (size > 1024) {
+			size /= 1024
+			count++
+		}
+
+		sizestr = sprintf("%.2f", size)
+		sub(/\.?0+$/, "", sizestr)
+		printf("%s %s", sizestr, suffix[count])
+	}'
+}
+
+function version()
+{
+	printf "%s %s\n"	"$myname" "$myver"
+	printf "%s\n"		"Copyright (C) 2020 Vilmar Catafesta <vcatafesta@gmail.com>"
+}
+
+function usage()
+{
+	cat <<EOF
+${myname} v${myver}
+
+A flexible pacman cache cleaning utility.
+
+Usage: ${myname} <operation> [options] [targets...]
+
+  Operations:
+    -d, --dryrun          perform a dry run, only finding candidate packages.
+    -m, --move <dir>      move candidate packages to "dir".
+    -r, --remove          remove candidate packages.
+
+  Options:
+    --min-atime <time>
+    --min-mtime <time>    keep packages with an atime/mtime that is not older
+                          than the time given, even if this means keeping more
+                          than specified through the '--keep' option. Accepts
+                          arguments according to 'info "Date input formats"',
+                          e.g. '30 days ago'.
+    -a, --arch <arch>     scan for "arch" (default: all architectures).
+    -c, --cachedir <dir>  scan "dir" for packages. can be used more than once.
+                          (default: read from /etc/pacman.conf).
+    -f, --force           apply force to mv(1) and rm(1) operations.
+    -h, --help            display this help message and exit.
+    -i, --ignore <pkgs>   ignore "pkgs", comma-separated. Alternatively, specify
+                          "-" to read package names from stdin, newline-
+                          delimited.
+    -k, --keep <num>      keep "num" of each package in the cache (default: 3).
+        --nocolor         remove color from output.
+    -q, --quiet           minimize output
+    -u, --uninstalled     target uninstalled packages.
+    -v, --verbose         increase verbosity. specify up to 3 times.
+    -z, --null            use null delimiters for candidate names (only with -v
+                          and -vv).
+
+EOF
+}
+
+function initOLD()
 {
 	local arr=
 	local cdir=
@@ -300,13 +400,10 @@ function ropch()
 	local pkgInAll=
 	local FilteredPackages=
 	local AllFilteredPackages=
-	local pkg_re='(.+)-[^-]+-[0-9]+-([^.]+)\.pkg.*'
+	local pkg_re='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 	#SOEN
 
-
-	[[ -d $PKGDIR ]] ||
-		die "cachedir '%s' does not exist or is not a directory" "$cachedir"
-	pushd "$PKGDIR" &>/dev/null ||
-		die "failed to chdir to $PKGDIR"
+	[[ -d $PKGDIR ]]            || die "cachedir '%s' does not exist or is not a directory" "$cachedir"
+	pushd "$PKGDIR" &>/dev/null || die "failed to chdir to $PKGDIR"
 
 #	for cdir in {a..z}
 #	do
@@ -322,11 +419,11 @@ function ropch()
 #		pushd $cdir >/dev/null 2>&1
 		if [ $# -lt 1 ]; then
 			#AllFilesPackages=$(find "$PWD" -maxdepth 100 -name '*.chi.zst' -type f)
-			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort -r )
+			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort )
 			#AllFilesPackages=$(printf '%s\n' "$PWD"/*.chi.zst | sort -r)
 		else
-			#AllFilesPackages=$(find "$PWD" -name '*.chi' -prune -o \( -name '*.chi.zst' \) | grep ^$1)
-			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort -r)
+			#AllFilesPackages=$(find "$PWD" -type f -name '*.chi' -prune -o \( -name '*.chi.zst' \) | grep ^$1)
+			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort )
 			#AllFilesPackages=$(printf '%s\n' "$PWD"/*.chi.zst | grep $1 | sort -r )
 		fi
 
@@ -339,24 +436,24 @@ function ropch()
 		log_wait_msg "wait, searching candidates for pruning..."
 		for pkgInAll in $AllFilesPackages
 		do
+			((pkgNumber++))
 			pkgInFullName=${pkgInAll}
 			pkgInAll=$(echo "${pkgInAll##*/}") 		# remove directory
-			sh_splitpkg ${pkgInAll}
-			FilteredPackages=${aPKGSPLIT[$PKG_BASE]}
-			#FilteredPackages=$(echo $pkgInAll | sed 's/-[[:digit:]].*$//')
-
-#info $FilteredPackages
-
-			AllFilteredPackages=$(find "$PWD" -type f -iname "$FilteredPackages*.zst")
+			#sh_splitpkg ${pkgInAll}
+			#FilteredPackages=${aPKGSPLIT[$PKG_BASE]}
+			FilteredPackages=$(echo $pkgInAll | sed 's/-[[:digit:]].*$//')
+			#AllFilteredPackages=$(find "$PWD" -type f -iname "$FilteredPackages*.zst" | sed 's/^.*\///' | sed 's/-[[:digit:]].*$//' | grep $FilteredPackages$ | sort)
+			AllFilteredPackages=$(find "$PWD" -type f -iname "$FilteredPackages*.zst" | grep -E "*$FilteredPackages-([0-9])" | sort)
 			#AllFilteredPackages=$(printf '%s\n' "$PWD"/$FilteredPackages*.chi.zst)
 
-#info "1-$pkgInAll \n2-$FilteredPackages \n3-$AllFilteredPackages"
+#			debug " #-$pkgNumber\n 1-$pkgInAll\n 2-$FilteredPackages\n 3-$AllFilteredPackages"
+#			exit
 
 			pkg=
   			arr=(${AllFilteredPackages[*]})
 		  	nfiles=${#arr[*]}
 
-			#log_wait_msg "${white}Verifying package ${purple}($nfiles) ${green}$pkgInAll"
+			log_wait_msg "${white}Verifying package ${purple}($nfiles) ${green}$FilteredPackages"
 			if [[ $nfiles -gt 1 ]]; then
 				log_wait_msg "${white}Verifying candidate package ${purple}($nfiles) ${green}$FilteredPackages"
 				for pkg in $AllFilteredPackages
@@ -408,97 +505,132 @@ function ropch()
 	msg "$output (disk space saved: %s)" "$(size_to_human "$totalsaved")"
 }
 
-
-function summary()
+function init()
 {
-			local -i filecount=$1; shift
-			local seenarch= seen= arch= name=
-			local -r pkg_re='(.+)-[^-]+-[0-9]+-([^.]+)\.pkg.*'
-			msg "Candidate packages:"
-			while read -r pkg; do
-				if (( verbose >= 3 )); then
-					[[ $pkg =~ $pkg_re ]] && name=${BASH_REMATCH[1]} arch=${BASH_REMATCH[2]}
-					if [[ -z $seen || $seenarch != "$arch" || $seen != "$name" ]]; then
-						seen=$name seenarch=$arch
-						printf '%s (%s):\n' "${name##*/}" "$arch"
+		local arr=
+		local cdir=
+		local nfiles=
+		local pkg=
+		local cOldDir=
+		local AllFilesPackages=
+		local pkg=
+		local pkgInAll=
+		local FilteredPackages=
+		local AllFilteredPackages=
+		local pkg_re='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 	#SOEN
+
+		[[ -d $PKGDIR ]]            || die "cachedir '%s' does not exist or is not a directory" "$cachedir"
+		pushd "$PKGDIR" &>/dev/null || die "failed to chdir to $PKGDIR"
+
+		cOldDir=$PWD
+		pkgInAll=
+		FilteredPackages=
+		AllFilesPackages=
+		AllFilteredPackages=
+		candidates=()
+
+		if [ $# -lt 1 ]; then
+			#AllFilesPackages=$(find "$PWD" -maxdepth 100 -name '*.chi.zst' -type f)
+			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort )
+			#AllFilesPackages=$(printf '%s\n' "$PWD"/*.chi.zst | sort -r)
+		else
+			#AllFilesPackages=$(find "$PWD" -type f -name '*.chi' -prune -o \( -name '*.chi.zst' \) | grep ^$1)
+			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort)
+			#AllFilesPackages=$(printf '%s\n' "$PWD"/*.chi.zst | grep $1 | sort -r )
+		fi
+
+		arr=("${AllFilesPackages[*]}")   # IFS=\n
+		if (( !${#arr[*]} )); then
+			msg 'no candidate packages found for pruning'
+			exit 0
+		fi
+
+		log_wait_msg "wait, searching candidates for pruning..."
+		for pkgInAll in $AllFilesPackages
+		do
+			((pkgNumber++))
+			pkgInFullName=${pkgInAll}
+			#pkgInAll=$(echo "${pkgInAll##*/}") 		# remove directory
+			sh_splitpkg ${pkgInAll}
+			FilteredPackages=${aPKGSPLIT[$PKG_BASE]}
+			#FilteredPackages=$(echo $pkgInAll | sed 's/-[[:digit:]].*$//')
+			#AllFilteredPackages=$(find "$PWD" -type f -iname "$FilteredPackages*.zst" | sed 's/^.*\///' | sed 's/-[[:digit:]].*$//' | grep $FilteredPackages$ | sort)
+			AllFilteredPackages=$(find "$PWD" -type f -iname "$FilteredPackages*.zst" | grep -E "*$FilteredPackages-([0-9])" | sort)
+			#AllFilteredPackages=$(printf '%s\n' "$PWD"/$FilteredPackages*.chi.zst)
+
+#			debug " #-$pkgNumber\n 1-$pkgInAll\n 2-$FilteredPackages\n 3-$AllFilteredPackages"
+
+			pkg=
+ 			arr=("${AllFilteredPackages[*]}")
+		  	nfiles=${#arr[*]}
+
+			if [[ $nfiles -gt 1 ]]; then
+				while read -r pkg; do
+					sh_splitpkg ${pkg}
+					SearchPkg=${aPKGSPLIT[$PKG_BASE]}
+
+					first="${FilteredPackages:1:1}"
+					last="${SearchPkg:1:1}"
+
+	#				if [[ ${last} > ${first} ]]; then
+	#					break
+	#				fi
+
+					log_wait_msg "${white}Verifying package ${purple}($nfiles) ${green}$FilteredPackages"
+
+					if [[ $FilteredPackages == $SearchPkg ]]; then
+						if [[ "$(vercmp $pkgInFullName $pkg)" -lt 0 ]]; then
+							candidates+=("${pkgInFullName}")
+							if (( verbose >= 3 )); then
+								[[ $pkg =~ $pkg_re ]] && name=${BASH_REMATCH[1]} arch=${BASH_REMATCH[2]}
+								if [[ -z $seen || $seenarch != "$arch" || $seen != "$name" ]]; then
+									seen=$name seenarch=$arch
+									printf '%s (%s):\n' "${name##*/}" "$arch"
+								fi
+								printf '  %s\n' "${pkg##*/}"
+							elif (( verbose >= 2 )); then
+								printf "%s$delim" "$pkg"
+							else
+								#printf "%s$delim" "${pkg##*/}"
+								printf "%s$delim" "${pkg}"
+							fi
+						fi
 					fi
-					printf '  %s\n' "${pkg##*/}"
-				elif (( verbose >= 2 )); then
-					printf "%s$delim" "$pkg"
-				else
-					printf "%s$delim" "${pkg##*/}"
-				fi
-			done < <(printf '%s\n' "$@" | pacsort --files)
+				done < <(printf '%s\n' "$arr")
+			fi
+		done
+		popd >/dev/null 2>&1
+
+		if (( ! ${#candidates[*]} )); then
+			msg 'no candidate packages found for pruning'
+		exit 0
+	fi
+
+	pkgcount=${#candidates[*]}
+	totalsaved=$(printf '%s\0' "${candidates[@]}" | xargs -0 stat -c %s | awk '{ sum += $1 } END { print sum }')
+	set -o errexit # Exit immediately if a pipeline returns non-zero.
+
+	cmdopts=(-f)
+	verbose=1
+	delete=1
+
+	(( verbose )) && cmdopts+=(-v)
+#	if (( delete )); then
+#		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 rm "${cmdopts[@]}"
+#	elif (( move )); then
+#		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
+#	fi
+	#summary "$pkgcount" "${candidates[@]}"
+	echo
+	msg "$output (disk space saved: %s)" "$(size_to_human "$totalsaved")"
 }
 
-function size_to_human()
+function cleanup()
 {
-	awk -v size="$1" '
-	BEGIN {
-		suffix[1] = "B"
-		suffix[2] = "KiB"
-		suffix[3] = "MiB"
-		suffix[4] = "GiB"
-		suffix[5] = "TiB"
-		suffix[6] = "PiB"
-		suffix[7] = "EiB"
-		count = 1
-
-		while (size > 1024) {
-			size /= 1024
-			count++
-		}
-
-		sizestr = sprintf("%.2f", size)
-		sub(/\.?0+$/, "", sizestr)
-		printf("%s %s", sizestr, suffix[count])
-	}'
+	msg "Exiting.."
+	exit
 }
-
-function version()
-{
-	printf "%s %s\n" "$myname" "$myver"
-	echo 'Copyright (C) 2020 Vilmar Catafesta <vcatafesta@gmail.com>'
-}
-
-usage() {
-	cat <<EOF
-${myname} v${myver}
-
-A flexible pacman cache cleaning utility.
-
-Usage: ${myname} <operation> [options] [targets...]
-
-  Operations:
-    -d, --dryrun          perform a dry run, only finding candidate packages.
-    -m, --move <dir>      move candidate packages to "dir".
-    -r, --remove          remove candidate packages.
-
-  Options:
-    --min-atime <time>
-    --min-mtime <time>    keep packages with an atime/mtime that is not older
-                          than the time given, even if this means keeping more
-                          than specified through the '--keep' option. Accepts
-                          arguments according to 'info "Date input formats"',
-                          e.g. '30 days ago'.
-    -a, --arch <arch>     scan for "arch" (default: all architectures).
-    -c, --cachedir <dir>  scan "dir" for packages. can be used more than once.
-                          (default: read from /etc/pacman.conf).
-    -f, --force           apply force to mv(1) and rm(1) operations.
-    -h, --help            display this help message and exit.
-    -i, --ignore <pkgs>   ignore "pkgs", comma-separated. Alternatively, specify
-                          "-" to read package names from stdin, newline-
-                          delimited.
-    -k, --keep <num>      keep "num" of each package in the cache (default: 3).
-        --nocolor         remove color from output.
-    -q, --quiet           minimize output
-    -u, --uninstalled     target uninstalled packages.
-    -v, --verbose         increase verbosity. specify up to 3 times.
-    -z, --null            use null delimiters for candidate names (only with -v
-                          and -vv).
-
-EOF
-}
+trap cleanup SIGINT SIGTERM
 
 setvarcolors
-ropch "$@"
+init $*

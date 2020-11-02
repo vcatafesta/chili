@@ -75,6 +75,8 @@ fi
 
 echo "==========================================================="
 # SOEN
+#!/usr/bin/env bash
+
 #str="python-4.3.5-1-x86_64.chi.zst"
 #str="python-zope-4.3.5-1-x86_64.chi.zst"
 #str="python-zope-proxy-4.3.5-1-x86_64.chi.zst"
