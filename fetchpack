@@ -547,11 +547,11 @@ function init()
 	  	nfiles=${#arr[*]}
 
 		if (( !${#arr[*]} )); then
-			msg 'no candidate packages found for pruning'
+			printf "${red}  E  no candidate packages found for pruning\n"
 			exit 0
 		fi
 
-		log_wait_msg "wait, searching $nfiles candidates for pruning..."
+		log_wait_msg "wait, searching ${red}($nfiles) ${reset}candidates for pruning..."
 		for pkgInAll in $AllFilesPackages
 		do
 			((pkgNumber++))
