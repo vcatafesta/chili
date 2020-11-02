@@ -532,6 +532,7 @@ function init()
 		AllFilesPackages=
 		AllFilteredPackages=
 		candidates=()
+		candesc=()
 
 		if [ $# -lt 1 ]; then
 			#AllFilesPackages=$(find "$PWD" -maxdepth 100 -name '*.chi.zst' -type f)
@@ -592,6 +593,8 @@ function init()
 					if [[ $FilteredPackages =~  $SearchPkg ]]; then
 						if [[ "$(vercmp $pkgInFullName $pkg)" -lt 0 ]]; then
 							candidates+=("${pkgInFullName}")
+							canddesc+=("${pkgInFullName}.desc")
+							canddesc+=("${pkgInFullName}.sha256")
 							if (( verbose >= 3 )); then
 								[[ $pkg =~ $pkg_re ]] && name=${BASH_REMATCH[1]} arch=${BASH_REMATCH[2]}
 								if [[ -z $seen || $seenarch != "$arch" || $seen != "$name" ]]; then
@@ -625,6 +628,7 @@ function init()
 	(( verbose )) && cmdopts+=(-v)
 	if (( delete )); then
 		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 rm "${cmdopts[@]}"
+		printf '%s\0' "${canddesc[@]}"   | runcmd xargs -0 rm "${cmdopts[@]}"
 	elif (( move )); then
 		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
 	fi
