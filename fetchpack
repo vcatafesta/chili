@@ -402,6 +402,8 @@ function initOLD()
 	local AllFilteredPackages=
 	local pkg_re='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 	#SOEN
 
+	PKGDIR=/var/cache/fetch/archives
+
 	[[ -d $PKGDIR ]]            || die "cachedir '%s' does not exist or is not a directory" "$cachedir"
 	pushd "$PKGDIR" &>/dev/null || die "failed to chdir to $PKGDIR"
 
@@ -453,7 +455,7 @@ function initOLD()
   			arr=(${AllFilteredPackages[*]})
 		  	nfiles=${#arr[*]}
 
-			log_wait_msg "${white}Verifying package ${purple}($nfiles) ${green}$FilteredPackages"
+			log_wait_msg "${white}Verifying package ${purple}($nfiles) ${green}${FilteredPackages} ${pkgInFullName}"
 			if [[ $nfiles -gt 1 ]]; then
 				log_wait_msg "${white}Verifying candidate package ${purple}($nfiles) ${green}$FilteredPackages"
 				for pkg in $AllFilteredPackages
@@ -519,6 +521,8 @@ function init()
 		local AllFilteredPackages=
 		local pkg_re='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 	#SOEN
 
+		PKGDIR=/var/cache/fetch/archives
+
 		[[ -d $PKGDIR ]]            || die "cachedir '%s' does not exist or is not a directory" "$cachedir"
 		pushd "$PKGDIR" &>/dev/null || die "failed to chdir to $PKGDIR"
 
@@ -539,13 +543,15 @@ function init()
 			#AllFilesPackages=$(printf '%s\n' "$PWD"/*.chi.zst | grep $1 | sort -r )
 		fi
 
-		arr=("${AllFilesPackages[*]}")   # IFS=\n
+		arr=(${AllFilesPackages[*]})
+	  	nfiles=${#arr[*]}
+
 		if (( !${#arr[*]} )); then
 			msg 'no candidate packages found for pruning'
 			exit 0
 		fi
 
-		log_wait_msg "wait, searching candidates for pruning..."
+		log_wait_msg "wait, searching $nfiles candidates for pruning..."
 		for pkgInAll in $AllFilesPackages
 		do
 			((pkgNumber++))
@@ -561,8 +567,13 @@ function init()
 #			debug " #-$pkgNumber\n 1-$pkgInAll\n 2-$FilteredPackages\n 3-$AllFilteredPackages"
 
 			pkg=
- 			arr=("${AllFilteredPackages[*]}")
+ 			arr=(${AllFilteredPackages[*]})
+ 			array=("${AllFilteredPackages[*]}")
 		  	nfiles=${#arr[*]}
+
+			if (( verbose >= 3 )); then
+				printf "     ${white}Verifying package ${purple}(%04d) ${green}[%40s]${purple}(%d)${green} => %s\n" "$pkgNumber" "$FilteredPackages" "$nfiles" "${pkgInFullName}"
+			fi
 
 			if [[ $nfiles -gt 1 ]]; then
 				while read -r pkg; do
@@ -572,13 +583,13 @@ function init()
 					first="${FilteredPackages:1:1}"
 					last="${SearchPkg:1:1}"
 
-	#				if [[ ${last} > ${first} ]]; then
-	#					break
-	#				fi
+					if [[ ${last} > ${first} ]]; then
+						break
+					fi
 
-					log_wait_msg "${white}Verifying package ${purple}($nfiles) ${green}$FilteredPackages"
+#					log_wait_msg "${white}Verifying package ${purple}($nfiles) ${green}$FilteredPackages"
 
-					if [[ $FilteredPackages == $SearchPkg ]]; then
+					if [[ $FilteredPackages =~  $SearchPkg ]]; then
 						if [[ "$(vercmp $pkgInFullName $pkg)" -lt 0 ]]; then
 							candidates+=("${pkgInFullName}")
 							if (( verbose >= 3 )); then
@@ -590,19 +601,16 @@ function init()
 								printf '  %s\n' "${pkg##*/}"
 							elif (( verbose >= 2 )); then
 								printf "%s$delim" "$pkg"
-							else
-								#printf "%s$delim" "${pkg##*/}"
-								printf "%s$delim" "${pkg}"
 							fi
 						fi
 					fi
-				done < <(printf '%s\n' "$arr")
+				done < <(printf '%s\n' "$array")
 			fi
 		done
 		popd >/dev/null 2>&1
 
 		if (( ! ${#candidates[*]} )); then
-			msg 'no candidate packages found for pruning'
+			printf "${red}  E  no packages found for pruning\n"
 		exit 0
 	fi
 
@@ -615,11 +623,11 @@ function init()
 	delete=1
 
 	(( verbose )) && cmdopts+=(-v)
-#	if (( delete )); then
-#		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 rm "${cmdopts[@]}"
-#	elif (( move )); then
-#		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
-#	fi
+	if (( delete )); then
+		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 rm "${cmdopts[@]}"
+	elif (( move )); then
+		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
+	fi
 	#summary "$pkgcount" "${candidates[@]}"
 	echo
 	msg "$output (disk space saved: %s)" "$(size_to_human "$totalsaved")"
