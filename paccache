@@ -354,7 +354,8 @@ fi
 
 # setting default cachedirs
 if [[ -z $cachedirs ]]; then
-	cachedirs=($(pacman-conf CacheDir))
+	#cachedirs=($(pacman-conf CacheDir))
+	cachedirs=("/var/cache/fetch/archives")
 fi
 
 # remaining args are a whitelist
