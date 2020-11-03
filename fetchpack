@@ -3,11 +3,15 @@ export LC_ALL="pt_BR.utf8"
 declare -r myname='fetchpack'
 declare -r myver='1.0.1'
 declare    delim=$'\n' keep=3 movedir= scanarch=
+declare -a cachedirs=() candidates=() cmdopts=() whitelist=() blacklist=()
+declare -i delete=0 dryrun=0 filecount=0 move=0 needsroot=0 totalsaved=0 verbose=0
 
+
+QUIET=0
+USE_COLOR='y'
 IFS=$' \t\n'
 SAVEIFS=$IFS
 source /etc/fetch/fetch.conf &> /dev/null
-PKGDIR="${GITDIR:=/var/cache/fetch/archives}"
 BOOTLOG=/tmp/fetchlog-$USER
 
 # Expand to nothing if there are no matches
@@ -171,7 +175,7 @@ function log_success_msg2()
 function die()
 {
 	local mesg=$1; shift
-   log_failure_msg2 $mesg "$@" >&2
+   log_failure_msg2 "${red}$mesg" "$@" >&2
 	exit 1
 }
 
@@ -371,7 +375,7 @@ Usage: ${myname} <operation> [options] [targets...]
                           e.g. '30 days ago'.
     -a, --arch <arch>     scan for "arch" (default: all architectures).
     -c, --cachedir <dir>  scan "dir" for packages. can be used more than once.
-                          (default: read from /etc/pacman.conf).
+                          (default: read from /etc/fetch/fetch.conf).
     -f, --force           apply force to mv(1) and rm(1) operations.
     -h, --help            display this help message and exit.
     -i, --ignore <pkgs>   ignore "pkgs", comma-separated. Alternatively, specify
@@ -388,7 +392,7 @@ Usage: ${myname} <operation> [options] [targets...]
 EOF
 }
 
-function initOLD()
+function init()
 {
 	local arr=
 	local cdir=
@@ -402,129 +406,15 @@ function initOLD()
 	local AllFilteredPackages=
 	local pkg_re='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 	#SOEN
 
-	PKGDIR=/var/cache/fetch/archives
+	for cachedir in "${cachedirs[@]}"
+	do
+		[[ -d $cachedir ]] ||
+			die "cachedir '%s' does not exist or is not a directory" "$cachedir"
 
-	[[ -d $PKGDIR ]]            || die "cachedir '%s' does not exist or is not a directory" "$cachedir"
-	pushd "$PKGDIR" &>/dev/null || die "failed to chdir to $PKGDIR"
-
-#	for cdir in {a..z}
-#	do
-		#echo -e "${white}Verifying packages in ${green}$cdir"
-		cOldDir=$PWD
-		pkgInAll=
-		FilteredPackages=
-		AllFilesPackages=
-		AllFilteredPackages=
-		candidates=()
-#		echo "${PWD##*/}"
-
-#		pushd $cdir >/dev/null 2>&1
-		if [ $# -lt 1 ]; then
-			#AllFilesPackages=$(find "$PWD" -maxdepth 100 -name '*.chi.zst' -type f)
-			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort )
-			#AllFilesPackages=$(printf '%s\n' "$PWD"/*.chi.zst | sort -r)
-		else
-			#AllFilesPackages=$(find "$PWD" -type f -name '*.chi' -prune -o \( -name '*.chi.zst' \) | grep ^$1)
-			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort )
-			#AllFilesPackages=$(printf '%s\n' "$PWD"/*.chi.zst | grep $1 | sort -r )
+		if (( move || delete )); then
+			[[ ! -w $cachedir ]] && needsroot=1
 		fi
-
-		arr=(${AllFilesPackages[*]})
-		if (( !${#arr[*]} )); then
-			msg 'no candidate packages found for pruning'
-			exit 0
-		fi
-
-		log_wait_msg "wait, searching candidates for pruning..."
-		for pkgInAll in $AllFilesPackages
-		do
-			((pkgNumber++))
-			pkgInFullName=${pkgInAll}
-			pkgInAll=$(echo "${pkgInAll##*/}") 		# remove directory
-			#sh_splitpkg ${pkgInAll}
-			#FilteredPackages=${aPKGSPLIT[$PKG_BASE]}
-			FilteredPackages=$(echo $pkgInAll | sed 's/-[[:digit:]].*$//')
-			#AllFilteredPackages=$(find "$PWD" -type f -iname "$FilteredPackages*.zst" | sed 's/^.*\///' | sed 's/-[[:digit:]].*$//' | grep $FilteredPackages$ | sort)
-			AllFilteredPackages=$(find "$PWD" -type f -iname "$FilteredPackages*.zst" | grep -E "*$FilteredPackages-([0-9])" | sort)
-			#AllFilteredPackages=$(printf '%s\n' "$PWD"/$FilteredPackages*.chi.zst)
-
-#			debug " #-$pkgNumber\n 1-$pkgInAll\n 2-$FilteredPackages\n 3-$AllFilteredPackages"
-#			exit
-
-			pkg=
-  			arr=(${AllFilteredPackages[*]})
-		  	nfiles=${#arr[*]}
-
-			log_wait_msg "${white}Verifying package ${purple}($nfiles) ${green}${FilteredPackages} ${pkgInFullName}"
-			if [[ $nfiles -gt 1 ]]; then
-				log_wait_msg "${white}Verifying candidate package ${purple}($nfiles) ${green}$FilteredPackages"
-				for pkg in $AllFilteredPackages
-				do
-					pkgFullName=${pkg}
-					pkg=$(echo "${pkg##*/}") 		# remove directory
-					#info "$pkgInAll \n$pkg"
-					if [[ "$(vercmp $pkgInAll $pkg)" -lt 0 ]]; then
-#						log_info_msg "Removing ${red}OLD ${reset}package ${yellow}$pkgInAll"
-#						rm $pkgFullName*  >/dev/null 2>&1
-						candidates+=("${pkgInFullName}")
-#						evaluate_retval
-						if [[ $nfiles -eq 2 ]]; then
-							break
-						fi
-					elif [[ "$(vercmp $pkgInAll $pkg)" -gt 0 ]]; then
-						continue
-					elif [[ "$(vercmp $pkgInAll $pkg)" -eq 0 ]]; then
-						continue
-					fi
-				done
-			fi
-		done
-#		popd >/dev/null 2>&1
-#	done
-	popd >/dev/null 2>&1
-
-	if (( ! ${#candidates[*]} )); then
-		msg 'no candidate packages found for pruning'
-		exit 0
-	fi
-
-	pkgcount=${#candidates[*]}
-	totalsaved=$(printf '%s\0' "${candidates[@]}" | xargs -0 stat -c %s | awk '{ sum += $1 } END { print sum }')
-	set -o errexit # Exit immediately if a pipeline returns non-zero.
-
-	cmdopts=(-f)
-	verbose=1
-	delete=1
-
-	(( verbose )) && cmdopts+=(-v)
-	if (( delete )); then
-		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 rm "${cmdopts[@]}"
-	elif (( move )); then
-		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
-	fi
-	#summary "$pkgcount" "${candidates[@]}"
-	echo
-	msg "$output (disk space saved: %s)" "$(size_to_human "$totalsaved")"
-}
-
-function init()
-{
-		local arr=
-		local cdir=
-		local nfiles=
-		local pkg=
-		local cOldDir=
-		local AllFilesPackages=
-		local pkg=
-		local pkgInAll=
-		local FilteredPackages=
-		local AllFilteredPackages=
-		local pkg_re='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 	#SOEN
-
-		PKGDIR=/var/cache/fetch/archives
-
-		[[ -d $PKGDIR ]]            || die "cachedir '%s' does not exist or is not a directory" "$cachedir"
-		pushd "$PKGDIR" &>/dev/null || die "failed to chdir to $PKGDIR"
+		pushd "$cachedir" &>/dev/null || die "failed to chdir to $cachedir"
 
 		cOldDir=$PWD
 		pkgInAll=
@@ -533,6 +423,7 @@ function init()
 		AllFilteredPackages=
 		candidates=()
 		candesc=()
+		pkgNumber=0
 
 		if [ $# -lt 1 ]; then
 			#AllFilesPackages=$(find "$PWD" -maxdepth 100 -name '*.chi.zst' -type f)
@@ -547,12 +438,12 @@ function init()
 		arr=(${AllFilesPackages[*]})
 	  	nfiles=${#arr[*]}
 
-		if (( !${#arr[*]} )); then
-			printf "${red}  E  no candidate packages found for pruning\n"
-			exit 0
-		fi
+#		if (( !${#arr[*]} )); then
+#			printf "${red}  E  no candidate packages found for pruning\n"
+#			exit 0
+#		fi
 
-		log_wait_msg "wait, searching ${red}($nfiles) ${reset}candidates for pruning..."
+		log_wait_msg "${reset}wait, searching ${red}($nfiles) ${reset}candidates for pruning in ${green}$cachedir"
 		for pkgInAll in $AllFilesPackages
 		do
 			((pkgNumber++))
@@ -572,8 +463,8 @@ function init()
  			array=("${AllFilteredPackages[*]}")
 		  	nfiles=${#arr[*]}
 
-			if (( verbose >= 3 )); then
-				printf "     ${white}Verifying package ${purple}(%04d) ${green}[%40s]${purple}(%d)${green} => %s\n" "$pkgNumber" "$FilteredPackages" "$nfiles" "${pkgInFullName}"
+			if (( verbose )); then
+				printf "     ${white}verifying package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${green} => %s\n" "$pkgNumber" "$FilteredPackages" "$nfiles" "${pkgInFullName}"
 			fi
 
 			if [[ $nfiles -gt 1 ]]; then
@@ -611,19 +502,16 @@ function init()
 			fi
 		done
 		popd >/dev/null 2>&1
+	done
 
-		if (( ! ${#candidates[*]} )); then
-			printf "${red}  E  no packages found for pruning\n"
+	if (( ! ${#candidates[*]} )); then
+		printf "${red}  E  NO packages found for pruning\n"
 		exit 0
 	fi
 
 	pkgcount=${#candidates[*]}
 	totalsaved=$(printf '%s\0' "${candidates[@]}" | xargs -0 stat -c %s | awk '{ sum += $1 } END { print sum }')
 	set -o errexit # Exit immediately if a pipeline returns non-zero.
-
-	cmdopts=(-f)
-	verbose=1
-	delete=1
 
 	(( verbose )) && cmdopts+=(-v)
 	if (( delete )); then
@@ -642,7 +530,80 @@ function cleanup()
 	msg "Exiting.."
 	exit
 }
+
 trap cleanup SIGINT SIGTERM
 
-setvarcolors
+OPT_SHORT=':a:c:dfhi:k:m:qrsuVvz'
+OPT_LONG=('arch:' 'cachedir:' 'dryrun' 'force' 'help' 'ignore:' 'keep:' 'move:'
+          'nocolor' 'quiet' 'remove' 'uninstalled' 'version' 'verbose' 'null'
+          'min-atime:' 'min-mtime:')
+
+if ! parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
+	exit 1
+fi
+set -- "${OPTRET[@]}"
+unset OPT_SHORT OPT_LONG OPTRET
+
+while :; do
+	case $1 in
+		-c|--cachedir)
+			cachedirs+=("$2")
+			shift ;;
+		-d|--dryrun)
+			dryrun=1 ;;
+		-f|--force)
+			cmdopts=(-f) ;;
+		-h|--help)
+			usage
+			exit 0 ;;
+		-m|--move)
+			move=1 movedir=$2
+			shift ;;
+		--nocolor)
+			USE_COLOR='n' ;;
+		-q|--quiet)
+			QUIET=1 ;;
+		-r|--remove)
+			delete=1 ;;
+		-V|--version)
+			version
+			exit 0 ;;
+		-v|--verbose)
+			(( ++verbose )) ;;
+		-z|--null)
+			delim='\0' ;;
+		--)
+			shift
+			break 2 ;;
+	esac
+	shift
+done
+
+# check if messages are to be printed using color
+if [[ -t 2 && $USE_COLOR != "n" ]]; then
+	setvarcolors
+fi
+
+# setting default cachedirs
+if [[ -z $cachedirs ]]; then
+	cachedirs=("${PKGDIR:=/var/cache/fetch/archives}")
+	cachedirs+=("/github/ChiliOS/packages")
+	cachedirs+=("/var/cache/fetch/archives")
+fi
+
+# sanity checks
+case $(( dryrun+delete+move )) in
+	0) 	die "no operation specified (use -h for help)" ;;
+	[^1]) die "only one operation may be used at a time" ;;
+esac
+
+[[ $movedir && ! -d $movedir ]] &&
+	die "destination directory '%s' does not exist or is not a directory" "$movedir"
+
+if (( move || delete )); then
+	# make it an absolute path since we're about to chdir
+	[[ $movedir && ${movedir:0:1} != '/' ]] && movedir=$PWD/$movedir
+	[[ $movedir && ! -w $movedir ]] && needsroot=1
+fi
+
 init $*
