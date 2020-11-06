@@ -3,7 +3,7 @@ export LC_ALL="pt_BR.utf8"
 declare -r myname='fetchpack'
 declare -r myver='1.0.1'
 declare    delim=$'\n' keep=3 movedir= scanarch=
-declare -a cachedirs=() candidates=() cmdopts=() whitelist=() blacklist=()
+declare -a cachedirs=() candesc=() candidates=() cmdopts=() whitelist=() blacklist=()
 declare -i delete=0 dryrun=0 filecount=0 move=0 needsroot=0 totalsaved=0 verbose=0
 
 QUIET=0
@@ -770,6 +770,14 @@ function main()
 
 		arrayfull=("${AllFilesPackages[@]}")
 
+		if (( dryrun )); then
+	   	echo "${white}running mode dry-run"
+		elif (( delete )); then
+	   	echo "${white}running mode delete"
+		elif (( move )); then
+	   	echo "${white}running mode move"
+		fi
+
 		while read -r pkgInAll;do
 			sh_splitpkg ${pkgInAll}
 			pkg_base=${aPKGSPLIT[$PKG_BASE]}
@@ -777,16 +785,16 @@ function main()
 
 			(( pkgNumber++ ))
 
-			if (( verbose >= 3 )); then
-				printf "     ${white}verifying package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${green} => %s\n" "$pkgNumber" "$pkg_base" "$nfiles" "${pkgInAll}"
-			fi
-
 			arr=$(find "$PWD" -type f -name "$pkg_base*.zst" | grep -E "*$pkg_base-([0-9])" | sort )
 			array=("${arr[@]}")
 			ntam=${#arr[*]}
 
 			if [[ $ntam -gt 1 ]]; then
 				continue
+			fi
+
+			if (( verbose >= 3 )); then
+				printf "     ${white}verifying package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${green} => %s\n" "$pkgNumber" "$pkg_base" "$nfiles" "${pkgInAll}"
 			fi
 
 			while read -r pkg;do
@@ -801,6 +809,7 @@ function main()
 						printf "     ${white}verifying package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${green} => %s\n" "$pkgNumber" "$pkg_base" "$nfiles" "${pkgInAll}"
 					fi
 					candidates+=("${pkgInAll}")
+					candidates+=("${pkgInAll}.desc")
 				fi
 #			done < <(printf '%s\n' "$(find "$PWD" -type f -name "$pkg_base*.zst" | grep -E "*$pkg_base-([0-9])" | sort )")
 			done < <(printf '%s\n' "$array")
@@ -831,7 +840,6 @@ function main()
 	(( verbose )) && cmdopts+=(-v)
 	if (( delete )); then
 		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 rm "${cmdopts[@]}"
-		printf '%s\0' "${canddesc[@]}"   | runcmd xargs -0 rm "${cmdopts[@]}"
 	elif (( move )); then
 		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
 	fi
