@@ -1,0 +1,86 @@
+#!/usr/bin/bash
+
+aPKGSPLIT=()
+cachedirs=("/var/cache/fetch/archives")
+pkg_ext='.chi.zst'
+pkg_re='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst'
+: ${aPKGSPLIT=()}
+: ${aPKGLIST=}
+: ${PKG_FOLDER_DIR=0}
+: ${PKG_FULLNAME=1}
+: ${PKG_ARCH=2}
+: ${PKG_BASE=3}
+: ${PKG_BASE_VERSION=4}
+: ${PKG_VERSION=5}
+: ${PKG_BUILD=6}
+
+function die(){
+	local msg=$1; shift
+   printf "%s %s\n" "$msg" "$@" >&2
+	exit 1
+}
+
+sh_splitpkg(){
+	local file=${1}
+	local pkg_folder_dir=$(echo ${file%/*})
+	local pkg_fullname=$(echo ${file##*/})
+	local	pkg_base=
+	local	pkg_version_build=
+	local	pkg_version=
+	local	pkg_build=
+	local	pkg_arch=
+	local	pkg_base_version=
+
+	[[ $pkg_fullname =~ $pkg_re ]] &&
+		pkg_fullname=${BASH_REMATCH[0]}
+		pkg_base=${BASH_REMATCH[1]}
+		pkg_version_build=${BASH_REMATCH[2]}
+		pkg_version=${BASH_REMATCH[3]}
+		pkg_build=${BASH_REMATCH[4]}
+		pkg_arch=${BASH_REMATCH[5]}
+		pkg_base_version=${pkg_base}-${pkg_version_build}
+
+	aPKGSPLIT=($pkg_folder_dir $pkg_fullname $pkg_arch $pkg_base $pkg_base_version $pkg_version $pkg_build)
+	return $?
+}
+
+main(){
+	local pkg=
+	local pkgInAll=
+	local pkg_base=
+	local pkg_search=
+	local candidates=()
+	local cachedir
+
+	for cachedir in "${cachedirs[@]}"
+	do
+		[[ -d $cachedir ]]            || die "Error: cachedir '$cachedir' does not exist or is not a directory"
+		pushd "$cachedir" &>/dev/null || die "Error: failed to chdir to $cachedir"
+
+		while read -r pkgInAll;do
+			sh_splitpkg ${pkgInAll}
+			pkg_base=${aPKGSPLIT[$PKG_BASE]}
+			[[ -z "$pkg_base" ]] &&	continue
+
+			while read -r pkg;do
+				sh_splitpkg ${pkg}
+				pkg_search=${aPKGSPLIT[$PKG_BASE]}
+
+				[[ -z "$pkg_search" ]] &&	continue
+				[[ "${pkg_search::1}" > "${pkg_base::1}" ]] && break
+
+				if [[ "${pkg_base}" =~ "${pkg_search}" ]] && [[ "$(vercmp $pkgInAll $pkg)" -lt 0 ]]; then
+					printf "%s\n" "${pkgInAll}"
+					candidates+=("${pkgInAll}")
+				fi
+			done < <(printf '%s\n' "$(find "$PWD" -type f -name "$pkg_base*.zst" | grep -E "*$pkg_base-([0-9])" )")
+		done < <(printf '%s\n' "$(find "$PWD" -type f -name "*.chi.zst" )")
+		popd >/dev/null 2>&1
+	done
+
+	if (( ! ${#candidates[*]} )); then
+		die "NO packages found for pruning"
+	fi
+}
+
+main $*

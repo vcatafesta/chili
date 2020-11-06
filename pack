@@ -1,0 +1,919 @@
+#!/usr/bin/bash
+export LC_ALL="pt_BR.utf8"
+declare -r myname='fetchpack'
+declare -r myver='1.0.1'
+declare    delim=$'\n' keep=3 movedir= scanarch=
+declare -a cachedirs=() candidates=() cmdopts=() whitelist=() blacklist=()
+declare -i delete=0 dryrun=0 filecount=0 move=0 needsroot=0 totalsaved=0 verbose=0
+
+QUIET=0
+USE_COLOR='y'
+IFS=$' \t\n'
+SAVEIFS=$IFS
+source /etc/fetch/fetch.conf &> /dev/null
+BOOTLOG=/tmp/fetchlog-$USER
+
+# Expand to nothing if there are no matches
+shopt -s nullglob
+shopt -s extglob
+
+LIBRARY=${LIBRARY:-'/usr/share/makepkg'}
+# Import libmakepkg
+source "$LIBRARY"/util/message.sh
+source "$LIBRARY"/util/parseopts.sh
+
+# log messages
+NORMAL="\\033[0;39m"         # Standard console grey
+SUCCESS="\\033[1;32m"        # Success is green
+WARNING="\\033[1;33m"        # Warnings are yellow
+FAILURE="\\033[1;31m"        # Failures are red
+INFO="\\033[1;36m"           # Information is light cyan
+BRACKET="\\033[1;34m"        # Brackets are blue
+BMPREFIX="     "
+SUCCESS_PREFIX="${SUCCESS}  *  ${NORMAL}"
+FAILURE_PREFIX="${FAILURE}*****${NORMAL}"
+WARNING_PREFIX="${WARNING}  W  ${NORMAL}"
+SKIP_PREFIX="${INFO}  S  ${NORMAL}"
+SUCCESS_SUFFIX="${BRACKET}[${SUCCESS}  OK  ${BRACKET}]${NORMAL}"
+FAILURE_SUFFIX="${BRACKET}[${FAILURE} FAIL ${BRACKET}]${NORMAL}"
+WARNING_SUFFIX="${BRACKET}[${WARNING} WARN ${BRACKET}]${NORMAL}"
+SKIP_SUFFIX="${BRACKET}[${INFO} SKIP ${BRACKET}]${NORMAL}"
+WAIT_PREFIX="${WARNING}  R  ${NORMAL}"
+WAIT_SUFFIX="${BRACKET}[${WARNING} WAIT ${BRACKET}]${NORMAL}"
+FAILURE_PREFIX="${FAILURE}  X  ${NORMAL}"
+KILLDELAY=3
+SCRIPT_STAT="0"
+
+if [ -z "${COLUMNS}" ]; then
+   COLUMNS=$(stty size)
+   COLUMNS=${COLUMNS##* }
+fi
+if [ "${COLUMNS}" = "0" ]; then
+   COLUMNS=80
+fi
+
+COL=$((${COLUMNS} - 8))
+WCOL=$((${COL} - 2))
+SET_COL="\\033[${COL}G"      # at the $COL char
+SET_WCOL="\\033[${WCOL}G"    # at the $WCOL char
+CURS_UP="\\033[1A\\033[0G"   # Up one line, at the 0'th char
+CURS_ZERO="\\033[0G"
+
+# flag's para split package
+: ${aPKGSPLIT=()}
+: ${aPKGLIST=}
+: ${PKG_FOLDER_DIR=0}
+: ${PKG_FULLNAME=1}
+: ${PKG_ARCH=2}
+: ${PKG_BASE=3}
+: ${PKG_BASE_VERSION=4}
+: ${PKG_VERSION=5}
+: ${PKG_BUILD=6}
+
+function setvarcolors()
+{
+	if tput setaf 1 &> /dev/null; then
+		tput sgr0; # reset colors
+		bold=$(tput bold);
+		reset=$(tput sgr0);
+		black=$(tput setaf 0);
+		blue=$(tput setaf 33);
+		cyan=$(tput setaf 37);
+		green=$(tput setaf 64);
+		orange=$(tput setaf 166);
+		purple=$(tput setaf 125);
+		red=$(tput setaf 124);
+		violet=$(tput setaf 61);
+		white=$(tput setaf 15);
+		yellow=$(tput setaf 136);
+		pink="\033[35;1m";
+	else
+		bold='';
+		reset="\e[0m";
+		black="\e[1;30m";
+		blue="\e[1;34m";
+		cyan="\e[1;36m";
+		green="\e[1;32m";
+		orange="\e[1;33m";
+		purple="\e[1;35m";
+		red="\e[1;31m";
+		violet="\e[1;35m";
+		white="\e[1;37m";
+		yellow="\e[1;33m";
+		pink="\033[35;1m";
+	fi
+}
+
+function info()
+{
+	dialog							\
+		--title     "[debug]$0"	\
+		--backtitle "$0"			\
+		--yesno     "$1"			\
+		15 100
+		result=$?
+		if (( $result )); then
+			exit
+		fi
+		return $result
+}
+
+function debug()
+{
+	info "$*"
+	return $?
+}
+
+
+function timespec()
+{
+	STAMP="$(echo `date +"%b %d %T %:z"` `hostname`) "
+	return 0
+}
+
+function log_info_msg()
+{
+	echo -n -e "${BMPREFIX}${@}"
+	logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
+	timespec
+	echo -n -e "${STAMP} ${logmessage}" >> ${BOOTLOG}
+	return 0
+}
+
+function evaluate_retval()
+{
+	local error_value="${?}"
+
+	if [ ${error_value} = 0 ]; then
+		log_success_msg2
+	else
+		log_failure_msg2
+	fi
+	return ${error_value}
+}
+
+function log_failure_msg2()
+{
+	echo -n -e "${BMPREFIX}${@}"
+	echo -e "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}"
+	echo "FAIL" >> ${BOOTLOG}
+	return 0
+}
+
+function log_wait_msg()
+{
+	echo -n -e "${BMPREFIX}${@}"
+	echo -e "${CURS_ZERO}${WAIT_PREFIX}${SET_COL}${WAIT_SUFFIX}"
+	echo " OK" >> ${BOOTLOG}
+	return 0
+}
+
+function log_success_msg2()
+{
+	echo -n -e "${BMPREFIX}${@}"
+	echo -e "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${SUCCESS_SUFFIX}"
+	echo " OK" >> ${BOOTLOG}
+	return 0
+}
+
+function die()
+{
+	local mesg=$1; shift
+   log_failure_msg2 "${red}$mesg" "$@" >&2
+	exit 1
+}
+
+function runcmd()
+{
+	if (( EUID != 0 )); then
+		msg "Privilege escalation required"
+		if sudo -v &>/dev/null && sudo -l &>/dev/null; then
+			sudo "$@"
+		else
+			die 'Unable to escalate privileges using sudo'
+		fi
+	else
+		"$@"
+	fi
+}
+
+function sh_splitpkg()
+{
+	file=${1}
+	#pkg_re='^([a-z-]+)(-)([0-9\\.]+)(-)([0-9])(-)(.*)(.chi.zst)$'
+	#pkg_re='([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)-(([0-9]+(\.[0-9]+)*)(-([0-9]+))?)-([^.]+).*'
+	pkg_re='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 	#SOEN
+	aPKGSPLIT=()
+
+	pkg_folder_dir=$(echo ${file%/*})							#remove arquivo deixando somente o diretorio/repo
+	pkg_fullname=$(echo ${file##*/})    						#remove diretorio deixando somente nome do pacote
+
+	[[ $pkg_fullname =~ $pkg_re ]] &&
+		pkg_fullname=${BASH_REMATCH[0]}
+		pkg_base=${BASH_REMATCH[1]}
+		pkg_version_build=${BASH_REMATCH[2]}
+		pkg_version=${BASH_REMATCH[3]}
+		pkg_build=${BASH_REMATCH[4]}
+		pkg_arch=${BASH_REMATCH[5]}
+		pkg_base_version=${pkg_base}-${pkg_version_build}
+
+#  info " file            : $file\n" \
+#        "pkg_folder      : $pkg_folder\n" \
+#	 	  "pkg_fullname    : $pkg_fullname\n" \
+#	 	  "pkg_arch        : $pkg_arch\n" \
+#	 	  "pkg_base        : $pkg_base\n" \
+#		  "pkg_base_version: $pkg_base_version\n" \
+#		  "pkg_version     : $pkg_version\n" \
+#		  "pkg_build       : $pkg_build"
+	aPKGSPLIT=($pkg_folder_dir $pkg_fullname $pkg_arch $pkg_base $pkg_base_version $pkg_version $pkg_build)
+	return $?
+}
+
+function sh_splitpkgOLD()
+{
+	local PRG='chi.zst'
+	local file=${1}
+	local pkg_folder_dir
+	local pkg_fullname
+	local pkg_arch
+	local pkg_base
+	local pkg_base_version
+	local pkg_version
+	local pkg_build
+	local pkg_str
+	local nconta=0
+	local char="-"
+	local var
+	local ra
+	local re
+
+	aPKGSPLIT=()
+	pkg_folder_dir=$(echo ${file%/*})							#remove arquivo deixando somente o diretorio/repo
+	pkg_fullname=$(echo ${file##*/})    						#remove diretorio deixando somente nome do pacote
+#	pkg_arch=$(echo ${pkg_fullname%.${PRG}*})  					#remove extensao pacote (chi.zst/mz)
+#	pkg_str=$(echo ${pkg_arch%-any*})      						# https://elmord.org/blog/?entry=20121227-manipulando-strings-bash
+#	pkg_str=$(echo ${pkg_str%-x86_64*})      					# https://elmord.org/blog/?entry=20121227-manipulando-strings-bash
+
+	pkg_arch=$(echo ${pkg_fullname%-any.${PRG}*}) 				#remove extensao pacote (chi.zst/mz)
+	pkg_arch=$(echo ${pkg_arch%.arch1*}) 							#remove extensao pacote (chi.zst/mz)
+	pkg_arch=$(echo ${pkg_arch%.arch2*}) 							#remove extensao pacote (chi.zst/mz)
+	#pkg_arch=$(echo ${pkg_arch%-x86_64.${PRG}*}) 				#remove extensao pacote (chi.zst/mz)
+	pkg_arch=$(echo ${pkg_arch%-x86_64*}) 							#remove extensao pacote (chi.zst/mz)
+	pkg_arch=$(echo ${pkg_arch%.${PRG}*})  				  		#remove extensao pacote (chi.zst/mz)
+	pkg_str=$pkg_arch
+
+	#debug
+	#info "file: $file\npkg_folder_dir: $pkg_folder_dir\npkg_fullname: $pkg_fullname\npkg_arch: $pkg_arch\npkg_str: $pkg_str"
+
+	IFS='-' 									# hyphen (-) is set as delimiter
+	read -ra ADDR <<< "$pkg_str"		# str is read into an array as tokens separated by IFS
+	for var in "${ADDR[@]}"; do 		# access each element of array
+		re='[a-zA-Z]'
+		if [[ "$var" =~ $re ]]; then
+			pkg_base="$pkg_base${var}$char"
+		else
+			((nconta++))
+			[[ $nconta -eq 1 ]] && pkg_version=$var || pkg_build=$var
+			#debug
+			#info "pkg_version: $pkg_version\npkg_build: $pkg_build"
+		fi
+	done
+ 	IFS=$SAVEIFS # reset to default value after usage
+	pkg_base=${pkg_base%-*}
+	pkg_version="${pkg_version}-${pkg_build}"
+	pkg_base_version="${pkg_base}-${pkg_version}"
+	[[ $pkg_folder = "" ]] && pkg_folder=$pkg_fullname
+
+	#debug
+#  info " pkg_folder      : $pkg_folder\n" \
+#	 	  "pkg_fullname    : $pkg_fullname\n" \
+#	 	  "pkg_arch        : $pkg_arch\n" \
+#	 	  "pkg_base        : $pkg_base\n" \
+#		  "pkg_base_version: $pkg_base_version\n" \
+#		  "pkg_version     : $pkg_version\n" \
+#		  "pkg_build       : $pkg_build"
+
+	aPKGSPLIT=($pkg_folder_dir $pkg_fullname $pkg_arch $pkg_base $pkg_base_version $pkg_version $pkg_build)
+#	aPKGLIST=${aPKGSPLIT[*]}
+#	arr=(${aPKGSPLIT[*]})
+#	echo -e "${arr[0]}\n${arr[1]}\n${arr[2]}\n${arr[3]}\n${arr[4]}\n${arr[5]}\n${arr[6]}\n${arr[7]}"
+#	info "${arr[0]}\n${arr[1]}\n${arr[2]}\n${arr[3]}\n${arr[4]}\n${arr[5]}\n${arr[6]}\n${arr[7]}"
+	return $?
+}
+
+function summary()
+{
+	local -i filecount=$1; shift
+	local seenarch= seen= arch= name=
+	local -r pkg_re='(.+)-[^-]+-[0-9]+-([^.]+)\.pkg.*'
+
+	msg "Candidate packages:"
+	while read -r pkg; do
+		if (( verbose >= 3 )); then
+			pkg =~ $pkg_re ]] && name=${BASH_REMATCH[1]} arch=${BASH_REMATCH[2]}
+			if [[ -z $seen || $seenarch != "$arch" || $seen != "$name" ]]; then
+				seen=$name seenarch=$arch
+				printf '%s (%s):\n' "${name##*/}" "$arch"
+			fi
+			printf '  %s\n' "${pkg##*/}"
+		elif (( verbose >= 2 )); then
+			printf "%s$delim" "$pkg"
+		else
+			printf "%s$delim" "${pkg##*/}"
+		fi
+	done < <(printf '%s\n' "$@" | pacsort --files)
+}
+
+function size_to_human()
+{
+	awk -v size="$1" '
+	BEGIN {
+		suffix[1] = "B"
+		suffix[2] = "KiB"
+		suffix[3] = "MiB"
+		suffix[4] = "GiB"
+		suffix[5] = "TiB"
+		suffix[6] = "PiB"
+		suffix[7] = "EiB"
+		count = 1
+
+		while (size > 1024) {
+			size /= 1024
+			count++
+		}
+
+		sizestr = sprintf("%.2f", size)
+		sub(/\.?0+$/, "", sizestr)
+		printf("%s %s", sizestr, suffix[count])
+	}'
+}
+
+function version()
+{
+	printf "%s %s\n"	"$myname" "$myver"
+	printf "%s\n"		"Copyright (C) 2020 Vilmar Catafesta <vcatafesta@gmail.com>"
+}
+
+function usage()
+{
+	cat <<EOF
+${myname} v${myver}
+
+A flexible pacman cache cleaning utility.
+
+Usage: ${myname} <operation> [options] [targets...]
+
+  Operations:
+    -d, --dryrun          perform a dry run, only finding candidate packages.
+    -m, --move <dir>      move candidate packages to "dir".
+    -r, --remove          remove candidate packages.
+
+  Options:
+    -c, --cachedir <dir>  scan "dir" for packages. can be used more than once.
+                          (default: read from /etc/fetch/fetch.conf).
+    -f, --force           apply force to mv(1) and rm(1) operations.
+    -h, --help            display this help message and exit.
+        --nocolor         remove color from output.
+    -q, --quiet           minimize output
+    -v, --verbose         increase verbosity. specify up to 3 times.
+                          and -vv).
+
+EOF
+}
+
+function init()
+{
+	local arr=
+	local cdir=
+	local nfiles=
+	local pkg=
+	local cOldDir=
+	local AllFilesPackages=
+	local pkg=
+	local pkgInAll=
+	local FilteredPackages=
+	local AllFilteredPackages=
+	local pkg_re='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 	#SOEN
+
+	for cachedir in "${cachedirs[@]}"
+	do
+		[[ -d $cachedir ]] ||
+			die "cachedir '%s' does not exist or is not a directory" "$cachedir"
+
+		if (( move || delete )); then
+			[[ ! -w $cachedir ]] && needsroot=1
+		fi
+		pushd "$cachedir" &>/dev/null || die "failed to chdir to $cachedir"
+
+		cOldDir=$PWD
+		pkgInAll=
+		FilteredPackages=
+		AllFilesPackages=
+		AllFilteredPackages=
+		candidates=()
+		candesc=()
+		pkgNumber=0
+
+		if [ $# -lt 1 ]; then
+			#AllFilesPackages=$(find "$PWD" -maxdepth 100 -name '*.chi.zst' -type f)
+			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort )
+			#AllFilesPackages=$(printf '%s\n' "$PWD"/*.chi.zst | sort -r)
+		else
+			#AllFilesPackages=$(find "$PWD" -type f -name '*.chi' -prune -o \( -name '*.chi.zst' \) | grep ^$1)
+			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort)
+			#AllFilesPackages=$(printf '%s\n' "$PWD"/*.chi.zst | grep $1 | sort -r )
+		fi
+
+		arr=(${AllFilesPackages[*]})
+	  	nfiles=${#arr[*]}
+
+#		if (( !${#arr[*]} )); then
+#			printf "${red}  E  no candidate packages found for pruning\n"
+#			exit 0
+#		fi
+
+		log_wait_msg "${reset}wait, searching ${red}($nfiles) ${reset}candidates for pruning in ${green}$cachedir"
+		for pkgInAll in $AllFilesPackages
+		do
+			((pkgNumber++))
+			pkgInFullName=${pkgInAll}
+			#pkgInAll=$(echo "${pkgInAll##*/}") 		# remove directory
+			sh_splitpkg ${pkgInAll}
+			FilteredPackages=${aPKGSPLIT[$PKG_BASE]}
+			#FilteredPackages=$(echo $pkgInAll | sed 's/-[[:digit:]].*$//')
+			#AllFilteredPackages=$(find "$PWD" -type f -iname "$FilteredPackages*.zst" | sed 's/^.*\///' | sed 's/-[[:digit:]].*$//' | grep $FilteredPackages$ | sort)
+			AllFilteredPackages=$(find "$PWD" -type f -iname "$FilteredPackages*.zst" | grep -E "*$FilteredPackages-([0-9])" | sort)
+			#AllFilteredPackages=$(printf '%s\n' "$PWD"/$FilteredPackages*.chi.zst)
+
+#			debug " #-$pkgNumber\n 1-$pkgInAll\n 2-$FilteredPackages\n 3-$AllFilteredPackages"
+
+			pkg=
+ 			arr=(${AllFilteredPackages[*]})
+ 			array=("${AllFilteredPackages[*]}")
+		  	nfiles=${#arr[*]}
+
+			if (( verbose )); then
+				printf "     ${white}verifying package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${green} => %s\n" "$pkgNumber" "$FilteredPackages" "$nfiles" "${pkgInFullName}"
+			fi
+
+			if [[ $nfiles -gt 1 ]]; then
+				while read -r pkg; do
+					sh_splitpkg ${pkg}
+					SearchPkg=${aPKGSPLIT[$PKG_BASE]}
+
+					first="${FilteredPackages:1:1}"
+					last="${SearchPkg:1:1}"
+
+					if [[ ${last} > ${first} ]]; then
+						break
+					fi
+
+#					log_wait_msg "${white}Verifying package ${purple}($nfiles) ${green}$FilteredPackages"
+
+					if [[ $FilteredPackages =~  $SearchPkg ]]; then
+						if [[ "$(vercmp $pkgInFullName $pkg)" -lt 0 ]]; then
+							candidates+=("${pkgInFullName}")
+							canddesc+=("${pkgInFullName}.desc")
+							canddesc+=("${pkgInFullName}.sha256")
+							if (( verbose >= 3 )); then
+								[[ $pkg =~ $pkg_re ]] && name=${BASH_REMATCH[1]} arch=${BASH_REMATCH[2]}
+								if [[ -z $seen || $seenarch != "$arch" || $seen != "$name" ]]; then
+									seen=$name seenarch=$arch
+									printf '%s (%s):\n' "${name##*/}" "$arch"
+								fi
+								printf '  %s\n' "${pkg##*/}"
+							elif (( verbose >= 2 )); then
+								printf "%s$delim" "$pkg"
+							fi
+						fi
+					fi
+				done < <(printf '%s\n' "$array")
+			fi
+		done
+		popd >/dev/null 2>&1
+	done
+
+	if (( ! ${#candidates[*]} )); then
+		printf "${red}  E  NO packages found for pruning\n"
+		exit 0
+	fi
+
+	pkgcount=${#candidates[*]}
+	totalsaved=$(printf '%s\0' "${candidates[@]}" | xargs -0 stat -c %s | awk '{ sum += $1 } END { print sum }')
+	set -o errexit # Exit immediately if a pipeline returns non-zero.
+
+	(( verbose )) && cmdopts+=(-v)
+	if (( delete )); then
+		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 rm "${cmdopts[@]}"
+		printf '%s\0' "${canddesc[@]}"   | runcmd xargs -0 rm "${cmdopts[@]}"
+	elif (( move )); then
+		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
+	fi
+	#summary "$pkgcount" "${candidates[@]}"
+	echo
+	msg "$output (disk space saved: %s)" "$(size_to_human "$totalsaved")"
+}
+
+function cleanup()
+{
+	msg "Exiting.."
+	exit
+}
+trap cleanup SIGINT SIGTERM
+
+join(){
+	{
+		local indelimiter="${1- }"
+		local outdelimiter="${2-.}"
+	}
+
+	local car
+	local cdr
+	local IFS
+
+	IFS="${indelimiter}"
+	read -t 1 car cdr || return
+	test "${cdr}" || { echo "${car}" ; return ; }
+	echo "${car}${outdelimiter}${cdr}" | ${FUNCNAME} "${indelimiter}" "${outdelimiter}"
+}
+
+filter()
+{
+	local pkg_base=$1
+	local file_search=$2
+	local pkg_search=
+	local pkgInAll=$3
+
+	sh_splitpkg ${file_search}
+	pkg_search=${aPKGSPLIT[$PKG_BASE]}
+
+	if [[ "${pkg_base}" =~ "${pkg_search}" ]] && [[ "$(vercmp $pkgInAll $file_search)" -lt 0 ]]; then
+		printf "%s" "${pkgInAll}"
+	fi
+}
+
+pkgfilter()
+{
+	sh_splitpkg ${1}
+	pkg_base=${aPKGSPLIT[$PKG_BASE]}
+
+	array=$@
+	info "${array[1]})"
+
+	IFS=$'\n' read -r -d '' -a pkg < \
+		<(	if (( min_atime || min_mtime )); then
+			find "$PWD" -name '*.chi' -prune -o \( -name '*.chi.zst' -printf '%A@ %T@ %p\n' \)
+			pacsort --files --key 3 --separator ' '
+		else
+			find "$PWD" -type f -name "$pkg_base*.zst" | grep -E "*$pkg_base-([0-9])" | sort
+		fi |
+		filter "$pkg_base" "$pkg" "$1")
+#	awk '{ print $1 }'
+}
+
+mainOLD(){
+	local pkg=
+	local pkgInAll=
+	local pkg_base=
+	local pkg_search=
+	local candidates=()
+	local cachedir
+
+	for cachedir in "${cachedirs[@]}"
+	do
+		[[ -d $cachedir ]]            || die "Error: cachedir '$cachedir' does not exist or is not a directory"
+		pushd "$cachedir" &>/dev/null || die "Error: failed to chdir to $cachedir"
+
+#		while IFS=$'\n' read -r -d '' -a cand; do
+		while IFS=$'\n' read -r -a cand; do
+			info $cand
+		done < \
+			<(	if (( min_atime || min_mtime )); then
+				find "$PWD" -name '*.chi' -prune -o \( -name '*.chi.zst' -printf '%A@ %T@ %p\n' \)
+				pacsort --files --key 3 --separator ' '
+			else
+				printf '%s\n' "$PWD"/*.chi.zst |	pacsort --files
+			fi | awk '{ print $1 }' )
+		candidates+=("${cand[@]}")
+		unset cand
+		popd >/dev/null 2>&1
+	done
+
+	files=${#candidates[*]}
+	if (( ! $files )); then
+		die "NO packages found for pruning"
+	else
+		die "${files} for pruning"
+	fi
+}
+
+function len()
+{
+	return $#
+}
+
+function seeek()
+{
+	count=0
+	while [ "x${wholist[count]}" != "x" ]
+	do
+		count=$(( $count + 1 ))
+	done
+}
+
+function ascan4()
+{
+	true=0
+	false=1
+	array=($(ls -1 /etc/ | sort ))
+	search='passwd'
+
+	if [[ "${array[@]}" =~ "${search}" ]]; then
+	    echo "${!array[*]}"
+	    echo "${BASH_REMATCH[0]}"
+	fi
+
+}
+
+function ascan3()
+{
+	local myarray="$1"
+	local match="$2"
+	printf '%s\n' "${myarray[@]}" | grep -P '^math$'
+}
+
+function ascan2()
+{
+	local myarray="$1"
+	local match="$2"
+	case "${myarray[@]}" in
+		*"$match"*)
+			return $true
+			;;
+	esac
+	return $false
+}
+
+function ascan()
+{
+  local e match="$1"
+  shift
+  for e; do [[ "$e" == "$match" ]] && return $true; done
+  return $false
+}
+
+function contains()
+{
+	local n=$#
+	local value=${!n}
+
+	for ((i=1;i < $#;i++)) {
+		if [ "${!i}" == "${value}" ]; then
+			return $i
+		fi
+	}
+	return $n
+}
+
+function teste()
+{
+	echo "+++++++++++++++++++++++++++++++"
+	array=("one" "two" "three" "four" "five six")
+	search='two'
+	contains "${array[@]}" "$search"
+	result=$?
+	len "${array[@]}"
+	nlen=$?
+
+	if (( $result > $nlen )); then
+		echo "$search not found"
+		exit
+	fi
+	echo "$search found"
+
+}
+
+mainold1(){
+	local pkg=
+	local pkgInAll=
+	local pkg_base=
+	local pkg_search=
+	local candidates=()
+	local cachedir
+
+	for cachedir in "${cachedirs[@]}"
+	do
+		[[ -d $cachedir ]]            || die "Error: cachedir '$cachedir' does not exist or is not a directory"
+		pushd "$cachedir" &>/dev/null || die "Error: failed to chdir to $cachedir"
+
+		arrayall=($(find "$PWD" -type f -name "*.chi.zst" | sort | uniq ))
+		arraytwo=($(find "$PWD" -type f -name "*.chi.zst" | sort ))
+
+		nx=${#arraytwo[*]}
+
+#info $nx
+
+		for pkgInAll in "${arrayall[@]}"
+		do
+			sh_splitpkg ${pkgInAll}
+			pkg_base=${aPKGSPLIT[$PKG_BASE]}
+			(( npkgbase++ ))
+			[[ -z "$pkg_base" ]] && continue
+
+			for i in $(seq 0 $nx)
+			do
+				nlen=${#pkg_base}
+				pkg="${arraytwo[$i]}"
+				sh_splitpkg ${pkg}
+				pkg_search=${aPKGSPLIT[$PKG_BASE]}
+				[[ -z "$pkg_search" ]] && continue
+
+				(( npkgsearch++ ))
+#				info "${pkg_base::$nlen}"
+				[[ "${pkg_search::$nlen}" > "${pkg_search::$nlen}" ]] && break
+# info "$pkgInAll\n$pkg"
+# echo "$pkgInAll $pkg"
+				if [[ "${pkg_base}" =~ "${pkg_search}" ]] && [[ "$(vercmp $pkgInAll $pkg)" -lt 0 ]]; then
+					printf "%s\n" "${pkgInAll}"
+					candidates+=("${pkgInAll}")
+					unset arraytwo[$npkgsearch]
+				fi
+			done
+		done
+		popd >/dev/null 2>&1
+	done
+
+	if (( ! ${#candidates[*]} )); then
+		die "NO packages found for pruning"
+	fi
+}
+
+function main()
+{
+	local pkg=
+	local pkgInAll=
+	local pkg_base=
+	local pkg_search=
+	local candidates=()
+	local cachedir
+
+	for cachedir in "${cachedirs[@]}"
+	do
+		[[ -d $cachedir ]]            || die "Error: cachedir '$cachedir' does not exist or is not a directory"
+		pushd "$cachedir" &>/dev/null || die "Error: failed to chdir to $cachedir"
+
+		if [ $# -lt 1 ]; then
+			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort )
+		else
+			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort)
+		fi
+
+		arrayfull=("${AllFilesPackages[@]}")
+
+		while read -r pkgInAll;do
+			sh_splitpkg ${pkgInAll}
+			pkg_base=${aPKGSPLIT[$PKG_BASE]}
+			[[ -z "$pkg_base" ]] &&	continue
+
+			(( pkgNumber++ ))
+
+			if (( verbose >= 3 )); then
+				printf "     ${white}verifying package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${green} => %s\n" "$pkgNumber" "$pkg_base" "$nfiles" "${pkgInAll}"
+			fi
+
+			arr=$(find "$PWD" -type f -name "$pkg_base*.zst" | grep -E "*$pkg_base-([0-9])" | sort )
+			array=("${arr[@]}")
+			ntam=${#arr[*]}
+
+			if [[ $ntam -gt 1 ]]; then
+				continue
+			fi
+
+			while read -r pkg;do
+				sh_splitpkg ${pkg}
+				pkg_search=${aPKGSPLIT[$PKG_BASE]}
+				[[ -z "$pkg_search" ]] &&	continue
+				nlen=${#pkg_base}
+				[[ "${pkg_search::$nlen}" > "${pkg_base::$nlen}" ]] && break
+
+				if [[ "${pkg_base}" =~ "${pkg_search}" ]] && [[ "$(vercmp $pkgInAll $pkg)" -lt 0 ]]; then
+					if (( verbose == 2 )); then
+						printf "     ${white}verifying package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${green} => %s\n" "$pkgNumber" "$pkg_base" "$nfiles" "${pkgInAll}"
+					fi
+					candidates+=("${pkgInAll}")
+				fi
+#			done < <(printf '%s\n' "$(find "$PWD" -type f -name "$pkg_base*.zst" | grep -E "*$pkg_base-([0-9])" | sort )")
+			done < <(printf '%s\n' "$array")
+#		done < <(printf '%s\n' "$(find "$PWD" -type f -name "*.chi.zst" | sort )")
+		done < <(printf '%s\n' "$arrayfull")
+		popd >/dev/null 2>&1
+	done
+
+	if (( ! ${#candidates[*]} )); then
+		printf "${red}  E  NO packages found for pruning\n"
+		exit 0
+	fi
+
+	echo
+	Number=0
+	while read -r pkg
+	do
+		(( Number++ ))
+		sh_splitpkg ${pkg}
+		pkg_base=${aPKGSPLIT[$PKG_BASE]}
+		printf "     ${white}found package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${green} => %s\n" "$Number" "$pkg_base" "$nfiles" "${pkg}"
+	done < <(printf '%s\n' "${candidates[@]}")
+
+	pkgcount=${#candidates[*]}
+	totalsaved=$(printf '%s\0' "${candidates[@]}" | xargs -0 stat -c %s | awk '{ sum += $1 } END { print sum }')
+	set -o errexit # Exit immediately if a pipeline returns non-zero.
+
+	(( verbose )) && cmdopts+=(-v)
+	if (( delete )); then
+		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 rm "${cmdopts[@]}"
+		printf '%s\0' "${canddesc[@]}"   | runcmd xargs -0 rm "${cmdopts[@]}"
+	elif (( move )); then
+		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
+	fi
+	#summary "$pkgcount" "${candidates[@]}"
+	echo
+	if (( dryrun )); then
+		msg "$output finish dry-run (files found: $pkgcount) (disk space saved: %s)" "$(size_to_human "$totalsaved")"
+	else
+		msg "$output (files found: $pkgcount) (disk space saved: %s)" "$(size_to_human "$totalsaved")"
+	fi
+}
+
+OPT_SHORT=':a:c:dfhi:k:m:qrsuVvz'
+OPT_LONG=('arch:' 'cachedir:' 'dryrun' 'force' 'help' 'ignore:' 'keep:' 'move:'
+          'nocolor' 'quiet' 'remove' 'uninstalled' 'version' 'verbose' 'null'
+          'min-atime:' 'min-mtime:')
+
+if ! parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
+	exit 1
+fi
+set -- "${OPTRET[@]}"
+unset OPT_SHORT OPT_LONG OPTRET
+
+while :; do
+	case $1 in
+		-c|--cachedir)
+			cachedirs+=("$2")
+			shift ;;
+		-d|--dryrun)
+			dryrun=1 ;;
+		-f|--force)
+			cmdopts=(-f) ;;
+		-h|--help)
+			usage
+			exit 0 ;;
+		-m|--move)
+			move=1 movedir=$2
+			shift ;;
+		--nocolor)
+			USE_COLOR='n' ;;
+		-q|--quiet)
+			QUIET=1 ;;
+		-r|--remove)
+			delete=1 ;;
+		-V|--version)
+			version
+			exit 0 ;;
+		-v|--verbose)
+			(( ++verbose )) ;;
+		-z|--null)
+			delim='\0' ;;
+		--)
+			shift
+			break 2 ;;
+	esac
+	shift
+done
+
+# check if messages are to be printed using color
+if [[ -t 2 && $USE_COLOR != "n" ]]; then
+	setvarcolors
+fi
+
+# setting default cachedirs
+if [[ -z $cachedirs ]]; then
+	cachedirs=("/var/cache/fetch/archives")
+#	cachedirs+=("${PKGDIR:=/var/cache/fetch/archives}")
+fi
+
+# sanity checks
+case $(( dryrun+delete+move )) in
+	0) 	die "no operation specified (use -h for help)" ;;
+	[^1]) die "only one operation may be used at a time" ;;
+esac
+
+[[ $movedir && ! -d $movedir ]] &&
+	die "destination directory '%s' does not exist or is not a directory" "$movedir"
+
+if (( move || delete )); then
+	# make it an absolute path since we're about to chdir
+	[[ $movedir && ${movedir:0:1} != '/' ]] && movedir=$PWD/$movedir
+	[[ $movedir && ! -w $movedir ]] && needsroot=1
+fi
+
+main $*

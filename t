@@ -1,30 +1,11 @@
-#!/bin/sh
+#!/usr/bin/bash
 
-choosepartitiondialog(){
-	# escolha a particao a ser instalada // Choose install partition
-	################################################################
-	#partitions=( $(blkid | cut -d: -f1 | sed "s/$/ '*' /") )
-	partitions=( $(fdisk -l | sed -n /sd[a-z][0-9]/p | sed "s/$/ '*' /") )
-	#partitions=( $(fdisk -l | sed -n /sd[a-z][0-9]/p | awk '{print $1,$5}') )
-	part=$(dialog \
-	--clear \
-	--no-collapse \
-	--tab-correct \
-	--menu 'Choose partition for installation ChiliOS:'	\
-	0 0 0 "${partitions[@]}" 2>&1 >/dev/tty )
-}
+ARRAY=$(find "$PWD" -type f -name '*')
+COUNT=0
 
-choosepartitionwhiptail(){
-	# escolha a particao a ser instalada // Choose install partition
-	################################################################
-	#partitions=( $(blkid | cut -d: -f1 | sed "s/$/ '*' /"))
-	#partitions=( $(fdisk -l | sed -n /sd[a-z][0-9]/p | sed "s/$/ '*' /"))
-	partitions=( $(fdisk -l | sed -n /sd[a-z][0-9]/p | awk '{print $1,$5}'))
-	part=$(whiptail \
-	--menu 'Choose partition for installation ChiliOS:'	\
-	0 0 0 "${partitions[@]}" 2>&1 >/dev/tty )
-}
-
-choosepartitionwhiptail
-#choosepartitiondialog
-
+for i in ${ARRAY}
+do
+    split -b 1M $i $i.
+    (( COUNT++ ))
+    echo "$COUNT): $i"
+done
