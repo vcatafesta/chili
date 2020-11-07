@@ -809,7 +809,7 @@ function main()
 						printf "     ${white}verifying package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${green} => %s\n" "$pkgNumber" "$pkg_base" "$nfiles" "${pkgInAll}"
 					fi
 					candidates+=("${pkgInAll}")
-					candidates+=("${pkgInAll}.desc")
+					[[ -e "${pkgInAll}.desc" ]] && candidates+=("${pkgInAll}.desc")
 				fi
 #			done < <(printf '%s\n' "$(find "$PWD" -type f -name "$pkg_base*.zst" | grep -E "*$pkg_base-([0-9])" | sort )")
 			done < <(printf '%s\n' "$array")
