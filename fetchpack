@@ -106,7 +106,7 @@ function setvarcolors()
 
 function info()
 {
-	dialog							\
+	whiptail							\
 		--title     "[debug]$0"	\
 		--backtitle "$0"			\
 		--yesno     "$1"			\
@@ -750,6 +750,7 @@ mainold1(){
 
 function main()
 {
+	local nfiles=0
 	local pkg=
 	local pkgInAll=
 	local pkg_base=
@@ -782,19 +783,18 @@ function main()
 			sh_splitpkg ${pkgInAll}
 			pkg_base=${aPKGSPLIT[$PKG_BASE]}
 			[[ -z "$pkg_base" ]] &&	continue
-
 			(( pkgNumber++ ))
-
-			arr=$(find "$PWD" -type f -name "$pkg_base*.zst" | grep -E "*$pkg_base-([0-9])" | sort )
-			array=("${arr[@]}")
-			ntam=${#arr[*]}
-
-			if [[ $ntam -gt 1 ]]; then
-				continue
-			fi
+			FilteredPackages=$(find "$PWD" -type f -iname "$pkg_base*.zst" | grep -E "*$pkg_base-([0-9])" | sort )
+			array=("${FilteredPackages[*]}")
+			arr=(${FilteredPackages[*]})
+			nfiles=${#arr[*]}
 
 			if (( verbose >= 3 )); then
 				printf "     ${white}verifying package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${green} => %s\n" "$pkgNumber" "$pkg_base" "$nfiles" "${pkgInAll}"
+			fi
+
+			if [[ $nfiles -lt 2 ]]; then
+				continue
 			fi
 
 			while read -r pkg;do
@@ -830,7 +830,7 @@ function main()
 		(( Number++ ))
 		sh_splitpkg ${pkg}
 		pkg_base=${aPKGSPLIT[$PKG_BASE]}
-		printf "     ${white}found package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${green} => %s\n" "$Number" "$pkg_base" "$nfiles" "${pkg}"
+		printf "     ${white}found package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${green} => %s\n" "$Number" "$pkg_base" "$Number" "${pkg}"
 	done < <(printf '%s\n' "${candidates[@]}")
 
 	pkgcount=${#candidates[*]}
