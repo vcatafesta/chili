@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 export LC_ALL="pt_BR.utf8"
 declare -r myname='fetchpack'
-declare -r myver='1.0.1'
+declare -r myver='1.0.1-20201108'
 declare    delim=$'\n' keep=3 movedir= scanarch=
 declare -a cachedirs=() candesc=() candidates=() cmdopts=() whitelist=() blacklist=()
 declare -i delete=0 dryrun=0 filecount=0 move=0 needsroot=0 totalsaved=0 verbose=0
@@ -367,7 +367,6 @@ function size_to_human()
 function logo()
 {
 	setvarcolors
-	echo $blue
 	cat <<'EOF'
   __      _       _                      _
  / _| ___| |_ ___| |__  _ __   __ _  ___| | __  Copyright (C) 2019-2020 Vilmar Catafesta <vcatafesta@gmail.com>
@@ -495,8 +494,6 @@ function init()
 					if [[ ${last} > ${first} ]]; then
 						break
 					fi
-
-#					log_wait_msg "${white}Verifying package ${purple}($nfiles) ${green}$FilteredPackages"
 
 					if [[ $FilteredPackages =~  $SearchPkg ]]; then
 						if [[ "$(vercmp $pkgInFullName $pkg)" -lt 0 ]]; then
@@ -818,7 +815,7 @@ function main()
 			nfiles=${#arr[*]}
 
 			if (( verbose >= 3 )); then
-				printf "     ${white}verifying package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${green} => %s\n" "$pkgNumber" "$pkg_base" "$nfiles" "${pkgInAll}"
+				printf "     ${white}verifying package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${blue} => %s\n" "$pkgNumber" "$pkg_base" "$nfiles" "${pkgInAll}"
 			fi
 
 			if [[ $nfiles -lt 2 ]]; then
@@ -834,7 +831,7 @@ function main()
 
 				if [[ "${pkg_base}" =~ "${pkg_search}" ]] && [[ "$(vercmp $pkgInAll $pkg)" -lt 0 ]]; then
 					if (( verbose == 2 )); then
-						printf "     ${white}verifying package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${green} => %s\n" "$pkgNumber" "$pkg_base" "$nfiles" "${pkgInAll}"
+						printf "     ${white}candidate package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${yellow} => %s\n" "$pkgNumber" "$pkg_base" "$nfiles" "${pkgInAll}"
 					fi
 					candidates+=("${pkgInAll}")
 					[[ -e "${pkgInAll}.desc" ]] && candidates+=("${pkgInAll}.desc")
@@ -858,7 +855,7 @@ function main()
 		(( Number++ ))
 		sh_splitpkg ${pkg}
 		pkg_base=${aPKGSPLIT[$PKG_BASE]}
-		printf "     ${white}found package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${green} => %s\n" "$Number" "$pkg_base" "$Number" "${pkg}"
+		printf "     ${white}found package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${red} => %s\n" "$Number" "$pkg_base" "$Number" "${pkg}"
 	done < <(printf '%s\n' "${candidates[@]}")
 
 	pkgcount=${#candidates[*]}
@@ -879,8 +876,6 @@ function main()
 		msg "$output (files found: $pkgcount) (disk space saved: %s)" "$(size_to_human "$totalsaved")"
 	fi
 }
-
-logo
 
 OPT_SHORT=':a:c:dfhi:k:m:qrsuVvz'
 OPT_LONG=('arch:' 'cachedir:' 'dryrun' 'force' 'help' 'ignore:' 'keep:' 'move:'
@@ -916,7 +911,7 @@ while :; do
 		-r|--remove)
 			delete=1 ;;
 		-V|--version)
-			#logo
+			logo
 			exit 0 ;;
 		-v|--verbose)
 			(( ++verbose )) ;;
