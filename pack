@@ -70,8 +70,7 @@ CURS_ZERO="\\033[0G"
 : ${PKG_VERSION=5}
 : ${PKG_BUILD=6}
 
-function setvarcolors()
-{
+function setvarcolors(){
 	if tput setaf 1 &> /dev/null; then
 		tput sgr0; # reset colors
 		bold=$(tput bold);
@@ -102,6 +101,23 @@ function setvarcolors()
 		yellow="\e[1;33m";
 		pink="\033[35;1m";
 	fi
+}
+
+
+function unsetvarcolors(){
+	unset bold
+	unset reset
+	unset black
+	unset blue
+	unset cyan
+	unset green
+	unset orange
+	unset purple
+	unset red
+	unset violet
+	unset white
+	unset yellow
+	unset pink
 }
 
 function info()
@@ -348,10 +364,11 @@ function size_to_human()
 }
 
 #figlet
-function logo(){
+function logo()
+{
 	setvarcolors
 	echo $blue
-	cat << 'EOF'
+	cat <<'EOF'
   __      _       _                      _
  / _| ___| |_ ___| |__  _ __   __ _  ___| | __  Copyright (C) 2019-2020 Vilmar Catafesta <vcatafesta@gmail.com>
 | |_ / _ \ __/ __| '_ \| '_ \ / _` |/ __| |/ /
@@ -363,7 +380,6 @@ EOF
    version
 	echo $reset
 }
-
 
 function version()
 {
@@ -893,6 +909,7 @@ while :; do
 			move=1 movedir=$2
 			shift ;;
 		--nocolor)
+			unsetvarcolors
 			USE_COLOR='n' ;;
 		-q|--quiet)
 			QUIET=1 ;;
