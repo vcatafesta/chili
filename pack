@@ -871,7 +871,7 @@ function main()
 	#summary "$pkgcount" "${candidates[@]}"
 	echo
 	if (( dryrun )); then
-		msg "$output finish dry-run (files found: $pkgcount) (disk space saved: %s)" "$(size_to_human "$totalsaved")"
+		msg "${yellow}$output finish dry-run (files found: $pkgcount) (disk space saved: %s)" "$(size_to_human "$totalsaved")"
 	else
 		msg "$output (files found: $pkgcount) (disk space saved: %s)" "$(size_to_human "$totalsaved")"
 	fi
