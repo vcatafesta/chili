@@ -131,8 +131,7 @@ function timespec()
 	return 0
 }
 
-function log_info_msg()
-{
+function log_info_msg(){
 	echo -n -e "${BMPREFIX}${@}"
 	logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
 	timespec
@@ -348,6 +347,24 @@ function size_to_human()
 	}'
 }
 
+#figlet
+function logo(){
+	setvarcolors
+	echo $blue
+	cat << 'EOF'
+  __      _       _                      _
+ / _| ___| |_ ___| |__  _ __   __ _  ___| | __  Copyright (C) 2019-2020 Vilmar Catafesta <vcatafesta@gmail.com>
+| |_ / _ \ __/ __| '_ \| '_ \ / _` |/ __| |/ /
+|  _|  __/ || (__| | | | |_) | (_| | (__|   <   Este programa pode ser redistribuído livremente
+|_|  \___|\__\___|_| |_| .__/ \__,_|\___|_|\_\  sob os termos da Licença Pública Geral GNU.
+                       |_|
+EOF
+	echo $yellow
+   version
+	echo $reset
+}
+
+
 function version()
 {
 	printf "%s %s\n"	"$myname" "$myver"
@@ -357,10 +374,7 @@ function version()
 function usage()
 {
 	cat <<EOF
-${myname} v${myver}
-
-A flexible pacman cache cleaning utility.
-
+A flexible cache cleaning utility.
 Usage: ${myname} <operation> [options] [targets...]
 
   Operations:
@@ -374,10 +388,8 @@ Usage: ${myname} <operation> [options] [targets...]
     -f, --force           apply force to mv(1) and rm(1) operations.
     -h, --help            display this help message and exit.
         --nocolor         remove color from output.
-    -q, --quiet           minimize output
     -v, --verbose         increase verbosity. specify up to 3 times.
                           and -vv).
-
 EOF
 }
 
@@ -852,6 +864,8 @@ function main()
 	fi
 }
 
+logo
+
 OPT_SHORT=':a:c:dfhi:k:m:qrsuVvz'
 OPT_LONG=('arch:' 'cachedir:' 'dryrun' 'force' 'help' 'ignore:' 'keep:' 'move:'
           'nocolor' 'quiet' 'remove' 'uninstalled' 'version' 'verbose' 'null'
@@ -885,7 +899,7 @@ while :; do
 		-r|--remove)
 			delete=1 ;;
 		-V|--version)
-			version
+			#logo
 			exit 0 ;;
 		-v|--verbose)
 			(( ++verbose )) ;;
