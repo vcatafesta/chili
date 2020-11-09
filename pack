@@ -5,7 +5,11 @@ declare -r myver='1.0.1-20201108'
 declare    delim=$'\n' keep=3 movedir= scanarch=
 declare -a cachedirs=() candesc=() candidates=() cmdopts=() whitelist=() blacklist=()
 declare -i delete=0 dryrun=0 filecount=0 move=0 needsroot=0 totalsaved=0 verbose=0
+declare -i ctime=0
+declare -i LTIME=0
 
+true=1
+false=0
 QUIET=0
 USE_COLOR='y'
 IFS=$' \t\n'
@@ -122,11 +126,12 @@ function unsetvarcolors(){
 
 function info()
 {
+#	dialog							\
 	whiptail							\
 		--title     "[debug]$0"	\
-		--backtitle "$0"			\
-		--yesno     "$1"			\
-		15 100
+		--backtitle "\n${0}\n"	\
+		--yesno     "${1}"		\
+		0 0
 		result=$?
 		if (( $result )); then
 			exit
@@ -384,28 +389,6 @@ function version()
 {
 	printf "%s %s\n"	"$myname" "$myver"
 	printf "%s\n"		"Copyright (C) 2020 Vilmar Catafesta <vcatafesta@gmail.com>"
-}
-
-function usage()
-{
-	cat <<EOF
-A flexible cache cleaning utility.
-Usage: ${myname} <operation> [options] [targets...]
-
-  Operations:
-    -d, --dryrun          perform a dry run, only finding candidate packages.
-    -m, --move <dir>      move candidate packages to "dir".
-    -r, --remove          remove candidate packages.
-
-  Options:
-    -c, --cachedir <dir>  scan "dir" for packages. can be used more than once.
-                          (default: read from /etc/fetch/fetch.conf).
-    -f, --force           apply force to mv(1) and rm(1) operations.
-    -h, --help            display this help message and exit.
-        --nocolor         remove color from output.
-    -v, --verbose         increase verbosity. specify up to 3 times.
-                          and -vv).
-EOF
 }
 
 function init()
@@ -789,19 +772,27 @@ function main()
 		pushd "$cachedir" &>/dev/null || die "Error: failed to chdir to $cachedir"
 
 		if [ $# -lt 1 ]; then
-			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort )
+			if (( $LTIME )); then
+				AllFilesPackages=$(find "$PWD" -type f -ctime $ctime -iname "*.chi.zst" | sort )
+			else
+				AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort )
+			fi
 		else
-			AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort)
+			if (( $LTIME )); then
+				AllFilesPackages=$(find "$PWD" -type f -ctime $ctime -iname "*.chi.zst" | grep $1 | sort)
+			else
+				AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort)
+			fi
 		fi
 
 		arrayfull=("${AllFilesPackages[@]}")
 
 		if (( dryrun )); then
-	   	echo "${white}running mode dry-run"
+	   	echo "${white}running mode => ${red}DRY-RUN"
 		elif (( delete )); then
-	   	echo "${white}running mode delete"
+	   	echo "${white}running mode => ${red}DELETE"
 		elif (( move )); then
-	   	echo "${white}running mode move"
+	   	echo "${white}running mode => ${red}MOVE"
 		fi
 
 		while read -r pkgInAll;do
@@ -810,6 +801,7 @@ function main()
 			[[ -z "$pkg_base" ]] &&	continue
 			(( pkgNumber++ ))
 			FilteredPackages=$(find "$PWD" -type f -iname "$pkg_base*.zst" | grep -E "*$pkg_base-([0-9])" | sort )
+
 			array=("${FilteredPackages[*]}")
 			arr=(${FilteredPackages[*]})
 			nfiles=${#arr[*]}
@@ -823,19 +815,28 @@ function main()
 			fi
 
 			while read -r pkg;do
-				sh_splitpkg ${pkg}
-				pkg_search=${aPKGSPLIT[$PKG_BASE]}
-				[[ -z "$pkg_search" ]] &&	continue
-				nlen=${#pkg_base}
-				[[ "${pkg_search::$nlen}" > "${pkg_base::$nlen}" ]] && break
+#				sh_splitpkg ${pkg}
+#				pkg_search=${aPKGSPLIT[$PKG_BASE]}
+#				[[ -z "$pkg_search" ]] &&	continue
+#				nlen=${#pkg_base}
+#				[[ "${pkg_search::$nlen}" > "${pkg_base::$nlen}" ]] && break
 
-				if [[ "${pkg_base}" =~ "${pkg_search}" ]] && [[ "$(vercmp $pkgInAll $pkg)" -lt 0 ]]; then
+				if [[ "${candidates[@]}" =~ "${pkg}" ]]; then
+					continue
+				fi
+
+#				if [[ "${pkg_base}" =~ "${pkg_search}" ]]; then
 					if (( verbose == 2 )); then
 						printf "     ${white}candidate package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${yellow} => %s\n" "$pkgNumber" "$pkg_base" "$nfiles" "${pkgInAll}"
 					fi
-					candidates+=("${pkgInAll}")
-					[[ -e "${pkgInAll}.desc" ]] && candidates+=("${pkgInAll}.desc")
-				fi
+					if [[ "$(vercmp $pkgInAll $pkg)" -lt 0 ]]; then
+						candidates+=("${pkgInAll}")
+						[[ -e "${pkgInAll}.desc" ]] && candesc+=("${pkgInAll}.desc")
+					elif [[ "$(vercmp $pkgInAll $pkg)" -gt 0 ]]; then
+						candidates+=("${pkg}")
+						[[ -e "${pkg}.desc" ]] && candesc+=("${pkg}.desc")
+					fi
+#				fi
 #			done < <(printf '%s\n' "$(find "$PWD" -type f -name "$pkg_base*.zst" | grep -E "*$pkg_base-([0-9])" | sort )")
 			done < <(printf '%s\n' "$array")
 #		done < <(printf '%s\n' "$(find "$PWD" -type f -name "*.chi.zst" | sort )")
@@ -844,6 +845,7 @@ function main()
 	done
 
 	if (( ! ${#candidates[*]} )); then
+		echo
 		printf "${red}  E  NO packages found for pruning\n"
 		exit 0
 	fi
@@ -865,8 +867,10 @@ function main()
 	(( verbose )) && cmdopts+=(-v)
 	if (( delete )); then
 		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 rm "${cmdopts[@]}"
+		printf '%s\0' "${candesc[@]}"    | runcmd xargs -0 rm "${cmdopts[@]}"
 	elif (( move )); then
 		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
+		printf '%s\0' "${candesc[@]}"    | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
 	fi
 	#summary "$pkgcount" "${candidates[@]}"
 	echo
@@ -877,10 +881,33 @@ function main()
 	fi
 }
 
-OPT_SHORT=':a:c:dfhi:k:m:qrsuVvz'
+function usage()
+{
+	cat <<EOF
+A flexible cache cleaning utility.
+Usage: ${myname} <operation> [options] [targets...]
+
+  Operations:
+    -d, --dryrun          perform a dry run, only finding candidate packages.
+    -m, --move <dir>      move candidate packages to "dir".
+    -r, --remove          remove candidate packages.
+
+  Options:
+    -c, --cachedir <dir>  scan "dir" for packages. can be used more than once.
+                          (default: read from /etc/fetch/fetch.conf).
+    -t, --ctime <time>    keep packages with an ctime that is not older
+    -f, --force           apply force to mv(1) and rm(1) operations.
+    -h, --help            display this help message and exit.
+        --nocolor         remove color from output.
+    -v, --verbose         increase verbosity. specify up to 3 times.
+                          and -vv).
+EOF
+}
+
+OPT_SHORT=':a:c:dfhi:k:m:qrsuVvzt:'
 OPT_LONG=('arch:' 'cachedir:' 'dryrun' 'force' 'help' 'ignore:' 'keep:' 'move:'
           'nocolor' 'quiet' 'remove' 'uninstalled' 'version' 'verbose' 'null'
-          'min-atime:' 'min-mtime:')
+          'ctime:')
 
 if ! parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
 	exit 1
@@ -890,6 +917,10 @@ unset OPT_SHORT OPT_LONG OPTRET
 
 while :; do
 	case $1 in
+		-t|--ctime)
+			ctime="$2"
+			LTIME=$true
+			shift ;;
 		-c|--cachedir)
 			cachedirs+=("$2")
 			shift ;;
