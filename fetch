@@ -281,15 +281,18 @@ function sh_checkparametros()
     done
 }
 
-
-function info()
-{
-    dialog 				\
-    --beep				\
-    --title     "FETCH"	\
-    --backtitle "fetch"	\
-    --msgbox    "$*"	\
-    15 70
+function info(){
+#	dialog							\
+	whiptail							\
+		--title     "[debug]$0"	\
+		--backtitle "\n${0}\n"	\
+		--yesno     "${1}"		\
+		0 0
+		result=$?
+		if (( $result )); then
+			exit
+		fi
+		return $result
 }
 
 # Módulo para emular o comando cat
@@ -727,7 +730,7 @@ function help()
 	echo -e "  fetch list [<package>] [<...>]"
 	echo -e "  fetch download [<package>] [...] [ALL] [-y] [-f]"
 	echo -e "  fetch --meta [xorg] [-y] [-f]"
-	echo -e "  fetch -a <package> [...] [-y] [-f] [-ctime=<n>]"
+	echo -e "  fetch -a <package> [...] [-y] [-f] [-ctime=<n>] -keep"
 	echo -e "  fetch -a -ctime=<n>"
 	exit
 }
@@ -2942,7 +2945,7 @@ function sh_alienpkg_initvars()
 function sh_alienpkg_exec()
 {
 	local pkg
-	local param=$@
+	local param=$*
 	local package
 	local LFORCELOCAL=
 	local LFIND=$false
@@ -2965,6 +2968,8 @@ function sh_alienpkg_exec()
 		elif [[ $(toupper "${s:0:7}") = "-CTIME=" ]]; then
 			LFIND=$true
 			mtime=${s:7}
+		elif [[ $(toupper "${s}") = "-KEEP" ]]; then
+			LKEEP=$true
 		else
 			string="$string ${s}"
 		fi
@@ -3102,8 +3107,10 @@ function sh_alienpkg_exec()
 		popd >/dev/null 2>&1
 		unset size
 
-		removeoldpkgchili $cPacoteSemExt
-		echo
+		if (( !$LKEEP )); then
+			removeoldpkgchili $cPacoteSemExt
+			echo
+		fi
 	done
 	unset ncount
 	unset ntotalpkg
@@ -3142,26 +3149,21 @@ function sh_aliencheck()
 }
 
 
-function sh_alienpkg_main()
-{
+function sh_alienpkg_main(){
 	sh_alienpkg_init
-#	setvarcolors
-#	sh_alienpkg_logo
-#	sh_checkroot
 	if [ $# -lt 1 ]; then
 		echo "uso: $0 -a <package-alienigena-versao>"
 		echo "     $0 alienpkg <package-alienigena-versao>"
 		echo "     $0 --alienpkg <package-alienigena-versao>"
 		echo "     $0 -a all"
+		echo "     $0 -a all -keep"
 	   exit 1
 	fi
 	sh_alienpkg_initvars $*
 	sh_alienpkg_exec $*
 }
 
-
-function sh_upgrade()
-{
+function sh_upgrade(){
 	shift
 	local param="$@"
 	local LAUTO=$false
