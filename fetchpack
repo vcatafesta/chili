@@ -822,17 +822,22 @@ function main()
 #				[[ "${pkg_search::$nlen}" > "${pkg_base::$nlen}" ]] && break
 
 				if [[ "${candidates[@]}" =~ "${pkg}" ]]; then
+					#echo "${BASH_REMATCH[0]}"
 					continue
 				fi
-
 #				if [[ "${pkg_base}" =~ "${pkg_search}" ]]; then
-					if (( verbose == 2 )); then
-						printf "     ${white}candidate package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${yellow} => %s\n" "$pkgNumber" "$pkg_base" "$nfiles" "${pkgInAll}"
-					fi
 					if [[ "$(vercmp $pkgInAll $pkg)" -lt 0 ]]; then
+						(( pkgFilter++ ))
+						if (( verbose == 2 )); then
+							printf "     ${white}candidate package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${yellow} => %s\n" "$pkgFilter" "$pkg_base" "$nfiles" "${pkgInAll}"
+						fi
 						candidates+=("${pkgInAll}")
 						[[ -e "${pkgInAll}.desc" ]] && candesc+=("${pkgInAll}.desc")
 					elif [[ "$(vercmp $pkgInAll $pkg)" -gt 0 ]]; then
+						(( pkgFilter++ ))
+						if (( verbose == 2 )); then
+							printf "     ${white}candidate package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${yellow} => %s\n" "$pkgFilter" "$pkg_base" "$nfiles" "${pkgInAll}"
+						fi
 						candidates+=("${pkg}")
 						[[ -e "${pkg}.desc" ]] && candesc+=("${pkg}.desc")
 					fi
@@ -850,15 +855,17 @@ function main()
 		exit 0
 	fi
 
-	echo
-	Number=0
-	while read -r pkg
-	do
-		(( Number++ ))
-		sh_splitpkg ${pkg}
-		pkg_base=${aPKGSPLIT[$PKG_BASE]}
-		printf "     ${white}found package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${red} => %s\n" "$Number" "$pkg_base" "$Number" "${pkg}"
-	done < <(printf '%s\n' "${candidates[@]}")
+	if (( verbose )); then
+		echo
+		Number=0
+		while read -r pkg
+		do
+			(( Number++ ))
+			sh_splitpkg ${pkg}
+			pkg_base=${aPKGSPLIT[$PKG_BASE]}
+			printf "     ${white}found package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${red} => %s\n" "$Number" "$pkg_base" "$Number" "${pkg}"
+		done < <(printf '%s\n' "${candidates[@]}")
+	fi
 
 	pkgcount=${#candidates[*]}
 	totalsaved=$(printf '%s\0' "${candidates[@]}" | xargs -0 stat -c %s | awk '{ sum += $1 } END { print sum }')
