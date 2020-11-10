@@ -71,6 +71,7 @@ FAILURE_PREFIX="${FAILURE}  X  ${NORMAL}"
 BOOTLOG=/tmp/fetchlog-$USER
 KILLDELAY=3
 SCRIPT_STAT="0"
+LKEEP=$false
 
 if [ -z "${COLUMNS}" ]; then
    COLUMNS=$(stty size)
