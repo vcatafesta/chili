@@ -795,10 +795,16 @@ function main()
 	   	echo "${white}running mode => ${red}MOVE"
 		fi
 
+		last_pkg_base=""
 		while read -r pkgInAll;do
 			sh_splitpkg ${pkgInAll}
 			pkg_base=${aPKGSPLIT[$PKG_BASE]}
 			[[ -z "$pkg_base" ]] &&	continue
+
+			if [[ "${pkg_base}" == "${last_pkg_base}" ]]; then
+				continue
+			fi
+
 			(( pkgNumber++ ))
 			FilteredPackages=$(find "$PWD" -type f -iname "$pkg_base*.zst" | grep -E "*$pkg_base-([0-9])" | sort )
 
@@ -814,29 +820,33 @@ function main()
 				continue
 			fi
 
+			last_pkg_search=${arr[@]: -1}
+			if (( verbose == 2 )); then
+				printf "<     ${white}candidate package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${yellow} => %s\n" "$pkgFilter" "$pkg_base" "$nfiles" "${last_pkg_search}"
+			fi
 			while read -r pkg;do
 #				sh_splitpkg ${pkg}
 #				pkg_search=${aPKGSPLIT[$PKG_BASE]}
 #				[[ -z "$pkg_search" ]] &&	continue
+
 #				nlen=${#pkg_base}
 #				[[ "${pkg_search::$nlen}" > "${pkg_base::$nlen}" ]] && break
+				(( pkgFilter++ ))
 
-				if [[ "${candidates[@]}" =~ "${pkg}" ]]; then
-					#echo "${BASH_REMATCH[0]}"
-					continue
-				fi
+#				if [[ "${candidates[@]}" =~ "${pkg}" ]]; then
+#					#info "$pkgInAll\n${BASH_REMATCH[0]}"
+#					continue
+#				fi
 #				if [[ "${pkg_base}" =~ "${pkg_search}" ]]; then
-					if [[ "$(vercmp $pkgInAll $pkg)" -lt 0 ]]; then
-						(( pkgFilter++ ))
+					if [[ "$(vercmp ${last_pkg_search} ${pkg})" -lt 0 ]]; then
 						if (( verbose == 2 )); then
-							printf "     ${white}candidate package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${yellow} => %s\n" "$pkgFilter" "$pkg_base" "$nfiles" "${pkgInAll}"
+							printf "<     ${white}candidate package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${yellow} => %s\n" "$pkgFilter" "$pkg_base" "$nfiles" "${pkg}"
 						fi
-						candidates+=("${pkgInAll}")
+						candidates+=("${last_pkg_search}")
 						[[ -e "${pkgInAll}.desc" ]] && candesc+=("${pkgInAll}.desc")
-					elif [[ "$(vercmp $pkgInAll $pkg)" -gt 0 ]]; then
-						(( pkgFilter++ ))
+					elif [[ "$(vercmp ${last_pkg_search} ${pkg})" -gt 0 ]]; then
 						if (( verbose == 2 )); then
-							printf "     ${white}candidate package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${yellow} => %s\n" "$pkgFilter" "$pkg_base" "$nfiles" "${pkgInAll}"
+							printf ">     ${white}candidate package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${yellow} => %s\n" "$pkgFilter" "$pkg_base" "$nfiles" "${pkg}"
 						fi
 						candidates+=("${pkg}")
 						[[ -e "${pkg}.desc" ]] && candesc+=("${pkg}.desc")
@@ -844,6 +854,7 @@ function main()
 #				fi
 #			done < <(printf '%s\n' "$(find "$PWD" -type f -name "$pkg_base*.zst" | grep -E "*$pkg_base-([0-9])" | sort )")
 			done < <(printf '%s\n' "$array")
+			last_pkg_base=$pkg_base
 #		done < <(printf '%s\n' "$(find "$PWD" -type f -name "*.chi.zst" | sort )")
 		done < <(printf '%s\n' "$arrayfull")
 		popd >/dev/null 2>&1
@@ -969,8 +980,9 @@ fi
 
 # setting default cachedirs
 if [[ -z $cachedirs ]]; then
-	cachedirs=("/var/cache/fetch/archives")
+#	cachedirs=("/var/cache/fetch/archives")
 #	cachedirs+=("${PKGDIR:=/var/cache/fetch/archives}")
+	cachedirs=("${GITDIR:=/var/cache/fetch/archives}")
 fi
 
 # sanity checks
