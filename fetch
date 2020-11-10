@@ -524,6 +524,23 @@ function setvarcolors()
 	fi
 }
 
+function unsetvarcolors()
+{
+	bold=
+	reset=
+	black=
+	blue=
+	cyan=
+	green=
+	orange=
+	purple=
+	red=
+	violet=
+	white=
+	yellow=
+	pink=
+}
+
 
 function sh_msgdoevangelho()
 {
@@ -750,7 +767,8 @@ function init()
 #	[[ $LAUTO  ]] && param+=" -Y"
 #	[[ $LFORCE ]] && param+=" -F"
 
-	while true; do
+	while true
+	do
 		case "${1}" in
 			-Sl|--local|local)  							shift;sh_initinstallpkg "$@";exit;;
 			-Sa|-a|--alienpkg|alienpkg)	  		   shift;sh_alienpkg_main "$@";exit;;
@@ -1471,7 +1489,7 @@ function sh_oldsplitpkg()
 	return $?
 }
 
-function sh_splitpkg()
+function sh_splitpkgNEW()
 {
 	file=${1}
 	#pkg_re='^([a-z-]+)(-)([0-9\\.]+)(-)([0-9])(-)(.*)(.chi.zst)$'
@@ -1505,7 +1523,7 @@ function sh_splitpkg()
 	return $?
 }
 
-function sh_splitpkgOLD()
+function sh_splitpkg()
 {
 	local file=${1}
 	local pkg_folder_dir
