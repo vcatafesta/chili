@@ -217,8 +217,7 @@ function runcmd()
 	fi
 }
 
-function sh_splitpkg()
-{
+function sh_splitpkg(){
 	file=${1}
 	#pkg_re='^([a-z-]+)(-)([0-9\\.]+)(-)([0-9])(-)(.*)(.chi.zst)$'
 	#pkg_re='([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)-(([0-9]+(\.[0-9]+)*)(-([0-9]+))?)-([^.]+).*'
@@ -228,7 +227,28 @@ function sh_splitpkg()
 	pkg_folder_dir=$(echo ${file%/*})							#remove arquivo deixando somente o diretorio/repo
 	pkg_fullname=$(echo ${file##*/})    						#remove diretorio deixando somente nome do pacote
 
-	[[ $pkg_fullname =~ $pkg_re ]] &&
+	arr=($(echo $pkg_fullname | awk 'match($0, /(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst/, array) {
+			print array[0]
+			print array[1]
+			print array[2]
+		   print array[3]
+		   print array[4]
+    		print array[5]
+    		print array[6]
+			}'))
+	pkg_fullname="${arr[0]}"
+	pkg_base="${arr[1]}"
+	pkg_version_build="${arr[2]}"
+	pkg_version="${arr[3]}"
+	pkg_build="${arr[4]}"
+	pkg_arch="${arr[5]}"
+	pkg_base_version="${arr[0]}-${arr[4]}"
+	aPKGSPLIT=($pkg_folder_dir $pkg_fullname $pkg_arch $pkg_base $pkg_base_version $pkg_version $pkg_build)
+	return $?
+}
+
+function sh_splitpkgNEW()
+{
 		pkg_fullname=${BASH_REMATCH[0]}
 		pkg_base=${BASH_REMATCH[1]}
 		pkg_version_build=${BASH_REMATCH[2]}
@@ -980,9 +1000,9 @@ fi
 
 # setting default cachedirs
 if [[ -z $cachedirs ]]; then
-#	cachedirs=("/var/cache/fetch/archives")
+	cachedirs=("/var/cache/fetch/archives")
 #	cachedirs+=("${PKGDIR:=/var/cache/fetch/archives}")
-	cachedirs=("${GITDIR:=/var/cache/fetch/archives}")
+#	cachedirs=("${GITDIR:=/var/cache/fetch/archives}")
 fi
 
 # sanity checks
