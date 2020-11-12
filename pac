@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-
+IFS=$' \t\n'
 declare -a candidates=()
 declare -a whitelist=()
 declare -a blacklist=()
@@ -18,26 +18,36 @@ function info(){
 		return $result
 }
 
-function filtro()
-{
+function filtro2(){
 	awk '
 	{
-		if( match($0, /(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst/, array)){
-			#print array[1], array[2], array[3], array[4], array[5], array[6]
-			print array[1]
+		if(match($0, /(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst/, array)){
+			printf("%s %s %s %s %s %s %s", "array[1] array[2] array[3] array[4] array[5] array[6]")
 		}
 	}'
 }
 
+function filtro(){
+	awk '
+	BEGIN {}
+	match($0, /(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst/, array) {
+#		printf("%s %s\n", array[1], array[2] )
+		print array[1], array[2]
+	 }
+	END 	{}'
+}
+
 pushd /var/cache/fetch/archives/ &>/dev/null
 
-IFS=$'\n' read -r -d '' -a cand < \
-	<( find "$PWD" -type f -name "linux*.chi.zst" -printf '%p\n' \
-		|pacsort --files --key 3 --separator ' ' 	\
-		|filtro "${#whitelist[*]}" "${whitelist[@]}" "${#blacklist[*]}" "${blacklist[@]}")
+IFS='\|' read -r -d '\n' -a cand < \
+		<( find "$PWD" -type f -name "*.chi.zst" -printf '%p\n' \
+		|filtro )
 
 	candidates+=("${cand[@]}")
-	info "${candidates[*]}"
+	for i in ${candidates[*]}
+	do
+		echo -e ${i}
+	done
 
 	unset cand
 
