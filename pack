@@ -944,12 +944,14 @@ function main()
 		#arr=(${AllOldPackages[*]})
 		#nfiles=${#arr[*]}
 
-		if (( dryrun )); then
-	   	echo "${white}running mode => ${red}DRY-RUN"
-		elif (( delete )); then
-	   	echo "${white}running mode => ${red}DELETE"
-		elif (( move )); then
-	   	echo "${white}running mode => ${red}MOVE"
+		if (( verbose )); then
+			if (( dryrun )); then
+		   	echo "${white}running mode => ${red}DRY-RUN"
+			elif (( delete )); then
+		   	echo "${white}running mode => ${red}DELETE"
+			elif (( move )); then
+		   	echo "${white}running mode => ${red}MOVE"
+			fi
 		fi
 
 		while read -r pkgInAll;do
@@ -1009,7 +1011,7 @@ function main()
 		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
 		printf '%s\0' "${candesc[@]}"    | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
 	fi
-	printf "\n"
+
 	if (( dryrun )); then
 		msg "${yellow}$output finish dry-run (files found: $pkgcount) (disk space saved: %s)" "$(size_to_human "$totalsaved")"
 	else
