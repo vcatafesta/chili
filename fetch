@@ -3,7 +3,7 @@
  # fetch - search, install, create, remove, upgrade packages in ChiliOS
  #
  # Created: 2019/04/05
- # Altered: 2020/11/09
+ # Altered: 2020/11/13
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.03.30.20201109"
+_VERSION_="2.03.50.20201113"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -2460,11 +2460,12 @@ function _GENERATE_DESC()
 
 	if [ -e info/desc ]; then
 		evaluate_retval
+		(( ncount++ ))
 		if !(( $LFORCE )); then
-			log_info_msg "${orange}info/desc ${reset}already exist. Skipping... Use the -f option to force recreate."
+			log_info_msg "$(fmt)${orange} info/desc ${reset}already exist. Skipping... Use the -f option to force recreate."
 			return
 		else
-			log_info_msg "${orange}info/desc ${reset}already exist. Rewriting"
+			log_info_msg "$(fmt)${orange} info/desc ${reset}already exist. Rewriting"
 		fi
 	fi
 	_CAT > "info/desc" << EOF
@@ -2522,7 +2523,8 @@ function sh_generatepkg()
 		done
 	fi
 
-	log_info_msg "(${ncount}/${ntotalpkg}) Generating info for package $pkg"
+	(( ncount++ ))
+	log_info_msg "$(fmt) Generating info for package $pkg"
 	if [[ ! -e "info/desc" ]]; then
 		LFORCE=$true
 	fi
@@ -2919,7 +2921,7 @@ function sh_createpkg()
 		local pkg=$(echo $PWD |sed 's/\// /g'|awk '{print $NF}')
 	fi
 
-	log_wait_msg "(${ncount}/${ntotalpkg}) Building package $pkg"
+	log_wait_msg "$(fmt) Building package $pkg"
 	#sh_generatepkg $pkg $pkg -Y -F $4 $5
 	sh_generatepkg $pkg $pkg -Y $4 $5
 	_NAME_FORMAT_PKG "$pkg.${PKG_EXT}" || exit 1
@@ -2929,7 +2931,8 @@ function sh_createpkg()
 		exit 1
 	fi
 	_CREATE_PKG "$pkg" || exit 1
-	log_info_msg "(${ncount}/${ntotalpkg}) Generating package $pkg"
+	(( ncount++ ))
+	log_info_msg "$(fmt) Generating package $pkg"
 	unset check_var
 	evaluate_retval
 }
@@ -2960,6 +2963,10 @@ function sh_alienpkg_initvars()
 	GITDIR="${GITDIR:-/github/ChiliOS}"
 }
 
+function fmt(){
+	echo "${pink}(${ncount}-8/#${ntotalpkg})${reset}"
+	return $?
+}
 
 function sh_alienpkg_exec()
 {
@@ -3022,7 +3029,7 @@ function sh_alienpkg_exec()
 		packagedir=${package}
 		file=${package}
 		FULLDIR=$BUILDDIR/$packagedir
-		((ncount++))
+		ncount=0
 
 		pkgtar=$(echo ${file##*/})                   #remove diretorio deixando somente nome do pacote
 		pkgtar=$(echo ${pkgtar%%.pkg.tar.zst})       #remove .pkg.tar.zst
@@ -3038,21 +3045,25 @@ function sh_alienpkg_exec()
 			local destpkgCORE="${GITDIR}/packages/core/${FilteredPackage}"
 
 			if [[ -e ${destpkgGIT} ]]; then
-				log_failure_msg2 "(${ncount}/${ntotalpkg}) ${orange}${FilteredPackage} ${reset}Package already exist in ${green}${GITDIR}/packages/${firstletter/}${reset} Use the -f option to force rebuild."
+				log_failure_msg2 "$(fmt) ${orange}${FilteredPackage} ${reset}Package already exist in ${green}${GITDIR}/packages/${firstletter/}${reset} Use the -f option to force rebuild."
+				(( ntotalpkg-- ))
 				continue
 			fi
 			if [[ -e ${destpkgCORE} ]]; then
-				log_failure_msg2 "(${ncount}/${ntotalpkg}) ${orange}${FilteredPackage} ${reset}Package already exist in ${green}${GITDIR}/packages/core/${reset} Use the -f option to force rebuild."
+				log_failure_msg2 "$(fmt) ${orange}${FilteredPackage} ${reset}Package already exist in ${green}${GITDIR}/packages/core/${reset} Use the -f option to force rebuild."
+				(( ntotalpkg-- ))
 				continue
 			fi
 		fi
 
 		destdir=$BUILDDIR/$pkgtar
-		log_info_msg "(${ncount}/${ntotalpkg}) Creating directory $destdir"
+		((ncount++))
+		log_info_msg "$(fmt) Creating directory $destdir"
 		mkdir -p $destdir
 		evaluate_retval
 
-		log_info_msg "(${ncount}/${ntotalpkg}) Unpacking package $package at $destdir"
+		((ncount++))
+		log_info_msg "$(fmt) Unpacking package $package at $destdir"
 		tar --extract --file $package -C $destdir >/dev/null 2>&1
 		evaluate_retval
 
@@ -3119,17 +3130,24 @@ function sh_alienpkg_exec()
 #		log_info_msg "Building $destdir package"
 #		as_root bcpalien  >/dev/null 2>&1
 
+		((ncount++))
 		sh_createpkg $pkgtar $pkgtar -Y -F
-		evaluate_retval
-
+#		evaluate_retval
 		sh_alienpkg_pkgsize
-		popd >/dev/null 2>&1
-		unset size
 
-		if (( !$LKEEP )); then
-			removeoldpkgchili $cPacoteSemExt
+		if !(( $LKEEP )); then
+			((ncount++))
+			log_wait_msg "$(fmt) Verifying candidate package for pruning ${yellow}${GITDIR}/packages/$cPacoteSemExt"
+			#removeoldpkgchili $cPacoteSemExt
+			((ncount++))
+			log_info_msg "$(fmt) Removing ${red}OLD ${reset}package ${yellow}${GITDIR}/packages/$cPacoteSemExt"
+			fetchpack -q -c "$GITDIR/packages/" -m /tmp/ "$cPacoteSemExt"
+			evaluate_retval
 			echo
 		fi
+		popd >/dev/null 2>&1
+		unset size
+		(( ntotalpkg-- ))
 	done
 	unset ncount
 	unset ntotalpkg

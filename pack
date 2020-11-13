@@ -975,9 +975,10 @@ function main()
 	done
 
 	if (( ! ${#candidates[*]} )); then
-		echo
-		printf "${red}  E  NO packages found for pruning\n"
-		exit 0
+		if (( verbose )); then
+			printf "${red}  E  NO packages found for pruning\n"
+		fi
+		exit 1
 	fi
 
 	if (( verbose )); then
@@ -1023,6 +1024,7 @@ function main()
 			msg "$output (files found: $pkgcount) (disk space saved: %s)" "$(size_to_human "$totalsaved")"
 		fi
 	fi
+	return 0
 }
 
 function usage(){
