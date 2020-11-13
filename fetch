@@ -2964,7 +2964,7 @@ function sh_alienpkg_initvars()
 }
 
 function fmt(){
-	echo "${pink}(J${ncount}:8/F${ntotalpkg}:${nfullpkg})${reset}"
+	printf "${pink}(J${ncount}:8/F${ntotalpkg}:${nfullpkg})${reset}"
 	return $?
 }
 
