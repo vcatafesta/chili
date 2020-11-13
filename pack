@@ -944,13 +944,17 @@ function main()
 		#arr=(${AllOldPackages[*]})
 		#nfiles=${#arr[*]}
 
-		if (( verbose )); then
-			if (( dryrun )); then
-		   	echo "${white}running mode => ${red}DRY-RUN"
-			elif (( delete )); then
-		   	echo "${white}running mode => ${red}DELETE"
-			elif (( move )); then
-		   	echo "${white}running mode => ${red}MOVE"
+		if (( QUIET )); then
+			verbose=0
+		else
+			if (( verbose )); then
+				if (( dryrun )); then
+			   	echo "${white}running mode => ${red}DRY-RUN"
+				elif (( delete )); then
+			   	echo "${white}running mode => ${red}DELETE"
+				elif (( move )); then
+			   	echo "${white}running mode => ${red}MOVE"
+				fi
 			fi
 		fi
 
@@ -1012,10 +1016,12 @@ function main()
 		printf '%s\0' "${candesc[@]}"    | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
 	fi
 
-	if (( dryrun )); then
-		msg "${yellow}$output finish dry-run (files found: $pkgcount) (disk space saved: %s)" "$(size_to_human "$totalsaved")"
-	else
-		msg "$output (files found: $pkgcount) (disk space saved: %s)" "$(size_to_human "$totalsaved")"
+	if (( !QUIET )); then
+		if (( dryrun )); then
+			msg "${yellow}$output finish dry-run (files found: $pkgcount) (disk space saved: %s)" "$(size_to_human "$totalsaved")"
+		else
+			msg "$output (files found: $pkgcount) (disk space saved: %s)" "$(size_to_human "$totalsaved")"
+		fi
 	fi
 }
 
@@ -1036,6 +1042,7 @@ Usage: ${myname} <operation> [options] [targets...]
     -f, --force           apply force to mv(1) and rm(1) operations.
     -h, --help            display this help message and exit.
         --nocolor         remove color from output.
+    -q, --quiet           quiet output.
     -v, --verbose         increase verbosity. specify up to 3 times.
                           and -vv).
 EOF
