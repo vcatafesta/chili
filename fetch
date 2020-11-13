@@ -2964,7 +2964,7 @@ function sh_alienpkg_initvars()
 }
 
 function fmt(){
-	echo "${pink}(${ncount}-8/#${ntotalpkg})${reset}"
+	echo "${pink}(J${ncount}:8/F${ntotalpkg}:${nfullpkg})${reset}"
 	return $?
 }
 
@@ -3021,6 +3021,7 @@ function sh_alienpkg_exec()
 
 	arraypkg=($pkg)
 	ntotalpkg=${#arraypkg[*]}
+	nfullpkg=${ntotalpkg}
 	log_success_msg2 "${red}(${ntotalpkg}) ${green}file(s) found."
 	LFORCELOCAL=$LFORCE
 
