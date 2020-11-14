@@ -3,7 +3,7 @@
  # fetch - search, install, create, remove, upgrade packages in ChiliOS
  #
  # Created: 2019/04/05
- # Altered: 2020/11/13
+ # Altered: 2020/11/14
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.03.50.20201113"
+_VERSION_="2.03.55.20201114"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -283,10 +283,10 @@ function sh_checkparametros()
 }
 
 function info(){
-#	dialog							\
-	whiptail							\
+#	whiptail							\
+	dialog							\
 		--title     "[debug]$0"	\
-		--backtitle "\n${0}\n"	\
+		--backtitle "\n$*n"	   \
 		--yesno     "${1}"		\
 		0 0
 		result=$?
@@ -2982,6 +2982,11 @@ function sh_alienpkg_exec()
 	local ncount=0
 	local arraypkg=
 
+
+	if [[ $(toupper "${param}") = "--DEFAULT" ]]; then
+		param="all -ctime=0 -keep"
+	fi
+
   	for s in ${param[@]}; do
 	 	if [[ "${s}" == "" ]] || [[ $(toupper "${s}") = "ALL" ]] || [[ $(toupper "${s}") = "ALL OFF" ]]; then
 			LALL=$true
@@ -3197,6 +3202,7 @@ function sh_alienpkg_main(){
 		echo "     $0 -a all -keep"
 	   exit 1
 	fi
+
 	sh_alienpkg_initvars $*
 	sh_alienpkg_exec $*
 }
