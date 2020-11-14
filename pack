@@ -1046,7 +1046,7 @@ case $(( dryrun+delete+move )) in
 esac
 
 [[ $movedir && ! -d $movedir ]] &&
-	die "destination directory '%s' does not exist or is not a directory" "$movedir"
+	die "destination directory '$movedir' does not exist or is not a directory!"
 
 if (( move || delete )); then
 	# make it an absolute path since we're about to chdir
