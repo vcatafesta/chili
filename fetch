@@ -2964,7 +2964,7 @@ function sh_alienpkg_initvars()
 }
 
 function fmt(){
-	printf "${pink}(J${ncount}:8/F${ntotalpkg}:${nfullpkg})${reset}"
+	printf "${pink}(j#${ncount}:8/f#${ntotalpkg}:${nfullpkg})${reset}"
 	return $?
 }
 
@@ -3144,12 +3144,12 @@ function sh_alienpkg_exec()
 			log_info_msg "$(fmt) Removing ${red}OLD ${reset}package ${yellow}${GITDIR}/packages/$cPacoteSemExt"
 			fetchpack -q -c "$GITDIR/packages/" -m /tmp/ "$cPacoteSemExt"
 			evaluate_retval
-			echo
 		fi
-		popd >/dev/null 2>&1
-		unset size
+		echo
 		(( ntotalpkg-- ))
 	done
+	popd >/dev/null 2>&1
+	unset size
 	unset ncount
 	unset ntotalpkg
 }
