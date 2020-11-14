@@ -1,67 +1,70 @@
 #!/usr/bin/bash
+
 export LC_ALL="pt_BR.utf8"
 declare -r myname='fetchpack'
-declare -r myver='1.0.1-20201108'
+declare -r myver='1.0.1-20201113'
 declare    delim=$'\n' keep=3 movedir= scanarch=
-declare -a cachedirs=() candesc=() candidates=() cmdopts=() whitelist=() blacklist=()
-declare -i delete=0 dryrun=0 filecount=0 move=0 needsroot=0 totalsaved=0 verbose=0
+declare    USE_COLOR='y'
+declare -a cachedirs=()
+declare -a candidates=() cmdopts=() candesc=()
+declare -i delete=0 dryrun=0 filecount=0 move=0 totalsaved=0
+declare -i verbose=1
+
 declare -i ctime=0
 declare -i LTIME=0
-
-true=1
-false=0
-QUIET=0
-USE_COLOR='y'
-IFS=$' \t\n'
-SAVEIFS=$IFS
-source /etc/fetch/fetch.conf &> /dev/null
-BOOTLOG=/tmp/fetchlog-$USER
+declare -i true=1
+declare -i false=0
+declare -i QUIET=0
+declare    IFS=$' \t\n'
+declare    SAVEIFS=$IFS
+declare    BOOTLOG=/tmp/fetchlog-$USER
 
 # Expand to nothing if there are no matches
 shopt -s nullglob
 shopt -s extglob
 
+# Import libs
 LIBRARY=${LIBRARY:-'/usr/share/makepkg'}
-# Import libmakepkg
+source /etc/fetch/fetch.conf &> /dev/null
 source "$LIBRARY"/util/message.sh
 source "$LIBRARY"/util/parseopts.sh
 
 # log messages
-NORMAL="\\033[0;39m"         # Standard console grey
-SUCCESS="\\033[1;32m"        # Success is green
-WARNING="\\033[1;33m"        # Warnings are yellow
-FAILURE="\\033[1;31m"        # Failures are red
-INFO="\\033[1;36m"           # Information is light cyan
-BRACKET="\\033[1;34m"        # Brackets are blue
-BMPREFIX="     "
-SUCCESS_PREFIX="${SUCCESS}  *  ${NORMAL}"
-FAILURE_PREFIX="${FAILURE}*****${NORMAL}"
-WARNING_PREFIX="${WARNING}  W  ${NORMAL}"
-SKIP_PREFIX="${INFO}  S  ${NORMAL}"
-SUCCESS_SUFFIX="${BRACKET}[${SUCCESS}  OK  ${BRACKET}]${NORMAL}"
-FAILURE_SUFFIX="${BRACKET}[${FAILURE} FAIL ${BRACKET}]${NORMAL}"
-WARNING_SUFFIX="${BRACKET}[${WARNING} WARN ${BRACKET}]${NORMAL}"
-SKIP_SUFFIX="${BRACKET}[${INFO} SKIP ${BRACKET}]${NORMAL}"
-WAIT_PREFIX="${WARNING}  R  ${NORMAL}"
-WAIT_SUFFIX="${BRACKET}[${WARNING} WAIT ${BRACKET}]${NORMAL}"
-FAILURE_PREFIX="${FAILURE}  X  ${NORMAL}"
-KILLDELAY=3
-SCRIPT_STAT="0"
+declare NORMAL="\\033[0;39m"         # Standard console grey
+declare SUCCESS="\\033[1;32m"        # Success is green
+declare WARNING="\\033[1;33m"        # Warnings are yellow
+declare FAILURE="\\033[1;31m"        # Failures are red
+declare INFO="\\033[1;36m"           # Information is light cyan
+declare BRACKET="\\033[1;34m"        # Brackets are blue
+declare BMPREFIX="     "
+declare SUCCESS_PREFIX="${SUCCESS}  *  ${NORMAL}"
+declare FAILURE_PREFIX="${FAILURE}*****${NORMAL}"
+declare WARNING_PREFIX="${WARNING}  W  ${NORMAL}"
+declare SKIP_PREFIX="${INFO}  S  ${NORMAL}"
+declare SUCCESS_SUFFIX="${BRACKET}[${SUCCESS}  OK  ${BRACKET}]${NORMAL}"
+declare FAILURE_SUFFIX="${BRACKET}[${FAILURE} FAIL ${BRACKET}]${NORMAL}"
+declare WARNING_SUFFIX="${BRACKET}[${WARNING} WARN ${BRACKET}]${NORMAL}"
+declare SKIP_SUFFIX="${BRACKET}[${INFO} SKIP ${BRACKET}]${NORMAL}"
+declare WAIT_PREFIX="${WARNING}  R  ${NORMAL}"
+declare WAIT_SUFFIX="${BRACKET}[${WARNING} WAIT ${BRACKET}]${NORMAL}"
+declare FAILURE_PREFIX="${FAILURE}  X  ${NORMAL}"
+declare KILLDELAY=3
+declare SCRIPT_STAT="0"
 
 if [ -z "${COLUMNS}" ]; then
-   COLUMNS=$(stty size)
+   declare COLUMNS=$(stty size)
    COLUMNS=${COLUMNS##* }
 fi
 if [ "${COLUMNS}" = "0" ]; then
-   COLUMNS=80
+   declare COLUMNS=80
 fi
 
-COL=$((${COLUMNS} - 8))
-WCOL=$((${COL} - 2))
-SET_COL="\\033[${COL}G"      # at the $COL char
-SET_WCOL="\\033[${WCOL}G"    # at the $WCOL char
-CURS_UP="\\033[1A\\033[0G"   # Up one line, at the 0'th char
-CURS_ZERO="\\033[0G"
+declare COL=$((${COLUMNS} - 8))
+declare WCOL=$((${COL} - 2))
+declare SET_COL="\\033[${COL}G"      # at the $COL char
+declare SET_WCOL="\\033[${WCOL}G"    # at the $WCOL char
+declare CURS_UP="\\033[1A\\033[0G"   # Up one line, at the 0'th char
+declare CURS_ZERO="\\033[0G"
 
 # flag's para split package
 : ${aPKGSPLIT=()}
@@ -74,8 +77,7 @@ CURS_ZERO="\\033[0G"
 : ${PKG_VERSION=5}
 : ${PKG_BUILD=6}
 
-
-# core functions
+# core function's
 function setvarcolors(){
 	if tput setaf 1 &> /dev/null; then
 		tput sgr0; # reset colors
@@ -109,7 +111,6 @@ function setvarcolors(){
 	fi
 }
 
-
 function unsetvarcolors(){
 	unset bold
 	unset reset
@@ -124,8 +125,13 @@ function unsetvarcolors(){
 	unset white
 	unset yellow
 	unset pink
+	unset NORMAL
+	unset SUCCESS
+	unset WARNING
+	unset FAILURE
+	unset INFO
+	unset BRACKET
 }
-
 
 function info(){
 #	dialog							\
@@ -141,18 +147,15 @@ function info(){
 		return $result
 }
 
-
 function debug(){
 	info "$*"
 	return $?
 }
 
-
 function timespec(){
 	STAMP="$(echo `date +"%b %d %T %:z"` `hostname`) "
 	return 0
 }
-
 
 function log_info_msg(){
 	echo -n -e "${BMPREFIX}${@}"
@@ -161,7 +164,6 @@ function log_info_msg(){
 	echo -n -e "${STAMP} ${logmessage}" >> ${BOOTLOG}
 	return 0
 }
-
 
 function evaluate_retval(){
 	local error_value="${?}"
@@ -174,14 +176,12 @@ function evaluate_retval(){
 	return ${error_value}
 }
 
-
 function log_failure_msg2(){
 	echo -n -e "${BMPREFIX}${@}"
 	echo -e "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}"
 	echo "FAIL" >> ${BOOTLOG}
 	return 0
 }
-
 
 function log_wait_msg(){
 	echo -n -e "${BMPREFIX}${@}"
@@ -190,7 +190,6 @@ function log_wait_msg(){
 	return 0
 }
 
-
 function log_success_msg2(){
 	echo -n -e "${BMPREFIX}${@}"
 	echo -e "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${SUCCESS_SUFFIX}"
@@ -198,13 +197,11 @@ function log_success_msg2(){
 	return 0
 }
 
-
 function die(){
-	local mesg=$1; shift
-   log_failure_msg2 "${red}$mesg" "$@" >&2
+	local msg=$1; shift
+   log_failure_msg2 "${red}$msg" "$@" >&2
 	exit 1
 }
-
 
 function runcmd(){
 	if (( EUID != 0 )); then
@@ -218,7 +215,6 @@ function runcmd(){
 		"$@"
 	fi
 }
-
 
 function sh_splitpkg(){
 	file=${1}
@@ -250,7 +246,6 @@ function sh_splitpkg(){
 	return $?
 }
 
-
 function sh_splitpkgNEW(){
 		pkg_fullname=${BASH_REMATCH[0]}
 		pkg_base=${BASH_REMATCH[1]}
@@ -271,7 +266,6 @@ function sh_splitpkgNEW(){
 	aPKGSPLIT=($pkg_folder_dir $pkg_fullname $pkg_arch $pkg_base $pkg_base_version $pkg_version $pkg_build)
 	return $?
 }
-
 
 function sh_splitpkgOLD(){
 	local PRG='chi.zst'
@@ -382,6 +376,7 @@ EOF
 	echo $yellow
    version
 	echo $reset
+	unsetvarcolors
 }
 
 function version()
@@ -501,8 +496,9 @@ function init()
 	done
 
 	if (( ! ${#candidates[*]} )); then
-		printf "${red}  E  NO packages found for pruning\n"
-		exit 0
+#		printf "${red}  E  NO packages found for pruning\n"
+		die "NO packages found for pruning"
+#		exit 1
 	fi
 
 	pkgcount=${#candidates[*]}
@@ -543,76 +539,6 @@ join(){
 	echo "${car}${outdelimiter}${cdr}" | ${FUNCNAME} "${indelimiter}" "${outdelimiter}"
 }
 
-filter()
-{
-	local pkg_base=$1
-	local file_search=$2
-	local pkg_search=
-	local pkgInAll=$3
-
-	sh_splitpkg ${file_search}
-	pkg_search=${aPKGSPLIT[$PKG_BASE]}
-
-	if [[ "${pkg_base}" =~ "${pkg_search}" ]] && [[ "$(vercmp $pkgInAll $file_search)" -lt 0 ]]; then
-		printf "%s" "${pkgInAll}"
-	fi
-}
-
-pkgfilter()
-{
-	sh_splitpkg ${1}
-	pkg_base=${aPKGSPLIT[$PKG_BASE]}
-
-	array=$@
-	info "${array[1]})"
-
-	IFS=$'\n' read -r -d '' -a pkg < \
-		<(	if (( min_atime || min_mtime )); then
-			find "$PWD" -name '*.chi' -prune -o \( -name '*.chi.zst' -printf '%A@ %T@ %p\n' \)
-			pacsort --files --key 3 --separator ' '
-		else
-			find "$PWD" -type f -name "$pkg_base*.zst" | grep -E "*$pkg_base-([0-9])" | sort
-		fi |
-		filter "$pkg_base" "$pkg" "$1")
-#	awk '{ print $1 }'
-}
-
-mainOLD(){
-	local pkg=
-	local pkgInAll=
-	local pkg_base=
-	local pkg_search=
-	local candidates=()
-	local cachedir
-
-	for cachedir in "${cachedirs[@]}"
-	do
-		[[ -d $cachedir ]]            || die "Error: cachedir '$cachedir' does not exist or is not a directory"
-		pushd "$cachedir" &>/dev/null || die "Error: failed to chdir to $cachedir"
-
-#		while IFS=$'\n' read -r -d '' -a cand; do
-		while IFS=$'\n' read -r -a cand; do
-			info $cand
-		done < \
-			<(	if (( min_atime || min_mtime )); then
-				find "$PWD" -name '*.chi' -prune -o \( -name '*.chi.zst' -printf '%A@ %T@ %p\n' \)
-				pacsort --files --key 3 --separator ' '
-			else
-				printf '%s\n' "$PWD"/*.chi.zst |	pacsort --files
-			fi | awk '{ print $1 }' )
-		candidates+=("${cand[@]}")
-		unset cand
-		popd >/dev/null 2>&1
-	done
-
-	files=${#candidates[*]}
-	if (( ! $files )); then
-		die "NO packages found for pruning"
-	else
-		die "${files} for pruning"
-	fi
-}
-
 function len()
 {
 	return $#
@@ -623,12 +549,11 @@ function seeek()
 	count=0
 	while [ "x${wholist[count]}" != "x" ]
 	do
-		count=$(( $count + 1 ))
+		(( count++ ))
 	done
 }
 
-function ascan4()
-{
+function ascan4(){
 	true=0
 	false=1
 	array=($(ls -1 /etc/ | sort ))
@@ -949,11 +874,11 @@ function main()
 		else
 			if (( verbose )); then
 				if (( dryrun )); then
-			   	echo "${white}running mode => ${red}DRY-RUN"
+			   	log_wait_msg "${white}running mode => ${red}DRY-RUN"
 				elif (( delete )); then
-			   	echo "${white}running mode => ${red}DELETE"
+			   	log_wait_msg "${white}running mode => ${red}DELETE"
 				elif (( move )); then
-			   	echo "${white}running mode => ${red}MOVE"
+			   	log_wait_msg "${white}running mode => ${red}MOVE"
 				fi
 			fi
 		fi
@@ -976,7 +901,7 @@ function main()
 
 	if (( ! ${#candidates[*]} )); then
 		if (( verbose )); then
-			printf "${red}  E  NO packages found for pruning\n"
+			die "NO packages found for pruning"
 		fi
 		exit 1
 	fi
@@ -1084,6 +1009,7 @@ while :; do
 			unsetvarcolors
 			USE_COLOR='n' ;;
 		-q|--quiet)
+			unsetvarcolors
 			QUIET=1 ;;
 		-r|--remove)
 			delete=1 ;;
