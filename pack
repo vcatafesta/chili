@@ -43,7 +43,6 @@ declare -a cachedirs=()
 declare -a candidates=() cmdopts=() candesc=()
 declare -i delete=0 dryrun=0 filecount=0 move=0 totalsaved=0
 declare -i verbose=0
-
 declare -i ctime=0
 declare -i LTIME=0
 declare -i true=1
@@ -52,6 +51,7 @@ declare -i QUIET=0
 declare    IFS=$' \t\n'
 declare    SAVEIFS=$IFS
 declare    BOOTLOG=/tmp/fetchlog-$USER
+readonly DEPENDENCIES=(which find sed grep sort cat awk tput dialog)
 
 # Expand to nothing if there are no matches
 shopt -s nullglob
@@ -986,6 +986,32 @@ function main()
 	return 0
 }
 
+function sh_checkroot()
+{
+	if [ "$(id -u)" != "0" ]; then
+		log_failure_msg2 "ERROR: This script must be run with root privileges."
+		exit
+	fi
+}
+
+checkDependencies() {
+  local errorFound=0
+
+  for command in "${DEPENDENCIES[@]}"; do
+    if ! which "$command"  &> /dev/null ; then
+      echo "ERRO: não encontrei o comando '$command'" >&2
+      errorFound=1
+    fi
+  done
+
+  if [[ "$errorFound" != "0" ]]; then
+    echo "---IMPOSSÍVEL CONTINUAR---"
+    echo "Esse script precisa dos comandos listados acima" >&2
+    echo "Instale-os e/ou verifique se estão no seu \$PATH" >&2
+    exit 1
+  fi
+}
+
 function usage(){
 	cat <<EOF
 A flexible cache cleaning utility.
@@ -1007,6 +1033,9 @@ Usage: ${myname} <operation> [options] [targets...]
     -v, --verbose         increase verbosity. specify up to 3 times ([-v][-vv][-vvv]).
 EOF
 }
+
+sh_checkroot
+checkDependencies
 
 OPT_SHORT=':a:c:dfhi:k:m:qrsuVvzt:'
 OPT_LONG=('arch:' 'cachedir:' 'dryrun' 'force' 'help' 'ignore:' 'keep:' 'move:'
