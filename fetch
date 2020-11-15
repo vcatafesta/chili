@@ -369,7 +369,7 @@ function sh_touchconf()
 PKG_EXT='chi.zst'		#ChiliOS
 
 # site de hospedagem da distro
-#PKG_SITE='http://10.0.0.68'
+#PKG_SITE='http://localhost'
 #PKG_SITE='http://201.7.66.107'
 #PKG_SITE='http://mazonos.com'
 PKG_SITE='https://github.com/vcatafesta/ChiliOS/tree/master'
@@ -387,9 +387,9 @@ LFS_INIT='SYSTEMD'
 ARCH='x86_64'
 DISTRO='chili'
 LFS_VARCACHE='fetch'
-GITDIR='/github/ChiliOS/packages'
-#PKGDIR='/var/cache/fetch/archives'
-PKGDIR="$GITDIR/core'
+GITDIR='/github/ChiliOS'
+PKGCORE="$GITDIR/packages/core"
+PKGDIR="$PKGCORE"
 ALIEN_CACHE_DIR='/var/cache/pacman/pkg'
 IGNOREPKG=('glibc' 'file')
 
@@ -748,14 +748,12 @@ function help()
 	echo -e "  fetch list [<package>] [<...>]"
 	echo -e "  fetch download [<package>] [...] [ALL] [-y] [-f]"
 	echo -e "  fetch --meta [xorg] [-y] [-f]"
-	echo -e "  fetch -a <package> [...] [-y] [-f] [-ctime=<n>] -keep"
-	echo -e "  fetch -a -ctime=<n>"
+	echo -e "  fetch -a <package> [...] [-y] [-f] [-ctime=<n>] [-keep]"
+	echo -e "  fetch -a -ctime=<n> [-keep]"
 	exit
 }
 
-
-function init()
-{
+function init(){
 	local param=$@
 	local s
 
@@ -2959,8 +2957,7 @@ function sh_alienpkg_initvars()
 	ALIEN_CACHE_DIR="${ALIEN_CACHE_DIR:=/var/cache/pacman/pkg}"
 	PKGS=$@
 #	EXT="${EXT:-.pkg.tar.xz}"
-	BUILDDIR="${PKGDIR:-/lfs/arch}"
-	GITDIR="${GITDIR:-/github/ChiliOS}"
+	BUILDDIR="${PKGCORE:-/lfs/arch}"
 }
 
 function fmt(){
@@ -3056,7 +3053,7 @@ function sh_alienpkg_exec()
 				continue
 			fi
 			if [[ -e ${destpkgCORE} ]]; then
-				log_failure_msg2 "$(fmt) ${orange}${FilteredPackage} ${reset}Package already exist in ${green}${GITDIR}/packages/core/${reset} Use the -f option to force rebuild."
+				log_failure_msg2 "$(fmt) ${orange}${FilteredPackage} ${reset}Package already exist in ${green}${PKGCORE}/${reset} Use the -f option to force rebuild."
 				(( ntotalpkg-- ))
 				continue
 			fi

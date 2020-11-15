@@ -1,8 +1,42 @@
 #!/usr/bin/bash
 
+#########################################################################
+ # fetchpack - A flexible cache cleaning utility in ChiliOS
+ #
+ # Created: 2020/10/05
+ # Altered: 2020/11/15
+ #
+ # Copyright (c) 2019 - 2020, Vilmar Catafesta <vcatafesta@gmail.com>
+ # All rights reserved.
+ #
+ # Redistribution and use in source and binary forms, with or without
+ # modification, are permitted provided that the following conditions
+ # are met:
+ # 1. Redistributions of source code must retain the above copyright
+ #    notice, this list of conditions and the following disclaimer.
+ # 2. Redistributions in binary form must reproduce the above copyright
+ #    notice, this list of conditions and the following disclaimer in the
+ #    documentation and/or other materials provided with the distribution.
+ # 3. The name of the copyright holders or contributors may not be used to
+ #    endorse or promote products derived from this software without
+ #    specific prior written permission.
+ #
+ # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ # ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ # PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
+ # HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ # SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ # LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ # DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#########################################################################
+
 export LC_ALL="pt_BR.utf8"
 declare -r myname='fetchpack'
-declare -r myver='1.0.1-20201113'
+declare -r myver='1.0.5-20201115'
 declare    delim=$'\n' keep=3 movedir= scanarch=
 declare    USE_COLOR='y'
 declare -a cachedirs=()
@@ -833,6 +867,20 @@ function main()
 	local candidates=()
 	local cachedir
 
+	if (( QUIET )); then
+		verbose=0
+	else
+		if (( verbose )); then
+			if (( dryrun )); then
+		   	log_wait_msg "${white}running mode => ${red}DRY-RUN"
+			elif (( delete )); then
+		   	log_wait_msg "${white}running mode => ${red}DELETE"
+			elif (( move )); then
+		   	log_wait_msg "${white}running mode => ${red}MOVE"
+			fi
+		fi
+	fi
+
 	for cachedir in "${cachedirs[@]}"
 	do
 		[[ -d $cachedir ]]            || die "Error: cachedir '$cachedir' does not exist or is not a directory"
@@ -848,7 +896,7 @@ function main()
 			#AllNewPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort -Vr | sed -r 's/([^0-9])-([^0-9])/\1§\2/g' | sort -t- -k1,1 -u | sed 's/§/-/g')
   			#AllOldPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort -Vr | awk -F '[0-9]+(.[0-9]+)+' 'lista[$1]++')
 			#using awk
-  			AllOldPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort -Vr | awk -F '[0-9]+([.][0-9]+)+' 'lista[$1]++') 		#OK
+  			AllOldPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort -V  | awk -F '[0-9]+([.][0-9]+)+' 'lista[$1]++') 		#OK
   			#AllNewPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort -V | awk -F '[0-9]+(.[0-9]+)+' '!lista[$1]++')
 			#using sort
 			#AllOldPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort -V | rev | tr - '\t' | uniq -f3 -df3 | tr '\t' - | rev)
@@ -858,7 +906,7 @@ function main()
 		   #AllNewPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort -Vr | sed -r 's/([^0-9])-([^0-9])/\1§\2/g' | sort -t- -k1,1 -u | sed 's/§/-/g')
 			#AllOldPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort -Vr | awk -F '[0-9]+(.[0-9]+)+' 'lista[$1]++')
 			#using awk
-			AllOldPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort -Vr | awk -F '[0-9]+([.][0-9]+)+' 'lista[$1]++')   #OK
+			AllOldPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort -V | awk -F '[0-9]+([.][0-9]+)+' 'lista[$1]++')   #OK
 			#AllNewPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort -V | awk -F '[0-9]+(.[0-9]+)+' '!lista[$1]++')
 			#using sort
 			#AllOldPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort -V | rev | tr - '\t' | uniq -f3 | tr '\t' - | rev)
@@ -868,20 +916,6 @@ function main()
 		arrayfull=("${AllOldPackages[@]}")
 		#arr=(${AllOldPackages[*]})
 		#nfiles=${#arr[*]}
-
-		if (( QUIET )); then
-			verbose=0
-		else
-			if (( verbose )); then
-				if (( dryrun )); then
-			   	log_wait_msg "${white}running mode => ${red}DRY-RUN"
-				elif (( delete )); then
-			   	log_wait_msg "${white}running mode => ${red}DELETE"
-				elif (( move )); then
-			   	log_wait_msg "${white}running mode => ${red}MOVE"
-				fi
-			fi
-		fi
 
 		while read -r pkgInAll;do
 			sh_splitpkg ${pkgInAll}
@@ -970,8 +1004,7 @@ Usage: ${myname} <operation> [options] [targets...]
     -h, --help            display this help message and exit.
         --nocolor         remove color from output.
     -q, --quiet           quiet output.
-    -v, --verbose         increase verbosity. specify up to 3 times.
-                          and -vv).
+    -v, --verbose         increase verbosity. specify up to 3 times ([-v][-vv][-vvv]).
 EOF
 }
 
@@ -1034,9 +1067,8 @@ fi
 
 # setting default cachedirs
 if [[ -z $cachedirs ]]; then
-	cachedirs=("/var/cache/fetch/archives")
-#	cachedirs+=("${PKGDIR:=/var/cache/fetch/archives}")
-#	cachedirs=("${GITDIR:=/var/cache/fetch/archives}")
+	cachedirs=("${GITDIR:=/var/cache/fetch/archives}")
+	cachedirs+=("/var/cache/fetch/archives")
 fi
 
 # sanity checks
