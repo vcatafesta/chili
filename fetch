@@ -110,31 +110,29 @@ LREMOVED=3
 
 # SUBROUTINES
 
-function cpad()
-{ # centralizar string
+function cpad(){
+	 # centralizar string
 	COLS=$(tput cols)
 	printf "%*s\n" $[$COLS/2] "${1}"
 }
 
-function rpad()
-{ # justificar à direita
+function rpad(){
+	# justificar à direita
 	COLS=$(tput cols)
 	printf "%*s\n" $COLS "${1}"
 }
 
-function lpad()
-{ # justificar à esquerda + $2 espacos
+function lpad(){
+	# justificar à esquerda + $2 espacos
 	COLS=$(tput cols)
 	printf "%ds\n" ${2} "${1}"
 }
 
-function sh_cdroot()
-{
+function sh_cdroot(){
 	cd - >/dev/null 2>&1
 }
 
-function colorize()
-{
+function colorize(){
     if tput setaf 0 &>/dev/null; then
         ALL_OFF="$(tput sgr0)"
         BOLD="$(tput bold)"
@@ -153,50 +151,42 @@ function colorize()
     readonly ALL_OFF BOLD BLUE GREEN RED YELLOW
 }
 
-function plain()
-{
+function plain(){
     local mesg=$1; shift
     printf "${BOLD}    ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-function msg()
-{
+function msg(){
     local mesg=$1; shift
     printf "${GREEN}  =>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-function msg2()
-{
+function msg2(){
     local mesg=$1; shift
     printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-function warning()
-{
+function warning(){
     local mesg=$1; shift
     printf "${YELLOW}==> $(gettext "WARNING:")${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-function error()
-{
+function error(){
     local mesg=$1; shift
     printf "${RED}==> $(gettext "ERROR:")${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-function timespec()
-{
+function timespec(){
    STAMP="$(echo `date +"%b %d %T %:z"` `hostname`) "
    return 0
 }
 
-function log_msg()
-{
+function log_msg(){
     echo -n -e "${BMPREFIX}${@}\n"
     return 0
 }
 
-function log_info_msg()
-{
+function log_info_msg(){
     echo -n -e "${BMPREFIX}${@}"
     logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
     timespec
@@ -204,8 +194,7 @@ function log_info_msg()
     return 0
 }
 
-function log_warning_msg()
-{
+function log_warning_msg(){
     echo -n -e "${BMPREFIX}${@}"
     echo -e "${CURS_ZERO}${WARNING_PREFIX}${SET_COL}${WARNING_SUFFIX}"
 
@@ -428,7 +417,6 @@ export VARLIB_REMO="/var/cache/${APP}/remove"
 declare -l BAIXA=${MENSAGEM}
 declare -u ALTA=${MENSAGEM}
 
-
 function importlib()
 {
 	for lib in "$LIBRARY"/*.sh; do
@@ -465,7 +453,6 @@ function replicate()
         printf "%s" $1
     done
 }
-
 
 function maxcol()
 {
@@ -953,7 +940,9 @@ function sh_update()
 		log_success_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
 	done
 	{ kill $pid; wait $pid 2>/dev/null; echo ;}
+
 	sh_recreatefilepackagesinstalled
+
 	echo
 	local nfilesInReposit=$(cat $VARCACHE_SEARCH/folders_packages | wc -l)
 	local nfilesInstalled=$(cat $VARCACHE_SEARCH/packages-installed | wc -l)
@@ -961,11 +950,9 @@ function sh_update()
 	[[ -e $VARCACHE_SEARCH/packages-removed ]] && nfilesRemoved=$(cat $VARCACHE_SEARCH/packages-removed | wc -l)
 
 	echo -e "${cyan}All list packages updated!${reset}"
-#	maxcol; replicate "=" $?
 	echo -e "${blue}($nfilesInReposit) packages in repository${reset}"
 	echo -e "${green}($nfilesInstalled) packages installed${reset}"
 	echo -e "${red}($nfilesRemoved) packages removed by $0${reset}"
-#	maxcol; replicate "=" $?
 	echo -e ${reset}
 
 #	conf "List out-of-cache packages?"
@@ -3317,8 +3304,7 @@ function sh_upgrade(){
 	sh_cdroot
 }
 
-
-checkDependencies() {
+checkDependencies(){
   local errorFound=0
 
   for command in "${DEPENDENCIES[@]}"; do
@@ -3336,8 +3322,7 @@ checkDependencies() {
   fi
 }
 
-function cleanup()
-{
+function cleanup(){
 	log_msg "Cleaning..."
 	cp -f $TMP_DIR_BACKUP/* $VARCACHE_SEARCH/
 	rm -rf $TMP_ROOT_BACKUP/
@@ -3345,16 +3330,14 @@ function cleanup()
 }
 trap cleanup SIGINT SIGTERM
 
-function sh_backup()
-{
+function sh_backup(){
 	log_wait_msg "Making backup: $VARCACHE_SEARCH/"
 	mkdir -p $TMP_DIR_BACKUP/
 	cp -f $VARCACHE_SEARCH/* $TMP_DIR_BACKUP/
 }
 
 #figlet
-function logo()
-{
+function logo(){
 	_CAT << 'EOF'
   __      _       _
  / _| ___| |_ ___| |__           Copyright (C) 2019-2020 Vilmar Catafesta <vcatafesta@gmail.com>
@@ -3376,6 +3359,7 @@ fi
 if [[ $1 = "" ]] || [[ $1 = "-h" ]] || [[ $1 = "--help" ]] || [[ $1 = "help" ]] || [[ $1 = "-help" ]]; then
 	help
 fi
+
 sh_checkroot
 checkDependencies
 init $*
