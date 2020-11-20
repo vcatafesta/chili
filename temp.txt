@@ -1,2 +1,0 @@
-full 	mazon_beta-1.2.tar.xz_[1.6G]
-minimal 2mazon_minimal-0.2.tar.xz_[176M]
