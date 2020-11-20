@@ -4,7 +4,7 @@
  # fetchpack - A flexible cache cleaning utility in ChiliOS
  #
  # Created: 2020/10/05
- # Altered: 2020/11/17
+ # Altered: 2020/11/19
  #
  # Copyright (c) 2019 - 2020, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -36,7 +36,7 @@
 
 export LC_ALL="pt_BR.utf8"
 declare -r myname='fetchpack'
-declare -r myver='1.0.6-20201117'
+declare -r myver='1.0.7-20201119'
 declare    delim=$'\n' keep=3 movedir= scanarch=
 declare    USE_COLOR='y'
 declare -a cachedirs=()
@@ -539,7 +539,7 @@ function init()
 	totalsaved=$(printf '%s\0' "${candidates[@]}" | xargs -0 stat -c %s | awk '{ sum += $1 } END { print sum }')
 	set -o errexit # Exit immediately if a pipeline returns non-zero.
 
-	(( verbose )) && cmdopts+=(-v)
+	(( verbose )) && cmdopts+=(-v) && cmdopts+=(-f)
 	if (( delete )); then
 		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 rm "${cmdopts[@]}"
 		printf '%s\0' "${canddesc[@]}"   | runcmd xargs -0 rm "${cmdopts[@]}"
