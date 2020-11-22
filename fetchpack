@@ -897,7 +897,7 @@ function main()
 			#AllNewPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort -Vr | sed -r 's/([^0-9])-([^0-9])/\1§\2/g' | sort -t- -k1,1 -u | sed 's/§/-/g')
   			#AllOldPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort -Vr | awk -F '[0-9]+(.[0-9]+)+' 'lista[$1]++')
 			#using awk
-  			AllOldPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort -V  | awk -F '[0-9]+([.][0-9]+)+' 'lista[$1]++') 		#OK
+  			AllOldPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort -Vr  | awk -F '[0-9]+([.][0-9]+)+' 'lista[$1]++') 		#OK
   			#AllNewPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort -V | awk -F '[0-9]+(.[0-9]+)+' '!lista[$1]++')
 			#using sort
 			#AllOldPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort -V | rev | tr - '\t' | uniq -f3 -df3 | tr '\t' - | rev)
@@ -907,7 +907,7 @@ function main()
 		   #AllNewPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort -Vr | sed -r 's/([^0-9])-([^0-9])/\1§\2/g' | sort -t- -k1,1 -u | sed 's/§/-/g')
 			#AllOldPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort -Vr | awk -F '[0-9]+(.[0-9]+)+' 'lista[$1]++')
 			#using awk
-			AllOldPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort -V | awk -F '[0-9]+([.][0-9]+)+' 'lista[$1]++')   #OK
+			AllOldPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort -Vr | awk -F '[0-9]+([.][0-9]+)+' 'lista[$1]++')   #OK
 			#AllNewPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort -V | awk -F '[0-9]+(.[0-9]+)+' '!lista[$1]++')
 			#using sort
 			#AllOldPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort -V | rev | tr - '\t' | uniq -f3 | tr '\t' - | rev)
@@ -929,7 +929,7 @@ function main()
 			fi
 
 			candidates+=("${pkgInAll}")
-			[[ -e "${pkgInAll}.desc" ]] && candesc+=("${pkgInAll}.desc")
+			candesc+=("${pkgInAll}.desc")
 		done < <(printf '%s\n' "$arrayfull")
 		popd >/dev/null 2>&1
 	done
@@ -1098,7 +1098,7 @@ fi
 if [[ -z $cachedirs ]]; then
 	cachedirs=("${GITDIR:=/var/cache/fetch/archives}")
 	cachedirs+=("/var/cache/fetch/archives")
-	cachedirs+=("/mnt/c/github/ChiliOS/packages")
+	#cachedirs+=("/mnt/c/github/ChiliOS/packages")
 fi
 
 # sanity checks

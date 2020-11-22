@@ -929,7 +929,7 @@ function main()
 			fi
 
 			candidates+=("${pkgInAll}")
-			[[ -e "${pkgInAll}.desc" ]] && candesc+=("${pkgInAll}.desc")
+			candesc+=("${pkgInAll}.desc")
 		done < <(printf '%s\n' "$arrayfull")
 		popd >/dev/null 2>&1
 	done
