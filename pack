@@ -970,11 +970,11 @@ function main()
 
 	(( verbose )) && cmdopts+=(-v)
 	if (( delete )); then
-		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 rm "${cmdopts[@]}"
-		printf '%s\0' "${candesc[@]}"    | runcmd xargs -0 rm "${cmdopts[@]}"
+		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 rm -f "${cmdopts[@]}"
+		printf '%s\0' "${candesc[@]}"    | runcmd xargs -0 rm -f "${cmdopts[@]}"
 	elif (( move )); then
-		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
-		printf '%s\0' "${candesc[@]}"    | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
+		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 mv -f "${cmdopts[@]}" -t "$movedir"
+		printf '%s\0' "${candesc[@]}"    | runcmd xargs -0 mv -f "${cmdopts[@]}" -t "$movedir"
 	fi
 
 	if (( !QUIET )); then
