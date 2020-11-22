@@ -964,8 +964,8 @@ function main()
 	fi
 
 	pkgcount=${#candidates[*]}
-	totalsaved=$(printf '%s\0' "${candidates[@]}" | xargs -0 stat -c %s | awk '{ sum += $1 } END { print sum }')
-	totalsaved+=$(printf '%s\0' "${candesc[@]}"   | xargs -0 stat -c %s | awk '{ sum += $1 } END { print sum }')
+	totalsaved=$(printf '%s\0' "${candidates[@]}" | xargs -0 stat -c %s >/dev/null 2>&1 | awk '{ sum += $1 } END { print sum }')
+	totalsaved+=$(printf '%s\0' "${candesc[@]}"   | xargs -0 stat -c %s >/dev/null 2>&1 | awk '{ sum += $1 } END { print sum }')
 	set -o errexit # Exit immediately if a pipeline returns non-zero.
 
 	(( verbose )) && cmdopts+=(-v)
