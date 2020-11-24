@@ -3,7 +3,7 @@
  # fetch - search, install, create, remove, upgrade packages in ChiliOS
  #
  # Created: 2019/04/05
- # Altered: 2020/11/20
+ # Altered: 2020/11/23
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -33,7 +33,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.03.60.20201120"
+_VERSION_="2.03.61.20201123"
 # awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
 
 #fatorial
@@ -777,7 +777,7 @@ function init(){
 			-Sc|--clean|clean)  							sh_clean $2;exit;;
 			-w|-W|--show|show) 							shift;sh_show "${param}";exit;;
 			-Su|--upgrade|upgrade)						sh_upgrade ${param};exit;;
-			-v|--version|version) 						exit;;
+			-v|--version|version) 						logo;exit;;
 			*) 												help;exit;;
 		esac
 		shift
@@ -3354,8 +3354,6 @@ setvarcolors
 
 if [[ $1 = "-a" ]] || [[ $1 = "--alienpkg" ]] || [[ $1 = "alienpkg" ]]; then
 	sh_alienpkg_logo
-else
-	logo
 fi
 
 if [[ $1 = "" ]] || [[ $1 = "-h" ]] || [[ $1 = "--help" ]] || [[ $1 = "help" ]] || [[ $1 = "-help" ]]; then
