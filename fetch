@@ -33,321 +33,15 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-_VERSION_="2.03.61.20201123"
-# awk -F: '{print $1}' /var/cache/fetch/search/packages-split | grep ^python$
-
-#fatorial
-#seq -s* 6 | bc
-#cat <(echo xxx; sleep 3; echo yyy; sleep 3)
-#ls | cut -d. -sf2-  | sort | uniq -c
-#source=($pkgname-${pkgver//_/-}.tar.gz)
+readonly _VERSION_="2.03.61.20201123"
 readonly DEPENDENCIES=(which tar zstd curl sed grep cat awk tput dialog)
-IFS=$' \t\n'
-SAVEIFS=$IFS
+LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 
-#hex code
-barra=$'\x5c'
-check=$'\0xfb'
-reg=$'\0x2a'
-SYSCONFDIR='/etc/fetch'
-NORMAL="\\033[0;39m"         # Standard console grey
-SUCCESS="\\033[1;32m"        # Success is green
-WARNING="\\033[1;33m"        # Warnings are yellow
-FAILURE="\\033[1;31m"        # Failures are red
-INFO="\\033[1;36m"           # Information is light cyan
-BRACKET="\\033[1;34m"        # Brackets are blue
-BMPREFIX="     "
-SUCCESS_PREFIX="${SUCCESS}  *  ${NORMAL}"
-FAILURE_PREFIX="${FAILURE}*****${NORMAL}"
-WARNING_PREFIX="${WARNING}  W  ${NORMAL}"
-SKIP_PREFIX="${INFO}  S  ${NORMAL}"
-SUCCESS_SUFFIX="${BRACKET}[${SUCCESS}  OK  ${BRACKET}]${NORMAL}"
-FAILURE_SUFFIX="${BRACKET}[${FAILURE} FAIL ${BRACKET}]${NORMAL}"
-WARNING_SUFFIX="${BRACKET}[${WARNING} WARN ${BRACKET}]${NORMAL}"
-SKIP_SUFFIX="${BRACKET}[${INFO} SKIP ${BRACKET}]${NORMAL}"
-WAIT_PREFIX="${WARNING}  R  ${NORMAL}"
-WAIT_SUFFIX="${BRACKET}[${WARNING} WAIT ${BRACKET}]${NORMAL}"
-FAILURE_PREFIX="${FAILURE}  X  ${NORMAL}"
-BOOTLOG=/tmp/fetchlog-$USER
-KILLDELAY=3
-SCRIPT_STAT="0"
-LKEEP=$false
+# Import lib
+source "$LIBRARY"/core.sh
 
-if [ -z "${COLUMNS}" ]; then
-   COLUMNS=$(stty size)
-   COLUMNS=${COLUMNS##* }
-fi
-if [ "${COLUMNS}" = "0" ]; then
-   COLUMNS=80
-fi
-
-COL=$((${COLUMNS} - 8))
-WCOL=$((${COL} - 2))
-SET_COL="\\033[${COL}G"      # at the $COL char
-SET_WCOL="\\033[${WCOL}G"    # at the $WCOL char
-CURS_UP="\\033[1A\\033[0G"   # Up one line, at the 0'th char
-CURS_ZERO="\\033[0G"
-
-OK=1
-NOK=0
-true=1
-TRUE=1
-false=0
-FALSE=0
-LINSTALLED=2
-LREMOVED=3
-
-# flag's para split package
-: ${aPKGSPLIT=()}
-: ${aPKGLIST=}
-: ${PKG_FOLDER_DIR=0}
-: ${PKG_FULLNAME=1}
-: ${PKG_ARCH=2}
-: ${PKG_BASE=3}
-: ${PKG_BASE_VERSION=4}
-: ${PKG_VERSION=5}
-: ${PKG_BUILD=6}
-
-# SUBROUTINES
-
-function cpad(){
-	 # centralizar string
-	COLS=$(tput cols)
-	printf "%*s\n" $[$COLS/2] "${1}"
-}
-
-function rpad(){
-	# justificar à direita
-	COLS=$(tput cols)
-	printf "%*s\n" $COLS "${1}"
-}
-
-function lpad(){
-	# justificar à esquerda + $2 espacos
-	COLS=$(tput cols)
-	printf "%ds\n" ${2} "${1}"
-}
-
-function sh_cdroot(){
-	cd - >/dev/null 2>&1
-}
-
-function colorize(){
-    if tput setaf 0 &>/dev/null; then
-        ALL_OFF="$(tput sgr0)"
-        BOLD="$(tput bold)"
-        BLUE="${BOLD}$(tput setaf 4)"
-        GREEN="${BOLD}$(tput setaf 2)"
-        RED="${BOLD}$(tput setaf 1)"
-        YELLOW="${BOLD}$(tput setaf 3)"
-    else
-        ALL_OFF="\e[0m"
-        BOLD="\e[1m"
-        BLUE="${BOLD}\e[34m"
-        GREEN="${BOLD}\e[32m"
-        RED="${BOLD}\e[31m"
-        YELLOW="${BOLD}\e[33m"
-    fi
-    readonly ALL_OFF BOLD BLUE GREEN RED YELLOW
-}
-
-function plain(){
-    local mesg=$1; shift
-    printf "${BOLD}    ${mesg}${ALL_OFF}\n" "$@" >&2
-}
-
-function msg(){
-    local mesg=$1; shift
-    printf "${GREEN}  =>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
-}
-
-function msg2(){
-    local mesg=$1; shift
-    printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
-}
-
-function warning(){
-    local mesg=$1; shift
-    printf "${YELLOW}==> $(gettext "WARNING:")${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
-}
-
-function error(){
-    local mesg=$1; shift
-    printf "${RED}==> $(gettext "ERROR:")${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
-}
-
-function timespec(){
-   STAMP="$(echo `date +"%b %d %T %:z"` `hostname`) "
-   return 0
-}
-
-function log_msg(){
-    echo -n -e "${BMPREFIX}${@}\n"
-    return 0
-}
-
-function log_info_msg(){
-    echo -n -e "${BMPREFIX}${@}"
-    logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
-    timespec
-    echo -n -e "${STAMP} ${logmessage}" >> ${BOOTLOG}
-    return 0
-}
-
-function log_warning_msg(){
-    echo -n -e "${BMPREFIX}${@}"
-    echo -e "${CURS_ZERO}${WARNING_PREFIX}${SET_COL}${WARNING_SUFFIX}"
-
-    # Strip non-printable characters from log file
-    logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
-    timespec
-    echo -e "${STAMP} ${logmessage} WARN" >> ${BOOTLOG}
-    return 0
-}
-
-
-function log_failure_msg()
-{
-    echo -n -e "${BMPREFIX}${@}"
-    echo -e "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}"
-    echo "FAIL" >> ${BOOTLOG}
-    return 0
-}
-
-
-function log_failure_msg2()
-{
-    echo -n -e "${BMPREFIX}${@}"
-    echo -e "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}"
-    echo "FAIL" >> ${BOOTLOG}
-    return 0
-}
-
-
-function log_success_msg2()
-{
-    echo -n -e "${BMPREFIX}${@}"
-    echo -e "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${SUCCESS_SUFFIX}"
-    echo " OK" >> ${BOOTLOG}
-    return 0
-}
-
-
-function log_wait_msg()
-{
-    echo -n -e "${BMPREFIX}${@}"
-    echo -e "${CURS_ZERO}${WAIT_PREFIX}${SET_COL}${WAIT_SUFFIX}"
-    echo " OK" >> ${BOOTLOG}
-    return 0
-}
-
-
-function evaluate_retval()
-{
-   local error_value="${?}"
-
-	if [ ${error_value} = 0 ]; then
-		log_success_msg2
-	else
-		log_failure_msg2
-	fi
-	return ${error_value}
-}
-
-
-function sh_checkparametros()
-{
-    LAUTO=$false
-    LFORCE=$false
-    LLIST=$true
-    local param=$@
-    local s
-
-    for s in ${param[@]}
-    do
-        [[ $(toupper "${s}") = "-Y" ]] && LAUTO=$true
-        [[ $(toupper "${s}") = "-F" ]] && LFORCE=$true
-        [[ $(toupper "${s}") = "OFF" ]] && LLIST=$false
-    done
-}
-
-function info(){
-#	whiptail							\
-	dialog							\
-		--title     "[debug]$0"	\
-		--backtitle "\n$*n"	   \
-		--yesno     "${1}"		\
-		0 0
-		result=$?
-		if (( $result )); then
-			exit
-		fi
-		return $result
-}
-
-# Módulo para emular o comando cat
-function _CAT()
-{
-    # Tag para sinalizar que precisa parar.
-    local end_of_file='EOF'
-
-    INPUT=( "${@:-"%"}" )
-    for i in "${INPUT[@]}"; do
-        if [[ "$i" != "%" ]]; then
-            exec 3< "$i" || exit 1
-        else
-            exec 3<&0
-        fi
-        while read -ru 3; do
-            # END OF FILE. Para identificar que precisa parar.
-            [[ "$REPLY" = "$end_of_file" ]] && break
-            echo -E "$REPLY"
-        done
-    done
-}
-
-# Módulo para emular o grep
-function _GREP()
-{
-    # Se encontrar a linha ele retorna a expressão encontrada! com status 0
-    # se não é status 1.
-    # Para utilizar este módulo precisa ser passado o argumento seguido do arquivo.
-    # ou variável.
-    local expression="$1"
-    local receive="$2"
-
-    # Testando e buscando expressão.
-    if [[ -z "$expression" ]]; then
-        { echo 'MODULE _GREP ERROR. Not found variable $expression'; exit 1 ;}
-    elif [[ -z "$receive" ]]; then
-        { echo 'MODULE _GREP ERROR. Not found variable $receive'; exit 1 ;}
-    fi
-    while IFS= read line; do
-        [[ "$line" =~ $expression ]] && { echo "$line"; return 0;}
-    done < "$receive"
-	 IFS=$SAVEIFS
-    return 1
-}
-
-# Módulo para emular o comando wc
-# Está funcionando por enquanto somente para
-# linhas.
-function _WC()
-{
-    local check="$@" # Recebendo args
-    local inc='0'    # Var incremento
-
-    for x in $check; do
-        let inc++
-    done
-    echo "$inc"
-    return 0
-}
-
-
-function sh_touchconf()
-{
-	mkdir -p $SYSCONFDIR &> /dev/null
+function sh_touchconf(){
+	[[ -d "${SYSCONFDIR}" ]] || mkdir -p $SYSCONFDIR &> /dev/null
 	cat > $SYSCONFDIR/fetch.conf << '_EOF_'
 ######################################################################
 # Arquivo de configuracao
@@ -418,144 +112,7 @@ export VARLIB_REMO="/var/cache/${APP}/remove"
 declare -l BAIXA=${MENSAGEM}
 declare -u ALTA=${MENSAGEM}
 
-function importlib()
-{
-	for lib in "$LIBRARY"/*.sh; do
-		source "$lib"
-	done
-}
-
-function toupper()
-{
-    declare -u TOUPPER=${@}
-    echo ${TOUPPER}
-}
-
-function tolower()
-{
-    declare -l TOLOWER=${@}
-    echo ${TOLOWER}
-}
-
-function now()
-{
-    printf "%(%m-%d-%Y %H:%M:%S)T\n" $(date +%s)
-}
-
-function strzero()
-{
-    printf "%0*d" $2 $1
-}
-
-function replicate()
-{
-    for c in $(seq 1 $2);
-    do
-        printf "%s" $1
-    done
-}
-
-function maxcol()
-{
-	if [ -z "${COLUMNS}" ]; then
-		COLUMNS=$(stty size)
-		COLUMNS=${COLUMNS##* }
-	fi
-	return $COLUMNS
-}
-
-
-function inkey()
-{
-	read -t "$1" -n1 -r -p "" lastkey
-}
-
-
-# simulando bash com echo
-# Vilmar Catafesta <vcatafesta@gmail.com>
-function _cat()
-{
-	echo "$(<$1)"
-}
-
-
-function setvarcolors()
-{
-	if tput setaf 1 &> /dev/null; then
-		tput sgr0; # reset colors
-		bold=$(tput bold);
-		reset=$(tput sgr0);
-		black=$(tput setaf 0);
-		blue=$(tput setaf 33);
-		cyan=$(tput setaf 37);
-		green=$(tput setaf 64);
-		orange=$(tput setaf 166);
-		purple=$(tput setaf 125);
-		red=$(tput setaf 124);
-		violet=$(tput setaf 61);
-		white=$(tput setaf 15);
-		yellow=$(tput setaf 136);
-		pink="\033[35;1m";
-	else
-		bold='';
-		reset="\e[0m";
-		black="\e[1;30m";
-		blue="\e[1;34m";
-		cyan="\e[1;36m";
-		green="\e[1;32m";
-		orange="\e[1;33m";
-		purple="\e[1;35m";
-		red="\e[1;31m";
-		violet="\e[1;35m";
-		white="\e[1;37m";
-		yellow="\e[1;33m";
-		pink="\033[35;1m";
-	fi
-}
-
-function unsetvarcolors()
-{
-	bold=
-	reset=
-	black=
-	blue=
-	cyan=
-	green=
-	orange=
-	purple=
-	red=
-	violet=
-	white=
-	yellow=
-	pink=
-}
-
-
-function sh_msgdoevangelho()
-{
-    local total
-    local id
-    local msg
-
-    frases=(
-        "Seja fiel até a morte, e eu te darei a coroa da vida! Ap 2:10"
-        "O que adianta o homem ganhar o mundo inteiro e perder sua alma?"
-        "Deus está com você!"
-        "Deus não falha!"
-        "A recompensa é boa!"
-        "A recompensa é eterna!"
-        "As dificuldades e os sofrimentos vão passar"
-        "Não desista, Deus tem grandes planos para você"
-    )
-    total=${#frases[@]}
-    id=$(( $RANDOM % $total ))
-    msg="${frases[$id]}"
-    echo -e "${blue}${msg}${reset}\n"
-}
-
-
-function sh_list()
-{
+function sh_list(){
 	local param=$@
 	local s
 	LLIST=$true
@@ -588,7 +145,6 @@ function sh_list()
 	fi
 	param="$@"
 
-
 	if (( $LLIST )); then
 		log_wait_msg "${blue}Listing..."
 		pkgCheckNumber=0
@@ -604,15 +160,13 @@ function sh_list()
 			log_failure_msg2 "${red}$param NOT FOUND ${reset} ${orange}$i${reset}"
 			log_failure_msg2 "($pkgCheckNumber) package(s) found."
 			echo
-			echo -e "${reset}Use: # $0 update - to update with the repository${reset}"
+			printf "${reset}Use: # $0 update - to update with the repository${reset}\n"
 		fi
 	fi
 	sh_cdroot
 }
 
-
-function sh_checknet()
-{
+function sh_checknet(){
 	# have internet?
 	log_info_msg "${cyan}Testing internet"
 	#ping -c3 -q $(echo $SITE | sed 's/http:\/\///g') >/dev/null 2>&1 || { evaluate_retval; log_failure_msg2 "No route to server ($SITE) - ABORTED."; return 1 ;}
@@ -621,10 +175,9 @@ function sh_checknet()
 	return $?
 }
 
-
-function sh_selfupdate()
-{
+function sh_selfupdate(){
 	local param=$@
+
 	sh_checkparametros ${param}
 	if !(( $LAUTO )) || !(( $LFORCE)); then
 		echo
@@ -669,38 +222,7 @@ function sh_selfupdate()
 	sh_cdroot
 }
 
-
-function spinner()
-{
-	spin=('\' '|' '/' '-' '+')
-
-	while :; do
-		for i in "${spin[@]}"; do
-			echo -ne "${cyan}\r$i${reset}"
-			#sleep 0.1
-		done
-	done
-}
-
-
-function sh_checkroot()
-{
-	if [ "$(id -u)" != "0" ]; then
-		log_failure_msg2 "ERROR: This script must be run with root privileges."
-		exit
-	fi
-}
-
-
-function sh_version()
-{
-	echo -e "$0 $_VERSION_"
-	echo
-}
-
-
-function help()
-{
+function help(){
 	echo -e "${cyan}Most used commands:"
 	echo -e "${pink}  -h,  --help,           help           ${reset}- display this help and exit"
 	echo -e "${pink}  -v,  --version,        version        ${reset}- output version information and exit"
@@ -784,33 +306,7 @@ function init(){
 	done
 }
 
-
-function conf()
-{
-    read -p "$1 [Y/n]"
-    [[ ${REPLY^} == "" ]] && return $true
-    [[ ${REPLY^} == N ]] && return $false || return $true
-}
-
-
-function confok()
-{
-    read -p "$1 [Y/n]"
-    [[ ${REPLY^} == "" ]] && return $true
-    [[ ${REPLY^} == N ]] && return $false || return $true
-}
-
-
-function confno()
-{
-    read -p "$1 [N/y]"
-    [[ ${REPLY^} == "" ]] && return $false
-    [[ ${REPLY^} == N  ]] && return $false || return $true
-}
-
-
-function sh_clean()
-{
+function sh_clean(){
 	local param=$@
 	local lRetval=$false
 	local nfiles=0
@@ -839,9 +335,7 @@ function sh_clean()
 	return $lRetval
 }
 
-
-function sh_checkdir()
-{
+function sh_checkdir(){
 	log_wait_msg "Checking job directories"
 	if [ $# -lt 1 ]; then
 		log_info_msg "$VARCACHE_ARCHIVES" ; [[ -d $VARCACHE_ARCHIVES  ]] && evaluate_retval || { mkdir -p $VARCACHE_ARCHIVES  >/dev/null 2>&1; evaluate_retval; }
@@ -863,9 +357,7 @@ function sh_checkdir()
 	return $?
 }
 
-
-function sh_update()
-{
+function sh_update(){
 	[[ $(toupper "${1}") = "SELF" ]] && { shift; sh_selfupdate "$@"; return $?;}
 
 	#internet?
@@ -965,7 +457,6 @@ function sh_update()
 	exit
 }
 
-
 function sh_FilesInCache()
 {
 	local nfilesincache=0
@@ -996,9 +487,7 @@ function sh_FilesInCache()
 	return $nfilesincache
 }
 
-
-function sh_pkgoutcache()
-{
+function sh_pkgoutcache(){
 	log_wait_msg "Ok, let's do it..."
 	log_info_msg "Wait, doing some calculations..."
 
@@ -1040,9 +529,7 @@ function sh_pkgoutcache()
 	return 0
 }
 
-
-function sh_show()
-{
+function sh_show(){
 	local param=$@
 	local LFORCE=$false
 	local pkgCheckNumber=0
@@ -1103,7 +590,6 @@ function sh_show()
 	sh_cdroot
 }
 
-
 function _PRE_REMOVE()
 {
 	(
@@ -1144,9 +630,7 @@ function _PRE_REMOVE()
 	_SUBSHELL_STATUS
 }
 
-
-function sh_removepkg()
-{
+function sh_removepkg(){
 	shift
 	while [[ -n "$1" ]]; do
 		_PRE_REMOVE "$1" || return 1
@@ -1162,9 +646,7 @@ function sh_removepkg()
 	return 0
 }
 
-
-function sh_doremove()
-{
+function sh_doremove(){
 	local param=$@
 
 	log_wait_msg "Wait, Removing package ${orange}${i}"
@@ -1181,9 +663,7 @@ function sh_doremove()
 	return $error_value
 }
 
-
-function sh_remove()
-{
+function sh_remove(){
 	LAUTO=$false
 	local param=$@
 
@@ -1217,9 +697,7 @@ function sh_remove()
 	return 0
 }
 
-
-function sh_download()
-{
+function sh_download(){
 	[[ $(toupper "${1}") = "ALL" ]] && LALL=$true   || LALL=$false
 	[[ $(toupper "${2}") = "-F"  ]] && LFORCE=$true || LFORCE=$false
 
@@ -1267,33 +745,7 @@ function sh_download()
 	sh_cdroot
 }
 
-
-function DOT()
-{
-	printf "${blue}:: ${reset}"
-	return
-}
-
-function sh_adel()
-{
-	#removendo duplicados e ordenando
-	local arr=${1}
-	local item
-
-	> /tmp/.array >/dev/null 2>&1
-	for item in ${arr[*]}
-	do
-		echo $item >> /tmp/.array    #imprime o conteudo da matriz
-	done
-	unset arr
-	unset deps
-	deps=$(uniq --ignore-case <<< $(sort /tmp/.array))
-	[[ -e /tmp/.array ]] && rm /tmp/.array >/dev/null 2>&1
-	return $?
-}
-
-function sh_getdeps()
-{
+function sh_getdeps(){
 	local ncontadep=0
 	local ncontapkgdep=0
 	local	arr=()
@@ -1340,7 +792,6 @@ function sh_getdeps()
    return $?
 }
 
-
 function sh_wgetdesc()
 {
    local cOldDir=$PWD
@@ -1362,8 +813,7 @@ function sh_wgetdesc()
 }
 
 
-function sh_wgetfull()
-{
+function sh_wgetfull(){
 	local cfullfilename=$1
 	local cRaw
 	if !(( $GITSITE )); then
@@ -1381,9 +831,7 @@ function sh_wgetfull()
 	return $?
 }
 
-
-function sh_wgetpartial()
-{
+function sh_wgetpartial(){
 	local cfullfilename=$1
 	local cRaw
 	if !(( $GITSITE )); then
@@ -1401,17 +849,14 @@ function sh_wgetpartial()
 	return $?
 }
 
-
-function sh_checksha256sum()
-{
+function sh_checksha256sum(){
 	log_info_msg "Checking sha256sum..."
 	ERROR=$(sha256sum -c ${cpacote}.sha256 2>&1>/dev/null)
 	evaluate_retval
 	return $?
 }
 
-function sh_splitbase()
-{
+function sh_splitbase(){
 	local file=${1}
 	local pkg_folder_dir=""
 	local pkg_fullname
@@ -1437,8 +882,7 @@ function sh_splitbase()
 	return $?
 }
 
-function sh_oldsplitpkg()
-{
+function sh_oldsplitpkg(){
 	local file=${1}
 	local pkg_folder_dir
 	local pkg_fullname
@@ -1476,8 +920,7 @@ function sh_oldsplitpkg()
 	return $?
 }
 
-function sh_splitpkgNEW()
-{
+function sh_splitpkgNEW(){
 	file=${1}
 	#pkg_re='^([a-z-]+)(-)([0-9\\.]+)(-)([0-9])(-)(.*)(.chi.zst)$'
 	#pkg_re='([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)-(([0-9]+(\.[0-9]+)*)(-([0-9]+))?)-([^.]+).*'
@@ -1510,8 +953,7 @@ function sh_splitpkgNEW()
 	return $?
 }
 
-function sh_splitpkg()
-{
+function sh_splitpkg(){
 	local file=${1}
 	local pkg_folder_dir
 	local pkg_fullname
@@ -1580,31 +1022,28 @@ function sh_splitpkg()
 	return $?
 }
 
-
-function sh_installdownload()
-{
-		for i in $pkgforinstall; do
-			sh_splitpkg ${i}
-			local cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
-			local cpacote=${aPKGSPLIT[PKG_FULLNAME]}
-			local cpacotebase=${aPKGSPLIT[PKG_BASE]}
-			test -e $VARCACHE_ARCHIVES/$cpacote || sh_wgetpartial
+function sh_installdownload(){
+	for i in $pkgforinstall; do
+		sh_splitpkg ${i}
+		local cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
+		local cpacote=${aPKGSPLIT[PKG_FULLNAME]}
+		local cpacotebase=${aPKGSPLIT[PKG_BASE]}
+		test -e $VARCACHE_ARCHIVES/$cpacote || sh_wgetpartial
+		local error_value="${?}"
+		if [ ${error_value} -ne 0 ]; then
+			log_failure_msg2 "ERROR: Downloading ${orange}${cfullfilename}"
+			log_wait_msg "Restarting download ${orange}${cfullfilename}"
+			sh_wgetfull
 			local error_value="${?}"
 			if [ ${error_value} -ne 0 ]; then
-				log_failure_msg2 "ERROR: Downloading ${orange}${cfullfilename}"
-				log_wait_msg "Restarting download ${orange}${cfullfilename}"
-				sh_wgetfull
-				local error_value="${?}"
-				if [ ${error_value} -ne 0 ]; then
-					log_failure_msg2 "ERROR: Fatal error downloading ${orange}${cfullfilename}. ${reset}Aborting..."
-					exit 1
-				fi
+				log_failure_msg2 "ERROR: Fatal error downloading ${orange}${cfullfilename}. ${reset}Aborting..."
+				exit 1
 			fi
-		done
+		fi
+	done
 }
 
-function sh_installdoinstallpkg()
-{
+function sh_installdoinstallpkg(){
 		for i in $pkgforinstall; do
 			sh_splitpkg ${i}
 			local cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
@@ -1636,8 +1075,7 @@ function sh_installdoinstallpkg()
 		done
 }
 
-function sh_install()
-{
+function sh_install(){
 	local param=$@
 	#sh_checknet
 
@@ -1787,9 +1225,7 @@ function sh_install()
 	sh_cdroot
 }
 
-
-function sh_search()
-{
+function sh_search(){
 	local param=$@
 	LAUTO=$false
    LFORCE=$false
@@ -1801,8 +1237,7 @@ function sh_search()
 }
 
 
-function sh_listmeta()
-{
+function sh_listmeta(){
 	local LLIST=$true
 	local Cont=0
 
@@ -1839,9 +1274,7 @@ function sh_listmeta()
 	sh_cdroot
 }
 
-
-function sh_meta()
-{
+function sh_meta(){
 	local param=$@
 	sh_checkparametros ${param}
 	sh_listmeta $param
@@ -1952,7 +1385,6 @@ function sh_meta()
 	sh_cdroot
 }
 
-
 function sh_recreatefilepackagesinstalled()
 ###########################################
 {
@@ -1989,9 +1421,7 @@ function sh_recreatefilepackagesinstalled()
 	evaluate_retval
 }
 
-
-function sh_listinstalled()
-{
+function sh_listinstalled(){
 	local param=$@
 	local pkgNumber=0
 	local s
@@ -2060,9 +1490,7 @@ function sh_listinstalled()
 	return $pkgNumber
 }
 
-
-function sh_listforinstall()
-{
+function sh_listforinstall(){
 	local pkgNumber=0
 	local s
 	local param=$@
@@ -2140,9 +1568,7 @@ function sh_listforinstall()
 	return $pkgNumber
 }
 
-
-function sh_installed()
-{
+function sh_installed(){
 	local param=$@
 
 	sh_recreatefilepackagesinstalled
@@ -2183,9 +1609,7 @@ function sh_installed()
 	sh_cdroot
 }
 
-
-function sh_listremoved()
-{
+function sh_listremoved(){
 	sh_checkdir "OFF"
 	log_wait_msg "Reading lists of removed packages..."
 	param=$1
@@ -2231,9 +1655,7 @@ function sh_listremoved()
 	return $pkgNumber
 }
 
-
-function sh_removed()
-{
+function sh_removed(){
 	sh_listremoved $1
 
 	if [[ $pkgremoved != "" ]]; then
@@ -2261,9 +1683,7 @@ function sh_removed()
 	sh_cdroot
 }
 
-
-function _LIST_ARCHIVES_DIRECTORIES()
-{
+function _LIST_ARCHIVES_DIRECTORIES(){
 	local packname="${1}.list"
 	local LIST_CLEAN_DIRECTORIES
 
@@ -2336,15 +1756,11 @@ function _LIST_ARCHIVES_DIRECTORIES()
 	done < "${VARLIB_LIST}/${packname}"
 }
 
-
-function _SUBSHELL_STATUS()
-{
+function _SUBSHELL_STATUS(){
 	[[ "$?" -ne '0' ]] && return 1 || return 0
 }
 
-
-function _MANAGE_SCRIPTS_AND_ARCHIVES()
-{
+function _MANAGE_SCRIPTS_AND_ARCHIVES(){
 	sh_splitpkg "${1}"
 #	local packname="${1/%.${PKG_EXT}/}"
 	local packname=${aPKGSPLIT[PKG_BASE_VERSION]}
@@ -2391,12 +1807,8 @@ function _MANAGE_SCRIPTS_AND_ARCHIVES()
 	return 0
 }
 
-
-function _CREATE_LIST()
-{
+function _CREATE_LIST(){
 	local packname="$1"
-
-#info "name_version_build: $name_version_build"
 
 	if ! tar --list --file "$packname" > "${VARLIB_LIST}/${name_version_build}.list"; then
 		log_failure_msg2 "ERROR! Can not create ${VARLIB_LIST}/${name_version_build}.list"
@@ -2405,9 +1817,7 @@ function _CREATE_LIST()
 	return 0
 }
 
-
-function _INPUT_NULL_PARAMETER()
-{
+function _INPUT_NULL_PARAMETER(){
 	pkg=$1
 
 	local arr
@@ -2433,9 +1843,7 @@ function _NAME_FORMAT_PKG()
 	return 0
 }
 
-
-function _GENERATE_DESC()
-{
+function _GENERATE_DESC(){
 	local i
 	local DESC_PACKNAME="$1"
 	local DESC_VERSION="$2"
@@ -2481,10 +1889,7 @@ EOF
 	return 0
 }
 
-
-function sh_generatepkg()
-{
-
+function sh_generatepkg(){
 	shift
 	local param=$@
 	local inc=0
@@ -2539,9 +1944,7 @@ function sh_generatepkg()
 	return 0
 }
 
-
-function sh_doinstallpkg()
-{
+function sh_doinstallpkg(){
 	(
 	local packname="$1"
 	local name_version_build
@@ -2588,9 +1991,7 @@ function sh_doinstallpkg()
 	_SUBSHELL_STATUS
 }
 
-
-function sh_initinstallpkg()
-{
+function sh_initinstallpkg(){
 	local pkg
 	local param=$@
 	local package
@@ -2656,9 +2057,7 @@ function sh_initinstallpkg()
 	shopt -u nullglob       # disable suppress error message of a command 
 }
 
-
-function sh_installpkg()
-{
+function sh_installpkg(){
 	local _pkg=
 	shift
 	while [[ -n "$1" ]]; do
@@ -2679,15 +2078,7 @@ function sh_installpkg()
 	return 0
 }
 
-
-function print()
-{
-	[[ "$printyeah" = '1' ]] && echo -e "$@"
-}
-
-
-function _REMOVE_NOW()
-{
+function _REMOVE_NOW(){
 	local packname="${1/%.${PKG_EXT}/}"
 	local a='0'
 	local d='0'
@@ -2744,9 +2135,7 @@ function _REMOVE_NOW()
 	return 0
 }
 
-
-function _GPG_SIGN()
-{
+function _GPG_SIGN(){
 	local package="$1"
 	local sig='sig'
 
@@ -2771,9 +2160,7 @@ function _GPG_SIGN()
 	return 0
 }
 
-
-function _VERIFY_ON()
-{
+function _VERIFY_ON(){
 	local package="$1"
 
 	#sh_generatepkg "$1"
@@ -2859,9 +2246,7 @@ function _VERIFY_ON()
 	_SUBSHELL_STATUS
 }
 
-
-function _CREATE_PKG()
-{
+function _CREATE_PKG(){
 	local package="${1/%.${PKG_EXT}/}"
 	local ext_desc='desc'
 
@@ -2881,9 +2266,7 @@ function _CREATE_PKG()
 	evaluate_retval
 }
 
-
-function sh_createpkg()
-{
+function sh_createpkg(){
 	shift
 	local param=$@
 	local s
@@ -2924,38 +2307,26 @@ function sh_createpkg()
 	evaluate_retval
 }
 
-
-function sh_alienpkg_init()
-{
+function sh_alienpkg_init(){
 	log_wait_msg "Loading /usr/libexec/fetch/core.sh"
 	#source /usr/libexec/fetch/core.sh
 	unset BUILDDIR
 	unset size
 }
 
-
-function sh_alienpkg_pkgsize()
-{
+function sh_alienpkg_pkgsize(){
 	size="$(/usr/bin/du -sk --apparent-size)"
    size="$(( ${size%%[^0-9]*} * 1024 ))"
 }
 
-
-function sh_alienpkg_initvars()
-{
+function sh_alienpkg_initvars(){
 	ALIEN_CACHE_DIR="${ALIEN_CACHE_DIR:=/var/cache/pacman/pkg}"
 	PKGS=$@
 #	EXT="${EXT:-.pkg.tar.xz}"
 	BUILDDIR="${PKGCORE:-/lfs/arch}"
 }
 
-function fmt(){
-	printf "${pink}(j#${ncount}:8/f#${ntotalpkg}:${nfullpkg})${reset}"
-	return $?
-}
-
-function sh_alienpkg_exec()
-{
+function sh_alienpkg_exec(){
 	local pkg
 	local param=$*
 	local package
@@ -2967,7 +2338,6 @@ function sh_alienpkg_exec()
 	local ntotalpkg=0
 	local ncount=0
 	local arraypkg=
-
 
 	if [[ $(toupper "${param}") = "--DEFAULT" ]]; then
 		param="all -ctime=0 -keep"
@@ -3098,11 +2468,7 @@ function sh_alienpkg_exec()
 		export 	ALIEN_DESC_VERSION="$pkgver"
 		export        DESC_VERSION="$pkgver"
 		export    ALIEN_DESC_BUILD="${pkgver: -1}"
-		export          DESC_BUILD="${pkgver: -1}"		
-		#export ALIEN_DESC_VERSION=$( echo $pkgver|cut -d '-' -f1)
-		#export       DESC_VERSION=$( echo $pkgver|cut -d '-' -f1)
-		#export   ALIEN_DESC_BUILD=$( echo $pkgver|cut -d '-' -f2)
-		#export         DESC_BUILD=$( echo $pkgver|cut -d '-' -f2)
+		export          DESC_BUILD="${pkgver: -1}"
 		export deps=$(cat $destdir/.PKGINFO | grep ^depend | awk -F'"' '{print $2}')
 
 #	 	log_info_msg "Generating DESC for package at $destdir"
@@ -3145,9 +2511,8 @@ function sh_alienpkg_exec()
 	unset ntotalpkg
 }
 
-function sh_alienpkg_logo()
-{
-    _CAT << 'EOF'
+function sh_alienpkg_logo(){
+	_CAT << 'EOF'
        _ _                  _
   __ _| (_) ___ _ __  _ __ | | ____ _
  / _` | | |/ _ \ '_ \| '_ \| |/ / _` |
@@ -3155,28 +2520,22 @@ function sh_alienpkg_logo()
  \__,_|_|_|\___|_| |_| .__/|_|\_\__, |
                      |_|        |___/
 EOF
-    sh_version
+	sh_version
 }
 
-
-function sh_aliencheck()
-{
+function sh_aliencheck(){
 	allfiles=$(ls -1 *.zst)
 
 	for pkg in $allfiles
 	do
 		firstletter=${pkg::1}
-	#	echo $firstletter
-	#	FilteredPackage=$(echo $pkg | sed 's/\(.*\)-\(.*-\)/\1*\2/' |cut -d* -f1)
 		FilteredPackage=$(echo $pkg | sed 's/\(.*\)-/\1*/'|cut -d* -f1).chi.zst
-
 		destpkg="/github/ChiliOS/packages/${firstletter}/${FilteredPackage}"
 		if [[ -e ${destpkg} ]]; then
 			echo "file exist: ${destpkg}"
 		fi
 	done
 }
-
 
 function sh_alienpkg_main(){
 	sh_alienpkg_init
@@ -3227,22 +2586,15 @@ function sh_upgrade(){
 	local ntotal_pkg_installed=${public_ntotal_pkg_installed}
 	local ntotal_pkg_listed=${public_ntotal_pkg_listed}
 
-# info $pkginstalled
-
 	for i in $pkginstalled; do
 		sh_splitpkg "${i}"
 		cBaseInstalled=${aPKGSPLIT[PKG_BASE]}
 		cBaseVersionInstalled=${aPKGSPLIT[PKG_BASE_VERSION]}
 		cVersionInstalled=${aPKGSPLIT[PKG_VERSION]}
 		cBuildInstalled=${aPKGSPLIT[PKG_BUILD]}
-#		pkgrepo=$(grep ^$cBaseInstalled $VARCACHE_SEARCH/packages)
 		pkgrepo=$(grep ^$cBaseInstalled: $VARCACHE_SEARCH/packages-split | cut -d: -f4)
 		count=0
 		((ntotalconfered++))
-
-		#debug
-
-#info "pkginstalled: ${i}\npkgrepo: $pkgrepo"
 
 		if [[ "${#pkgrepo}" -gt 0 ]]; then # pacote?
 			for cPkg in ${pkgrepo}; do
@@ -3258,8 +2610,6 @@ function sh_upgrade(){
 					Python) continue;;
 					gtk+)   continue;;
 				esac
-
-#info "$cBaseInstalled == $cBase"
 
 				if [[ $cBaseInstalled == $cBase ]]; then
 					((count++))
