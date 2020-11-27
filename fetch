@@ -1,9 +1,8 @@
 #!/bin/bash
-
  # fetch - search, install, create, remove, upgrade packages in ChiliOS
  #
  # Created: 2019/04/05
- # Altered: 2020/11/23
+ # Altered: 2020/11/26
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -31,14 +30,46 @@
  # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #########################################################################
-readonly _VERSION_="2.03.61.20201123"
-readonly DEPENDENCIES=(which tar zstd curl sed grep cat awk tput dialog)
-LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 
-# Import lib
-source "$LIBRARY"/core.sh
+function configure(){
+	readonly _VERSION_="2.03.62.20201126"
+	readonly DEPENDENCIES=(which tar zstd curl sed grep cat awk tput dialog)
+	LIBRARY=${LIBRARY:-'/usr/share/fetch'}
+
+	# Import lib
+	source "$LIBRARY"/core.sh
+
+	fc=$SYSCONFDIR/fetch.conf
+	[[ -e "$fc" ]] || sh_touchconf
+	source /etc/fetch/fetch.conf &> /dev/null
+
+	# default
+	export APP="fetch"
+	BAIXA=${MENSAGEM}
+	ALTA=${MENSAGEM}
+	cmdopts=()
+	PRG="${PKG_EXT:=chi.zst}"
+	SITE="${PKG_SITE:=http://10.0.0.66}"
+	GITSITE="${GITSITE:=0}"
+	RAW="${PKG_RAW:=http://10.0.0.66}"
+	AUTO_YES="${AUTO_YES:=1}"
+	VARCACHE="/var/cache/${APP}"
+	VARCACHE_ARCHIVES="/var/cache/${APP}/archives"
+	VARCACHE_REMOVED="/var/cache/${APP}/removed"
+	VARCACHE_INSTALLED="/var/cache/${APP}/installed"
+	VARCACHE_SEARCH="/var/cache/${APP}/search"
+	LIBRARY=${LIBRARY:-'/usr/share/${APP}'}
+	USE_COLOR='y'
+	TMP_DIR_BACKUP="/tmp/${APP}/${VARCACHE_SEARCH}"
+	TMP_ROOT_BACKUP="/tmp/${APP}"
+	export descme='info/desc'
+	export PKG_EXT="${PKG_EXT:='chi.zst'}"
+	export LFS_VARCACHE="${LFS_VARCACHE:='fetch'}"
+	export VARLIB_LIST="/var/cache/${APP}/list"
+	export VARLIB_DESC="/var/cache/${APP}/desc"
+	export VARLIB_REMO="/var/cache/${APP}/remove"
+}
 
 function sh_touchconf(){
 	[[ -d "${SYSCONFDIR}" ]] || mkdir -p $SYSCONFDIR &> /dev/null
@@ -82,42 +113,15 @@ GITSITE='1'
 _EOF_
 }
 
-fc=$SYSCONFDIR/fetch.conf
-test -e "$fc" || sh_touchconf
-source /etc/fetch/fetch.conf &> /dev/null
-
-# default
-export APP="fetch"
-PRG="${PKG_EXT:=chi.zst}"
-SITE="${PKG_SITE:=http://10.0.0.66}"
-GITSITE="${GITSITE:=0}"
-RAW="${PKG_RAW:=http://10.0.0.66}"
-AUTO_YES="${AUTO_YES:=1}"
-VARCACHE="/var/cache/${APP}"
-VARCACHE_ARCHIVES="/var/cache/${APP}/archives"
-VARCACHE_REMOVED="/var/cache/${APP}/removed"
-VARCACHE_INSTALLED="/var/cache/${APP}/installed"
-VARCACHE_SEARCH="/var/cache/${APP}/search"
-LIBRARY=${LIBRARY:-'/usr/share/${APP}'}
-TMP_DIR_BACKUP="/tmp/${APP}/${VARCACHE_SEARCH}"
-TMP_ROOT_BACKUP="/tmp/${APP}"
-#
-export descme='info/desc'
-export PKG_EXT="${PKG_EXT:='chi.zst'}"
-export LFS_VARCACHE="${LFS_VARCACHE:='fetch'}"
-export VARLIB_LIST="/var/cache/${APP}/list"
-export VARLIB_DESC="/var/cache/${APP}/desc"
-export VARLIB_REMO="/var/cache/${APP}/remove"
-
-declare -l BAIXA=${MENSAGEM}
-declare -u ALTA=${MENSAGEM}
-
 function sh_list(){
 	local param=$@
 	local s
-	LLIST=$true
-	LFORCE=$false
+#	LLIST=$true
+#	LFORCE=$false
 	pkg=
+
+info $param
+info "$param\n$LAUTO\n$LFORCE"
 
 	sh_checkdir "OFF"
 
@@ -127,7 +131,7 @@ function sh_list(){
 
 	if [[ "${param}" == "" ]] || [[ $(toupper "${param}") = "ALL" ]] || [[ $(toupper "${param}") = "ALL OFF" ]]; then
 		LALL=$true
-		pkg=$(_CAT $VARCACHE_SEARCH/folders_packages)
+		pkg=$(cat $VARCACHE_SEARCH/folders_packages)
 	else
 		for s in ${param[@]}; do
 			if [[ $(toupper "${s}") = "-Y" ]]; then
@@ -220,90 +224,6 @@ function sh_selfupdate(){
 	fi
 	return 1
 	sh_cdroot
-}
-
-function help(){
-	echo -e "${cyan}Most used commands:"
-	echo -e "${pink}  -h,  --help,           help           ${reset}- display this help and exit"
-	echo -e "${pink}  -v,  --version,        version        ${reset}- output version information and exit"
-	echo -e "${pink}  -Sa, --alienpkg,       alienpkg       ${reset}- import package from ARCH"
-	echo -e "${pink}  -Sl, --local,          local          ${reset}- install local package"
-	echo -e "${pink}  -C   --create,         create         ${reset}- build package"
-	echo -e "${pink}  -Sg, --generate,       generate       ${reset}- generate info package from source"
-	echo -e "${pink}  -Sy, --update,         update         ${reset}- update list packages in repository online. Need Internet"
-	echo -e "${pink}  -S,  --install,        install        ${reset}- install packages"
-	echo -e "${pink}  -m,  --meta,           meta           ${reset}- install meta packages"
-	echo -e "${pink}  -R,  --remove,         remove         ${reset}- remove packages"
-	echo -e "${pink}  -L,  --list,           list           ${reset}- list avaiable packages based on package names"
-	echo -e "${pink}  -La, --list-avaiable,  list-avaiable  ${reset}- list avaiable packages based on package names"
-	echo -e "${pink}  -Lc, --list-cache,     list-cache     ${reset}- list downloaded packages in cache"
-	echo -e "${pink}  -Li, --list-installed, list-installed ${reset}- list installed packages"
-	echo -e "${pink}  -Lr, --list-removed,   list-removed   ${reset}- list packages removed by $0"
-	echo -e "${pink}  -Pi, --in-cache,       in-cache       ${reset}- list packages in-cache"
-	echo -e "${pink}  -Po, --out-cache,      out-cache      ${reset}- list packages out-cache"
-	echo -e "${pink}  -w,  --show,           show           ${reset}- show package details"
-	echo -e "${pink}  -Sc, --clean,          clean          ${reset}- erase downloaded packages files"
-	echo -e "${pink}  -Ss, --search,         search         ${reset}- search for packages"
-	echo -e "${pink}  -Su, --upgrade,        upgrade        ${reset}- upgrade packages"
-	echo -e "${pink}  -Sw, --download,       download       ${reset}- only download the binary package into cache directory"
-	echo
-	echo -e "${cyan}ex:"
-	echo -e "${yellow}  fetch update self - Update self fetch via internet"
-	echo -e "  fetch create [packname-version-build]"
-	echo -e "  fetch -Sy || fetch update"
-	echo -e "  fetch -S <package> [...] [-y] [-f] [--nodeps] || fetch install <package> [...] [-y] [-f] [--nodeps]"
-	echo -e "  fetch remove <package> [...] [-y] [-f]"
-	echo -e "  fetch <package> [...] [-y] [-f]"
-	echo -e "  fetch search <package> [...] [-y] [-f]"
-	echo -e "  fetch list [<package>] [<...>]"
-	echo -e "  fetch download [<package>] [...] [ALL] [-y] [-f]"
-	echo -e "  fetch --meta [xorg] [-y] [-f]"
-	echo -e "  fetch -a <package> [...] [-y] [-f] [-ctime=<n>] [-keep]"
-	echo -e "  fetch -a -ctime=<n> [-keep]"
-	exit
-}
-
-function init(){
-	local param=$@
-	local s
-
-	# Parse Command Line Options.
-	for s in ${param[@]}; do
-		[[ $(toupper "${s}") = "-Y" ]]  && { LAUTO=$true;  continue;}
-		[[ $(toupper "${s}") = "-F" ]]  && { LFORCE=$true; continue;}
-		[[ $(toupper "${s}") = "OFF" ]] && { LLIST=$false; continue;}
-	done
-#	[[ $LAUTO  ]] && param+=" -Y"
-#	[[ $LFORCE ]] && param+=" -F"
-
-	while true
-	do
-		case "${1}" in
-			-Sl|--local|local)  							shift;sh_initinstallpkg "$@";exit;;
-			-Sa|-a|--alienpkg|alienpkg)	  		   shift;sh_alienpkg_main "$@";exit;;
-			-Sy|--update|update)							shift;sh_update "${param}";exit;;
-			-Sg|-g|--generate|generate)				sh_generatepkg "$@";exit;;
-			-C|-c|--create|create)					   sh_createpkg "${param}";exit;;
-			-M|-m|--meta|meta)	                  shift;sh_meta "${param}";exit;;
-			-Ss|-ss|-SS|-sS|--search|search)	     	shift;sh_search "$@";exit;;
-			-S|-s|-Si|-i|--install|install)			shift;sh_install "$@";exit;;
-			-R|-r|--remove|remove) 						shift;sh_remove "$@";exit;;
-			-Sw|--download|download) 					shift;sh_download "${param}";exit;;
-			-L|-l|--list|list)    	 					shift;sh_list "$@";exit;;
-			-La|--list-avaiable|list-avaiable) 		shift;sh_list "$@";exit;;
-			-Lc|--list-cache|list-cache) 	        	shift;sh_FilesInCache "${param}";exit;;
-			-Lr|--list-removed|list-removed)			sh_removed $2 $3;exit;;
-			-Li|--list-installed|list-installed)	shift;sh_listinstalled "${@}";exit;;
-			-Pi|--in-cache|in-cache)	            shift;sh_FilesInCache "${param}";exit;;
-			-Po|--out-cache|out-cache)	            shift;sh_pkgoutcache "${param}";exit;;
-			-Sc|--clean|clean)  							sh_clean $2;exit;;
-			-w|-W|--show|show) 							shift;sh_show "${param}";exit;;
-			-Su|--upgrade|upgrade)						sh_upgrade ${param};exit;;
-			-v|--version|version) 						logo;exit;;
-			*) 												help;exit;;
-		esac
-		shift
-	done
 }
 
 function sh_clean(){
@@ -2471,7 +2391,6 @@ function sh_alienpkg_exec(){
 		export          DESC_BUILD="${pkgver: -1}"
 		export deps=$(cat $destdir/.PKGINFO | grep ^depend | awk -F'"' '{print $2}')
 
-#	 	log_info_msg "Generating DESC for package at $destdir"
 		pushd $destdir	>/dev/null 2>&1
 
 #		as_root genalien $pkg >/dev/null 2>&1
@@ -2656,7 +2575,7 @@ function sh_upgrade(){
 	sh_cdroot
 }
 
-checkDependencies(){
+function checkDependencies(){
   local errorFound=0
 
   for command in "${DEPENDENCIES[@]}"; do
@@ -2676,8 +2595,8 @@ checkDependencies(){
 
 function cleanup(){
 	log_msg "Cleaning..."
-	cp -f $TMP_DIR_BACKUP/* $VARCACHE_SEARCH/
-	rm -rf $TMP_ROOT_BACKUP/
+	cp -f $TMP_DIR_BACKUP/* $VARCACHE_SEARCH/ &> /dev/null
+	rm -rf $TMP_ROOT_BACKUP/ &> /dev/null
 	exit
 }
 trap cleanup SIGINT SIGTERM
@@ -2700,7 +2619,170 @@ EOF
 	sh_version
 }
 
+function help(){
+	cat <<EOF
+${cyan}Most used commands:
+${red}  -h,  --help,           help           ${reset}- display this help and exit
+${red}  -v,  --version,        version        ${reset}- output version information and exit
+${red}  -Sa, --alienpkg,       alienpkg       ${reset}- import package from ArchLinux
+${red}  -Sl, --local,          local          ${reset}- install local package
+${red}  -C   --create,         create         ${reset}- build package
+${red}  -Sg, --generate,       generate       ${reset}- generate info package from source
+${red}  -Sy, --update,         update         ${reset}- update list packages in repository online. Need Internet
+${red}  -S,  --install,        install        ${reset}- install packages
+${red}  -m,  --meta,           meta           ${reset}- install meta packages
+${red}  -R,  --remove,         remove         ${reset}- remove packages
+${red}  -L,  --list,           list           ${reset}- list avaiable packages based on package names
+${red}  -La, --list-avaiable,  list-avaiable  ${reset}- list avaiable packages based on package names
+${red}  -Lc, --list-cache,     list-cache     ${reset}- list downloaded packages in cache
+${red}  -Li, --list-installed, list-installed ${reset}- list installed packages
+${red}  -Lr, --list-removed,   list-removed   ${reset}- list packages removed by ${0}
+${red}  -Pi, --in-cache,       in-cache       ${reset}- list packages in-cache
+${red}  -Po, --out-cache,      out-cache      ${reset}- list packages out-cache
+${red}  -w,  --show,           show           ${reset}- show package details
+${red}  -Sc, --clean,          clean          ${reset}- erase downloaded packages files
+${red}  -Ss, --search,         search         ${reset}- search for packages
+${red}  -Su, --upgrade,        upgrade        ${reset}- upgrade packages
+${red}  -Sw, --download,       download       ${reset}- only download the binary package into cache directory
+
+${cyan}ex:
+${yellow}  fetch update self - Update self fetch via internet
+  fetch create [packname-version-build]
+  fetch -Sy || fetch update"
+  fetch -S <package> [...] [-y] [-f] [--nodeps] || fetch install <package> [...] [-y] [-f] [--nodeps]
+  fetch remove <package> [...] [-y] [-f]
+  fetch <package> [...] [-y] [-f]
+  fetch search <package> [...] [-y] [-f]
+  fetch list [<package>] [<...>]
+  fetch download [<package>] [...] [ALL] [-y] [-f]
+  fetch --meta [xorg] [-y] [-f]
+  fetch -a <package> [...] [-y] [-f] [-ctime=<n>] [-keep]
+  fetch -a -ctime=<n> [-keep]
+  fetch -a --default
+EOF
+	exit
+}
+
+function init(){
+	local param=$@
+	local s
+
+	# Parse Command Line Options.
+	for s in ${param[@]}; do
+		[[ $(toupper "${s}") = "-Y" ]]  && { LAUTO=$true;  continue;}
+		[[ $(toupper "${s}") = "-F" ]]  && { LFORCE=$true; continue;}
+		[[ $(toupper "${s}") = "OFF" ]] && { LLIST=$false; continue;}
+	done
+#	[[ $LAUTO  ]] && param+=" -Y"
+#	[[ $LFORCE ]] && param+=" -F"
+
+	while true
+	do
+		case "${1}" in
+			-Sl|--local|local)  							shift;sh_initinstallpkg "$@";exit;;
+			-Sa|-a|--alienpkg|alienpkg)	  		   shift;sh_alienpkg_main "$@";exit;;
+			-Sy|--update|update)							shift;sh_update "${param}";exit;;
+			-Sg|-g|--generate|generate)				sh_generatepkg "$@";exit;;
+			-c|-C|--create|create)					   sh_createpkg "${param}";exit;;
+			-m|-M|--meta|meta)	                  shift;sh_meta "${param}";exit;;
+			-Ss|-ss|-SS|-sS|--search|search)	     	shift;sh_search "$@";exit;;
+			-S|-s|-Si|-i|--install|install)			shift;sh_install "$@";exit;;
+			-R|-r|--remove|remove) 						shift;sh_remove "$@";exit;;
+			-Sw|--download|download) 					shift;sh_download "${param}";exit;;
+			-L|-l|--list|list)    	 					shift;sh_list "$@";exit;;
+			-La|--list-avaiable|list-avaiable) 		shift;sh_list "$@";exit;;
+			-Lc|--list-cache|list-cache) 	        	shift;sh_FilesInCache "${param}";exit;;
+			-Lr|--list-removed|list-removed)			sh_removed $2 $3;exit;;
+			-Li|--list-installed|list-installed)	shift;sh_listinstalled "${@}";exit;;
+			-Pi|--in-cache|in-cache)	            shift;sh_FilesInCache "${param}";exit;;
+			-Po|--out-cache|out-cache)	            shift;sh_pkgoutcache "${param}";exit;;
+			-Sc|--clean|clean)  							sh_clean $2;exit;;
+			-w|-W|--show|show) 							shift;sh_show "${param}";exit;;
+			-Su|--upgrade|upgrade)						sh_upgrade ${param};exit;;
+			-v|--version|version) 						logo;exit;;
+			*) 												help;exit;;
+		esac
+		shift
+	done
+}
+
+configure
+sh_checkroot
+checkDependencies
 setvarcolors
+
+function parse(){
+	OPT_SHORT=':a:c:dlfyhi:k:m:qrsuVvzt:'
+	OPT_LONG=('arch:' 'cachedir:' 'list' 'dryrun' 'force' 'auto' 'help' 'ignore:' 'keep:' 'move:'
+	          'nocolor' 'quiet' 'remove' 'uninstalled' 'version' 'verbose' 'null' 'ctime:')
+
+	if ! parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
+		exit 1
+	fi
+	#set -- "${OPTRET[@]}"
+	unset OPT_SHORT OPT_LONG OPTRET
+
+	while true
+	do
+		case $1 in
+			-t|--ctime)
+				ctime="$2"
+				LTIME=$true
+				shift ;;
+			-c|--cachedir)
+				cachedirs+=("$2")
+				shift ;;
+			-d|--dryrun)
+				dryrun=1 ;;
+			-f|--force)
+				LFORCE=$true
+				cmdopts+=(-f)
+				shift
+				;;
+			-y|--auto)
+				LAUTO=$true
+				cmdopts+=(-f)
+				shift
+				;;
+			-h|--help)
+				help
+				exit 0 ;;
+			-m|--move)
+				move=1 movedir=$2
+				shift ;;
+			--nocolor)
+				unsetvarcolors
+				USE_COLOR='n' ;;
+			-q|--quiet)
+				unsetvarcolors
+				QUIET=1 ;;
+			-r|--remove)
+				delete=1 ;;
+			-V|--version)
+				logo
+				exit 0 ;;
+			-v|--verbose)
+				(( ++verbose )) ;;
+			-z|--null)
+				delim='\0' ;;
+			--)
+				shift
+				break 2 ;;
+		esac
+		shift
+	done
+}
+
+# check if messages are to be printed using color
+if [[ -t 2 && $USE_COLOR != "n" ]]; then
+	setvarcolors
+fi
+
+# sanity checks
+#case $(( dryrun+delete+move )) in
+#	0) 	die "no operation specified (use -h for help)" ;;
+#	[^1]) die "only one operation may be used at a time" ;;
+#esac
 
 if [[ $1 = "-a" ]] || [[ $1 = "--alienpkg" ]] || [[ $1 = "alienpkg" ]]; then
 	sh_alienpkg_logo
@@ -2710,8 +2792,6 @@ if [[ $1 = "" ]] || [[ $1 = "-h" ]] || [[ $1 = "--help" ]] || [[ $1 = "help" ]] 
 	help
 fi
 
-sh_checkroot
-checkDependencies
 init $*
 
 # vim:set ts=3 sw=3 et:

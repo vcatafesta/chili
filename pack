@@ -58,10 +58,12 @@ shopt -s nullglob
 shopt -s extglob
 
 # Import libs
-LIBRARY=${LIBRARY:-'/usr/share/makepkg'}
+#LIBRARY=${LIBRARY:-'/usr/share/makepkg'}
+LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 source /etc/fetch/fetch.conf &> /dev/null
-source "$LIBRARY"/util/message.sh
-source "$LIBRARY"/util/parseopts.sh
+source "$LIBRARY"/core.sh
+#source "$LIBRARY"/util/message.sh
+#source "$LIBRARY"/util/parseopts.sh
 
 # log messages
 declare NORMAL="\\033[0;39m"         # Standard console grey

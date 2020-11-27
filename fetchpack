@@ -58,10 +58,12 @@ shopt -s nullglob
 shopt -s extglob
 
 # Import libs
-LIBRARY=${LIBRARY:-'/usr/share/makepkg'}
+#LIBRARY=${LIBRARY:-'/usr/share/makepkg'}
+LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 source /etc/fetch/fetch.conf &> /dev/null
-source "$LIBRARY"/util/message.sh
-source "$LIBRARY"/util/parseopts.sh
+source "$LIBRARY"/core.sh
+#source "$LIBRARY"/util/message.sh
+#source "$LIBRARY"/util/parseopts.sh
 
 # log messages
 declare NORMAL="\\033[0;39m"         # Standard console grey
@@ -964,11 +966,12 @@ function main()
 	fi
 
 	pkgcount=${#candidates[*]}
-	totalsaved=$(printf '%s\0' "${candidates[@]}" | xargs -0 stat -c %s | awk '{ sum += $1 } END { print sum }')
-	totalsaved+=$(printf '%s\0' "${candesc[@]}"   | xargs -0 stat -c %s | awk '{ sum += $1 } END { print sum }')
+	totalsaved=$(printf '%s\0' "${candidates[@]}" | xargs -0 stat -c %s >/dev/null 2>&1 | awk '{ sum += $1 } END { print sum }')
+	totalsaved+=$(printf '%s\0' "${candesc[@]}"   | xargs -0 stat -c %s >/dev/null 2>&1 | awk '{ sum += $1 } END { print sum }')
 	set -o errexit # Exit immediately if a pipeline returns non-zero.
 
 	(( verbose )) && cmdopts+=(-v)
+	(( verbose )) && cmdopts+=(-f)
 	if (( delete )); then
 		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 rm "${cmdopts[@]}"
 		printf '%s\0' "${candesc[@]}"    | runcmd xargs -0 rm "${cmdopts[@]}"
