@@ -113,20 +113,19 @@ GITSITE='1'
 _EOF_
 }
 
-function sh_list(){
+function sh_list()
+{
 	local param=$@
-	local s
-#	LLIST=$true
-#	LFORCE=$false
+	local nfiles
+	local arr
 	pkg=
-
-info $param
-info "$param\n$LAUTO\n$LFORCE"
-
 	sh_checkdir "OFF"
+	LLIST=$true
 
 	if (( $LLIST )); then
-		log_wait_msg "${blue}Reading package lists in the repository..."
+		if (( $verbose )); then
+			log_wait_msg "${blue}Reading package lists in the repository..."
+		fi
 	fi
 
 	if [[ "${param}" == "" ]] || [[ $(toupper "${param}") = "ALL" ]] || [[ $(toupper "${param}") = "ALL OFF" ]]; then
@@ -147,13 +146,18 @@ info "$param\n$LAUTO\n$LFORCE"
 			fi
 		done
 	fi
+	arr=(${pkg[*]})
+	nfiles=${#arr[*]}
 	param="$@"
 
 	if (( $LLIST )); then
-		log_wait_msg "${blue}Listing..."
+		if (( $verbose )); then
+			log_wait_msg "${blue}Listing..."
+		fi
 		pkgCheckNumber=0
-		printf "%12sPackage(${ncontapkgdep})%34sversion%8sfullname\n"
-		if [[ $pkg ]]; then
+		printf "%12sPackage(${green}%04d${reset})%31sversion%8sfullname\n" "" "${nfiles}"
+
+		if [[ $nfiles -gt 0 ]]; then
 			for i in $pkg; do
 				((pkgCheckNumber++))
 				sh_splitpkg $i
@@ -170,7 +174,8 @@ info "$param\n$LAUTO\n$LFORCE"
 	sh_cdroot
 }
 
-function sh_checknet(){
+function sh_checknet()
+{
 	# have internet?
 	log_info_msg "${cyan}Testing internet"
 	#ping -c3 -q $(echo $SITE | sed 's/http:\/\///g') >/dev/null 2>&1 || { evaluate_retval; log_failure_msg2 "No route to server ($SITE) - ABORTED."; return 1 ;}
@@ -179,7 +184,8 @@ function sh_checknet(){
 	return $?
 }
 
-function sh_selfupdate(){
+function sh_selfupdate()
+{
 	local param=$@
 
 	sh_checkparametros ${param}
@@ -226,17 +232,18 @@ function sh_selfupdate(){
 	sh_cdroot
 }
 
-function sh_clean(){
+function sh_clean()
+{
 	local param=$@
 	local lRetval=$false
 	local nfiles=0
 
 	sh_checkparametros ${param}
 	if !(( $LAUTO )); then
-		echo -e "Pacotes a serem mantidos:"
-      echo -e "      Todos os pacotes instalados localmente"
-		echo
-		echo -e "Cache directory: $VARCACHE_ARCHIVES"
+		printf "Pacotes a serem mantidos:\n"
+      printf "      Todos os pacotes instalados localmente\n"
+		printf "\n"
+		printf "Cache directory: $VARCACHE_ARCHIVES\n"
 		conf "${blue}:: ${reset}Do you want to remove all packages from the cache?"
 		LAUTO=$?
 	fi
@@ -256,7 +263,9 @@ function sh_clean(){
 }
 
 function sh_checkdir(){
-	log_wait_msg "Checking job directories"
+	if (( $verbose )); then
+		log_wait_msg "Checking job directories"
+	fi
 	if [ $# -lt 1 ]; then
 		log_info_msg "$VARCACHE_ARCHIVES" ; [[ -d $VARCACHE_ARCHIVES  ]] && evaluate_retval || { mkdir -p $VARCACHE_ARCHIVES  >/dev/null 2>&1; evaluate_retval; }
 		log_info_msg "$VARCACHE_REMOVED"  ; [[ -d $VARCACHE_REMOVED   ]] && evaluate_retval || { mkdir -p $VARCACHE_REMOVED   >/dev/null 2>&1; evaluate_retval; }
@@ -277,7 +286,8 @@ function sh_checkdir(){
 	return $?
 }
 
-function sh_update(){
+function sh_update()
+{
 	[[ $(toupper "${1}") = "SELF" ]] && { shift; sh_selfupdate "$@"; return $?;}
 
 	#internet?
@@ -407,7 +417,8 @@ function sh_FilesInCache()
 	return $nfilesincache
 }
 
-function sh_pkgoutcache(){
+function sh_pkgoutcache()
+{
 	log_wait_msg "Ok, let's do it..."
 	log_info_msg "Wait, doing some calculations..."
 
@@ -449,7 +460,8 @@ function sh_pkgoutcache(){
 	return 0
 }
 
-function sh_show(){
+function sh_show()
+{
 	local param=$@
 	local LFORCE=$false
 	local pkgCheckNumber=0
@@ -457,16 +469,7 @@ function sh_show(){
 	log_wait_msg "Reading package lists..."
 	sh_checkdir "OFF"
 
-	for s in ${param[@]}; do
-#		[[ $(toupper "${s}") = "-Y" ]]  && { LAUTO=$true;  param[$count]=;}
-#		[[ $(toupper "${s}") = "-F" ]]  && { LFORCE=$true; param[$count]=;}
-#		[[ $(toupper "${s}") = "OFF" ]] && { LLIST=$false; param[$count]=;}
-#		((count++))
-		[[ $(toupper "${s}") = "-Y" ]]  && LAUTO=$true
-		[[ $(toupper "${s}") = "-F" ]]  && LFORCE=$true
-		[[ $(toupper "${s}") = "OFF" ]] && LLIST=$false
-	done
-
+	sh_checkparametros ${param}
 	sh_listinstalled ${param} "OFF" "EXACT"
 
 	local ntotal_pkg_installed=${public_ntotal_pkg_installed}
@@ -522,7 +525,6 @@ function _PRE_REMOVE()
 	local search_pack
 
 	pushd $VARLIB_DESC 1>/dev/null
-#	local alldesc="$(echo *.desc | grep $pkgsearch)"
 	local alldesc=$(echo $pkgsearch*)
 
 	for search_pack in $alldesc; do
@@ -533,7 +535,6 @@ function _PRE_REMOVE()
 				fi
 			done
 			source $VARLIB_DESC/${search_pack}
-#			local name_version_build="${pkgname}-${version}-${build}"
 			local name_version_build="${packname}"
 			AUTO_YES=$true
 			pushd "${VARLIB_LIST}" 1>/dev/null
@@ -550,7 +551,8 @@ function _PRE_REMOVE()
 	_SUBSHELL_STATUS
 }
 
-function sh_removepkg(){
+function sh_removepkg()
+{
 	shift
 	while [[ -n "$1" ]]; do
 		_PRE_REMOVE "$1" || return 1
@@ -566,7 +568,8 @@ function sh_removepkg(){
 	return 0
 }
 
-function sh_doremove(){
+function sh_doremove()
+{
 	local param=$@
 
 	log_wait_msg "Wait, Removing package ${orange}${i}"
@@ -583,7 +586,8 @@ function sh_doremove(){
 	return $error_value
 }
 
-function sh_remove(){
+function sh_remove()
+{
 	LAUTO=$false
 	local param=$@
 
@@ -617,7 +621,8 @@ function sh_remove(){
 	return 0
 }
 
-function sh_download(){
+function sh_download()
+{
 	[[ $(toupper "${1}") = "ALL" ]] && LALL=$true   || LALL=$false
 	[[ $(toupper "${2}") = "-F"  ]] && LFORCE=$true || LFORCE=$false
 
@@ -665,7 +670,8 @@ function sh_download(){
 	sh_cdroot
 }
 
-function sh_getdeps(){
+function sh_getdeps()
+{
 	local ncontadep=0
 	local ncontapkgdep=0
 	local	arr=()
@@ -732,8 +738,8 @@ function sh_wgetdesc()
 	return $?
 }
 
-
-function sh_wgetfull(){
+function sh_wgetfull()
+{
 	local cfullfilename=$1
 	local cRaw
 	if !(( $GITSITE )); then
@@ -751,7 +757,8 @@ function sh_wgetfull(){
 	return $?
 }
 
-function sh_wgetpartial(){
+function sh_wgetpartial()
+{
 	local cfullfilename=$1
 	local cRaw
 	if !(( $GITSITE )); then
@@ -769,14 +776,16 @@ function sh_wgetpartial(){
 	return $?
 }
 
-function sh_checksha256sum(){
+function sh_checksha256sum()
+{
 	log_info_msg "Checking sha256sum..."
 	ERROR=$(sha256sum -c ${cpacote}.sha256 2>&1>/dev/null)
 	evaluate_retval
 	return $?
 }
 
-function sh_splitbase(){
+function sh_splitbase()
+{
 	local file=${1}
 	local pkg_folder_dir=""
 	local pkg_fullname
@@ -802,7 +811,8 @@ function sh_splitbase(){
 	return $?
 }
 
-function sh_oldsplitpkg(){
+function sh_oldsplitpkg()
+{
 	local file=${1}
 	local pkg_folder_dir
 	local pkg_fullname
@@ -840,7 +850,8 @@ function sh_oldsplitpkg(){
 	return $?
 }
 
-function sh_splitpkgNEW(){
+function sh_splitpkgNEW()
+{
 	file=${1}
 	#pkg_re='^([a-z-]+)(-)([0-9\\.]+)(-)([0-9])(-)(.*)(.chi.zst)$'
 	#pkg_re='([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)-(([0-9]+(\.[0-9]+)*)(-([0-9]+))?)-([^.]+).*'
@@ -873,7 +884,8 @@ function sh_splitpkgNEW(){
 	return $?
 }
 
-function sh_splitpkg(){
+function sh_splitpkg()
+{
 	local file=${1}
 	local pkg_folder_dir
 	local pkg_fullname
@@ -963,39 +975,41 @@ function sh_installdownload(){
 	done
 }
 
-function sh_installdoinstallpkg(){
-		for i in $pkgforinstall; do
-			sh_splitpkg ${i}
-			local cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
-			local cpacote=${aPKGSPLIT[PKG_FULLNAME]}
-			local cpacotebase=${aPKGSPLIT[PKG_BASE]}
-			case $cpacotebase in
-				gcc)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
-				gcc-libs)   log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
-				glibc)	   log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
-				file)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
-				flac)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
-			esac
-			cpacoteinstalled=$(grep ^$cpacoteSemExt ${VARCACHE_SEARCH}/packages-installed)
-			[[ $cpacoteinstalled = $cpacoteSemExt ]] && LINSTALLED=$true
+function sh_installdoinstallpkg()
+{
+	for i in $pkgforinstall; do
+		sh_splitpkg ${i}
+		local cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
+		local cpacote=${aPKGSPLIT[PKG_FULLNAME]}
+		local cpacotebase=${aPKGSPLIT[PKG_BASE]}
+		case $cpacotebase in
+			gcc)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+			gcc-libs)   log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+			glibc)	   log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+			file)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+			flac)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
+		esac
+		cpacoteinstalled=$(grep ^$cpacoteSemExt ${VARCACHE_SEARCH}/packages-installed)
+		[[ $cpacoteinstalled = $cpacoteSemExt ]] && LINSTALLED=$true
 
-#			info "1-cpacoteSemExt   : $cpacoteSemExt\n2-cpacoteinstalled: $cpacoteinstalled"
+#		info "1-cpacoteSemExt   : $cpacoteSemExt\n2-cpacoteinstalled: $cpacoteinstalled"
 
-			if (( $LINSTALLED )) && !(( $LFORCE )); then
-				log_failure_msg2 "${orange}${cfullfilename} ${reset}Package is already installed. Use the -f option to force reinstallation."
-				continue
-			fi
-			sh_installpkg -i ${cpacote}
-			local error_value="${?}"
-			if [ ${error_value} -ne 0 ]; then
-				log_failure_msg2 "${red}ERROR:${reset} installing package: ${orange}${cpacote}${reset}"
-			else
-				log_success_msg2 "${green}${cpacote} ${reset}Done. package installation successfully."
-			fi
-		done
+		if (( $LINSTALLED )) && !(( $LFORCE )); then
+			log_failure_msg2 "${orange}${cfullfilename} ${reset}Package is already installed. Use the -f option to force reinstallation."
+			continue
+		fi
+		sh_installpkg -i ${cpacote}
+		local error_value="${?}"
+		if [ ${error_value} -ne 0 ]; then
+			log_failure_msg2 "${red}ERROR:${reset} installing package: ${orange}${cpacote}${reset}"
+		else
+			log_success_msg2 "${green}${cpacote} ${reset}Done. package installation successfully."
+		fi
+	done
 }
 
-function sh_install(){
+function sh_install()
+{
 	local param=$@
 	#sh_checknet
 
@@ -1145,10 +1159,10 @@ function sh_install(){
 	sh_cdroot
 }
 
-function sh_search(){
+function sh_search()
+{
 	local param=$@
-	LAUTO=$false
-   LFORCE=$false
+	sh_checkparametros ${param}
 
 	#sh_checknet
 	sh_list $param
@@ -1156,8 +1170,8 @@ function sh_search(){
 	sh_cdroot
 }
 
-
-function sh_listmeta(){
+function sh_listmeta()
+{
 	local LLIST=$true
 	local Cont=0
 
@@ -1194,7 +1208,8 @@ function sh_listmeta(){
 	sh_cdroot
 }
 
-function sh_meta(){
+function sh_meta()
+{
 	local param=$@
 	sh_checkparametros ${param}
 	sh_listmeta $param
@@ -1306,7 +1321,6 @@ function sh_meta(){
 }
 
 function sh_recreatefilepackagesinstalled()
-###########################################
 {
 	local pkgNumber=0
 	local s
@@ -1341,7 +1355,8 @@ function sh_recreatefilepackagesinstalled()
 	evaluate_retval
 }
 
-function sh_listinstalled(){
+function sh_listinstalled()
+{
 	local param=$@
 	local pkgNumber=0
 	local s
@@ -1410,7 +1425,8 @@ function sh_listinstalled(){
 	return $pkgNumber
 }
 
-function sh_listforinstall(){
+function sh_listforinstall()
+{
 	local pkgNumber=0
 	local s
 	local param=$@
@@ -1529,7 +1545,8 @@ function sh_installed(){
 	sh_cdroot
 }
 
-function sh_listremoved(){
+function sh_listremoved()
+{
 	sh_checkdir "OFF"
 	log_wait_msg "Reading lists of removed packages..."
 	param=$1
@@ -1575,7 +1592,8 @@ function sh_listremoved(){
 	return $pkgNumber
 }
 
-function sh_removed(){
+function sh_removed()
+{
 	sh_listremoved $1
 
 	if [[ $pkgremoved != "" ]]; then
@@ -1603,7 +1621,8 @@ function sh_removed(){
 	sh_cdroot
 }
 
-function _LIST_ARCHIVES_DIRECTORIES(){
+function _LIST_ARCHIVES_DIRECTORIES()
+{
 	local packname="${1}.list"
 	local LIST_CLEAN_DIRECTORIES
 
@@ -1680,7 +1699,8 @@ function _SUBSHELL_STATUS(){
 	[[ "$?" -ne '0' ]] && return 1 || return 0
 }
 
-function _MANAGE_SCRIPTS_AND_ARCHIVES(){
+function _MANAGE_SCRIPTS_AND_ARCHIVES()
+{
 	sh_splitpkg "${1}"
 #	local packname="${1/%.${PKG_EXT}/}"
 	local packname=${aPKGSPLIT[PKG_BASE_VERSION]}
@@ -1727,7 +1747,8 @@ function _MANAGE_SCRIPTS_AND_ARCHIVES(){
 	return 0
 }
 
-function _CREATE_LIST(){
+function _CREATE_LIST()
+{
 	local packname="$1"
 
 	if ! tar --list --file "$packname" > "${VARLIB_LIST}/${name_version_build}.list"; then
@@ -1737,7 +1758,8 @@ function _CREATE_LIST(){
 	return 0
 }
 
-function _INPUT_NULL_PARAMETER(){
+function _INPUT_NULL_PARAMETER()
+{
 	pkg=$1
 
 	local arr
@@ -1763,7 +1785,8 @@ function _NAME_FORMAT_PKG()
 	return 0
 }
 
-function _GENERATE_DESC(){
+function _GENERATE_DESC()
+{
 	local i
 	local DESC_PACKNAME="$1"
 	local DESC_VERSION="$2"
@@ -1809,7 +1832,8 @@ EOF
 	return 0
 }
 
-function sh_generatepkg(){
+function sh_generatepkg()
+{
 	shift
 	local param=$@
 	local inc=0
@@ -1864,7 +1888,8 @@ function sh_generatepkg(){
 	return 0
 }
 
-function sh_doinstallpkg(){
+function sh_doinstallpkg()
+{
 	(
 	local packname="$1"
 	local name_version_build
@@ -1977,7 +2002,8 @@ function sh_initinstallpkg(){
 	shopt -u nullglob       # disable suppress error message of a command 
 }
 
-function sh_installpkg(){
+function sh_installpkg()
+{
 	local _pkg=
 	shift
 	while [[ -n "$1" ]]; do
@@ -1998,7 +2024,8 @@ function sh_installpkg(){
 	return 0
 }
 
-function _REMOVE_NOW(){
+function _REMOVE_NOW()
+{
 	local packname="${1/%.${PKG_EXT}/}"
 	local a='0'
 	local d='0'
@@ -2055,7 +2082,8 @@ function _REMOVE_NOW(){
 	return 0
 }
 
-function _GPG_SIGN(){
+function _GPG_SIGN()
+{
 	local package="$1"
 	local sig='sig'
 
@@ -2080,7 +2108,8 @@ function _GPG_SIGN(){
 	return 0
 }
 
-function _VERIFY_ON(){
+function _VERIFY_ON()
+{
 	local package="$1"
 
 	#sh_generatepkg "$1"
@@ -2186,7 +2215,8 @@ function _CREATE_PKG(){
 	evaluate_retval
 }
 
-function sh_createpkg(){
+function sh_createpkg()
+{
 	shift
 	local param=$@
 	local s
@@ -2227,26 +2257,30 @@ function sh_createpkg(){
 	evaluate_retval
 }
 
-function sh_alienpkg_init(){
+function sh_alienpkg_init()
+{
 	log_wait_msg "Loading /usr/libexec/fetch/core.sh"
 	#source /usr/libexec/fetch/core.sh
 	unset BUILDDIR
 	unset size
 }
 
-function sh_alienpkg_pkgsize(){
+function sh_alienpkg_pkgsize()
+{
 	size="$(/usr/bin/du -sk --apparent-size)"
    size="$(( ${size%%[^0-9]*} * 1024 ))"
 }
 
-function sh_alienpkg_initvars(){
+function sh_alienpkg_initvars()
+{
 	ALIEN_CACHE_DIR="${ALIEN_CACHE_DIR:=/var/cache/pacman/pkg}"
 	PKGS=$@
 #	EXT="${EXT:-.pkg.tar.xz}"
 	BUILDDIR="${PKGCORE:-/lfs/arch}"
 }
 
-function sh_alienpkg_exec(){
+function sh_alienpkg_exec()
+{
 	local pkg
 	local param=$*
 	local package
@@ -2430,7 +2464,8 @@ function sh_alienpkg_exec(){
 	unset ntotalpkg
 }
 
-function sh_alienpkg_logo(){
+function sh_alienpkg_logo()
+{
 	_CAT << 'EOF'
        _ _                  _
   __ _| (_) ___ _ __  _ __ | | ____ _
@@ -2442,7 +2477,8 @@ EOF
 	sh_version
 }
 
-function sh_aliencheck(){
+function sh_aliencheck()
+{
 	allfiles=$(ls -1 *.zst)
 
 	for pkg in $allfiles
@@ -2456,7 +2492,8 @@ function sh_aliencheck(){
 	done
 }
 
-function sh_alienpkg_main(){
+function sh_alienpkg_main()
+{
 	sh_alienpkg_init
 	if [ $# -lt 1 ]; then
 		echo "uso: $0 -a <package-alienigena-versao>"
@@ -2471,7 +2508,8 @@ function sh_alienpkg_main(){
 	sh_alienpkg_exec $*
 }
 
-function sh_upgrade(){
+function sh_upgrade()
+{
 	shift
 	local param="$@"
 	local LAUTO=$false
@@ -2575,7 +2613,8 @@ function sh_upgrade(){
 	sh_cdroot
 }
 
-function checkDependencies(){
+function checkDependencies()
+{
   local errorFound=0
 
   for command in "${DEPENDENCIES[@]}"; do
@@ -2593,7 +2632,8 @@ function checkDependencies(){
   fi
 }
 
-function cleanup(){
+function cleanup()
+{
 	log_msg "Cleaning..."
 	cp -f $TMP_DIR_BACKUP/* $VARCACHE_SEARCH/ &> /dev/null
 	rm -rf $TMP_ROOT_BACKUP/ &> /dev/null
@@ -2601,14 +2641,16 @@ function cleanup(){
 }
 trap cleanup SIGINT SIGTERM
 
-function sh_backup(){
+function sh_backup()
+{
 	log_wait_msg "Making backup: $VARCACHE_SEARCH/"
 	mkdir -p $TMP_DIR_BACKUP/
 	cp -f $VARCACHE_SEARCH/* $TMP_DIR_BACKUP/
 }
 
 #figlet
-function logo(){
+function logo()
+{
 	_CAT << 'EOF'
   __      _       _
  / _| ___| |_ ___| |__           Copyright (C) 2019-2020 Vilmar Catafesta <vcatafesta@gmail.com>
@@ -2619,7 +2661,8 @@ EOF
 	sh_version
 }
 
-function help(){
+function help()
+{
 	cat <<EOF
 ${cyan}Most used commands:
 ${red}  -h,  --help,           help           ${reset}- display this help and exit
@@ -2663,29 +2706,19 @@ EOF
 	exit
 }
 
-function init(){
-	local param=$@
-	local s
-
-	# Parse Command Line Options.
-	for s in ${param[@]}; do
-		[[ $(toupper "${s}") = "-Y" ]]  && { LAUTO=$true;  continue;}
-		[[ $(toupper "${s}") = "-F" ]]  && { LFORCE=$true; continue;}
-		[[ $(toupper "${s}") = "OFF" ]] && { LLIST=$false; continue;}
-	done
-#	[[ $LAUTO  ]] && param+=" -Y"
-#	[[ $LFORCE ]] && param+=" -F"
-
-	while true
+function init()
+{
+  	while test $# -gt 0
 	do
 		case "${1}" in
 			-Sl|--local|local)  							shift;sh_initinstallpkg "$@";exit;;
 			-Sa|-a|--alienpkg|alienpkg)	  		   shift;sh_alienpkg_main "$@";exit;;
 			-Sy|--update|update)							shift;sh_update "${param}";exit;;
 			-Sg|-g|--generate|generate)				sh_generatepkg "$@";exit;;
+			-Sc|--clean|clean)  							sh_clean "$@";exit;;
+			-Ss|--search|search)	     					shift;sh_search "$@";exit;;
 			-c|-C|--create|create)					   sh_createpkg "${param}";exit;;
 			-m|-M|--meta|meta)	                  shift;sh_meta "${param}";exit;;
-			-Ss|-ss|-SS|-sS|--search|search)	     	shift;sh_search "$@";exit;;
 			-S|-s|-Si|-i|--install|install)			shift;sh_install "$@";exit;;
 			-R|-r|--remove|remove) 						shift;sh_remove "$@";exit;;
 			-Sw|--download|download) 					shift;sh_download "${param}";exit;;
@@ -2696,11 +2729,21 @@ function init(){
 			-Li|--list-installed|list-installed)	shift;sh_listinstalled "${@}";exit;;
 			-Pi|--in-cache|in-cache)	            shift;sh_FilesInCache "${param}";exit;;
 			-Po|--out-cache|out-cache)	            shift;sh_pkgoutcache "${param}";exit;;
-			-Sc|--clean|clean)  							sh_clean $2;exit;;
 			-w|-W|--show|show) 							shift;sh_show "${param}";exit;;
 			-Su|--upgrade|upgrade)						sh_upgrade ${param};exit;;
 			-v|--version|version) 						logo;exit;;
-			*) 												help;exit;;
+      	-u|--unit)										test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1; _arg_unit="$2";shift;;
+			--clean|-Sc|clean)							sh_clean;exit 0;;
+			--unit=*)										_arg_unit="${_key##--unit=}";;
+			-u*)												_arg_unit="${_key##-u}";;
+      	-v*|--version)									logo;exit 0;;
+      	-f*|--force)									LFORCE=1;;
+      	-y*|--auto)										LAUTO=1;;
+      	-q|--quiet)										verbose=0;;
+      	--nocolor)										unsetvarcolors;USE_COLOR='n';;
+      	--no-verbose|--verbose)						verbose=1;test "${1:0:5}" = "--no-" && verbose=0;;
+      	-h*|--help)										help;exit 0;;
+      	*)													help;exit 0;_last_positional="$1";_positionals+=("$_last_positional");_positionals_count=$((_positionals_count + 1));;
 		esac
 		shift
 	done
@@ -2710,73 +2753,6 @@ configure
 sh_checkroot
 checkDependencies
 setvarcolors
-
-function parse(){
-	OPT_SHORT=':a:c:dlfyhi:k:m:qrsuVvzt:'
-	OPT_LONG=('arch:' 'cachedir:' 'list' 'dryrun' 'force' 'auto' 'help' 'ignore:' 'keep:' 'move:'
-	          'nocolor' 'quiet' 'remove' 'uninstalled' 'version' 'verbose' 'null' 'ctime:')
-
-	if ! parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
-		exit 1
-	fi
-	#set -- "${OPTRET[@]}"
-	unset OPT_SHORT OPT_LONG OPTRET
-
-	while true
-	do
-		case $1 in
-			-t|--ctime)
-				ctime="$2"
-				LTIME=$true
-				shift ;;
-			-c|--cachedir)
-				cachedirs+=("$2")
-				shift ;;
-			-d|--dryrun)
-				dryrun=1 ;;
-			-f|--force)
-				LFORCE=$true
-				cmdopts+=(-f)
-				shift
-				;;
-			-y|--auto)
-				LAUTO=$true
-				cmdopts+=(-f)
-				shift
-				;;
-			-h|--help)
-				help
-				exit 0 ;;
-			-m|--move)
-				move=1 movedir=$2
-				shift ;;
-			--nocolor)
-				unsetvarcolors
-				USE_COLOR='n' ;;
-			-q|--quiet)
-				unsetvarcolors
-				QUIET=1 ;;
-			-r|--remove)
-				delete=1 ;;
-			-V|--version)
-				logo
-				exit 0 ;;
-			-v|--verbose)
-				(( ++verbose )) ;;
-			-z|--null)
-				delim='\0' ;;
-			--)
-				shift
-				break 2 ;;
-		esac
-		shift
-	done
-}
-
-# check if messages are to be printed using color
-if [[ -t 2 && $USE_COLOR != "n" ]]; then
-	setvarcolors
-fi
 
 # sanity checks
 #case $(( dryrun+delete+move )) in
@@ -2792,6 +2768,7 @@ if [[ $1 = "" ]] || [[ $1 = "-h" ]] || [[ $1 = "--help" ]] || [[ $1 = "help" ]] 
 	help
 fi
 
-init $*
+sh_checkparametros "$@"
+init "$@"
 
 # vim:set ts=3 sw=3 et:

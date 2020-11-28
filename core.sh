@@ -21,6 +21,7 @@ LREMOVED=3
 LAUTO=0
 LFORCE=0
 LLIST=0
+verbose=1
 
 #hex code
 barra=$'\x5c'
@@ -499,6 +500,22 @@ checkDependencies(){
     echo "Instale-os e/ou verifique se estão no seu \$PATH" >&2
     exit 1
   fi
+}
+
+function sh_checkparametros()
+{
+	local param=$@
+	local s
+
+	for s in ${param[@]}
+	do
+		[[ $(toupper "${s}") = "--quiet" ]]   && verbose=0
+		[[ $(toupper "${s}") = "-q" ]]   	  && verbose=0
+		[[ $(toupper "${s}") = "--NOCOLOR" ]] && unsetvarcolors;USE_COLOR='n'
+		[[ $(toupper "${s}") = "-Y" ]]        && LAUTO=$true
+		[[ $(toupper "${s}") = "-F" ]]        && LFORCE=$true
+		[[ $(toupper "${s}") = "OFF" ]]       && LLIST=$false
+	done
 }
 
 #   parseopts.sh - getopt_long-like parser
