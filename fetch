@@ -2,7 +2,7 @@
  # fetch - search, install, create, remove, upgrade packages in ChiliOS
  #
  # Created: 2019/04/05
- # Altered: 2020/11/26
+ # Altered: 2020/12/01
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -33,7 +33,7 @@
 #########################################################################
 
 function configure(){
-	readonly _VERSION_="2.03.62.20201126"
+	readonly _VERSION_="2.03.72.20201201"
 	readonly DEPENDENCIES=(which tar zstd curl sed grep cat awk tput dialog)
 	LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 
@@ -113,6 +113,23 @@ GITSITE='1'
 _EOF_
 }
 
+function cabec()
+{
+	local nfiles=$1
+	printf "%12sPackage(${green}%04d${reset})%31sversion%8sfullname\n" "" "${nfiles}"
+}
+
+function write()
+{
+	sh_splitpkg $1
+	printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$pkgCheckNumber" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}"
+}
+function footer()
+{
+	local pkgCheckNumber=$1
+	log_msg "${green}($pkgCheckNumber)${reset} package(s) found."
+}
+
 function sh_list()
 {
 	local param=$@
@@ -155,20 +172,26 @@ function sh_list()
 			log_wait_msg "${blue}Listing..."
 		fi
 		pkgCheckNumber=0
-		printf "%12sPackage(${green}%04d${reset})%31sversion%8sfullname\n" "" "${nfiles}"
+		if (( $verbose )); then
+			cabec $nfiles
+		fi
 
 		if [[ $nfiles -gt 0 ]]; then
 			for i in $pkg; do
 				((pkgCheckNumber++))
-				sh_splitpkg $i
-				[[ $LLIST = $true ]] && printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$pkgCheckNumber" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}"
+				if (( $verbose )); then
+					[[ $LLIST = $true ]] && write $i
+				fi
 			done
-			[[ $LLIST = $true ]] && log_msg "${green}($pkgCheckNumber)${reset} package(s) found."
+				if (( $verbose )); then
+					[[ $LLIST = $true ]] && footer $pkgCheckNumber
+				fi
 		else
-			log_failure_msg2 "${red}$param NOT FOUND ${reset} ${orange}$i${reset}"
-			log_failure_msg2 "($pkgCheckNumber) package(s) found."
-			echo
-			printf "${reset}Use: # $0 update - to update with the repository${reset}\n"
+			if (( $verbose )); then
+				log_failure_msg2 "${red}$param NOT FOUND ${reset} ${orange}$i${reset}"
+				echo
+				printf "${reset}Use: # $0 update - to update with the repository${reset}\n"
+			fi
 		fi
 	fi
 	sh_cdroot
@@ -177,10 +200,20 @@ function sh_list()
 function sh_checknet()
 {
 	# have internet?
-	log_info_msg "${cyan}Testing internet"
-	#ping -c3 -q $(echo $SITE | sed 's/http:\/\///g') >/dev/null 2>&1 || { evaluate_retval; log_failure_msg2 "No route to server ($SITE) - ABORTED."; return 1 ;}
-	curl --insecure $SITE >/dev/null 2>&1 || { evaluate_retval; log_failure_msg2 "No route to server ($SITE) - ABORTED."; return 1 ;}
-	evaluate_retval
+	if (( $verbose )); then
+		log_info_msg "${cyan}Testing internet"
+	fi
+	curl --insecure $SITE >/dev/null 2>&1 ||
+	{
+		if (( $verbose )); then
+			evaluate_retval
+			log_failure_msg2 "No route to server ($SITE) - ABORTED."
+			return 1
+		fi
+	}
+	if (( $verbose )); then
+		evaluate_retval
+	fi
 	return $?
 }
 
@@ -463,52 +496,61 @@ function sh_pkgoutcache()
 function sh_show()
 {
 	local param=$@
-	local LFORCE=$false
-	local pkgCheckNumber=0
+	local error_value=0
 
-	log_wait_msg "Reading package lists..."
+	if (( verbose )); then
+		log_wait_msg "Reading package lists..."
+	fi
+
 	sh_checkdir "OFF"
-
-	sh_checkparametros ${param}
-	sh_listinstalled ${param} "OFF" "EXACT"
+#	sh_listinstalled ${param} "OFF" "EXACT"
+	sh_list ${param}
+	pkginstalled=$pkg
 
 	local ntotal_pkg_installed=${public_ntotal_pkg_installed}
 	local ntotal_pkg_listed=${public_ntotal_pkg_listed}
 
-	log_wait_msg "Listing..."
+	if (( verbose )); then
+		log_wait_msg "Listing..."
+	fi
+
+	#internet?
+	sh_checknet; [[ $? = $false ]] || { return 1;}
+
 	if [[ $pkginstalled != " " ]]; then
 		for i in $pkginstalled; do
-			log_success_msg2 "${green}FOUND ${reset} ${orange}${i}${reset}"
-			((pkgCheckNumber++))
-			log_success_msg2 "($pkgCheckNumber) file(s) found."
-			local cfile=${i}
-			#local cbase=$(echo $cfile | cut -d/ -f1)
-    		#local cpacote=$(echo $cfile | cut -d/ -f2)".desc"
 			sh_splitpkg ${i}
+			local cfullname=${aPKGSPLIT[1]}.desc
 			local cBase=${aPKGSPLIT[$PKG_BASE]}
 			local cBaseVersion=${aPKGSPLIT[$PKG_BASE_VERSION]}
 			local cpacote=${aPKGSPLIT[$PKG_BASE_VERSION]}.desc
 			local cVersion=${aPKGSPLIT[$PKG_VERSION]}
 			local cBuild=${aPKGSPLIT[$PKG_BUILD]}
 
-    		cd $VARCACHE_ARCHIVES/
-    		[[ $LFORCE = $true ]] && sh_wgetdesc || test -e $VARCACHE_ARCHIVES/$cpacote || sh_wgetdesc
- 			evaluate_retval
-    		local error_value="${?}"
+			if (( verbose )); then
+				log_wait_msg "Wait, downloading .desc..."
+			fi
+
+			cpacote=$VARCACHE_ARCHIVES/$cfullname
+  			if [[ $LFORCE ]] || [[ -e $cpacote ]]; then
+				sh_wgetdesc
+	    		error_value="${?}"
+			fi
 
     		if [ ${error_value} = 0 ]; then
-    			log_wait_msg "${blue}Dumping... $cpacote${reset}"
-    			echo -e "${cyan}"
-    			_CAT $VARLIB_DESC/$cpacote
+				if (( verbose )); then
+   	 			log_wait_msg "${blue}Dumping => $cpacote${reset}"
+				fi
+    			echo -n -e "${cyan}"
+    			cat $cpacote
     			echo -e "${reset}"
     		else
-    			log_failure_msg2 "${red}ERROR Downloading... $cpacote${reset}"
+    			log_failure_msg2 "ERROR Downloading ${red}$cfullname${reset}"
     		fi
 
 		done
 	else
 		log_failure_msg2 "${red}$param NOT FOUND${reset} ${orange}$i${reset}"
-		log_failure_msg2 "($pkgCheckNumber) file(s) found."
 	fi
 	sh_cdroot
 }
@@ -720,41 +762,36 @@ function sh_getdeps()
 
 function sh_wgetdesc()
 {
-   local cOldDir=$PWD
 	local cfullfilename=$1
-
 	local cRaw
+   local nretval
+
 	if !(( $GITSITE )); then
-		#site normal
-		cRaw=$SITE
+		cRaw=$SITE 	#site normal
 	else
-		#github
-		cRaw=$RAW
+		cRaw=$RAW	#github
 	fi
-	cd $VARCACHE_ARCHIVES/
-#	log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/${i}.desc"   ; evaluate_retval
+	pushd $VARCACHE_ARCHIVES/ &>/dev/null
 	curl -s -k -O "${cRaw}/packages/${i}.desc"
-	cd $cOldDir
-	return $?
+	nretval=$?
+	popd &>/dev/null
+	return $nretval
 }
 
 function sh_wgetfull()
 {
 	local cfullfilename=$1
 	local cRaw
+   local nretval
+
 	if !(( $GITSITE )); then
-		#site normal
-		cRaw=$SITE
+		cRaw=$SITE	#site normal
 	else
-		#github
-		cRaw=$RAW
+		cRaw=$RAW	#github
 	fi
-#	sh_checknet; [[ $? = $false ]] || { return 1;}
 	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}"        ; curl -s -k -O "${cRaw}/packages/$i"        ; evaluate_retval
-#	log_info_msg "${cyan}Fetching file    ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval
-#	log_info_msg "${cyan}Fetching file    ${cRaw}/packages/${orange}${i}.sha256" ; curl -s -k -O "${cRaw}/packages/$i.sha256" ; evaluate_retval
-#	log_info_msg "${cyan}Fetching filee   ${cRaw}/packages/${orange}${i}.sig"    ; curl -s -k -O "${cRaw}/packages/$i.sig"    ; evaluate_retval
-	return $?
+	nretval=$?
+	return $nretval
 }
 
 function sh_wgetpartial()
@@ -1382,7 +1419,7 @@ function sh_listinstalled()
 
 	if (( $LALL )) || [[ "$cListSearch" == "" ]]; then
 		#pkginstalled=$(awk -F: '{print $1}' $VARCACHE_SEARCH/packages-installed-split | grep ^)
-		pkginstalled=$(grep ^ $VARCACHE_SEARCH/packages-installed)
+		pkginstalled="$(grep ^ $VARCACHE_SEARCH/packages-installed)"
 	else
 		for x in ${cListSearch}; do
 			if (( $LEXACT )); then
@@ -1392,7 +1429,6 @@ function sh_listinstalled()
 			fi
 		done
 	fi
-
 
 	if (( $LLIST )); then
 		log_wait_msg "${green}Listing..."
@@ -2666,7 +2702,6 @@ function help()
 	cat <<EOF
 ${cyan}Most used commands:
 ${red}  -h,  --help,           help           ${reset}- display this help and exit
-${red}  -v,  --version,        version        ${reset}- output version information and exit
 ${red}  -Sa, --alienpkg,       alienpkg       ${reset}- import package from ArchLinux
 ${red}  -Sl, --local,          local          ${reset}- install local package
 ${red}  -C   --create,         create         ${reset}- build package
@@ -2687,6 +2722,7 @@ ${red}  -Sc, --clean,          clean          ${reset}- erase downloaded package
 ${red}  -Ss, --search,         search         ${reset}- search for packages
 ${red}  -Su, --upgrade,        upgrade        ${reset}- upgrade packages
 ${red}  -Sw, --download,       download       ${reset}- only download the binary package into cache directory
+${red}  -V,  --version,        version        ${reset}- output version information and exit
 
 ${cyan}ex:
 ${yellow}  fetch update self - Update self fetch via internet
@@ -2729,19 +2765,18 @@ function init()
 			-Li|--list-installed|list-installed)	shift;sh_listinstalled "${@}";exit;;
 			-Pi|--in-cache|in-cache)	            shift;sh_FilesInCache "${param}";exit;;
 			-Po|--out-cache|out-cache)	            shift;sh_pkgoutcache "${param}";exit;;
-			-w|-W|--show|show) 							shift;sh_show "${param}";exit;;
+			-w|--show|show) 								shift;sh_show "$@";exit;;
 			-Su|--upgrade|upgrade)						sh_upgrade ${param};exit;;
-			-v|--version|version) 						logo;exit;;
       	-u|--unit)										test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1; _arg_unit="$2";shift;;
 			--clean|-Sc|clean)							sh_clean;exit 0;;
 			--unit=*)										_arg_unit="${_key##--unit=}";;
 			-u*)												_arg_unit="${_key##-u}";;
-      	-v*|--version)									logo;exit 0;;
+      	-V*|--version)									logo;exit 0;;
       	-f*|--force)									LFORCE=1;;
       	-y*|--auto)										LAUTO=1;;
       	-q|--quiet)										verbose=0;;
       	--nocolor)										unsetvarcolors;USE_COLOR='n';;
-      	--no-verbose|--verbose)						verbose=1;test "${1:0:5}" = "--no-" && verbose=0;;
+      	-v|--no-verbose|--verbose)					(( ++verbose ));test "${1:0:5}" = "--no-" && verbose=0;;
       	-h*|--help)										help;exit 0;;
       	*)													help;exit 0;_last_positional="$1";_positionals+=("$_last_positional");_positionals_count=$((_positionals_count + 1));;
 		esac
