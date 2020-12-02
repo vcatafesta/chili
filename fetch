@@ -69,6 +69,7 @@ function configure(){
 	export VARLIB_LIST="/var/cache/${APP}/list"
 	export VARLIB_DESC="/var/cache/${APP}/desc"
 	export VARLIB_REMO="/var/cache/${APP}/remove"
+	verbose=1
 }
 
 function sh_touchconf(){
@@ -116,14 +117,17 @@ _EOF_
 function cabec()
 {
 	local nfiles=$1
-	printf "%12sPackage(${green}%04d${reset})%31sversion%8sfullname\n" "" "${nfiles}"
+#	printf "%12sPackage(${green}%04d${reset})%31sversion%8sfullname\n" "" "${nfiles}"
+	printf "${reset}%5s(${pink}%04d${reset})${green} Package%37sversion%8sfullname\n" "" "${nfiles}"
 }
 
 function write()
 {
+	local pkgCheckNumber=$2
 	sh_splitpkg $1
 	printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$pkgCheckNumber" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}"
 }
+
 function footer()
 {
 	local pkgCheckNumber=$1
@@ -140,7 +144,7 @@ function sh_list()
 	LLIST=$true
 
 	if (( $LLIST )); then
-		if (( $verbose )); then
+		if (( verbose >= 2 )); then
 			log_wait_msg "${blue}Reading package lists in the repository..."
 		fi
 	fi
@@ -168,29 +172,29 @@ function sh_list()
 	param="$@"
 
 	if (( $LLIST )); then
-		if (( $verbose )); then
+		if (( verbose >= 2 )); then
 			log_wait_msg "${blue}Listing..."
 		fi
 		pkgCheckNumber=0
-		if (( $verbose )); then
-			cabec $nfiles
-		fi
-
 		if [[ $nfiles -gt 0 ]]; then
+			if (( verbose )); then
+				cabec $nfiles
+			fi
+
 			for i in $pkg; do
 				((pkgCheckNumber++))
-				if (( $verbose )); then
-					[[ $LLIST = $true ]] && write $i
+				if (( verbose )); then
+					[[ $LLIST = $true ]] && write $i $pkgCheckNumber
 				fi
 			done
-				if (( $verbose )); then
-					[[ $LLIST = $true ]] && footer $pkgCheckNumber
-				fi
+
+			if (( verbose >= 2 )); then
+				[[ $LLIST = $true ]] && footer $pkgCheckNumber
+			fi
+
 		else
-			if (( $verbose )); then
-				log_failure_msg2 "${red}$param NOT FOUND ${reset} ${orange}$i${reset}"
-				echo
-				printf "${reset}Use: # $0 update - to update with the repository${reset}\n"
+			if (( verbose )); then
+				log_failure_msg2 "ERROR: package ${green}'$param' ${red}was NOT FOUND${reset}"
 			fi
 		fi
 	fi
@@ -200,18 +204,18 @@ function sh_list()
 function sh_checknet()
 {
 	# have internet?
-	if (( $verbose )); then
+	if (( verbose >= 2 )); then
 		log_info_msg "${cyan}Testing internet"
 	fi
 	curl --insecure $SITE >/dev/null 2>&1 ||
 	{
-		if (( $verbose )); then
+		if (( verbose >= 2 )); then
 			evaluate_retval
 			log_failure_msg2 "No route to server ($SITE) - ABORTED."
 			return 1
 		fi
 	}
-	if (( $verbose )); then
+	if (( verbose )); then
 		evaluate_retval
 	fi
 	return $?
@@ -295,8 +299,9 @@ function sh_clean()
 	return $lRetval
 }
 
-function sh_checkdir(){
-	if (( $verbose )); then
+function sh_checkdir()
+{
+	if (( verbose >= 2 )); then
 		log_wait_msg "Checking job directories"
 	fi
 	if [ $# -lt 1 ]; then
@@ -498,11 +503,10 @@ function sh_show()
 	local param=$@
 	local error_value=0
 
-	if (( verbose )); then
+	if (( verbose >= 2 )); then
 		log_wait_msg "Reading package lists..."
 	fi
 
-	sh_checkdir "OFF"
 #	sh_listinstalled ${param} "OFF" "EXACT"
 	sh_list ${param}
 	pkginstalled=$pkg
@@ -510,14 +514,11 @@ function sh_show()
 	local ntotal_pkg_installed=${public_ntotal_pkg_installed}
 	local ntotal_pkg_listed=${public_ntotal_pkg_listed}
 
-	if (( verbose )); then
+	if (( verbose >= 2 )); then
 		log_wait_msg "Listing..."
 	fi
 
-	#internet?
-	sh_checknet; [[ $? = $false ]] || { return 1;}
-
-	if [[ $pkginstalled != " " ]]; then
+	if [[ $pkginstalled != "" ]]; then
 		for i in $pkginstalled; do
 			sh_splitpkg ${i}
 			local cfullname=${aPKGSPLIT[1]}.desc
@@ -716,10 +717,11 @@ function sh_getdeps()
    local LDEPS=${1}
 	deps=
 
-	echo "$(DOT)${cyan}resolvendo dependencias..."
+	printf "$(DOT)${cyan}resolvendo dependencias...\n"
   	GETDEPS=
 
-   for i in $pkgforinstall; do
+   for i in $pkgforinstall
+	do
       sh_splitpkg "${i}"
       cbase=${aPKGSPLIT[PKG_BASE]}
       cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
@@ -735,7 +737,7 @@ function sh_getdeps()
   	sh_adel "$deps"
   	arr=(${deps[*]})
   	ncontapkgdep=${#arr[*]}
-   printf "%12sPackage(${ncontapkgdep})%34sversion%8sfullname\n"
+  	cabec $ncontapkgdep
 
   	for i in ${deps[*]}
   	do
@@ -744,8 +746,7 @@ function sh_getdeps()
   		if [[ $pkgdep = "" ]]; then
   			printf "${red}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${i}" "WARNING! Dependencia nao localizada na base de dados. ${reset}Use: # ${APP} -Sy to update with the repository${reset}"#
   		else
-  			sh_splitpkg $pkgdep
-  			printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$ncontadep" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}"
+			write $pkgdep $ncontadep
   			GETDEPS="$GETDEPS $(echo $pkgdep)"
   		fi
   	done
@@ -984,7 +985,8 @@ function sh_splitpkg()
 	return $?
 }
 
-function sh_installdownload(){
+function sh_installdownload()
+{
 	for i in $pkgforinstall; do
 		sh_splitpkg ${i}
 		local cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
@@ -1170,7 +1172,7 @@ function sh_install()
 #				done
 #			fi
 
-#         sh_installdoinstallpkg
+#        sh_installdoinstallpkg
 
 #			sh_installpkg -i ${cpacote}
 #			local error_value="${?}"
@@ -1192,9 +1194,6 @@ function sh_install()
 function sh_search()
 {
 	local param=$@
-	sh_checkparametros ${param}
-
-	#sh_checknet
 	sh_list $param
 	log_msg "${reset}Use ${APP} -S <package> for package installation."
 	sh_cdroot
@@ -1495,12 +1494,10 @@ function sh_listforinstall()
 	fi
 
 	if (( $LLIST )); then
-#		log_wait_msg "${green}Listing..."
    	arr=(${pkgforinstall[*]})
    	ncontapkgforinstall=${#arr[*]}
 		if [[ "${#pkgforinstall}" -gt 0 ]]; then # pacote?
 			pkgNumber=0
-#      	printf "%12sPackage(${ncontapkgforinstall})%34sversion%8sfullname\n"
   			sh_getdeps $LDEPS
       	arr=(${pkgforinstall[*]})
       	ncontapkgforinstall=${#arr[*]}
@@ -1513,10 +1510,7 @@ function sh_listforinstall()
 #         	printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$pkgNumbr" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FULLNAME]}"
 #			done
 
-#			public_ntotal_pkg_listed=$pkgNumber
 			public_ntotal_pkg_listed=$ncontapkgforinstall
-			#log_msg "($public_ntotal_pkg_listed) package(s) for install."
-			echo
 		else
 			log_msg "($pkgNumber) package(s) found."
 			echo
@@ -2740,6 +2734,7 @@ function init()
   	while test $# -gt 0
 	do
 		case "${1}" in
+			-S|-Si|--install|install)					shift;sh_install "$@";exit;;
 			-Sl|--local|local)  							shift;sh_initinstallpkg "$@";exit;;
 			-Sa|-a|--alienpkg|alienpkg)	  		   shift;sh_alienpkg_main "$@";exit;;
 			-Sy|--update|update)							shift;sh_update "${param}";exit;;
@@ -2748,7 +2743,6 @@ function init()
 			-Ss|--search|search)	     					shift;sh_search "$@";exit;;
 			-c|-C|--create|create)					   sh_createpkg "${param}";exit;;
 			-m|-M|--meta|meta)	                  shift;sh_meta "${param}";exit;;
-			-S|-s|-Si|-i|--install|install)			shift;sh_install "$@";exit;;
 			-R|-r|--remove|remove) 						shift;sh_remove "$@";exit;;
 			-Sw|--download|download) 					shift;sh_download "${param}";exit;;
 			-L|-l|--list|list)    	 					shift;sh_list "$@";exit;;
