@@ -2,7 +2,7 @@
  # fetch - search, install, create, remove, upgrade packages in ChiliOS
  #
  # Created: 2019/04/05
- # Altered: 2020/12/01
+ # Altered: 2020/12/02
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -32,9 +32,10 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #########################################################################
 
-function configure(){
-	readonly _VERSION_="2.03.80.20201201"
-	readonly DEPENDENCIES=(which tar zstd curl sed grep cat awk tput dialog)
+function configure()
+{
+	readonly _VERSION_="2.03.85.20201202"
+	readonly DEPENDENCIES=(which find tar zstd curl sed grep cat awk tput dialog)
 	LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 
 	# Import lib
@@ -204,12 +205,12 @@ function sh_list()
 function sh_checknet()
 {
 	# have internet?
-	if (( verbose >= 2 )); then
+	if (( verbose )); then
 		log_info_msg "${cyan}Testing internet"
 	fi
 	curl --insecure $SITE >/dev/null 2>&1 ||
 	{
-		if (( verbose >= 2 )); then
+		if (( verbose )); then
 			evaluate_retval
 			log_failure_msg2 "No route to server ($SITE) - ABORTED."
 			return 1
@@ -675,13 +676,7 @@ function sh_download()
 			fi
 		fi
 
-#		sh_checknet; [[ $? = $false ]] || { return 1;}
-#		spinner & pid=$!
 		for i in $pkg; do
-#			local cfile=$i
-#			local cbase=$(echo $cfile | cut -d/ -f1)
-#			local cpacote=$(echo $cfile | cut -d/ -f2)
-
 			sh_splitpkg ${i}
 			local cfullname=${aPKGSPLIT[$PKG_FULLNAME]}
 			local cbase=${aPKGSPLIT[$PKG_BASE]}
@@ -696,12 +691,9 @@ function sh_download()
 			log_wait_msg "File ${red}#${nFilesDownloaded} of ${nTotalFiles}${reset}|Checking package ${orange}${cfullname} ${cspace}"
     		[[ $LFORCE = $true ]] && sh_wgetfull || test -e $VARCACHE_ARCHIVES/$cfullname || sh_wgetfull
 		done
-#		{ kill $pid; wait $pid 2>/dev/null; echo ;}
-#		echo ""
 		log_success_msg2 "${cyan}($nFilesDownloaded) packages(s) downloaded."
 	else
-		echo
-		echo "Choose one package for download or install."
+		printf "\nChoose one package for download or install.\n"
 	fi
 	sh_cdroot
 }
@@ -795,18 +787,14 @@ function sh_wgetpartial()
 {
 	local cfullfilename=$1
 	local cRaw
+
 	if !(( $GITSITE )); then
-		#site normal
-		cRaw=$SITE
+		cRaw=$SITE	#site normal
 	else
-		#github
-		cRaw=$RAW
+		cRaw=$RAW	#github
 	fi
-#	sh_checknet; [[ $? = $false ]] || { return 1;}
 	test -e $VARCACHE_ARCHIVES/$cpacote 			|| { log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}"     ; curl -s -k -O "${cRaw}/packages/$i"        ; evaluate_retval; }
 	test -e $VARCACHE_ARCHIVES/$cpacote.desc		||	{ log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.desc"   ; curl -s -k -O "${cRaw}/packages/$i.desc"   ; evaluate_retval; }
-#	test -e $VARCACHE_ARCHIVES/$cpacote.sha256	||	{ log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.sha256" ; curl -s -k -O "${cRaw}/packages/$i.sha256" ; evaluate_retval; }
-#	test -e $VARCACHE_ARCHIVES/$cpacote.sig 		||	{ log_info_msg "${cyan}Fetching file ${cRaw}/packages/${orange}${i}.sig"    ; curl -s -k -O "${cRaw}/packages/$i.sig"    ; evaluate_retval; }
 	return $?
 }
 
@@ -1027,8 +1015,6 @@ function sh_installdoinstallpkg()
 		cpacoteinstalled=$(grep ^$cpacoteSemExt ${VARCACHE_SEARCH}/packages-installed)
 		[[ $cpacoteinstalled = $cpacoteSemExt ]] && LINSTALLED=$true
 
-#		info "1-cpacoteSemExt   : $cpacoteSemExt\n2-cpacoteinstalled: $cpacoteinstalled"
-
 		if (( $LINSTALLED )) && !(( $LFORCE )); then
 			log_failure_msg2 "${orange}${cfullfilename} ${reset}Package is already installed. Use the -f option to force reinstallation."
 			continue
@@ -1046,10 +1032,8 @@ function sh_installdoinstallpkg()
 function sh_install()
 {
 	local param=$@
-	#sh_checknet
 
 	sh_listforinstall ${param} "ON" "EXACT"
-
 	if [[ $pkgforinstall != "" ]]; then
 		[[ -d $VARCACHE_ARCHIVES/ ]] || mkdir -p $VARCACHE_ARCHIVES/
 		cd $VARCACHE_ARCHIVES/
@@ -1060,131 +1044,6 @@ function sh_install()
 				return
 			fi
 		fi
-
-		for i in $pkgforinstall; do
-			sh_splitpkg ${i}
-			local cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
-			local cpacote=${aPKGSPLIT[PKG_FULLNAME]}
-			local cpacotebase=${aPKGSPLIT[PKG_BASE]}
-			local cpacoteSemExt=${aPKGSPLIT[PKG_BASE_VERSION]}
-			local LINSTALLED=$false
-			local cpacoteinstalled=
-
-#			case $cpacotebase in
-#				gcc)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
-#				gcc-libs)   log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
-#				glibc)	   log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
-#				file)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
-#				flac)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
-#			esac
-
-#			info "1-$cfullfilename\n2-$cbase\n3-$cpacote\n4-$cpacoteSemExt"
-
-#			cpacoteinstalled=$(grep ^$cpacoteSemExt ${VARCACHE_SEARCH}/packages-installed)
-#			[[ $cpacoteinstalled = $cpacoteSemExt ]] && LINSTALLED=$true
-
-#			info "1-cpacoteSemExt   : $cpacoteSemExt\n2-cpacoteinstalled: $cpacoteinstalled"
-
-#			if (( $LINSTALLED )) && !(( $LFORCE )); then
-#				log_failure_msg2 "${orange}${cfullfilename} ${reset}Package is already installed. Use the -f option to force reinstallation."
-#				continue
-#			fi
-
-#			test -e $VARCACHE_ARCHIVES/$cfullfilename.desc || sh_wgetdesc
-#			local error_value="${?}"
-#			if [ ${error_value} -ne 0 ]; then
-#				log_failure_msg2 "ERROR: Downloading ${orange}${cfullfilename}.desc"
-#				log_wait_msg "Restarting download ${orange}${cfullfilename}.desc"
-#				sh_wgetdesc
-#				local error_value="${?}"
-#				if [ ${error_value} -ne 0 ]; then
-#					log_failure_msg2 "ERROR: Fatal error downloading ${orange}${cfullfilename}.desc. ${reset}Aborting..."
-#					exit 1
-#				fi
-#			fi
-
-#			sh_getdeps
-
-#			if !(( $LAUTO )); then
-#				read -p "${blue}:: ${reset}Continue installation? [Y/n]" LDOWNLOAD
-#				if [[ $(toupper "${LDOWNLOAD}") = "N" ]]; then
-#					return
-#				fi
-#			fi
-
-#			sh_checksha256sum
-#			local error_value="${?}"
-#			if [ ${error_value} -ne 0 ]; then
-#				log_failure_msg2 "ERROR: Checking sha256sum ${cfullfilename}.sha256"
-#				log_wait_msg "Restarting download ${cfullfilename}"
-#				sh_wgetfull
-#				sh_checksha256sum
-#				local error_value="${?}"
-#				if [ ${error_value} -ne 0 ]; then
-#					log_failure_msg2 "ERROR: Checking sha256sum ${cfullfilename}.sha256. Aborting..."
-#					exit 1
-#				fi
-#			fi
-
-#			if !(( $LINSTALLED )); then
-#				log_wait_msg "Wait, installing package ${orange}$cpacote"
-#			else
-#				log_wait_msg "Wait, reinstalling package ${orange}$cpacote"
-#			fi
-
-#         sh_installdownload
-
-#			test -e $VARCACHE_ARCHIVES/$cpacote || sh_wgetpartial
-#			local error_value="${?}"
-#			if [ ${error_value} -ne 0 ]; then
-#				log_failure_msg2 "ERROR: Downloading ${orange}${cfullfilename}"
-#				log_wait_msg "Restarting download ${orange}${cfullfilename}"
-#				sh_wgetfull
-#				local error_value="${?}"
-#				if [ ${error_value} -ne 0 ]; then
-#					log_failure_msg2 "ERROR: Fatal error downloading ${orange}${cfullfilename}. ${reset}Aborting..."
-#					exit 1
-#				fi
-#			fi
-
-#			if [[ $GETDEPS != " " ]]; then
-#				for i in $GETDEPS; do
-#					sh_splitpkg ${i}
-#					cpacote=${aPKGSPLIT[PKG_FULLNAME]}
-#					cpacotebase=${aPKGSPLIT[PKG_BASE]}
-#     			case $cpacotebase in
-#		      		gcc)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
-#     				gcc-libs)   log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
-#     				glibc)	   log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
-#      				file)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
-#  	   			flac)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
-#      	      esac
-#					test -e $VARCACHE_ARCHIVES/$cpacote || sh_wgetpartial
-#      			if !(( $LINSTALLED )); then
-#		      		log_wait_msg "Wait, installing package ${orange}$cpacote"
-#     			else
-#    				log_wait_msg "Wait, reinstalling package ${orange}$cpacote"
-#      			fi
-#					sh_installpkg -i ${cpacote}
-#					local error_value="${?}"
-#					if [ ${error_value} -ne 0 ]; then
-#						log_failure_msg2 "${red}ERROR:${reset} installing package: ${orange}${cpacote}${reset}"
-#					else
-#						log_success_msg2 "${green}${cpacote} ${reset}Done. package installation successfully."
-#					fi
-#				done
-#			fi
-
-#        sh_installdoinstallpkg
-
-#			sh_installpkg -i ${cpacote}
-#			local error_value="${?}"
-#			if [ ${error_value} -ne 0 ]; then
-#				log_failure_msg2 "${red}ERROR:${reset} installing package: ${orange}${cpacote}${reset}"
-#			else
-#				log_success_msg2 "${green}${cpacote} ${reset}Done. package installation successfully."
-#			fi
-		done
       sh_installdownload
       sh_installdoinstallpkg
 	else
@@ -1413,7 +1272,6 @@ function sh_listinstalled()
 	done
 
 	if (( $LALL )) || [[ "$cListSearch" == "" ]]; then
-		#pkginstalled=$(awk -F: '{print $1}' $VARCACHE_SEARCH/packages-installed-split | grep ^)
 		pkginstalled="$(grep ^ $VARCACHE_SEARCH/packages-installed)"
 	else
 		for x in ${cListSearch}; do
@@ -1426,20 +1284,19 @@ function sh_listinstalled()
 	fi
 
 	if (( $LLIST )); then
-		log_wait_msg "${green}Listing..."
+		if (( verbose >= 2 )); then
+			log_wait_msg "${green}Listing..."
+		fi
 		arr=(${pkginstalled[*]})
 		ntotalpkg=${#arr[*]}
 		if [[ "${#pkginstalled}" -gt 0 ]]; then # pacote?
 			pkgNumber=0
-			printf "%12sPackage(${ntotalpkg})%33sversion%8sfullname\n"
+			cabec ${ntotalpkg}
 			for i in $pkginstalled; do
 				((pkgNumber++))
-				sh_splitpkg "${i}"
-#				log_success_msg2 "${green}FOUND ($pkgNumber) ${orange}${aPKGSPLIT[PKG_BASE]} ${aPKGSPLIT[PKG_VERSION]}${reset}"
-				printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$pkgNumber" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}"
+				write "${i}" "${pkgNumber}"
 			done
 			public_ntotal_pkg_listed=$pkgNumber
-			log_msg "($pkgNumber) package(s) installed."
 		else
 			log_msg "($pkgNumber) package(s) found."
 			echo
@@ -1962,18 +1819,18 @@ function sh_doinstallpkg()
 	_SUBSHELL_STATUS
 }
 
-function sh_initinstallpkg(){
+function sh_initinstallpkg()
+{
 	local pkg
 	local param=$@
 	local package
 	local	xdir=$PWD/
+	local arr
+	local nfiles
 
-	shopt -s nullglob       # enable suppress error message of a command 
+	shopt -s nullglob       # enable suppress error message of a command
 	if [[ "${param}" == "" ]] || [[ $(toupper "${param}") = "ALL" ]] || [[ $(toupper "${param}") = "ALL OFF" ]]; then
-		pkg=$(ls -1 "$VARCACHE_ARCHIVES/*.${PRG}" &>/dev/null)
-	   if [[ "${#pkg}" -eq 0 ]]; then # none?
-   		pkg=$(ls -1 *.${PRG} &>/dev/null)
-	   fi
+		pkg=$(find . "$VARCACHE_ARCHIVES/" -type f -iname "*.${PRG}")
 	else
 		for s in ${param[@]}; do
 			if [[ $(toupper "${s}") = "-Y" ]]; then
@@ -1985,47 +1842,48 @@ function sh_initinstallpkg(){
 			else
 				xdir=$(dirname $s)
 				cfile=$(echo $s | sed 's/\// /g' | awk '{print $NF}')
-				files=$(ls -1 $xdir/*.${PRG} |grep "$cfile")
+				files=$(find . "$VARCACHE_ARCHIVES/" -type f -iname "*.${PRG}" |grep "$cfile")
 				pkg="$pkg $(echo $files| grep $cfile)"
 			fi
 		done
 	fi
 
-	log_wait_msg "${blue}Listing..."
+	if (( verbose >= 2 )); then
+		log_wait_msg "${blue}Listing..."
+	fi
+
 	pkgCheckNumber=0
 	LLIST=$true
+	arr=(${pkg[*]})
+	nfiles=${#arr[*]}
 
-	if [[ "${#pkg}" -gt 1 ]]; then # pacote?
+	if [[ $nfiles -gt 0 ]]; then # pacote?
 		for i in $pkg; do
-			[[ $LLIST = $true ]] && log_success_msg2 "${blue}FOUND local package in ${xdir}${orange}$i"
+			[[ $LLIST = $true ]] && log_success_msg2 "${blue}FOUND local package ${orange}$i"
 			((pkgCheckNumber++))
 		done
-		[[ $LLIST = $true ]] && log_success_msg2 "($pkgCheckNumber) package(s) found."
 
 		if (( $pkgCheckNumber )); then
 			if !(( $LAUTO )); then
-				echo
 				conf "Install Pakages(s)?"
 				LAUTO=$?
 			fi
 		fi
+
+		if (( $LAUTO )); then
+			for package in $pkg
+			do
+				log_wait_msg "Installing local package ${orange}$package"
+				#ERROR=$(sh_installpkg -i $package 2>&1>/dev/null)
+				sh_installpkg -i $package
+			done
+		fi
 	else
 		msg "${orange}$param ${red}NOT FOUND ${reset}local package in ${orange}${VARCACHE_ARCHIVES}${reset}"
 		msg "${orange}$param ${red}NOT FOUND ${reset}local package in ${orange}${xdir} ${reset}"
-		log_msg "($pkgCheckNumber) package(s) found."
-		echo
-		echo -e "${reset}Use: # $0 update - to update with the repository${reset}"
+		printf "${reset}Use: # $0 update - to update with the repository${reset}\n"
 	fi
-
-	if (( $LAUTO )); then
-		for package in $pkg
-		do
-			log_wait_msg "Installing local package ${orange}$package"
-#			ERROR=$(sh_installpkg -i $package 2>&1>/dev/null)
-			sh_installpkg -i $package
-		done
-	fi
-	shopt -u nullglob       # disable suppress error message of a command 
+	shopt -u nullglob       # disable suppress error message of a command
 }
 
 function sh_installpkg()
@@ -2737,18 +2595,19 @@ function init()
   	while test $# -gt 0
 	do
 		case "${1}" in
-			-S|-Si|--install|install)					shift;sh_install "$@";exit;;
+			-Si|-S|--install|install)					shift;sh_install "$@";exit;;
 			-Sl|--local|local)  							shift;sh_initinstallpkg "$@";exit;;
 			-Sa|-a|--alienpkg|alienpkg)	  		   shift;sh_alienpkg_main "$@";exit;;
-			-Sy|--update|update)							shift;sh_update "${param}";exit;;
+			-Sc|--clean|clean)							sh_clean;exit 0;;
 			-Sg|-g|--generate|generate)				sh_generatepkg "$@";exit;;
 			-Sc|--clean|clean)  							sh_clean "$@";exit;;
 			-Ss|--search|search)	     					shift;sh_search "$@";exit;;
+			-Sy|--update|update)							shift;sh_update "${param}";exit;;
 			-c|-C|--create|create)					   sh_createpkg "${param}";exit;;
 			-m|-M|--meta|meta)	                  shift;sh_meta "${param}";exit;;
 			-R|-r|--remove|remove) 						shift;sh_remove "$@";exit;;
 			-Sw|--download|download) 					shift;sh_download "$@";exit;;
-			-L|-l|--list|list)    	 					shift;sh_list "$@";exit;;
+			-L|--list|list)    	 						shift;sh_list "$@";exit;;
 			-La|--list-avaiable|list-avaiable) 		shift;sh_list "$@";exit;;
 			-Lc|--list-cache|list-cache) 	        	shift;sh_FilesInCache "${param}";exit;;
 			-Lr|--list-removed|list-removed)			sh_removed $2 $3;exit;;
@@ -2758,7 +2617,6 @@ function init()
 			-Qi|--show|show) 								shift;sh_show "$@";exit;;
 			-Su|--upgrade|upgrade)						sh_upgrade ${param};exit;;
       	-u|--unit)										test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1; _arg_unit="$2";shift;;
-			--clean|-Sc|clean)							sh_clean;exit 0;;
 			--unit=*)										_arg_unit="${_key##--unit=}";;
 			-u*)												_arg_unit="${_key##-u}";;
       	-V*|--version)									logo;exit 0;;
