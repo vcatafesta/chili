@@ -717,7 +717,7 @@ function sh_getdeps()
    local LDEPS=${1}
 	deps=
 
-	printf "$(DOT)${cyan}resolvendo dependencias...\n"
+	printf "$(DOT)${cyan}solving dependencies...\n"
   	GETDEPS=
 
    for i in $pkgforinstall
