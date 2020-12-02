@@ -527,10 +527,6 @@ function sh_show()
 			local cVersion=${aPKGSPLIT[$PKG_VERSION]}
 			local cBuild=${aPKGSPLIT[$PKG_BUILD]}
 
-			if (( verbose )); then
-				log_wait_msg "Wait, downloading .desc..."
-			fi
-
 			cpacote=$VARCACHE_ARCHIVES/$cfullname
   			if [[ $LFORCE ]] || [[ -e $cpacote ]]; then
 				sh_wgetdesc
@@ -538,9 +534,6 @@ function sh_show()
 			fi
 
     		if [ ${error_value} = 0 ]; then
-				if (( verbose )); then
-   	 			log_wait_msg "${blue}Dumping => $cpacote${reset}"
-				fi
     			echo -n -e "${cyan}"
     			cat $cpacote
     			echo -e "${reset}"
@@ -550,7 +543,7 @@ function sh_show()
 
 		done
 	else
-		log_failure_msg2 "${red}$param NOT FOUND${reset} ${orange}$i${reset}"
+		log_failure_msg2 "ERROR: package ${green}'$param' ${red}was NOT FOUND${reset}"
 	fi
 	sh_cdroot
 }
@@ -2717,7 +2710,7 @@ ${red}  -Li, --list-installed, list-installed ${reset}- list installed packages
 ${red}  -Lr, --list-removed,   list-removed   ${reset}- list packages removed by ${0}
 ${red}  -Pi, --in-cache,       in-cache       ${reset}- list packages in-cache
 ${red}  -Po, --out-cache,      out-cache      ${reset}- list packages out-cache
-${red}  -w,  --show,           show           ${reset}- show package details
+${red}  -Qi, --show,           show           ${reset}- show package details
 ${red}  -Sc, --clean,          clean          ${reset}- erase downloaded packages files
 ${red}  -Ss, --search,         search         ${reset}- search for packages
 ${red}  -Su, --upgrade,        upgrade        ${reset}- upgrade packages
@@ -2765,7 +2758,7 @@ function init()
 			-Li|--list-installed|list-installed)	shift;sh_listinstalled "${@}";exit;;
 			-Pi|--in-cache|in-cache)	            shift;sh_FilesInCache "${param}";exit;;
 			-Po|--out-cache|out-cache)	            shift;sh_pkgoutcache "${param}";exit;;
-			-w|--show|show) 								shift;sh_show "$@";exit;;
+			-Qi|--show|show) 								shift;sh_show "$@";exit;;
 			-Su|--upgrade|upgrade)						sh_upgrade ${param};exit;;
       	-u|--unit)										test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1; _arg_unit="$2";shift;;
 			--clean|-Sc|clean)							sh_clean;exit 0;;
