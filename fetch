@@ -2744,7 +2744,7 @@ function init()
 			-c|-C|--create|create)					   sh_createpkg "${param}";exit;;
 			-m|-M|--meta|meta)	                  shift;sh_meta "${param}";exit;;
 			-R|-r|--remove|remove) 						shift;sh_remove "$@";exit;;
-			-Sw|--download|download) 					shift;sh_download "${param}";exit;;
+			-Sw|--download|download) 					shift;sh_download "$@";exit;;
 			-L|-l|--list|list)    	 					shift;sh_list "$@";exit;;
 			-La|--list-avaiable|list-avaiable) 		shift;sh_list "$@";exit;;
 			-Lc|--list-cache|list-cache) 	        	shift;sh_FilesInCache "${param}";exit;;
