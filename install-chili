@@ -383,7 +383,6 @@ function is_true()
    [ "$1" = "1" ] || [ "$1" = "yes" ] || [ "$1" = "true" ] ||  [ "$1" = "y" ] || [ "$1" = "t" ]
 }
 
-
 function sh_trapErro()
 {
     dialog --msgbox "Voce pressionou ctrl-c" 7 60
@@ -719,7 +718,6 @@ function sh_execcopiaold()
 	) | dialog --title "** COPIANDO **" --backtitle "$cabec" --gauge "$MSG" 7 60 0
 }
 
-
 function sh_execcopia()
 {
 	ORIGEM=$MEDIUM/
@@ -772,7 +770,6 @@ function sh_execcopia()
     )
 }
 
-
 function sh_pvexectar(){
     (pv -n $pwd/$tarball_default			            \
     |tar xJpf - -C $dir_install ) 2>&1 		            \
@@ -781,7 +778,6 @@ function sh_pvexectar(){
             --gauge "\n$cmsg_extracting: $dir_install" 	\
     7 60
 }
-
 
 function sh_exectar(){
 	local nret
@@ -1249,7 +1245,8 @@ function sh_wgetdefault(){
    	fi
 }
 
-function sh_check_install(){
+function sh_check_install()
+{
 	if [ $LPARTITION -eq 0 ]; then
     	#if [ $LDISK -eq 0 ]; then
 	    #	choosedisk
@@ -1288,7 +1285,8 @@ function sh_check_install(){
     fi
 }
 
-function sh_startinstall(){
+function sh_startinstall()
+{
   	cd $dir_install
 	sh_exectar
 	if [ $? = 1 ]; then
@@ -1657,14 +1655,16 @@ function choosedisk()
     done
 }
 
-function sh_umountpartition(){
+function sh_umountpartition()
+{
 	mensagem "$cmsg_umount_partition"
 	umount -rl $part 2> /dev/null
 	LMOUNT=0
 	cd $pwd
 }
 
-function sh_mountpartition(){
+function sh_mountpartition()
+{
 	mensagem "$cmsg_create_dir"
 	mkdir -p $dir_install 2> /dev/null
 	mensagem "$cmsg_mount_partition"
@@ -1695,7 +1695,8 @@ function sh_mountpartition(){
 	cd $dir_install
 }
 
-function choosepartition(){
+function choosepartition()
+{
 	# escolha a particao a ser instalada // Choose install partition
 	################################################################
 	#partitions=( $(blkid | cut -d: -f1 | sed "s/$/ '*' /") )
@@ -1729,31 +1730,31 @@ function choosepartition(){
         array[((n++))]="${size[((y++))]} ${type[((x++))]}"
     done
 
-	part=$(dialog                                                       \
-			--title 		"$cparticao"					  			\
+	part=$(dialog															\
+			--title 			"$cparticao"					  			\
 			--backtitle	 	"$ccabec"					 				\
 			--cancel-label	"$buttonback"								\
 			--menu 			"\n$cmsg007:"								\
-			0 65 0 														\
-			"${array[@]}" 2>&1 >/dev/tty 							    )
+			0 65 0 															\
+			"${array[@]}" 2>&1 >/dev/tty							    )
 
 	exit_status=$?
 	case $exit_status in
 		$ESC)
-            LDISK=0
+			LDISK=0
 			LPARTITION=0
 			#scrend 1
 			#exit 1
 			scrmain
 			;;
 		$CANCEL)
-            LDISK=0
+			LDISK=0
 			LPARTITION=0
 			#scrend 0
 			scrmain
 			;;
 	esac
-    LDISK=1
+	LDISK=1
 	LPARTITION=1
 	#sh_format
 	#sh_mountpartition
@@ -1772,32 +1773,31 @@ function sh_mkswap()
 
 function sh_domkfs()
 {
-   	mensagem "$cmsg_Desmontando_particao: $part"
-    umount -rl $part 2> /dev/null
-   	mensagem "$cmsg_Formatando_particao: $part"
-    mkfs -t ext4 -L "$xLABEL" $part > /dev/null 2>&1
-    local nchoice=$?
-    if [ $nchoice = $true ]; then
-        LFORMAT=1
-    else
-        LFORMAT=0
-    fi
-    return $nchoice
-
+	mensagem "$cmsg_Desmontando_particao: $part"
+	umount -rl $part 2> /dev/null
+	mensagem "$cmsg_Formatando_particao: $part"
+	mkfs -t ext4 -L "$xLABEL" $part > /dev/null 2>&1
+	local nchoice=$?
+	if [ $nchoice = $true ]; then
+		LFORMAT=1
+	else
+		LFORMAT=0
+	fi
+	return $nchoice
 }
 
 function sh_format()
 {
 	sh_checkpartition
-    local nmontada=$?
+	local nmontada=$?
 	local format=1
 
 	if [ $nmontada = 0 ] ; then
 		LFORMAT=0
-	    conf " *** FORMAT *** " "\n   $cmsgTodos_os_dados_serao_perdidos \n\n   $cmsg021 $part ?"
+		conf " *** FORMAT *** " "\n   $cmsgTodos_os_dados_serao_perdidos \n\n   $cmsg021 $part ?"
 		format=$?
 		if [ $format = 0 ] ; then
-            sh_domkfs
+			sh_domkfs
 			local nfmt=$?
 			if [ $nfmt = 0 ] ; then
 				sh_mkswap
@@ -2139,8 +2139,6 @@ function en_US()
 
 function scrend()
 {
-	#info "By"
-	#clear
 	exit $1
 }
 
@@ -2231,47 +2229,36 @@ function init()
 	done
 }
 
-function sh_packagedisp(){
+function sh_packagedisp()
+{
 	sh_testarota
 	if [ $? = $false ]; then
 		info "\n$cmsgnoroute"
 		menuinstall
 	fi
-    sh_delpackageindex
+	sh_delpackageindex
 	sh_wgetpackageindex
-
-#   pkt=($(cat releases                 \
-#       | grep .xz                      \
-#       | awk '{print $2, $5}'          \
-#       | sed 's/<a href=\"//g'         \
-#       | cut -d'"' -f3                 \
-#       | sed 's/>//g'                  \
-#       | sed 's/<\/a//g' ))
-
-#   pkt=($(curl -k -s --url "${site}/releases/$oldspkg"| sed 's/<[^h]*h/ /g'| awk '{print $1}' | grep "xz$"|sed 's/"/ /g' | awk '{print $2,$2}'))
-#   pkt=($(curl -k -s --url "${site}/releases/$oldspkg"| sed 's/<[^>]*>//g'| sed 's/^[ \t]*//;s/[ \t]*$//' | awk '{print $1,$1}'| grep "xz$"))
-#   pkt=($(curl -k -s --url "${site}/releases/$oldspkg"| sed 's/href="/:/g'| sed 's/">/:/g' | cut -d: -f4  | awk '{print $1,$1}'| grep ".xz$"))
-    pkt=($(curl -k -s --url "${site}/releases/$oldspkg"| sed 's/^.*href="//'|sed 's/".*$//' | grep ".xz$" | awk '{print $1,$1}'))
-    sd=$(dialog 				                                \
-                 --backtitle     "$ccabec"                      \
-                 --title         "$ccabec"                      \
-                 --cancel-label  "Voltar"                       \
+	pkt=($(curl -k -s --url "${site}/releases/$oldspkg"| sed 's/^.*href="//'|sed 's/".*$//' | grep ".xz$" | awk '{print $1,$1}'))
+	sd=$(dialog 				                                		\
+                 --backtitle     "$ccabec"                     \
+                 --title         "$ccabec"                     \
+                 --cancel-label  "Voltar"                      \
                  --menu          "\n$cmsgPacotes_disponiveis:"	\
-			     0 0 0											\
-                "${pkt[@]}" 2>&1 >/dev/tty						)
+			     0 0 0															\
+                "${pkt[@]}" 2>&1 >/dev/tty							)
 
-     exit_status=$?
-     case $exit_status in
-         $ESC)
-             #scrend 1
-             #exit 1
-             #scrmain
-             ;;
-         $CANCEL)
-             #scrend 0
-             #scrmain
-            ;;
-     esac
+		exit_status=$?
+		case $exit_status in
+			$ESC)
+				#scrend 1
+				#exit 1
+				#scrmain
+				;;
+			$CANCEL)
+				#scrend 0
+				#scrmain
+				;;
+		esac
 }
 
 sh_tools()
@@ -2318,30 +2305,30 @@ sh_tools()
 
 function zeravar()
 {
-    sd=""
-    part=""
-    LDISK=0
-    LPARTITION=0
-    LFORMAT=0
-    LMOUNT=0
-    LAUTOMATICA=$false
+	sd=""
+	part=""
+	LDISK=0
+	LPARTITION=0
+	LFORMAT=0
+	LMOUNT=0
+	LAUTOMATICA=$false
 }
 
 function sh_automated_install()
 {
-	confmulti 	"$cmsgInstalacao_Automatica"                  		\
-				"\n$cmsgNeste_modo_a_instalacao_sera_automatizada"	\
-				"bastando escolher o pacote e o disco destino"      \
-        		"\n\n$cmsgDeseja_continuar_e_escolher_o_disco_destino?"
-    local nChoice=$?
-    if [ $nChoice = $false ]; then
-        zeravar
-        sh_tools
-    fi
-    LAUTOMATICA=$true
-    menuinstall
-    nChoice=$?
-    if [ $nChoice = $false ]; then
+	confmulti	"$cmsgInstalacao_Automatica"                  			\
+					"\n$cmsgNeste_modo_a_instalacao_sera_automatizada"		\
+					"bastando escolher o pacote e o disco destino"      	\
+        			"\n\n$cmsgDeseja_continuar_e_escolher_o_disco_destino?"
+	local nChoice=$?
+	if [ $nChoice = $false ]; then
+		zeravar
+		sh_tools
+	fi
+	LAUTOMATICA=$true
+	menuinstall
+	nChoice=$?
+	if [ $nChoice = $false ]; then
         info "$cmsgInstalacao_Automatica" "\n$cmsgInstalacao_Automatica_cancelada"
         zeravar
         sh_tools
@@ -2399,27 +2386,29 @@ function sh_automated_install()
     zeravar
 }
 
-function sh_pvexecrsyncold(){
-    #NUMFILES=$(ls -R $MEDIUM | wc -l)
-    rsync -ravp --info=progress2 $MEDIUM/ $dir_install/ \
+function sh_pvexecrsyncold()
+{
+	#NUMFILES=$(ls -R $MEDIUM | wc -l)
+	rsync -ravp --info=progress2 $MEDIUM/ $dir_install/ \
 	| grep -o "[0-9]*%" \
 	| tr -d '%' \
 	| echo -e "$q \n#""${MSG[10]}"" : $q %" \
-    |dialog --title "** RSYNC **" --backtitle "$ccabec" --gauge "\n$cmsg_extracting:$dir_install" 7 60
+	|dialog --title "** RSYNC **" --backtitle "$ccabec" --gauge "\n$cmsg_extracting:$dir_install" 7 60
 }
 
-function sh_pvexecrsync(){
-    #NUMFILES=$(ls -R $MEDIUM | wc -l)
-    rsync -ravp --info=progress2 $MEDIUM/ $dir_install/ \
-    | grep -o "[0-9]*%"     \
-    | tr -d '%'     \
-    |dialog --title "** RSYNC **" --backtitle "$ccabec" --gauge "\n$cmsg_extracting:$dir_install" 7 60
+function sh_pvexecrsync()
+{
+	#NUMFILES=$(ls -R $MEDIUM | wc -l)
+	rsync -ravp --info=progress2 $MEDIUM/ $dir_install/ \
+	| grep -o "[0-9]*%"     \
+	| tr -d '%'     \
+	|dialog --title "** RSYNC **" --backtitle "$ccabec" --gauge "\n$cmsg_extracting:$dir_install" 7 60
 }
 
-
-function sh_pvexecrunsquashfs(){
+function sh_pvexecrunsquashfs()
+{
 	unsquashfs -f -d $dir_install $ROOTSQFS | grep -o "[0-9]*%" | tr -d '%' \
-    |dialog --title "** UNQUASHING **" --backtitle "$ccabec" --gauge "\n$cmsg_extracting:$dir_install" 7 60
+	|dialog --title "** UNQUASHING **" --backtitle "$ccabec" --gauge "\n$cmsg_extracting:$dir_install" 7 60
 }
 
 function sh_confadduser()
@@ -2467,32 +2456,32 @@ function sh_confadduser()
 	done
 }
 
+function sh_tailexecrsync()
+{
+	{
+		cd $dir_install
+		rsync -ravp $MEDIUM/ $dir_install/
+		nret=$?
+		echo
+		echo
+		echo "COPIA EFETUADA COM SUCESSO. TECLE ALGO"
+	} > out &
+	dialog  	--title "**RSYNC**"                   	\
+        		--begin 10 10 --tailboxbg out 04 120 	\
+        		--and-widget                           \
+        		--begin 3 10 --msgbox "Aguarde" 5 30
 
-
-function sh_tailexecrsync(){
-    {
-        cd $dir_install
-        rsync -ravp $MEDIUM/ $dir_install/
-        nret=$?
-        echo
-        echo
-        echo "COPIA EFETUADA COM SUCESSO. TECLE ALGO"
-    } > out &
-    dialog  --title "**RSYNC**"                   \
-        --begin 10 10 --tailboxbg out 04 120      \
-        --and-widget                              \
-        --begin 3 10 --msgbox "Aguarde" 5 30
-
-    rm -f out > /dev/null 2>&1
-    return $nret
+	rm -f out > /dev/null 2>&1
+	return $nret
 }
 
-function sh_wgetsqfs(){
-    sh_check_install
-  	cd $dir_install
-#   sh_tailexecrsync
-#   sh_pvexecrsync
-    sh_execcopia
+function sh_wgetsqfs()
+{
+	sh_check_install
+	cd $dir_install
+	#sh_tailexecrsync
+	#sh_pvexecrsync
+	sh_execcopia
 	#sh_pvexecrunsquashfs
 }
 
