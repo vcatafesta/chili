@@ -2714,7 +2714,7 @@ ${red}  -V,  --version,        version        ${reset}- output version informati
 ${cyan}ex:
 ${yellow}  fetch update self - Update self fetch via internet
   fetch create [packname-version-build]
-  fetch -Sy || fetch update"
+  fetch -Sy || fetch update
   fetch -S <package> [...] [-y] [-f] [--nodeps] || fetch install <package> [...] [-y] [-f] [--nodeps]
   fetch remove <package> [...] [-y] [-f]
   fetch <package> [...] [-y] [-f]
