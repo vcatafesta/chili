@@ -33,7 +33,7 @@
 #########################################################################
 
 function configure(){
-	readonly _VERSION_="2.03.72.20201201"
+	readonly _VERSION_="2.03.80.20201201"
 	readonly DEPENDENCIES=(which tar zstd curl sed grep cat awk tput dialog)
 	LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 
@@ -2789,7 +2789,10 @@ if [[ $1 = "-a" ]] || [[ $1 = "--alienpkg" ]] || [[ $1 = "alienpkg" ]]; then
 	sh_alienpkg_logo
 fi
 
-if [[ $1 = "" ]] || [[ $1 = "-h" ]] || [[ $1 = "--help" ]] || [[ $1 = "help" ]] || [[ $1 = "-help" ]]; then
+if [[ $1 = "" ]]; then
+	die "no operation specified (use -h for help)"
+fi
+if [[ $1 = "-h" ]] || [[ $1 = "--help" ]] || [[ $1 = "help" ]] || [[ $1 = "-help" ]]; then
 	help
 fi
 
