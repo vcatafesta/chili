@@ -717,7 +717,9 @@ function sh_getdeps()
    local LDEPS=${1}
 	deps=
 
-	printf "$(DOT)${cyan}solving dependencies...\n"
+	if (( verbose >= 2 )); then
+		printf "$(DOT)${cyan}solving dependencies...\n"
+	fi
   	GETDEPS=
 
    for i in $pkgforinstall
@@ -737,8 +739,9 @@ function sh_getdeps()
   	sh_adel "$deps"
   	arr=(${deps[*]})
   	ncontapkgdep=${#arr[*]}
-  	cabec $ncontapkgdep
-
+	if (( ncontapkgdep )); then
+  		cabec $ncontapkgdep
+	fi
   	for i in ${deps[*]}
   	do
   		((ncontadep++))
@@ -1047,7 +1050,7 @@ function sh_install()
 
 	sh_listforinstall ${param} "ON" "EXACT"
 
-	if [[ $pkgforinstall != " " ]]; then
+	if [[ $pkgforinstall != "" ]]; then
 		[[ -d $VARCACHE_ARCHIVES/ ]] || mkdir -p $VARCACHE_ARCHIVES/
 		cd $VARCACHE_ARCHIVES/
 
