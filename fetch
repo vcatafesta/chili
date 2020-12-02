@@ -2689,12 +2689,12 @@ function help()
 	cat <<EOF
 ${cyan}Most used commands:
 ${red}  -h,  --help,           help           ${reset}- display this help and exit
+${red}  -S,  --install,        install        ${reset}- install packages
 ${red}  -Sa, --alienpkg,       alienpkg       ${reset}- import package from ArchLinux
 ${red}  -Sl, --local,          local          ${reset}- install local package
-${red}  -C   --create,         create         ${reset}- build package
 ${red}  -Sg, --generate,       generate       ${reset}- generate info package from source
 ${red}  -Sy, --update,         update         ${reset}- update list packages in repository online. Need Internet
-${red}  -S,  --install,        install        ${reset}- install packages
+${red}  -C   --create,         create         ${reset}- build package
 ${red}  -m,  --meta,           meta           ${reset}- install meta packages
 ${red}  -R,  --remove,         remove         ${reset}- remove packages
 ${red}  -L,  --list,           list           ${reset}- list avaiable packages based on package names
