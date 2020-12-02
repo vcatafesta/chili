@@ -2764,7 +2764,7 @@ function init()
       	-q|--quiet)										verbose=0;;
       	--nocolor)										unsetvarcolors;USE_COLOR='n';;
       	-v|--no-verbose|--verbose)					(( ++verbose ));test "${1:0:5}" = "--no-" && verbose=0;;
-      	-h*|--help)										help;exit 0;;
+      	-h|--help)										help;exit 0;;
       	*)													help;exit 0;_last_positional="$1";_positionals+=("$_last_positional");_positionals_count=$((_positionals_count + 1));;
 		esac
 		shift
