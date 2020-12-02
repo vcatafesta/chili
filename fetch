@@ -1865,7 +1865,7 @@ function sh_initinstallpkg()
 
 		if (( $pkgCheckNumber )); then
 			if !(( $LAUTO )); then
-				conf "Install Pakages(s)?"
+				conf "$(DOT)Install package(s)?"
 				LAUTO=$?
 			fi
 		fi
