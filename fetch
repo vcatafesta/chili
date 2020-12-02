@@ -168,6 +168,7 @@ function sh_list()
 			fi
 		done
 	fi
+
 	arr=(${pkg[*]})
 	nfiles=${#arr[*]}
 	param="$@"
@@ -205,20 +206,14 @@ function sh_list()
 function sh_checknet()
 {
 	# have internet?
-	if (( verbose )); then
-		log_info_msg "${cyan}Testing internet"
-	fi
+	log_info_msg "${cyan}Testing internet"
 	curl --insecure $SITE >/dev/null 2>&1 ||
 	{
-		if (( verbose )); then
-			evaluate_retval
-			log_failure_msg2 "No route to server ($SITE) - ABORTED."
-			return 1
-		fi
-	}
-	if (( verbose )); then
 		evaluate_retval
-	fi
+		log_failure_msg2 "No route to server ($SITE) - ABORTED."
+		return 1
+	}
+	evaluate_retval
 	return $?
 }
 
@@ -676,6 +671,9 @@ function sh_download()
 			fi
 		fi
 
+		#internet?
+		sh_checknet; [[ $? = $false ]] || { return 1;}
+
 		for i in $pkg; do
 			sh_splitpkg ${i}
 			local cfullname=${aPKGSPLIT[$PKG_FULLNAME]}
@@ -688,7 +686,9 @@ function sh_download()
 			## Download package.
 			((nFilesDownloaded++))
 			cd $VARCACHE_ARCHIVES/
-			log_wait_msg "File ${red}#${nFilesDownloaded} of ${nTotalFiles}${reset}|Checking package ${orange}${cfullname} ${cspace}"
+			if (( verbose >=2 )); then
+				log_wait_msg "File ${red}#${nFilesDownloaded} of ${nTotalFiles}${reset}|Checking package ${orange}${cfullname} ${cspace}"
+			fi
     		[[ $LFORCE = $true ]] && sh_wgetfull || test -e $VARCACHE_ARCHIVES/$cfullname || sh_wgetfull
 		done
 		log_success_msg2 "${cyan}($nFilesDownloaded) packages(s) downloaded."
@@ -1824,13 +1824,12 @@ function sh_initinstallpkg()
 	local pkg
 	local param=$@
 	local package
-	local	xdir=$PWD/
 	local arr
 	local nfiles
 
 	shopt -s nullglob       # enable suppress error message of a command
 	if [[ "${param}" == "" ]] || [[ $(toupper "${param}") = "ALL" ]] || [[ $(toupper "${param}") = "ALL OFF" ]]; then
-		pkg=$(find . "$VARCACHE_ARCHIVES/" -type f -iname "*.${PRG}")
+		pkg=$(find "$VARCACHE_ARCHIVES/" -type f -iname "*.${PRG}")
 	else
 		for s in ${param[@]}; do
 			if [[ $(toupper "${s}") = "-Y" ]]; then
@@ -1840,9 +1839,8 @@ function sh_initinstallpkg()
 			elif [[ $(toupper "${s}") = "OFF" ]]; then
 				LLIST=$false
 			else
-				xdir=$(dirname $s)
 				cfile=$(echo $s | sed 's/\// /g' | awk '{print $NF}')
-				files=$(find . "$VARCACHE_ARCHIVES/" -type f -iname "*.${PRG}" |grep "$cfile")
+				files=$(find "$VARCACHE_ARCHIVES/" -type f -iname "*.${PRG}" |grep "$cfile")
 				pkg="$pkg $(echo $files| grep $cfile)"
 			fi
 		done
@@ -1880,8 +1878,8 @@ function sh_initinstallpkg()
 		fi
 	else
 		msg "${orange}$param ${red}NOT FOUND ${reset}local package in ${orange}${VARCACHE_ARCHIVES}${reset}"
-		msg "${orange}$param ${red}NOT FOUND ${reset}local package in ${orange}${xdir} ${reset}"
-		printf "${reset}Use: # $0 update - to update with the repository${reset}\n"
+		msg "${orange}$param ${red}NOT FOUND ${reset}local package in ${orange}${PWD} ${reset}"
+		printf "${reset}Use: # $0 -Sy to update with the repository${reset}\n"
 	fi
 	shopt -u nullglob       # disable suppress error message of a command
 }
@@ -2126,7 +2124,6 @@ function sh_createpkg()
 	fi
 
 	log_wait_msg "$(fmt) Building package $pkg"
-	#sh_generatepkg $pkg $pkg -Y -F $4 $5
 	sh_generatepkg $pkg $pkg -Y $4 $5
 	_NAME_FORMAT_PKG "$pkg.${PKG_EXT}" || exit 1
 	_VERIFY_ON "$pkg"
@@ -2310,24 +2307,12 @@ function sh_alienpkg_exec()
 		export deps=$(cat $destdir/.PKGINFO | grep ^depend | awk -F'"' '{print $2}')
 
 		pushd $destdir	>/dev/null 2>&1
-
-#		as_root genalien $pkg >/dev/null 2>&1
-#		sh_generatepkg $pkg $pkg
-#		mv $destdir/.BUILDINFO $destdir/info/ >/dev/null 2>&1
-#		mv $destdir/.MTREE     $destdir/info/ >/dev/null 2>&1
-#		mv $destdir/.PKGINFO   $destdir/info/ >/dev/null 2>&1
-#		mv $destdir/.INSTALL   $destdir/info/ >/dev/null 2>&1
-
 		rm -f $destdir/.BUILDINFO >/dev/null 2>&1
 		rm -f $destdir/.MTREE     >/dev/null 2>&1
 		rm -f $destdir/.PKGINFO   >/dev/null 2>&1
 
-#		log_info_msg "Building $destdir package"
-#		as_root bcpalien  >/dev/null 2>&1
-
 		((ncount++))
 		sh_createpkg $pkgtar $pkgtar -Y -F
-#		evaluate_retval
 		sh_alienpkg_pkgsize
 
 		if !(( $LKEEP )); then
