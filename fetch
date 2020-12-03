@@ -2,7 +2,7 @@
  # fetch - search, install, create, remove, upgrade packages in ChiliOS
  #
  # Created: 2019/04/05
- # Altered: 2020/12/02
+ # Altered: 2020/12/03
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -34,8 +34,8 @@
 
 function configure()
 {
-	readonly _VERSION_="2.03.85.20201202"
-	readonly DEPENDENCIES=(which find tar zstd curl sed grep cat awk tput dialog)
+	readonly _VERSION_="2.03.90.20201203"
+	readonly DEPENDENCIES=(which gpg find tar zstd curl sed grep cat awk tput dialog)
 	LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 
 	# Import lib
@@ -557,7 +557,8 @@ function _PRE_REMOVE()
 	local search_pack
 
 	pushd $VARLIB_DESC 1>/dev/null
-	local alldesc=$(echo $pkgsearch*)
+#	local alldesc=$(echo $pkgsearch*)
+	local alldesc=$packname.desc
 
 	for search_pack in $alldesc; do
 		if [[ "$search_pack" =~ ^${re}.* ]]; then
@@ -566,7 +567,8 @@ function _PRE_REMOVE()
 					((count_occurrences++))
 				fi
 			done
-			source $VARLIB_DESC/${search_pack}
+
+			[[ -e $VARLIB_DESC/${search_pack} ]] && source $VARLIB_DESC/${search_pack}
 			local name_version_build="${packname}"
 			AUTO_YES=$true
 			pushd "${VARLIB_LIST}" 1>/dev/null
@@ -581,6 +583,44 @@ function _PRE_REMOVE()
 	[[ "$inc" -gt '0' ]] && { log_failure_msg2 "NOT FOUND ${packname}"; return 1 ;}
 	)
 	_SUBSHELL_STATUS
+}
+
+function sh_remove()
+{
+	LAUTO=$false
+	local param=$@
+
+	sh_listinstalled ${param} "EXACT"
+	local lExist=$?
+	[ $lExist -eq 0 ] && return 1
+
+	sh_checkparametros ${param}
+
+	if [[ $pkginstalled != "" ]]; then
+		if !(( $LAUTO )); then
+			echo
+			confno "${blue}::${reset} Remove package(s)?"
+			LAUTO=$?
+		fi
+
+		if (( $LAUTO )); then
+			[[ -d $VARCACHE_ARCHIVES ]] || mkdir -p $VARCACHE_ARCHIVES
+			cd $VARCACHE_ARCHIVES/
+
+			for i in $pkginstalled; do
+				sh_splitpkg ${i}
+				local cfullname=${aPKGSPLIT[1]}
+				local cbase=${aPKGSPLIT[$PKG_BASE]}
+				local cbaseversion=${aPKGSPLIT[$PKG_BASE_VERSION]}
+				local cpacote=${aPKGSPLIT[$PKG_BASE_VERSION]}
+				local cversion=${aPKGSPLIT[$PKG_VERSION]}
+				local cbuild=${aPKGSPLIT[$PKG_BUILD]}
+				sh_doremove $cpacote $i
+			done
+		fi
+	fi
+	sh_cdroot
+	return 0
 }
 
 function sh_removepkg()
@@ -608,49 +648,12 @@ function sh_doremove()
 #	ERROR=$(sh_removepkg -r $1 2>&1)
 	sh_removepkg -r $1
 	local error_value="${?}"
-	if [ ${error_value} != 0 ]; then
-		log_failure_msg2 "$ERROR"
-	else
+	if [ ${error_value} = 0 ]; then
 		if (( $LLIST )); then
 			log_success_msg2 "${green}${2}${reset} Done. Removal of the package successfully completed"
 		fi
 	fi
 	return $error_value
-}
-
-function sh_remove()
-{
-	LAUTO=$false
-	local param=$@
-
-	sh_listinstalled ${param}
-	local lExist=$?
-	[ $lExist -eq 0 ] && return 1
-
-	sh_checkparametros ${param}
-
-	if [[ $pkginstalled != " " ]]; then
-		if !(( $LAUTO )); then
-			echo
-			confno "${blue}::${reset} Remove package(s)?"
-			LAUTO=$?
-		fi
-
-		if (( $LAUTO )); then
-			[[ -d $VARCACHE_ARCHIVES ]] || mkdir -p $VARCACHE_ARCHIVES
-			cd $VARCACHE_ARCHIVES/
-
-			for i in $pkginstalled; do
-				declare -g ee=$i
-				local cfile=$i
-				local cbase=$(echo $cfile | cut -d/ -f1)
-				local cpacote=$(echo $cfile | cut -d/ -f2 | sed 's/.'${PRG}'//g')
-				sh_doremove $cpacote $i
-			done
-		fi
-	fi
-	sh_cdroot
-	return 0
 }
 
 function sh_download()
@@ -732,16 +735,22 @@ function sh_getdeps()
   	arr=(${deps[*]})
   	ncontapkgdep=${#arr[*]}
 	if (( ncontapkgdep )); then
-  		cabec $ncontapkgdep
+		if (( verbose )); then
+  			cabec $ncontapkgdep
+		fi
 	fi
   	for i in ${deps[*]}
   	do
   		((ncontadep++))
   		pkgdep=$(cat $VARCACHE_SEARCH/packages-split | grep ^${i}: | awk -F":" '{print $5}')
   		if [[ $pkgdep = "" ]]; then
-  			printf "${red}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${i}" "WARNING! Dependencia nao localizada na base de dados. ${reset}Use: # ${APP} -Sy to update with the repository${reset}"#
+			if (( verbose )); then
+  				printf "${red}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${i}" "WARNING! Dependencia nao localizada na base de dados. ${reset}Use: # ${APP} -Sy to update with the repository${reset}"#
+			fi
   		else
-			write $pkgdep $ncontadep
+			if (( verbose )); then
+				write $pkgdep $ncontadep
+			fi
   			GETDEPS="$GETDEPS $(echo $pkgdep)"
   		fi
   	done
@@ -926,15 +935,15 @@ function sh_splitpkg()
 	aPKGSPLIT=()
 	pkg_folder_dir=$(echo ${file%/*})							#remove arquivo deixando somente o diretorio/repo
 	pkg_fullname=$(echo ${file##*/})    						#remove diretorio deixando somente nome do pacote
-#	pkg_arch=$(echo ${pkg_fullname%.${PRG}*})  					#remove extensao pacote (chi.zst/mz)
-#	pkg_str=$(echo ${pkg_arch%-any*})      						# https://elmord.org/blog/?entry=20121227-manipulando-strings-bash
+#	pkg_arch=$(echo ${pkg_fullname%.${PRG}*})  				#remove extensao pacote (chi.zst/mz)
+#	pkg_str=$(echo ${pkg_arch%-any*})      					# https://elmord.org/blog/?entry=20121227-manipulando-strings-bash
 #	pkg_str=$(echo ${pkg_str%-x86_64*})      					# https://elmord.org/blog/?entry=20121227-manipulando-strings-bash
 
-	pkg_arch=$(echo ${pkg_fullname%-any.${PRG}*}) 				#remove extensao pacote (chi.zst/mz)
+	pkg_arch=$(echo ${pkg_fullname%-any.${PRG}*}) 			#remove extensao pacote (chi.zst/mz)
 	pkg_arch=$(echo ${pkg_arch%.arch1*}) 						#remove extensao pacote (chi.zst/mz)
-	#pkg_arch=$(echo ${pkg_arch%-x86_64.${PRG}*}) 				#remove extensao pacote (chi.zst/mz)
+	#pkg_arch=$(echo ${pkg_arch%-x86_64.${PRG}*}) 			#remove extensao pacote (chi.zst/mz)
 	pkg_arch=$(echo ${pkg_arch%-x86_64*}) 						#remove extensao pacote (chi.zst/mz)
-	pkg_arch=$(echo ${pkg_arch%.${PRG}*})  				  		#remove extensao pacote (chi.zst/mz)
+	pkg_arch=$(echo ${pkg_arch%.${PRG}*})  					#remove extensao pacote (chi.zst/mz)
 	pkg_str=$pkg_arch
 
 	#debug
@@ -1033,7 +1042,9 @@ function sh_install()
 {
 	local param=$@
 
+	sh_checkparametros "$param"
 	sh_listforinstall ${param} "ON" "EXACT"
+
 	if [[ $pkgforinstall != "" ]]; then
 		[[ -d $VARCACHE_ARCHIVES/ ]] || mkdir -p $VARCACHE_ARCHIVES/
 		cd $VARCACHE_ARCHIVES/
@@ -1272,43 +1283,42 @@ function sh_listinstalled()
 	done
 
 	if (( $LALL )) || [[ "$cListSearch" == "" ]]; then
-		pkginstalled="$(grep ^ $VARCACHE_SEARCH/packages-installed)"
+		if (( $LALL )); then
+			pkginstalled="$(grep ^ $VARCACHE_SEARCH/packages-installed)"
+		else
+			log_failure_msg2 "${red}error${reset}: nenhum alvo definido (use -h para obter ajuda)"
+			exit 1
+		fi
 	else
 		for x in ${cListSearch}; do
 			if (( $LEXACT )); then
-				pkginstalled="$pkginstalled $(grep ^$x: $VARCACHE_SEARCH/packages-split | cut -d: -f5)"
+				pkginstalled="$pkginstalled $(grep ^$x: $VARCACHE_SEARCH/packages-installed-split | cut -d: -f5)"
 			else
 				pkginstalled="$pkginstalled $(grep $x $VARCACHE_SEARCH/packages-installed)"
 			fi
 		done
 	fi
 
+	arr=(${pkginstalled[*]})
+	ntotalpkg=${#arr[*]}
+
 	if (( $LLIST )); then
 		if (( verbose >= 2 )); then
 			log_wait_msg "${green}Listing..."
 		fi
-		arr=(${pkginstalled[*]})
-		ntotalpkg=${#arr[*]}
-		if [[ "${#pkginstalled}" -gt 0 ]]; then # pacote?
-			pkgNumber=0
+		if [[ $ntotalpkg -gt 0 ]]; then # pacote?
 			cabec ${ntotalpkg}
+			pkgNumber=0
 			for i in $pkginstalled; do
 				((pkgNumber++))
 				write "${i}" "${pkgNumber}"
 			done
-			public_ntotal_pkg_listed=$pkgNumber
 		else
-			log_msg "($pkgNumber) package(s) found."
-			echo
-			echo -e "${reset}Use: # ${APP} -Sy - to update with the repository${reset}"
+			log_failure_msg2 "${red}error${reset}: package(s) not installed:${yellow}$cListSearch"
 		fi
-	else
-		pkgNumber=0
-		for i in $pkginstalled; do
-			((pkgNumber++))
-		done
-		public_ntotal_pkg_listed=$pkgNumber
 	fi
+	pkgNumber=$ntotalpkg
+	public_ntotal_pkg_listed=$pkgNumber
 	sh_cdroot
 	return $pkgNumber
 }
@@ -1430,33 +1440,32 @@ function sh_installed(){
 
 function sh_listremoved()
 {
-	sh_checkdir "OFF"
-	log_wait_msg "Reading lists of removed packages..."
-	param=$1
+	local param=$@
 
-	if [ "$param" == "" ]; then
-		param=".*."
+	sh_checkdir "OFF"
+	if (( verbose >= 2 )); then
+		log_wait_msg "Reading lists of removed packages..."
+		log_info_msg "Checking packages"
 	fi
 
-	log_info_msg "Checking packages"
-	pushd $VARCACHE_REMOVED/ &>/dev/null
-	aCache=($(echo *.${PRG}))
-
+	aCache=($(find "$VARCACHE_REMOVED/" -type f -iname "*"))
 	rm -f $VARCACHE_SEARCH/packages-removed
 	for item in ${aCache[*]}; do
     	echo $item|sed 's/.'${PRG}'//g' >> $VARCACHE_SEARCH/packages-removed
 	done
-	popd  &>/dev/null
 	local nfilesremoved=${#aCache[*]}
-	evaluate_retval
 
-	if [ "$param" == "all" ]; then
+	if (( verbose >= 2 )); then
+		evaluate_retval
+	fi
+
+	if [ "$param" == "" ]; then
 		pkgremoved=$(cat $VARCACHE_SEARCH/packages-removed)
 	else
 		pkgremoved=$(grep $param $VARCACHE_SEARCH/packages-removed)
 	fi
 
-	declare -g pkgNumber=0
+	pkgNumber=0
 	log_success_msg2 "Listing... Done"
 
 	if [[ $pkgremoved != "" ]]; then
@@ -1468,8 +1477,7 @@ function sh_listremoved()
 	else
 		log_failure_msg2 "${red}$param NOT FOUND ${reset} ${orange}$i${reset}"
 		log_failure_msg2 "($pkgNumber) package(s) removed by $0."
-		echo
-		echo -e "${reset}Use: # $0 update - to update with the repository${reset}"
+		printf "\n$(DOT)${reset}Use: # $0 update - to update with the repository${reset}\n"
 	fi
 	sh_cdroot
 	return $pkgNumber
@@ -1477,14 +1485,19 @@ function sh_listremoved()
 
 function sh_removed()
 {
-	sh_listremoved $1
+	local param=$@
+	sh_listremoved $param
 
 	if [[ $pkgremoved != "" ]]; then
 		if [ $pkgNumber = '1' ]; then
 			for i in $pkgremoved; do
-				local cfile=$i
-				local cbase=$(echo $cfile | cut -d/ -f1)
-				local cpacote=$(echo $cfile | cut -d/ -f2)
+				sh_splitpkg ${i}
+				local cfullname=${aPKGSPLIT[1]}
+				local cbase=${aPKGSPLIT[$PKG_BASE]}
+				local cbaseversion=${aPKGSPLIT[$PKG_BASE_VERSION]}
+				local cpacote=${aPKGSPLIT[$PKG_BASE_VERSION]}
+				local cversion=${aPKGSPLIT[$PKG_VERSION]}
+				local cbuild=${aPKGSPLIT[$PKG_BUILD]}
 
 				test -d $VARCACHE_ARCHIVES || mkdir -p $VARCACHE_ARCHIVES
 				cd $VARCACHE_ARCHIVES/
@@ -1492,14 +1505,13 @@ function sh_removed()
 				read -p "Reinstall package? [Y/n]" LINSTALL
 
 				if [[ $(toupper "${LINSTALL}") = "Y" ]] || [[ $(toupper "${LINSTALL}") = "" ]]; then
-					sh_search "$cpacote" "-Y"
+					sh_install "$cbase" --nodeps -f -y -q
 					return 0
 				fi
 
 			done
 		fi
-		echo
-		echo "use $APP -S for install package"
+		printf "\n$(DOT)Use $APP -S for install package\n"
 	fi
 	sh_cdroot
 }
@@ -1891,8 +1903,7 @@ function sh_installpkg()
 	while [[ -n "$1" ]]; do
 		sh_doinstallpkg "$1"  || return 1
 		retval=${?}
-#		_pkg=$(echo ${1}|sed 's/\// /g'|awk '{print $NF}'|sed 's/.'${PKG_EXT}'//g')
-		sh_splitpkg "${1}"
+		sh_splitpkg "$1"
 		_pkg=${aPKGSPLIT[PKG_BASE_VERSION]}
 		[[ $retval = 0 ]] && > $VARCACHE_INSTALLED/${_pkg}
 		[[ $retval = 0 ]] && rm -f $VARCACHE_REMOVED/${_pkg}
@@ -1971,9 +1982,9 @@ function _GPG_SIGN()
 
 	#Pacote existe?
 	if [[ ! -e "${package}.${PKG_EXT}" ]]; then
-		echo "${red}[ERRO]${end} Unable to sign package. ${package}.${PKG_EXT}"
-		echo "Reason: Package not found."
-		echo "For security reasons, do not pass the package on to third parties."
+		printf "${red}[ERRO]${end} Unable to sign package. ${package}.${PKG_EXT}\n"
+		printf "Reason: Package not found.\n"
+		printf "For security reasons, do not pass the package on to third parties.\n"
 		return 1
 	fi
 
@@ -2066,7 +2077,6 @@ function _VERIFY_ON()
 		#Verificando se rm -rf está presente em um dos scripts.
 		for check_script in 'pre.sh' 'pos.sh' 'rm.sh'; do
 			if [[ -e "${dir_info}/${check_script}" ]]; then
-#			if _GREP 'rm[[:space:]]+\-(rf|fr)' "${dir_info}/${check_script}" 1>&4 2>&3; then
 			if _GREP 'rm[[:space:]]+\-(rf|fr)' "${dir_info}/${check_script}" &>/dev/null; then
 				log_failure_msg2 "${red}[CRAZY!]${end} ${PWD}/${dir_info}/$check_script contain command rm -rf. ABORTED NOW."
 				return $false
@@ -2077,7 +2087,8 @@ function _VERIFY_ON()
 	_SUBSHELL_STATUS
 }
 
-function _CREATE_PKG(){
+function _CREATE_PKG()
+{
 	local package="${1/%.${PKG_EXT}/}"
 	local ext_desc='desc'
 
@@ -2379,7 +2390,6 @@ function sh_alienpkg_main()
 
 function sh_upgrade()
 {
-	shift
 	local param="$@"
 	local LAUTO=$false
 	local LFORCE=$false
@@ -2396,17 +2406,6 @@ function sh_upgrade()
 	local ntotal_pkg_listed
 
 	#sh_recreatefilepackagesinstalled
-
-#	for s in ${param[@]}; do
-#		[[ $(toupper "${s}") = "-Y" ]]  && { LAUTO=$true;  param[$count]=;}
-#		[[ $(toupper "${s}") = "-F" ]]  && { LFORCE=$true; param[$count]=;}
-#		[[ $(toupper "${s}") = "OFF" ]] && { LLIST=$false; param[$count]=;}
-#		((count++))
-#		[[ $(toupper "${s}") = "-Y" ]]  && LAUTO=$true
-#		[[ $(toupper "${s}") = "-F" ]]  && LFORCE=$true
-#		[[ $(toupper "${s}") = "OFF" ]] && LLIST=$false
-#	done
-
 	sh_listinstalled ${param} "OFF" "EXACT"
 
 	local ntotal_pkg_installed=${public_ntotal_pkg_installed}
@@ -2556,17 +2555,16 @@ ${red}  -Ss, --search,         search         ${reset}- search for packages
 ${red}  -Su, --upgrade,        upgrade        ${reset}- upgrade packages
 ${red}  -Sw, --download,       download       ${reset}- only download the binary package into cache directory
 ${red}  -V,  --version,        version        ${reset}- output version information and exit
-
-${cyan}ex:
-${yellow}  fetch update self - Update self fetch via internet
-  fetch create [packname-version-build]
-  fetch -Sy || fetch update
-  fetch -S <package> [...] [-y] [-f] [--nodeps] || fetch install <package> [...] [-y] [-f] [--nodeps]
-  fetch remove <package> [...] [-y] [-f]
-  fetch <package> [...] [-y] [-f]
-  fetch search <package> [...] [-y] [-f]
-  fetch list [<package>] [<...>]
-  fetch download [<package>] [...] [ALL] [-y] [-f]
+${cyan}ex:${yellow}
+  fetch update self - Update self fetch via internet
+  fetch -Sy
+  fetch -S <package> [...] [-y] [-f] [--nodeps]
+  fetch -R <package> [...] [-y] [-f] [ALL]
+  fetch -Ss <package> [...] [-y] [-f]
+  fetch -Li [<package>] [<...>]
+  fetch -Sw [<package>] [...] [ALL] [-y] [-f]
+  fetch -Qi [<package>]
+  fetch -c [packname-version-build]
   fetch --meta [xorg] [-y] [-f]
   fetch -a <package> [...] [-y] [-f] [-ctime=<n>] [-keep]
   fetch -a -ctime=<n> [-keep]
@@ -2590,17 +2588,17 @@ function init()
 			-Sy|--update|update)							shift;sh_update "${param}";exit;;
 			-c|-C|--create|create)					   sh_createpkg "${param}";exit;;
 			-m|-M|--meta|meta)	                  shift;sh_meta "${param}";exit;;
-			-R|-r|--remove|remove) 						shift;sh_remove "$@";exit;;
+			-R|--remove|remove) 							shift;sh_remove "$@";exit;;
 			-Sw|--download|download) 					shift;sh_download "$@";exit;;
 			-L|--list|list)    	 						shift;sh_list "$@";exit;;
 			-La|--list-avaiable|list-avaiable) 		shift;sh_list "$@";exit;;
 			-Lc|--list-cache|list-cache) 	        	shift;sh_FilesInCache "${param}";exit;;
-			-Lr|--list-removed|list-removed)			sh_removed $2 $3;exit;;
+			-Lr|--list-removed|list-removed)			shift;sh_removed "$@";exit;;
 			-Li|--list-installed|list-installed)	shift;sh_listinstalled "${@}";exit;;
 			-Pi|--in-cache|in-cache)	            shift;sh_FilesInCache "${param}";exit;;
 			-Po|--out-cache|out-cache)	            shift;sh_pkgoutcache "${param}";exit;;
 			-Qi|--show|show) 								shift;sh_show "$@";exit;;
-			-Su|--upgrade|upgrade)						sh_upgrade ${param};exit;;
+			-Su|--upgrade|upgrade)						shift;sh_upgrade "$@";exit;;
       	-u|--unit)										test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1; _arg_unit="$2";shift;;
 			--unit=*)										_arg_unit="${_key##--unit=}";;
 			-u*)												_arg_unit="${_key##-u}";;
