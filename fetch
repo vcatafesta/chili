@@ -1242,25 +1242,35 @@ function sh_recreatefilepackagesinstalled()
 
 	pushd $VARLIB_DESC/ &>/dev/null
 	aCachedesc=($(echo *.desc))
-	for item in ${aCachedesc[*]}; do
-		cfileinstalled=$(echo ${item%.desc*})
-		cfileinstalled=$(echo ${cfileinstalled%.${PRG}*})
-		echo ${cfileinstalled} >> $VARCACHE_SEARCH/packages-installed
-		sh_splitpkg ${cfileinstalled}
-		echo "${aPKGSPLIT[$PKG_BASE]}:${aPKGSPLIT[$PKG_VERSION]}:${aPKGSPLIT[$PKG_BUILD]}:${aPKGSPLIT[$PKG_FULLNAME]}" >> $VARCACHE_SEARCH/packages-installed-split
-		if ! [[ -e $VARCACHE_INSTALLED/${cfileinstalled} ]]; then
-			> $VARCACHE_INSTALLED/${cfileinstalled}
-			echo "$USER|$(date)|yes" >> $VARCACHE_INSTALLED/${cfileinstalled}
-		fi
-		mv $item $cfileinstalled.desc  &> /dev/null    #consertar pacotes antigos
-	done
-	popd  &>/dev/null
+	local nfilesinstalled=${#aCachedesc[*]}
 
+	if (( $nfilesinstalled )); then
+		if (( verbose >= 2 )); then
+			sh_cabec $nfilesinstalled
+		fi
+		for item in ${aCachedesc[*]}; do
+			cfileinstalled=$(echo ${item%.desc*})
+			cfileinstalled=$(echo ${cfileinstalled%.${PRG}*})
+
+			(( pkgNumber++ ))
+			if (( verbose >= 2 )); then
+				sh_write $cfileinstalled $pkgNumber
+			fi
+
+			echo ${cfileinstalled} >> $VARCACHE_SEARCH/packages-installed
+			sh_splitpkg ${cfileinstalled}
+			echo "${aPKGSPLIT[$PKG_BASE]}:${aPKGSPLIT[$PKG_VERSION]}:${aPKGSPLIT[$PKG_BUILD]}:${aPKGSPLIT[$PKG_FULLNAME]}" >> $VARCACHE_SEARCH/packages-installed-split
+			if ! [[ -e $VARCACHE_INSTALLED/${cfileinstalled} ]]; then
+				> $VARCACHE_INSTALLED/${cfileinstalled}
+				echo "$USER|$(date)|yes" >> $VARCACHE_INSTALLED/${cfileinstalled}
+			fi
+			mv $item $cfileinstalled.desc  &> /dev/null    #consertar pacotes antigos
+		done
+	fi
 	cat $VARCACHE_SEARCH/packages-installed|sort|uniq >/tmp/packages-installed
 	cp /tmp/packages-installed $VARCACHE_SEARCH/packages-installed
 	rm -f /tmp/packages-installed
-
-	local nfilesinstalled=${#aCachedesc[*]}
+	popd  &>/dev/null
 	log_success_msg2 "Done"
 	return $nfilesinstalled
 }
@@ -1303,7 +1313,7 @@ function sh_listinstalled()
 		for x in ${cListSearch}; do
 			if (( $LEXACT )); then
 				pkginstalled="$pkginstalled $(grep ^$x: $VARCACHE_SEARCH/packages-installed-split | cut -d: -f5)"
-				pkgremoved="$pkgremoved $(grep $x $VARCACHE_SEARCH/packages-removed)"
+				pkgremoved="$pkgremoved $(grep $x- $VARCACHE_SEARCH/packages-removed)"
 			else
 				pkginstalled="$pkginstalled $(grep $x $VARCACHE_SEARCH/packages-installed)"
 			fi
@@ -1338,7 +1348,7 @@ function sh_listinstalled()
 						local cbuild=${aPKGSPLIT[$PKG_BUILD]}
 						while IFS='|' read -r cuser cdate creason; do
 							printf "%5sPackage: ${yellow}$cbaseversion\t${reset}Removed by: ${yellow}$cuser\t ${reset}on Date: ${yellow}$cdate ${reset}Reason: ${yellow}$creason${reset}\n"
-						done < "$x"
+						done < "$VARCACHE_REMOVED/$x"
 					done
 				fi
 			fi
@@ -1467,6 +1477,7 @@ function sh_installed(){
 
 function sh_recreatefilepackagesremoved()
 {
+	local pkgNumber=0
 	log_msg "Recriando list of removed packages"
 	sh_checkdir "OFF"
 	if (( verbose >= 2 )); then
@@ -1474,18 +1485,28 @@ function sh_recreatefilepackagesremoved()
 		log_wait_msg "Checking packages removed"
 	fi
 	aCache=($(find "$VARCACHE_REMOVED/" -type f -iname "*"))
-	rm -f $VARCACHE_SEARCH/packages-removed
-	for item in ${aCache[*]}; do
-		sh_splitpkg ${item}
-		local cFullname=${aPKGSPLIT[1]}
-		local cBase=${aPKGSPLIT[$PKG_BASE]}
-		local cBaseVersion=${aPKGSPLIT[$PKG_BASE_VERSION]}
-		local cPacote=${aPKGSPLIT[$PKG_BASE_VERSION]}
-		local cVersion=${aPKGSPLIT[$PKG_VERSION]}
-		local cBuild=${aPKGSPLIT[$PKG_BUILD]}
-    	echo $cBaseVersion >> $VARCACHE_SEARCH/packages-removed
-	done
 	local nfilesremoved=${#aCache[*]}
+	if (( $nfilesremoved )); then
+		if (( verbose >= 2 )); then
+			sh_cabec $nfilesremoved
+		fi
+		rm -f $VARCACHE_SEARCH/packages-removed
+		for item in ${aCache[*]}; do
+			sh_splitpkg ${item}
+			local cFullname=${aPKGSPLIT[1]}
+			local cBase=${aPKGSPLIT[$PKG_BASE]}
+			local cBaseVersion=${aPKGSPLIT[$PKG_BASE_VERSION]}
+			local cPacote=${aPKGSPLIT[$PKG_BASE_VERSION]}
+			local cVersion=${aPKGSPLIT[$PKG_VERSION]}
+			local cBuild=${aPKGSPLIT[$PKG_BUILD]}
+	    	echo $cBaseVersion >> $VARCACHE_SEARCH/packages-removed
+
+			(( pkgNumber++ ))
+			if (( verbose >= 2 )); then
+				sh_write $cBaseVersion $pkgNumber
+			fi
+		done
+	fi
 	log_success_msg2 "Done"
 	return $nfilesremoved
 }
