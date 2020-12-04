@@ -1029,7 +1029,7 @@ function sh_installdoinstallpkg()
 			log_failure_msg2 "${orange}${cfullfilename} ${reset}Package is already installed. Use the -f option to force reinstallation."
 			continue
 		fi
-		sh_installpkg -i ${cpacote}
+		sh_installpkg ${cpacote}
 		local error_value="${?}"
 		if [ ${error_value} -ne 0 ]; then
 			log_failure_msg2 "${red}ERROR:${reset} installing package: ${orange}${cpacote}${reset}"
@@ -1041,9 +1041,9 @@ function sh_installdoinstallpkg()
 
 function sh_install()
 {
-	local param=$@
+	local param="$@"
 
-	sh_checkparametros "$param"
+	sh_checkparametros $param
 	sh_listforinstall ${param} "ON" "EXACT"
 
 	if [[ $pkgforinstall != "" ]]; then
@@ -1210,8 +1210,8 @@ function sh_meta()
 					log_info_msg "Reinstalling package ${orange}$cpacote"
 				fi
 
-				#ERROR=$(sh_installpkg -i $cpacote 2>&1>/dev/null)
-				sh_installpkg -i $cpacote
+				#ERROR=$(sh_installpkg $cpacote 2>&1>/dev/null)
+				sh_installpkg $cpacote
 				evaluate_retval
 
 				local error_value="${?}"
@@ -1383,6 +1383,7 @@ function sh_listforinstall()
 		[[ $(toupper "${s}") = "-Y" ]]    && { LAUTO=$true; continue; }
      	[[ $(toupper "${s}") = "-F" ]]    && { LFORCE=$true; continue; }
      	[[ $(toupper "${s}") = "OFF" ]]   && { LLIST=$false; continue; }
+     	[[ $(toupper "${s}") = "ON"  ]]   && { LLIST=$true; continue; }
 		[[ $(toupper "${s}") = "EXACT" ]] && { LEXACT=$true; continue; }
 		[[ $(toupper "${s}") = "ALL" ]]   && { LALL=$true; continue; }
 		cListSearch="$cListSearch $(echo ${s})"
@@ -1563,9 +1564,8 @@ function sh_removed()
 				local cbuild=${aPKGSPLIT[$PKG_BUILD]}
 
 				test -d $VARCACHE_ARCHIVES || mkdir -p $VARCACHE_ARCHIVES
-				cd $VARCACHE_ARCHIVES/
 				echo
-				read -p "Reinstall package? [Y/n]" LINSTALL
+				read -p "$(DOT)Reinstall package? [Y/n]" LINSTALL
 
 				if [[ $(toupper "${LINSTALL}") = "Y" ]] || [[ $(toupper "${LINSTALL}") = "" ]]; then
 					sh_install "$cbase" --nodeps -f -y -q
@@ -1576,7 +1576,6 @@ function sh_removed()
 		fi
 		printf "$(DOT)Use $APP -S for reinstall package\n"
 	fi
-	sh_cdroot
 }
 
 function _LIST_ARCHIVES_DIRECTORIES()
@@ -1653,7 +1652,8 @@ function _LIST_ARCHIVES_DIRECTORIES()
 	done < "${VARLIB_LIST}/${packname}"
 }
 
-function _SUBSHELL_STATUS(){
+function _SUBSHELL_STATUS()
+{
 	[[ "$?" -ne '0' ]] && return 1 || return 0
 }
 
@@ -1888,7 +1888,6 @@ function sh_doinstallpkg()
 
 	_CREATE_LIST "$1" || return 1
 	_MANAGE_SCRIPTS_AND_ARCHIVES "${name_version_build}" || return 1
-#	_MANAGE_SCRIPTS_AND_ARCHIVES "${1}" || return 1
 	_LIST_ARCHIVES_DIRECTORIES "${name_version_build}"
 	)
 	_SUBSHELL_STATUS
@@ -1947,8 +1946,8 @@ function sh_initinstallpkg()
 			for package in $pkg
 			do
 				log_wait_msg "Installing local package ${orange}$package"
-				#ERROR=$(sh_installpkg -i $package 2>&1>/dev/null)
-				sh_installpkg -i $package
+				#ERROR=$(sh_installpkg $package 2>&1>/dev/null)
+				sh_installpkg $package
 			done
 		fi
 	else
@@ -1961,11 +1960,12 @@ function sh_initinstallpkg()
 
 function sh_installpkg()
 {
+	local retval=0
 	local _pkg=
-	shift
+
 	while [[ -n "$1" ]]; do
-		sh_doinstallpkg "$1"  || return 1
-		retval=${?}
+		sh_doinstallpkg "$1" || return 1
+		retval=$?
 		sh_splitpkg "$1"
 		_pkg=${aPKGSPLIT[PKG_BASE_VERSION]}
 		[[ $retval = 0 ]] && > $VARCACHE_INSTALLED/${_pkg}
@@ -1978,7 +1978,7 @@ function sh_installpkg()
 		[[ $retval = 0 ]] && echo "${aPKGSPLIT[$PKG_BASE]}:${aPKGSPLIT[$PKG_VERSION]}:${aPKGSPLIT[$PKG_BUILD]}:${aPKGSPLIT[$PKG_ARCH]}:${aPKGSPLIT[$PKG_FULLNAME]}" >> $VARCACHE_SEARCH/packages-installed-split
 		shift
 	done
-	return 0
+	return $retval
 }
 
 function _REMOVE_NOW()
@@ -2455,8 +2455,6 @@ function sh_alienpkg_main()
 function sh_upgrade()
 {
 	local param="$@"
-	local LAUTO=$false
-	local LFORCE=$false
 	local LLIST=$false
 	local count=0
 	local s
@@ -2469,7 +2467,7 @@ function sh_upgrade()
 	local ntotal_pkg_installed
 	local ntotal_pkg_listed
 
-	#sh_recreatefilepackagesinstalled
+	sh_checkparametros "$@"
 	sh_listinstalled ${param} "OFF" "EXACT"
 
 	local ntotal_pkg_installed=${public_ntotal_pkg_installed}
@@ -2505,10 +2503,10 @@ function sh_upgrade()
 					if [[ "$(vercmp $cBaseVersionInstalled $cBaseVersion)" -lt 0 ]]; then
 						log_success_msg2 "[$ntotalconfered/$ntotal_pkg_listed]${orange}${cBase} ${reset}is being updated to newest version ($cVersion)."
 						sh_doremove $cBaseVersionInstalled "OFF"
-						sh_install "$cBaseVersion" "-y" "-f" "OFF"
+						sh_install "$cBase" -y -f --nodeps
 					elif [[ "$cBaseVersionInstalled" = "$cBaseVersion" ]]; then
 						if (( $LFORCE )); then
-							sh_install "$cBaseVersion" "-y" "-f" "OFF"
+							sh_install "$cBase" -y -f --nodeps
 							continue
 						else
 							log_success_msg2 "[$ntotalconfered/$ntotal_pkg_listed]${orange}${cBase} ${reset}is already the newest version ($cVersionInstalled). Use the -f option to force reinstallation."
@@ -2516,7 +2514,7 @@ function sh_upgrade()
 						fi
 					else
 						if (( $LFORCE )); then
-							sh_install "$cBaseVersion" "-y" "-f" "OFF"
+							sh_install "$cBase" -y -f --nodeps
 						else
 							log_success_msg2 "[$ntotalconfered/$ntotal_pkg_listed]${orange}${cBase} ${reset}is already the newest version ($cVersionInstalled)."
 						fi
@@ -2539,7 +2537,7 @@ function sh_upgrade()
 		conf "${blue}:: ${reset}Install Pakages(s)?"
 		LAUTO=$?
 		if (( $LAUTO )); then
-			sh_search $param -y -f
+			sh_install $param -y -f --nodeps
 		fi
 	fi
 	sh_cdroot
@@ -2618,12 +2616,15 @@ ${red}  -Sc, --clean,          clean          ${reset}- erase downloaded package
 ${red}  -Ss, --search,         search         ${reset}- search for packages
 ${red}  -Su, --upgrade,        upgrade        ${reset}- upgrade packages
 ${red}  -Sw, --download,       download       ${reset}- only download the binary package into cache directory
-${red}  -V,  --version,        version        ${reset}- output version information and exit
+${red}  -Tr, --recreate-removed               ${reset}- recreate database packages removed
+${red}  -Ti, --recreate-installed             ${reset}- recreate database packages installed
+${red}  -V,  --version                        ${reset}- output version information and exit
 ${cyan}ex:${yellow}
   fetch update self - Update self fetch via internet
   fetch -Sy
   fetch -S <package> [...] [-y] [-f] [--nodeps]
   fetch -R <package> [...] [-y] [-f] [ALL]
+  fetch -Su [<package>] [...] [-y] [-f] [ALL]
   fetch -Ss <package> [...] [-y] [-f]
   fetch -Li [<package>] [<...>]
   fetch -Sw [<package>] [...] [ALL] [-y] [-f]
