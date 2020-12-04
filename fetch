@@ -633,6 +633,7 @@ function sh_removepkg()
 		[[ $retval = 0 ]] && _pkg=($(echo $VARCACHE_INSTALLED/${1}*| sed 's|/| |g'|awk '{print $5}'))
 		[[ $retval = 0 ]] && rm -f $VARCACHE_INSTALLED/${_pkg}
 		[[ $retval = 0 ]] && > $VARCACHE_REMOVED/${_pkg}
+		[[ $retval = 0 ]] && echo ${_pkg} >> $VARCACHE_SEARCH/packages-removed
 		[[ $retval = 0 ]] && echo "$USER|$(date)|yes" >> $VARCACHE_REMOVED/${_pkg}
 		[[ $retval = 0 ]] && sed -i  '/'${_pkginstalled}'/d' $VARCACHE_SEARCH/packages-installed
 		[[ $retval = 0 ]] && sed -i  '/'${_pkginstalled}'/d' $VARCACHE_SEARCH/packages-installed-split
