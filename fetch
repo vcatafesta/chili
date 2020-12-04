@@ -1515,8 +1515,10 @@ function sh_listremoved()
 {
 	local param=$@
 	local pkgNumber=0
+	local arr
 
-	sh_recreatefilepackagesremoved
+	#sh_recreatefilepackagesremoved
+	log_msg "Listing files removed"
 	if [[ -z "$param" ]]; then
 		pkgremoved=$(cat $VARCACHE_SEARCH/packages-removed)
 	else
@@ -1524,15 +1526,18 @@ function sh_listremoved()
 	fi
 
 	if (( verbose >= 2 )); then
-		log_success_msg2 "Listing... Done"
+		log_wait_msg "Listing... Done"
 	fi
 
-	if [[ -n $pkgremoved ]]; then
+	arr=(${pkgremoved[*]})
+	nfilesremoved=${#arr[*]}
+
+	if [[ $nfilesremoved -gt 0 ]]; then
+		sh_cabec $nfilesremoved
 		for i in $pkgremoved; do
-			log_success_msg2 "${green}FOUND ${reset} ${orange}$i${reset}"
 			((pkgNumber++))
+			sh_write $i $pkgNumber
 		done
-		log_success_msg2 "($pkgNumber) package(s) removed by $0"
 	else
 		log_failure_msg2 "${red}$param NOT FOUND ${reset} ${orange}$i${reset}"
 		log_failure_msg2 "($pkgNumber) package(s) removed by $0."
@@ -1546,8 +1551,8 @@ function sh_removed()
 	local param=$@
 	sh_listremoved $param
 
-	if [[ $pkgremoved != "" ]]; then
-		if [ $pkgNumber = '1' ]; then
+	if [[ -n $pkgremoved ]]; then
+		if [[ $pkgNumber -gt 0 ]]; then
 			for i in $pkgremoved; do
 				sh_splitpkg ${i}
 				local cfullname=${aPKGSPLIT[1]}
@@ -1569,7 +1574,7 @@ function sh_removed()
 
 			done
 		fi
-		printf "\n$(DOT)Use $APP -S for install package\n"
+		printf "$(DOT)Use $APP -S for reinstall package\n"
 	fi
 	sh_cdroot
 }
