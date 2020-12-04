@@ -23,6 +23,37 @@ LFORCE=0
 LLIST=0
 verbose=1
 
+if tput setaf 1 &> /dev/null; then
+	tput sgr0; # reset colors
+	bold=$(tput bold);
+	reset=$(tput sgr0);
+	blue=$(tput setaf 33);
+	cyan=$(tput setaf 37);
+	green=$(tput setaf 64);
+	orange=$(tput setaf 166);
+	purple=$(tput setaf 125);
+	red=$(tput setaf 124);
+	violet=$(tput setaf 61);
+	white=$(tput setaf 15);
+	yellow=$(tput setaf 136);
+	pink="\033[35;1m";
+	black=$(tput setaf 0);
+else
+	bold='';
+	reset="\e[0m";
+	blue="\e[1;34m";
+	cyan="\e[1;36m";
+	green="\e[1;32m";
+	orange="\e[1;33m";
+	purple="\e[1;35m";
+	red="\e[1;31m";
+	violet="\e[1;35m";
+	white="\e[1;37m";
+	yellow="\e[1;33m";
+	pink="\033[35;1m";
+	black="\e[1;30m";
+fi
+
 #hex code
 barra=$'\x5c'
 check=$'\0xfb'
@@ -34,7 +65,8 @@ WARNING="\\033[1;33m"        # Warnings are yellow
 FAILURE="\\033[1;31m"        # Failures are red
 INFO="\\033[1;36m"           # Information is light cyan
 BRACKET="\\033[1;34m"        # Brackets are blue
-BMPREFIX="     "
+#BMPREFIX="     "
+BMPREFIX="  ${blue}::${reset} "
 SUCCESS_PREFIX="${SUCCESS}  *  ${NORMAL}"
 FAILURE_PREFIX="${FAILURE}*****${NORMAL}"
 WARNING_PREFIX="${WARNING}  W  ${NORMAL}"
