@@ -2,7 +2,7 @@
  # fetch - search, install, create, remove, upgrade packages in ChiliOS
  #
  # Created: 2019/04/05
- # Altered: 2020/12/03
+ # Altered: 2020/12/05
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -34,7 +34,7 @@
 
 function configure()
 {
-	readonly _VERSION_="2.03.90.20201203"
+	readonly _VERSION_="2.03.95.20201205"
 	readonly DEPENDENCIES=(which gpg find tar zstd curl sed grep cat awk tput dialog)
 	LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 
@@ -140,7 +140,10 @@ function sh_list()
 	local param=$@
 	local nfiles
 	local arr
+	local s
+	local x
 	pkg=
+
 	sh_checkdir "OFF"
 	LLIST=$true
 
@@ -150,21 +153,30 @@ function sh_list()
 		fi
 	fi
 
-	if [[ "${param}" == "" ]] || [[ $(toupper "${param}") = "ALL" ]] || [[ $(toupper "${param}") = "ALL OFF" ]]; then
-		LALL=$true
-		pkg=$(cat $VARCACHE_SEARCH/folders_packages)
+	for s in ${param[@]}; do
+		[[ $(toupper "${s}") = "--NODEPS" ]] && { LDEPS=$false; continue; }
+		[[ $(toupper "${s}") = "-Y" ]]       && { LAUTO=$true; continue; }
+     	[[ $(toupper "${s}") = "-F" ]]       && { LFORCE=$true; continue; }
+     	[[ $(toupper "${s}") = "OFF" ]]      && { LLIST=$false; continue; }
+		[[ $(toupper "${s}") = "EXACT" ]]    && { LEXACT=$true; continue; }
+		[[ $(toupper "${s}") = "ALL" ]]      && { LALL=$true; continue; }
+		cListSearch="$cListSearch $(echo ${s})"
+	done
+
+	if (( $LALL )) || [[ "$cListSearch" == "" ]]; then
+		if (( $LALL )); then
+			pkg=$(cat $VARCACHE_SEARCH/folders_packages)
+		else
+			log_failure_msg2 "${red}error${reset}: nenhum alvo definido (use -h para obter ajuda)"
+			exit 1
+		fi
 	else
-		for s in ${param[@]}; do
-			if [[ $(toupper "${s}") = "-Y" ]]; then
-				shift
-				LAUTO=$true
-			elif [[ $(toupper "${s}") = "-F" ]]; then
-				shift
-				LFORCE=$true
-			elif [[ $(toupper "${s}") = "OFF" ]]; then
-				LLIST=$false
+		for x in ${cListSearch}; do
+			if (( $LEXACT )); then
+				pkg="$pkg $(grep ^$x: $VARCACHE_SEARCH/packages-split | cut -d: -f5)"
+				pkgremoved="$pkgremoved $(grep $x- $VARCACHE_SEARCH/packages-removed)"
 			else
-				pkg="$pkg $(grep $s $VARCACHE_SEARCH/folders_packages)"
+				pkg="$pkg $(grep $x $VARCACHE_SEARCH/folders_packages)"
 			fi
 		done
 	fi
@@ -633,6 +645,7 @@ function sh_removepkg()
 		[[ $retval = 0 ]] && _pkg=($(echo $VARCACHE_INSTALLED/${1}*| sed 's|/| |g'|awk '{print $5}'))
 		[[ $retval = 0 ]] && rm -f $VARCACHE_INSTALLED/${_pkg}
 		[[ $retval = 0 ]] && > $VARCACHE_REMOVED/${_pkg}
+		[[ $retval = 0 ]] && sed -i  '/'${_pkg}'/d' $VARCACHE_SEARCH/packages-removed
 		[[ $retval = 0 ]] && echo ${_pkg} >> $VARCACHE_SEARCH/packages-removed
 		[[ $retval = 0 ]] && echo "$USER|$(date)|yes" >> $VARCACHE_REMOVED/${_pkg}
 		[[ $retval = 0 ]] && sed -i  '/'${_pkginstalled}'/d' $VARCACHE_SEARCH/packages-installed
@@ -1011,11 +1024,15 @@ function sh_installdownload()
 
 function sh_installdoinstallpkg()
 {
+	local LINSTALLED=$false
+
 	for i in $pkgforinstall; do
 		sh_splitpkg ${i}
 		local cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
 		local cpacote=${aPKGSPLIT[PKG_FULLNAME]}
 		local cpacotebase=${aPKGSPLIT[PKG_BASE]}
+		local cBaseVersion=${aPKGSPLIT[$PKG_BASE_VERSION]}
+
 		case $cpacotebase in
 			gcc)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
 			gcc-libs)   log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
@@ -1023,11 +1040,11 @@ function sh_installdoinstallpkg()
 			file)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
 			flac)	      log_failure_msg2 "Skipping package: $cpacotebase"; continue;;
 		esac
-		cpacoteinstalled=$(grep ^$cpacoteSemExt ${VARCACHE_SEARCH}/packages-installed)
-		[[ $cpacoteinstalled = $cpacoteSemExt ]] && LINSTALLED=$true
+		local cpacoteinstalled=$(grep ^$cBaseVersion ${VARCACHE_SEARCH}/packages-installed)
+		[[ $cpacoteinstalled == $cBaseVersion ]] && LINSTALLED=$true
 
 		if (( $LINSTALLED )) && !(( $LFORCE )); then
-			log_failure_msg2 "${orange}${cfullfilename} ${reset}Package is already installed. Use the -f option to force reinstallation."
+			log_failure_msg2 "${orange}${cBaseVersion} ${reset}Package is already installed. Use the -f option to force reinstallation."
 			continue
 		fi
 		sh_installpkg ${cpacote}
@@ -1311,6 +1328,7 @@ function sh_listinstalled()
 			exit 1
 		fi
 	else
+
 		for x in ${cListSearch}; do
 			if (( $LEXACT )); then
 				pkginstalled="$pkginstalled $(grep ^$x: $VARCACHE_SEARCH/packages-installed-split | cut -d: -f5)"
@@ -1973,6 +1991,7 @@ function sh_installpkg()
 		[[ $retval = 0 ]] && echo "$USER|$(date)|yes" >> $VARCACHE_INSTALLED/${_pkg}
 		[[ $retval = 0 ]] && rm -f $VARCACHE_REMOVED/${_pkg}
 		[[ $retval = 0 ]] && rm -f "$VARCACHE_REMOVED/${aPKGSPLIT[$PKG_ARCH]}.${PRG}"
+		[[ $retval = 0 ]] && sed -i '/'${_pkg}'/d' $VARCACHE_SEARCH/packages-removed
 		[[ $retval = 0 ]] && sed -i '/'${_pkg}'/d' $VARCACHE_SEARCH/packages-installed
 		[[ $retval = 0 ]] && sed -i '/'${_pkg}'/d' $VARCACHE_SEARCH/packages-installed-split
 		[[ $retval = 0 ]] && echo ${_pkg} >> $VARCACHE_SEARCH/packages-installed
@@ -2510,7 +2529,7 @@ function sh_upgrade()
 							sh_install "$cBase" -y -f --nodeps
 							continue
 						else
-							log_success_msg2 "[$ntotalconfered/$ntotal_pkg_listed]${orange}${cBase} ${reset}is already the newest version ($cVersionInstalled). Use the -f option to force reinstallation."
+							log_success_msg2 "[$ntotalconfered/$ntotal_pkg_listed]${orange}${cBase} ${reset}is already the newest version ${green}($cVersionInstalled)${reset}. Use the -f option to force reinstallation."
 							continue
 						fi
 					else
@@ -2620,14 +2639,14 @@ ${red}  -Sw, --download,       download       ${reset}- only download the binary
 ${red}  -Tr, --recreate-removed               ${reset}- recreate database packages removed
 ${red}  -Ti, --recreate-installed             ${reset}- recreate database packages installed
 ${red}  -V,  --version                        ${reset}- output version information and exit
-${cyan}ex:${yellow}
-  fetch update self - Update self fetch via internet
-  fetch -Sy
-  fetch -S <package> [...] [-y] [-f] [--nodeps]
+${cyan}ex:
+  ${reset}fetch ${pink}-Sy${reset} self ${yellow}=> Update self fetch via internet
+  ${reset}fetch ${pink}-Sy${reset}      ${yellow}=> Update database
+  ${reset}fetch ${pink}-S ${green}<${reset}package${green}> [${reset}...] [-y] [-f] [--nodeps]
   fetch -R <package> [...] [-y] [-f] [ALL]
   fetch -Su [<package>] [...] [-y] [-f] [ALL]
-  fetch -Ss <package> [...] [-y] [-f]
-  fetch -Li [<package>] [<...>]
+  fetch -Ss <package> [...] [-y] [-f] [EXACT]
+  fetch -Li [<package>] [<...>] [ALL] [EXACT]
   fetch -Sw [<package>] [...] [ALL] [-y] [-f]
   fetch -Qi [<package>]
   fetch -c [packname-version-build]

@@ -27,20 +27,25 @@ if tput setaf 1 &> /dev/null; then
 	tput sgr0; # reset colors
 	bold=$(tput bold);
 	reset=$(tput sgr0);
+	rst=$(tput sgr0);
+	rs=$(tput sgr0);
 	blue=$(tput setaf 33);
 	cyan=$(tput setaf 37);
-	green=$(tput setaf 64);
+#	green=$(tput setaf 64);
+	green=$(tput setaf 2);
 	orange=$(tput setaf 166);
 	purple=$(tput setaf 125);
 	red=$(tput setaf 124);
 	violet=$(tput setaf 61);
 	white=$(tput setaf 15);
 	yellow=$(tput setaf 136);
-	pink="\033[35;1m";
+	yellow=$(tput setaf 129);
 	black=$(tput setaf 0);
 else
 	bold='';
 	reset="\e[0m";
+	rst="\e[0m";
+	rs="\e[0m";
 	blue="\e[1;34m";
 	cyan="\e[1;36m";
 	green="\e[1;32m";
@@ -376,19 +381,25 @@ function setvarcolors(){
 		tput sgr0; # reset colors
 		bold=$(tput bold);
 		reset=$(tput sgr0);
+		rst=$(tput sgr0);
+		rs=$(tput sgr0);
 		blue=$(tput setaf 33);
 		cyan=$(tput setaf 37);
-		green=$(tput setaf 64);
+#		green=$(tput setaf 64);
+		green=$(tput setaf 2);
 		orange=$(tput setaf 166);
 		purple=$(tput setaf 125);
 		red=$(tput setaf 124);
 		violet=$(tput setaf 61);
 		white=$(tput setaf 15);
 		yellow=$(tput setaf 136);
-		pink="\033[35;1m";
+		pink=$(tput setaf 129);
 		black=$(tput setaf 0);
 	else
 		bold='';
+		reset="\e[0m";
+		rst="\e[0m";
+		rs="\e[0m";
 		reset="\e[0m";
 		blue="\e[1;34m";
 		cyan="\e[1;36m";
