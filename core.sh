@@ -70,8 +70,8 @@ WARNING="\\033[1;33m"        # Warnings are yellow
 FAILURE="\\033[1;31m"        # Failures are red
 INFO="\\033[1;36m"           # Information is light cyan
 BRACKET="\\033[1;34m"        # Brackets are blue
-#BMPREFIX="     "
-BMPREFIX="  ${blue}::${reset} "
+BMPREFIX="     "
+DOTPREFIX="  ${blue}::${reset} "
 SUCCESS_PREFIX="${SUCCESS}  *  ${NORMAL}"
 FAILURE_PREFIX="${FAILURE}*****${NORMAL}"
 WARNING_PREFIX="${WARNING}  W  ${NORMAL}"
@@ -188,7 +188,7 @@ function timespec(){
 }
 
 function log_msg(){
-    echo -n -e "${BMPREFIX}${@}\n"
+    echo -n -e "${DOTPREFIX}${@}\n"
     return 0
 }
 
