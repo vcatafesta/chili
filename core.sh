@@ -158,86 +158,110 @@ function colorize(){
     readonly ALL_OFF BOLD BLUE GREEN RED YELLOW
 }
 
-function plain(){
-    local mesg=$1; shift
-    printf "${BOLD}    ${mesg}${ALL_OFF}\n" "$@" >&2
+function plain()
+{
+	local mesg=$1; shift
+	printf "${BOLD}    ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-function msg(){
-    local mesg=$1; shift
-    printf "${GREEN}  =>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
+function msg()
+{
+	local mesg=$1; shift
+	printf "${GREEN}  =>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-function msg2(){
-    local mesg=$1; shift
-    printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
+function msg2()
+{
+	local mesg=$1; shift
+	printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-function warning(){
-    local mesg=$1; shift
-    printf "${YELLOW}==> $(gettext "WARNING:")${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
+function warning()
+{
+	local mesg=$1; shift
+	printf "${YELLOW}==> $(gettext "WARNING:")${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-function error(){
-    local mesg=$1; shift
-    printf "${RED}==> $(gettext "ERROR:")${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
+function error()
+{
+	local mesg=$1; shift
+	printf "${RED}==> $(gettext "ERROR:")${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-function timespec(){
-   STAMP="$(echo `date +"%b %d %T %:z"` `hostname`) "
-   return 0
+function timespec()
+{
+	STAMP="$(echo `date +"%b %d %T %:z"` `hostname`) "
+	return 0
 }
 
-function log_msg(){
-    echo -n -e "${DOTPREFIX}${@}\n"
-    return 0
+function log_msg()
+{
+	#echo -n -e "${DOTPREFIX}${@}\n"
+	printf "${DOTPREFIX}${@}"
+	return 0
 }
 
-function log_info_msg(){
-    echo -n -e "${BMPREFIX}${@}"
-    logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
-    timespec
-    echo -n -e "${STAMP} ${logmessage}" >> ${BOOTLOG}
-    return 0
+function log_info_msg()
+{
+	#echo -n -e "${BMPREFIX}${@}"
+	printf "${BMPREFIX}${@}"
+	#logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
+	#timespec
+	#echo -n -e "${STAMP} ${logmessage}" >> ${BOOTLOG}
+	return 0
 }
 
-function log_warning_msg(){
-    echo -n -e "${BMPREFIX}${@}"
-    echo -e "${CURS_ZERO}${WARNING_PREFIX}${SET_COL}${WARNING_SUFFIX}"
+function log_warning_msg()
+{
+	#echo -n -e "${BMPREFIX}${@}"
+	printf "${BMPREFIX}${@}"
+	printf "${CURS_ZERO}${WARNING_PREFIX}${SET_COL}${WARNING_SUFFIX}\n"
 
-    # Strip non-printable characters from log file
-    logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
-    timespec
-    echo -e "${STAMP} ${logmessage} WARN" >> ${BOOTLOG}
-    return 0
+	# Strip non-printable characters from log file
+	#logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
+	#timespec
+	#echo -e "${STAMP} ${logmessage} WARN" >> ${BOOTLOG}
+	return 0
 }
 
-function log_failure_msg(){
-    echo -n -e "${BMPREFIX}${@}"
-    echo -e "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}"
-    echo "FAIL" >> ${BOOTLOG}
-    return 0
+function log_failure_msg()
+{
+	#echo -n -e "${BMPREFIX}${@}"
+	#echo -e "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}"
+	printf "${BMPREFIX}${@}"
+	printf "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}\n"
+	#echo "FAIL" >> ${BOOTLOG}
+	return 0
 }
 
-function log_failure_msg2(){
-    echo -n -e "${BMPREFIX}${@}"
-    echo -e "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}"
-    echo "FAIL" >> ${BOOTLOG}
-    return 0
+function log_failure_msg2()
+{
+	#echo -n -e "${BMPREFIX}${@}"
+	#echo -e "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}"
+	printf "${BMPREFIX}${@}"
+	printf "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}\n"
+	#echo "FAIL" >> ${BOOTLOG}
+	return 0
 }
 
-function log_success_msg2(){
-    echo -n -e "${BMPREFIX}${@}"
-    echo -e "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${SUCCESS_SUFFIX}"
-    echo " OK" >> ${BOOTLOG}
-    return 0
+function log_success_msg2()
+{
+	#echo -n -e "${BMPREFIX}${@}"
+	#echo -e "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${SUCCESS_SUFFIX}"
+	printf "${BMPREFIX}${@}"
+	printf "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${SUCCESS_SUFFIX}\n"
+	#echo " OK" >> ${BOOTLOG}
+	return 0
 }
 
-function log_wait_msg(){
-    echo -n -e "${BMPREFIX}${@}"
-    echo -e "${CURS_ZERO}${WAIT_PREFIX}${SET_COL}${WAIT_SUFFIX}"
-    echo " OK" >> ${BOOTLOG}
-    return 0
+function log_wait_msg()
+{
+	#echo -n -e "${BMPREFIX}${@}"
+	#echo -e "${CURS_ZERO}${WAIT_PREFIX}${SET_COL}${WAIT_SUFFIX}"
+	printf "${BMPREFIX}${@}"
+	printf "${CURS_ZERO}${WAIT_PREFIX}${SET_COL}${WAIT_SUFFIX}\n"
+	echo " OK" >> ${BOOTLOG}
+	return 0
 }
 
 function die()
