@@ -375,16 +375,9 @@ function sh_update()
 	evaluate_retval
 	log_wait_msg "${pink}Updating packages lists from ${SITE}...${reset}"
 	FoldersInRepo=$(cat $VARCACHE_SEARCH/folders)
-
-#	spinner & pid=$!
-
-	> $VARCACHE_SEARCH/folders_packages
-	> $VARCACHE_SEARCH/packages
-	> $VARCACHE_SEARCH/folders_metapackages
-	> $VARCACHE_SEARCH/metapackages
-	> $VARCACHE_SEARCH/packages-split
-
+	spinner & pid=$!
 	local Folders
+
 	for Folders in ${FoldersInRepo}; do
 		if !(( $GITSITE )); then
 			#site normal
@@ -415,13 +408,12 @@ function sh_update()
 		cstrvalue=$(strzero ${count} 5)
 		[[ ${count} =  0 ]] || log_success_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
 		[[ ${count} != 0 ]] || log_failure_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
-#		log_success_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
 	done
-#	{ kill $pid; wait $pid 2>/dev/null; echo ;}
+	{ kill $pid; wait $pid 2>/dev/null; echo ;}
 
 	sh_recreatefilepackagesinstalled
 	sh_recreatefilepackagesremoved
-	cleaning
+	sh_cleaning
 
 	local nfilesInReposit=$(cat $VARCACHE_SEARCH/folders_packages | wc -l)
 	local nfilesInstalled=$(cat $VARCACHE_SEARCH/packages-installed | wc -l)
@@ -2711,7 +2703,7 @@ function checkDependencies()
   fi
 }
 
-function cleaning()
+function sh_cleaning()
 {
 	log_msg "Cleaning..."
 	rm -rf $TMP_ROOT_BACKUP/ &> /dev/null
