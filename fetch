@@ -748,11 +748,13 @@ function sh_getdeps()
       cbase=${aPKGSPLIT[PKG_BASE]}
       cfullfilename=${aPKGSPLIT[PKG_FULLNAME]}
       test -e $VARCACHE_ARCHIVES/$cfullfilename.desc || sh_wgetdesc
-      source $VARCACHE_ARCHIVES/$cfullfilename.desc
-   	deps="$deps ${cbase}"
-      if (( $LDEPS )); then
-      	deps="$deps ${dep[*]}"
-      	deps="$deps $(cat $VARCACHE_ARCHIVES/${cfullfilename}.desc | grep ^depend | awk -F"'" '{print $2}')"
+	   if test -e $VARCACHE_ARCHIVES/$cfullfilename.desc; then
+	   	source $VARCACHE_ARCHIVES/$cfullfilename.desc
+	   	deps="$deps ${cbase}"
+	      if (( $LDEPS )); then
+	      	deps="$deps ${dep[*]}"
+	      	deps="$deps $(cat $VARCACHE_ARCHIVES/${cfullfilename}.desc | grep ^depend | awk -F"'" '{print $2}')"
+	      fi
       fi
    done
 
@@ -790,14 +792,14 @@ function sh_wgetresponse()
 
 	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}"
 	response=$(curl -s -w "%{http_code}\n" -k -O "${cRaw}/packages/$i")
-	evaluate_retval
 	if [[ $response -eq 404 ]]; then
+		evaluate_retval $NEG
 		cfile=$(echo ${i##*/})
 		rm -f $VARCACHE_ARCHIVES/$cfile &> /dev/null
 		log_failure_msg2 "${red}error${reset}: NOT FOUND file ${orange}${cfile} ${reset}at $SITE"
-		exit 1
 		return $false
 	fi
+	evaluate_retval
 	return $true
 }
 

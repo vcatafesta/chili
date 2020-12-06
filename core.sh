@@ -12,6 +12,7 @@ SAVEIFS=$IFS
 
 OK=1
 NOK=0
+NEG=1
 true=1
 TRUE=1
 false=0
@@ -239,14 +240,20 @@ function log_wait_msg(){
     return 0
 }
 
-function die(){
+function die()
+{
 	local msg=$1; shift
    log_failure_msg2 "${red}$msg" "$@" >&2
 	exit 1
 }
 
-function evaluate_retval(){
+function evaluate_retval()
+{
    local error_value="${?}"
+
+	if [ $# -gt 0 ]; then
+   	error_value="${1}"
+	fi
 
 	if [ ${error_value} = 0 ]; then
 		log_success_msg2
