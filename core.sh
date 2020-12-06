@@ -203,8 +203,8 @@ function log_msg()
 
 function log_info_msg()
 {
-	#echo -n -e "${BMPREFIX}${@}"
-	printf "${BMPREFIX}${@}"
+	echo -n -e "${BMPREFIX}${@}"
+	#printf "${BMPREFIX}${@}"
 	#logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
 	#timespec
 	#echo -n -e "${STAMP} ${logmessage}" >> ${BOOTLOG}
