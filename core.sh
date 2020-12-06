@@ -260,7 +260,7 @@ function log_wait_msg()
 	#echo -e "${CURS_ZERO}${WAIT_PREFIX}${SET_COL}${WAIT_SUFFIX}"
 	printf "${BMPREFIX}${@}"
 	printf "${CURS_ZERO}${WAIT_PREFIX}${SET_COL}${WAIT_SUFFIX}\n"
-	echo " OK" >> ${BOOTLOG}
+	#echo " OK" >> ${BOOTLOG}
 	return 0
 }
 

@@ -376,11 +376,14 @@ function sh_update()
 	log_wait_msg "${pink}Updating packages lists from ${SITE}...${reset}"
 	FoldersInRepo=$(cat $VARCACHE_SEARCH/folders)
 
-#	> folders_packages
-#	> packages
-#	> folders_metapackages
-#	> metapackages
-	spinner & pid=$!
+#	spinner & pid=$!
+
+	> $VARCACHE_SEARCH/folders_packages
+	> $VARCACHE_SEARCH/packages
+	> $VARCACHE_SEARCH/folders_metapackages
+	> $VARCACHE_SEARCH/metapackages
+	> $VARCACHE_SEARCH/packages-split
+
 	local Folders
 	for Folders in ${FoldersInRepo}; do
 		if !(( $GITSITE )); then
@@ -396,10 +399,10 @@ function sh_update()
 		local count=0
 		for pkgInFolder in $PackagesInFolders; do
 			sh_splitpkg ${pkgInFolder}
-			echo "${Folders}/${pkgInFolder}" >> folders_packages
-			sed -i '/'${pkgInFolder}'/d' $VARCACHE_SEARCH/packages
-			sed -i '/'${pkgInFolder}'/d' $VARCACHE_SEARCH/packages-split
-			echo "${pkgInFolder}"            >> packages
+			echo "${Folders}/${pkgInFolder}" >> $VARCACHE_SEARCH/folders_packages
+#			sed -i '/'${pkgInFolder}'/d'        $VARCACHE_SEARCH/packages
+#			sed -i '/'${pkgInFolder}'/d'        $VARCACHE_SEARCH/packages-split
+			echo "${pkgInFolder}"            >> $VARCACHE_SEARCH/packages
 			echo "${aPKGSPLIT[$PKG_BASE]}:${aPKGSPLIT[$PKG_VERSION]}:${aPKGSPLIT[$PKG_BUILD]}:${aPKGSPLIT[$PKG_FULLNAME]}:${Folders}/${pkgInFolder}" >> $VARCACHE_SEARCH/packages-split
 			((count++))
 		done
@@ -410,33 +413,27 @@ function sh_update()
 		done
 
 		cstrvalue=$(strzero ${count} 5)
-#		[[ ${count} =  0 ]] || log_success_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
-#		[[ ${count} != 0 ]] || log_failure_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
-		log_success_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
+		[[ ${count} =  0 ]] || log_success_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
+		[[ ${count} != 0 ]] || log_failure_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
+#		log_success_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
 	done
-	{ kill $pid; wait $pid 2>/dev/null; echo ;}
+#	{ kill $pid; wait $pid 2>/dev/null; echo ;}
 
 	sh_recreatefilepackagesinstalled
+	sh_recreatefilepackagesremoved
+	cleaning
 
-	echo
 	local nfilesInReposit=$(cat $VARCACHE_SEARCH/folders_packages | wc -l)
 	local nfilesInstalled=$(cat $VARCACHE_SEARCH/packages-installed | wc -l)
 	local nfilesRemoved=0
 	[[ -e $VARCACHE_SEARCH/packages-removed ]] && nfilesRemoved=$(cat $VARCACHE_SEARCH/packages-removed | wc -l)
 
-	echo -e "${cyan}All list packages updated!${reset}"
-	echo -e "${blue}($nfilesInReposit) packages in repository${reset}"
-	echo -e "${green}($nfilesInstalled) packages installed${reset}"
-	echo -e "${red}($nfilesRemoved) packages removed by $0${reset}"
-	echo -e ${reset}
-
-#	conf "List out-of-cache packages?"
-#	[[ $? = $true ]] && sh_pkgoutcache
-
-	echo -e "${reset}Use: # $0 --help for helping${reset}"
-	echo
+	printf "${cyan}All list packages updated!${reset}\n"
+	printf "${blue}($nfilesInReposit) packages in repository${reset}\n"
+	printf "${green}($nfilesInstalled) packages installed${reset}\n"
+	printf "${red}($nfilesRemoved) packages removed by $0${reset}\n"
+	printf "\n${reset}Use: # $0 --help for helping${reset}\n"
 	sh_cdroot
-	exit
 }
 
 function sh_FilesInCache()
@@ -1546,7 +1543,7 @@ function sh_listforinstall()
 			if (( $LEXACT )); then
 				pkgforinstall="$pkgforinstall $(grep ^$x: $VARCACHE_SEARCH/packages-split | cut -d: -f5)"
 			else
-				pkgforinstall="$pkgforinstall $(grep $x $VARCACHE_SEARCH/packages-split)"
+				pkgforinstall="$pkgforinstall $(grep $x $VARCACHE_SEARCH/packages-split | cut -d: -f5)"
 			fi
 		done
 	fi
@@ -2712,6 +2709,12 @@ function checkDependencies()
     echo "Instale-os e/ou verifique se estão no seu \$PATH" >&2
     exit 1
   fi
+}
+
+function cleaning()
+{
+	log_msg "Cleaning..."
+	rm -rf $TMP_ROOT_BACKUP/ &> /dev/null
 }
 
 function cleanup()
