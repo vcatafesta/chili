@@ -1099,7 +1099,8 @@ function sh_install()
 
 	sh_checkdir "OFF"
 	sh_checkparametros $param
-	sh_listforinstall ${param} "ON" "EXACT"
+#	sh_listforinstall ${param} "ON" "EXACT"
+	sh_listforinstall ${param} "ON"
 
 	if [[ $pkgforinstall != "" ]]; then
 		[[ -d $VARCACHE_ARCHIVES/ ]] || mkdir -p $VARCACHE_ARCHIVES/
