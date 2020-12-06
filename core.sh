@@ -197,7 +197,7 @@ function timespec()
 function log_msg()
 {
 	#echo -n -e "${DOTPREFIX}${@}\n"
-	printf "${DOTPREFIX}${@}"
+	printf "${DOTPREFIX}${@}\n"
 	return 0
 }
 
