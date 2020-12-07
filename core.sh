@@ -413,13 +413,13 @@ function importlib()
 function toupper()
 {
     declare -u TOUPPER=${@}
-    printf "${TOUPPER}\n"
+    echo -e "${TOUPPER}"
 }
 
 function tolower()
 {
 	declare -l TOLOWER=${@}
-   printf "${TOLOWER}\n"
+   echo -e "${TOLOWER}"
 }
 
 function filetolower()
