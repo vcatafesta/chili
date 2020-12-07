@@ -23,6 +23,8 @@ LAUTO=0
 LFORCE=0
 LLIST=0
 verbose=1
+declare -l BAIXA=${MENSAGEM}
+declare -u ALTA=${MENSAGEM}
 
 if tput setaf 1 &> /dev/null; then
 	tput sgr0; # reset colors
@@ -117,7 +119,44 @@ CURS_ZERO="\\033[0G"
 
 # SUBROUTINES
 
-function cpad(){
+function zshdw()
+{
+	sudo git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install
+}
+
+function firstletter()
+{
+	word=$1
+	#firstletter="$(echo $word | head -c 1)"
+	#firstletter=$(echo "$word" | sed -e "{ s/^\(.\).*/\1/ ; q }")
+	#firstletter="${word%"${word#?}"}"
+	#firstletter=${word:0:1}
+	firstletter=${word::1}
+	printf "$firstletter\n"
+}
+
+function colorize()
+{
+	if tput setaf 0 &>/dev/null; then
+		ALL_OFF="$(tput sgr0)"
+		BOLD="$(tput bold)"
+		BLUE="${BOLD}$(tput setaf 4)"
+		GREEN="${BOLD}$(tput setaf 2)"
+		RED="${BOLD}$(tput setaf 1)"
+		YELLOW="${BOLD}$(tput setaf 3)"
+	else
+		ALL_OFF="\e[0m"
+		BOLD="\e[1m"
+		BLUE="${BOLD}\e[34m"
+		GREEN="${BOLD}\e[32m"
+		RED="${BOLD}\e[31m"
+		YELLOW="${BOLD}\e[33m"
+	fi
+	readonly ALL_OFF BOLD BLUE GREEN RED YELLOW
+}
+
+function cpad()
+{
 	# centralizar string
 	COLS=$(tput cols)
 	printf "%*s\n" $[$COLS/2] "${1}"
@@ -135,7 +174,8 @@ function lpad(){
 	printf "%ds\n" ${2} "${1}"
 }
 
-function sh_cdroot(){
+function sh_cdroot()
+{
 	cd - >/dev/null 2>&1
 }
 
@@ -302,15 +342,18 @@ function info(){
 }
 export -f info
 
-# Módulo para emular o comando cat
-function _CAT(){
+# Modulo para emular o comando cat
+# Agradecimentos a SlackJeff
+# https://github.com/slackjeff/bananapkg
+function _CAT()
+{
     # Tag para sinalizar que precisa parar.
     local end_of_file='EOF'
 
     INPUT=( "${@:-"%"}" )
     for i in "${INPUT[@]}"; do
         if [[ "$i" != "%" ]]; then
-            exec 3< "$i" || exit 1
+            exec 3< "$i" || return 1
         else
             exec 3<&0
         fi
@@ -345,51 +388,84 @@ function _GREP(){
 }
 
 # Módulo para emular o comando wc
-# Está funcionando por enquanto somente para
-# linhas.
-function _WC(){
-    local check="$@" # Recebendo args
-    local inc='0'    # Var incremento
+# Está funcionando por enquanto somente para linhas.
+# Agradecimentos a SlackJeff
+# https://github.com/slackjeff/bananapkg
+function _WC()
+{
+	local check="$@" 	# Recebendo args
+	local inc=0    	# Var incremento
 
-    for x in $check; do
-        let inc++
-    done
-    echo "$inc"
-    return 0
+	for x in $check; do
+		(( inc++ ))
+	done
+	printf "$inc\n"
+	return 0
 }
 
-function importlib(){
+function importlib()
+{
 	for lib in "$LIBRARY"/*.sh; do
 		source "$lib"
 	done
 }
 
-function toupper(){
+function toupper()
+{
     declare -u TOUPPER=${@}
-    echo ${TOUPPER}
+    printf "${TOUPPER}\n"
 }
 
-function tolower(){
-    declare -l TOLOWER=${@}
-    echo ${TOLOWER}
+function tolower()
+{
+	declare -l TOLOWER=${@}
+   printf "${TOLOWER}\n"
 }
 
-function now(){
-    printf "%(%m-%d-%Y %H:%M:%S)T\n" $(date +%s)
+function filetolower()
+{
+	for arquivo in $@
+	do
+		printf "$arquivo\n"
+		mv "$arquivo" "${arquivo,,}"
+	done
 }
 
-function strzero(){
-    printf "%0*d" $2 $1
+function mvlower()
+{
+	local filepath
+	local dirpath
+	local filename
+
+	for filepath in "$@"; do
+		# OBS: temos que preservar o path do diretório!
+		dirpath=$(dirname "$filepath")
+		filename=$(basename "$filepath")
+		mv "$filepath" "${dirpath}/${filename,,}"
+	done
+}
+#mvlower "$@"
+
+function now()
+{
+	printf "%(%m-%d-%Y %H:%M:%S)T\n" $(date +%s)
 }
 
-function replicate(){
+function strzero()
+{
+	printf "%0*d" $2 $1
+}
+
+function replicate()
+{
 	for c in $(seq 1 $2);
 	do
 		printf "%s" $1
 	done
 }
 
-function maxcol(){
+function maxcol()
+{
 	if [ -z "${COLUMNS}" ]; then
 		COLUMNS=$(stty size)
 		COLUMNS=${COLUMNS##* }
@@ -397,13 +473,15 @@ function maxcol(){
 	return $COLUMNS
 }
 
-function inkey(){
+function inkey()
+{
 	read -t "$1" -n1 -r -p "" lastkey
 }
 
 # simulando bash com echo
 # Vilmar Catafesta <vcatafesta@gmail.com>
-function _cat(){
+function _cat()
+{
 	echo "$(<$1)"
 }
 
@@ -462,7 +540,8 @@ function unsetvarcolors(){
 	pink=
 }
 
-function sh_msgdoevangelho(){
+function sh_msgdoevangelho()
+{
 	local total
 	local id
 	local msg
@@ -484,7 +563,8 @@ function sh_msgdoevangelho(){
 	printf "${blue}${msg}${reset}\n"
 }
 
-function spinner(){
+function spinner()
+{
 	spin=('\' '|' '/' '-' '+')
 
 	while :; do
@@ -495,35 +575,217 @@ function spinner(){
 	done
 }
 
-function sh_checkroot(){
+function sh_checkroot()
+{
 	if [ "$(id -u)" != "0" ]; then
 		log_failure_msg2 "ERROR: This script must be run with root privileges."
 		exit
 	fi
 }
 
-function sh_version(){
-	printf "$0 $_VERSION_\n"
-	echo
+function criartemp()
+{
+	# for((i=1;i<=${1};i++)) ; do touch a-${i}.tmp ; done
+	local modo="0755"
+	echo -e "Prefixo   :"; read arquivo
+	echo -e "Extensao  :"; read ext
+	echo -e "Quantidade:"; read quantidade
+	echo -e "Modo      :"; read modo
+	echo -e "Criando os arquivos...\n";
+	variavel="0"
+	while [ $variavel -lt $quantidade ]; do
+	   arq=$arquivo$variavel
+	   touch $arq.$ext
+	   chmod $modo $arq.$ext
+	   printf "$PWD/$arq.$ext criado\n"
+	   (( variavel++ ))
+	done
 }
 
-function conf(){
-    read -p "$1 [Y/n]"
-    [[ ${REPLY^} == "" ]] && return $true
-    [[ ${REPLY^} == N ]] && return $false || return $true
+function as_root()
+{
+	if   [ $EUID = 0 ];        then $*
+	elif [ -x /usr/bin/sudo ]; then sudo $*
+	else                            su -c \\"$*\\"
+	fi
+}
+export -f as_root
+
+which2()
+{
+	#cat > /usr/bin/which << "EOF"
+	##!/bin/bash
+	type -pa "$@" | head -n 1
+	#type -pa "$@" | head -n 1 ; exit ${PIPESTATUS[0]}
+	#EOF
+	#chmod -v 755 /usr/bin/which
+	#chown -v root:root /usr/bin/which
 }
 
-function confok(){
+function ex()
+{
+	if [ -f $1 ] ; then
+		case $1 in
+			*.tar.bz2)   tar xvjf $1     ;;
+			*.tar.gz)    tar xvzf $1     ;;
+         *.tar.xz)    tar Jxvf $1     ;;
+         *.lz)        lzip -d -v $1   ;;
+         *.chi)       tar Jxvf $1     ;;
+         *.chi.zst)   tar -xvf $1     ;;
+         *.tar.zst)   tar -xvf $1     ;;
+         *.mz)        tar Jxvf $1     ;;
+         *.cxz)       tar Jxvf $1     ;;
+         *.chi)       tar Jxvf $1     ;;
+         *.tar)       tar xvf $1      ;;
+         *.tbz2)      tar xvjf $1     ;;
+         *.tgz)       tar xvzf $1     ;;
+         *.bz2)       bunzip2 $1      ;;
+         *.rar)       unrar x $1      ;;
+         *.gz)        gunzip $1       ;;
+         *.zip)       unzip $1        ;;
+         *.Z)         uncompress $1   ;;
+         *.7z)        7z x $1         ;;
+         *)           echo "'$1' cannot be extracted via >extract<" ;;
+		esac
+	else
+		echo "'$1' is not a valid file!"
+	fi
+}
+
+function limpa()
+{
+	#!/bin/bash
+	#source /lib/lsb/init-functions
+	cdir=$(ls -l|awk '/^d/ {print $9}')
+	blue="\e[1;34m"
+
+	echo -e ${blue}
+	log_success_msg2 "Iniciando limpeza..."
+
+	for i in $cdir
+	do
+		log_info_msg "${blue}Removendo diretorio temporario... $i/"
+		rm -rfd $i/
+		evaluate_retval
+	done
+	log_success_msg2 "Finish."
+}
+
+function dwup()
+{
+	if [ "$(vercmp $2 4.0.4)" -lt 0 ]; then
+		echo
+	fi
+}
+
+function sh_version()
+{
+	printf "$0 $_VERSION_\n\n"
+}
+
+function conf()
+{
 	read -p "$1 [Y/n]"
 	[[ ${REPLY^} == "" ]] && return $true
 	[[ ${REPLY^} == N ]] && return $false || return $true
 }
 
-function confno(){
+function confok()
+{
+	read -p "$1 [Y/n]"
+	[[ ${REPLY^} == "" ]] && return $true
+	[[ ${REPLY^} == N ]] && return $false || return $true
+}
+
+function confno()
+{
 	read -p "$1 [N/y]"
 	[[ ${REPLY^} == "" ]] && return $false
 	[[ ${REPLY^} == N  ]] && return $false || return $true
 }
+
+function limpa_tar_zst()
+{
+	for i in {a..z}
+	do
+		cd $i
+		rm *.pkg.tar.zst
+		cd ../
+	done
+}
+
+function swap()
+{ # Swap 2 filenames around, if they exist (from Uzi's bashrc).
+    local TMPFILE=tmp.$$
+
+    [ $# -ne 2 ] && echo "swap: 2 arguments needed" && return 1
+    [ ! -e $1 ] && echo "swap: $1 does not exist" && return 1
+    [ ! -e $2 ] && echo "swap: $2 does not exist" && return 1
+
+    mv "$1" $TMPFILE
+    mv "$2" "$1"
+    mv $TMPFILE "$2"
+}
+
+# Creates an archive (*.tar.gz) from given directory.
+function maketar() { tar cvzf "${1%%/}.tar.gz"  "${1%%/}/"; }
+
+# Create a ZIP archive of a file or folder.
+function makezip() { zip -r "${1%%/}.zip" "$1" ; }
+
+function cat2()
+{
+    exec 3<> $@
+    while read line <&3
+    do {
+      echo "$line"
+      (( Lines++ ));                   #  Incremented values of this variable
+                                       #+ accessible outside loop.
+                                       #  No subshell, no problem.
+    }
+    done
+    exec 3>&-
+    echo
+    echo "Number of lines read = $Lines"     # 8
+}
+
+function newtemp()
+{
+	#!/bin/bash
+	if [ $# -lt 2 ]
+	then
+		# Imprime o nome do script "$0" (isso eh bom para tornar um template de script) e como usá-lo 
+		echo "usar $0 <qtde> <ext>"
+		# Sai do script com código de erro 1 (falha)
+	else
+		for((i=1;i<=${1};i++)) ; do touch tmp-${i}.${2} ; echo -e tmp-${i}.${2}; done
+	fi
+}
+
+function take()
+{
+	mkdir -p $@ && cd ${@:$#}
+}
+
+function colors()
+{
+	for c in {0..255}; do tput setaf $c; tput setaf $c | cat -v; echo =$c; done
+}
+
+function colortable()
+{
+	for ((i=0; i<256; i++)) ;do
+  	 echo -n '  '
+    tput setab $i
+    tput setaf $(( ( (i>231&&i<244 ) || ( (i<17)&& (i%8<2)) ||
+        (i>16&&i<232)&& ((i-16)%6 <(i<100?3:2) ) && ((i-16)%36<15) )?7:16))
+    printf " C %03d " $i
+    tput op
+    (( ((i<16||i>231) && ((i+1)%8==0)) || ((i>16&&i<232)&& ((i-15)%6==0)) )) &&
+        printf "\n" ''
+	done
+}
+
 
 function DOT()
 {
@@ -558,7 +820,7 @@ function fmt(){
 	return $?
 }
 
-checkDependencies(){
+function checkDependencies(){
   local errorFound=0
 
   for command in "${DEPENDENCIES[@]}"; do
