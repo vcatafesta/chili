@@ -4,7 +4,7 @@
  # fetchpack - A flexible cache cleaning utility in ChiliOS
  #
  # Created: 2020/10/05
- # Altered: 2020/11/20
+ # Altered: 2020/12/07
  #
  # Copyright (c) 2019 - 2020, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -36,7 +36,7 @@
 
 export LC_ALL="pt_BR.utf8"
 declare -r myname='fetchpack'
-declare -r myver='1.0.8-20201120'
+declare -r myver='1.0.9-20201207'
 declare    delim=$'\n' keep=3 movedir= scanarch=
 declare    USE_COLOR='y'
 declare -a cachedirs=()
