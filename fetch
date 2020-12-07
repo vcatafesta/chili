@@ -149,7 +149,7 @@ function sh_list()
 
 	if (( $LLIST )); then
 		if (( verbose >= 2 )); then
-			log_wait_msg "${blue}Reading package lists in the repository..."
+			log_msg "Reading package lists in the repository"
 		fi
 	fi
 
@@ -186,9 +186,6 @@ function sh_list()
 	param="$@"
 
 	if (( $LLIST )); then
-		if (( verbose >= 2 )); then
-			log_wait_msg "${blue}Listing..."
-		fi
 		pkgCheckNumber=0
 		if [[ $nfiles -gt 0 ]]; then
 			if (( verbose >= 2 )); then
@@ -201,11 +198,6 @@ function sh_list()
 					[[ $LLIST = $true ]] && sh_write $i $pkgCheckNumber
 				fi
 			done
-
-			if (( verbose >= 2 )); then
-				[[ $LLIST = $true ]] && sh_footer $pkgCheckNumber
-			fi
-
 		else
 			if (( verbose )); then
 				log_failure_msg2 "ERROR: package ${green}'$param' ${red}was NOT FOUND${reset}"
@@ -248,7 +240,7 @@ function sh_selfupdate()
 
 		#internet?
 		sh_checknet; [[ $? = $false ]] || { return 1;}
-		log_wait_msg "Ok, let's do it..."
+		log_msg "Ok, let's do it..."
 		#Ok, Puxe o arquivo do repositorio agora!
 		[[ -d "${tmp_dir_full}" ]] && rm -r "${tmp_dir_full}"
 		[[ -d "${tmp_dir}" ]] || mkdir -p "${tmp_dir}"
@@ -310,7 +302,7 @@ function sh_clean()
 function sh_checkdir()
 {
 	if (( verbose >= 2 )); then
-		log_wait_msg "Checking job directories"
+		log_msg "Checking job directories"
 	fi
 
 	[[ -e $VARCACHE_SEARCH/packages-removed         ]] || > $VARCACHE_SEARCH/packages-removed
@@ -373,7 +365,7 @@ function sh_update()
 #	echo "${FoldersInRepo[@]}" > ${VARCACHE_SEARCH}/folders
 
 	evaluate_retval
-	log_wait_msg "${pink}Updating packages lists from ${SITE}...${reset}"
+	log_msg "${pink}Updating packages lists from ${SITE}...${reset}"
 	FoldersInRepo=$(cat $VARCACHE_SEARCH/folders)
 	spinner & pid=$!
 	local Folders
@@ -420,11 +412,12 @@ function sh_update()
 	local nfilesRemoved=0
 	[[ -e $VARCACHE_SEARCH/packages-removed ]] && nfilesRemoved=$(cat $VARCACHE_SEARCH/packages-removed | wc -l)
 
-	printf "${cyan}All list packages updated!${reset}\n"
-	printf "${blue}($nfilesInReposit) packages in repository${reset}\n"
-	printf "${green}($nfilesInstalled) packages installed${reset}\n"
-	printf "${red}($nfilesRemoved) packages removed by $0${reset}\n"
-	printf "\n${reset}Use: # $0 --help for helping${reset}\n"
+	log_msg "${cyan}All list packages updated!${reset}"
+	log_msg "${blue}($nfilesInReposit) packages in repository${reset}"
+	log_msg "${green}($nfilesInstalled) packages installed${reset}"
+	log_msg "${red}($nfilesRemoved) packages removed by $0${reset}"
+	echo
+	log_msg "${reset}Use: # $0 --help for helping${reset}"
 	sh_cdroot
 }
 
@@ -507,7 +500,7 @@ function sh_show()
 	local error_value=0
 
 	if (( verbose >= 2 )); then
-		log_wait_msg "Reading package lists..."
+		log_msg "Reading package lists..."
 	fi
 
 #	sh_listinstalled ${param} "OFF" "EXACT"
@@ -516,10 +509,6 @@ function sh_show()
 
 	local ntotal_pkg_installed=${public_ntotal_pkg_installed}
 	local ntotal_pkg_listed=${public_ntotal_pkg_listed}
-
-	if (( verbose >= 2 )); then
-		log_wait_msg "Listing..."
-	fi
 
 	if [[ $pkginstalled != "" ]]; then
 		for i in $pkginstalled; do
@@ -555,6 +544,7 @@ function sh_show()
 				printf "${cyan}Init         : ${yellow}${lfs_init}\n"
 				printf "${cyan}LSB          : ${yellow}${lfs_version}\n"
     			printf "${reset}\n"
+				unset pkgname version desc arch url license depend dep size mainteiner distro lfs_init lfs_version
     		else
     			log_failure_msg2 "ERROR Downloading ${red}$cfullname${reset}"
     		fi
@@ -1335,7 +1325,7 @@ function sh_recreatefilepackagesinstalled()
 	cp /tmp/packages-installed $VARCACHE_SEARCH/packages-installed
 	rm -f /tmp/packages-installed
 	popd  &>/dev/null
-	log_success_msg2 "Done"
+	#log_success_msg2 "Done"
 	return $nfilesinstalled
 }
 
@@ -1390,9 +1380,6 @@ function sh_listremoved()
 	ntotalpkg=${#arr[*]}
 
 	if (( $LLIST )); then
-		if (( verbose >= 2 )); then
-			log_wait_msg "${green}Listing..."
-		fi
 		if [[ $ntotalpkg -gt 0 ]]; then # pacote?
 			sh_cabec ${ntotalpkg}
 			pkgNumber=0
@@ -1479,9 +1466,6 @@ function sh_listinstalled()
 	ntotalpkg=${#arr[*]}
 
 	if (( $LLIST )); then
-		if (( verbose >= 2 )); then
-			log_wait_msg "${green}Listing..."
-		fi
 		if [[ $ntotalpkg -gt 0 ]]; then # pacote?
 			sh_cabec ${ntotalpkg}
 			pkgNumber=0
@@ -1669,7 +1653,7 @@ function sh_recreatefilepackagesremoved()
 			fi
 		done
 	fi
-	log_success_msg2 "Done"
+	#log_success_msg2 "Done"
 	return $nfilesremoved
 }
 
@@ -1685,10 +1669,6 @@ function sh_listremovedOLD()
 		pkgremoved=$(cat $VARCACHE_SEARCH/packages-removed)
 	else
 		pkgremoved=$(grep $param $VARCACHE_SEARCH/packages-removed)
-	fi
-
-	if (( verbose >= 2 )); then
-		log_wait_msg "Listing... Done"
 	fi
 
 	arr=(${pkgremoved[*]})
@@ -2079,10 +2059,6 @@ function sh_initinstallpkg()
 				pkg="$pkg $(echo $files| grep $cfile)"
 			fi
 		done
-	fi
-
-	if (( verbose >= 2 )); then
-		log_wait_msg "${blue}Listing..."
 	fi
 
 	pkgCheckNumber=0
@@ -2742,9 +2718,11 @@ trap cleanup SIGINT SIGTERM
 
 function sh_backup()
 {
-	log_wait_msg "Making backup: $VARCACHE_SEARCH/"
-	mkdir -p $TMP_DIR_BACKUP/
-	cp -f $VARCACHE_SEARCH/* $TMP_DIR_BACKUP/
+	if (( verbose >= 2 )); then
+		log_wait_msg "Making backup: $VARCACHE_SEARCH/"
+	fi
+	mkdir -p $TMP_DIR_BACKUP/ &> /dev/null
+	cp -f $VARCACHE_SEARCH/* $TMP_DIR_BACKUP/ &> /dev/null
 }
 
 #figlet
@@ -2856,6 +2834,7 @@ configure
 sh_checkroot
 checkDependencies
 setvarcolors
+sh_backup
 
 # sanity checks
 #case $(( dryrun+delete+move )) in
