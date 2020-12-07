@@ -786,10 +786,10 @@ function sh_wgetresponse()
 		cfile=$(echo ${i##*/})
 		rm -f $VARCACHE_ARCHIVES/$cfile &> /dev/null
 		log_failure_msg2 "${red}error${reset}: NOT FOUND file ${orange}${cfile} ${reset}at $SITE"
-		return $false
+		return 1
 	fi
 	evaluate_retval
-	return $true
+	return 0
 }
 
 function sh_wgetdesc()
