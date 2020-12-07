@@ -413,9 +413,9 @@ function sh_update()
 	[[ -e $VARCACHE_SEARCH/packages-removed ]] && nfilesRemoved=$(cat $VARCACHE_SEARCH/packages-removed | wc -l)
 
 	log_msg "${cyan}All list packages updated!${reset}"
-	log_msg "${blue}($nfilesInReposit) packages in repository${reset}"
-	log_msg "${green}($nfilesInstalled) packages installed${reset}"
-	log_msg "${red}($nfilesRemoved) packages removed by $0${reset}"
+	log_msg "${blue}($(strzero $nfilesInReposit 5)) packages in repository${reset}"
+	log_msg "${green}($(strzero $nfilesInstalled 5)) packages installed${reset}"
+	log_msg "${red}($(strzero $nfilesRemoved 5)) packages removed by $0${reset}"
 	echo
 	log_msg "${reset}Use: # $0 --help for helping${reset}"
 	sh_cdroot
