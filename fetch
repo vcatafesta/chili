@@ -1284,7 +1284,7 @@ function sh_recreatefilepackagesinstalled()
 	local pkgNumber=0
 	local s
 
-	log_msg "Recriando list of installed packages"
+	log_msg "Recreating list of installed packages"
 	#sh_checkdir "OFF"
 	if (( verbose >= 2 )); then
 		log_wait_msg "Reading lists of installed packages"
@@ -1624,7 +1624,7 @@ function sh_installed(){
 function sh_recreatefilepackagesremoved()
 {
 	local pkgNumber=0
-	log_msg "Recriando list of removed packages"
+	log_msg "Recreating list of removed packages"
 	sh_checkdir "OFF"
 	if (( verbose >= 2 )); then
 		log_wait_msg "Reading lists of removed packages"
