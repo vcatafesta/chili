@@ -750,11 +750,11 @@ function mainOLD()
 		arrayfull=("${AllFilesPackages[@]}")
 
 		if (( dryrun )); then
-	   	echo "${white}running mode => ${red}DRY-RUN"
+	   	log_msg "${white}running mode => ${red}DRY-RUN"
 		elif (( delete )); then
-	   	echo "${white}running mode => ${red}DELETE"
+	   	log_msg "${white}running mode => ${red}DELETE"
 		elif (( move )); then
-	   	echo "${white}running mode => ${red}MOVE"
+	   	log_msg "${white}running mode => ${red}MOVE"
 		fi
 
 		last_pkg_base=""
@@ -875,11 +875,11 @@ function main()
 	else
 		if (( verbose )); then
 			if (( dryrun )); then
-		   	log_wait_msg "${white}running mode => ${red}DRY-RUN"
+		   	log_msg "${white}running mode => ${red}DRY-RUN"
 			elif (( delete )); then
-		   	log_wait_msg "${white}running mode => ${red}DELETE"
+		   	log_msg "${white}running mode => ${red}DELETE"
 			elif (( move )); then
-		   	log_wait_msg "${white}running mode => ${red}MOVE"
+		   	log_msg "${white}running mode => ${red}MOVE"
 			fi
 		fi
 	fi
