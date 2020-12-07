@@ -270,6 +270,201 @@ function cleanup()
 }
 trap cleanup SIGINT SIGTERM
 
+function mainold1()
+{
+	local pkg=
+	local pkgInAll=
+	local pkg_base=
+	local pkg_search=
+	local candidates=()
+	local cachedir
+
+	for cachedir in "${cachedirs[@]}"
+	do
+		[[ -d $cachedir ]]            || die "Error: cachedir '$cachedir' does not exist or is not a directory"
+		pushd "$cachedir" &>/dev/null || die "Error: failed to chdir to $cachedir"
+
+		arrayall=($(find "$PWD" -type f -name "*.chi.zst" | sort | uniq ))
+		arraytwo=($(find "$PWD" -type f -name "*.chi.zst" | sort ))
+
+		nx=${#arraytwo[*]}
+
+		for pkgInAll in "${arrayall[@]}"
+		do
+			sh_splitpkg ${pkgInAll}
+			pkg_base=${aPKGSPLIT[$PKG_BASE]}
+			(( npkgbase++ ))
+			[[ -z "$pkg_base" ]] && continue
+
+			for i in $(seq 0 $nx)
+			do
+				nlen=${#pkg_base}
+				pkg="${arraytwo[$i]}"
+				sh_splitpkg ${pkg}
+				pkg_search=${aPKGSPLIT[$PKG_BASE]}
+				[[ -z "$pkg_search" ]] && continue
+
+				(( npkgsearch++ ))
+				[[ "${pkg_search::$nlen}" > "${pkg_search::$nlen}" ]] && break
+				if [[ "${pkg_base}" =~ "${pkg_search}" ]] && [[ "$(vercmp $pkgInAll $pkg)" -lt 0 ]]; then
+					printf "%s\n" "${pkgInAll}"
+					candidates+=("${pkgInAll}")
+					unset arraytwo[$npkgsearch]
+				fi
+			done
+		done
+		popd >/dev/null 2>&1
+	done
+
+	if (( ! ${#candidates[*]} )); then
+		die "NO packages found for pruning"
+	fi
+}
+
+function mainOLD()
+{
+	local nfiles=0
+	local pkg=
+	local pkgInAll=
+	local pkg_base=
+	local pkg_search=
+	local candidates=()
+	local cachedir
+
+	for cachedir in "${cachedirs[@]}"
+	do
+		[[ -d $cachedir ]]            || die "Error: cachedir '$cachedir' does not exist or is not a directory"
+		pushd "$cachedir" &>/dev/null || die "Error: failed to chdir to $cachedir"
+
+		if [ $# -lt 1 ]; then
+			if (( $LTIME )); then
+				AllFilesPackages=$(find "$PWD" -type f -ctime $ctime -iname "*.chi.zst" | sort )
+			else
+				AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | sort )
+			fi
+		else
+			if (( $LTIME )); then
+				AllFilesPackages=$(find "$PWD" -type f -ctime $ctime -iname "*.chi.zst" | grep $1 | sort)
+			else
+				AllFilesPackages=$(find "$PWD" -type f -iname "*.chi.zst" | grep $1 | sort)
+			fi
+		fi
+
+		# find "$PWD" -iname "zip*.chi.zst" | sort -Vr | sed -r 's/([^0-9])-([^0-9])/\1§\2/g' | sort -t- -k1,1 -u | sed 's/§/-/g'
+
+		arrayfull=("${AllFilesPackages[@]}")
+
+		if (( dryrun )); then
+	   	log_msg "${white}running mode => ${red}DRY-RUN"
+		elif (( delete )); then
+	   	log_msg "${white}running mode => ${red}DELETE"
+		elif (( move )); then
+	   	log_msg "${white}running mode => ${red}MOVE"
+		fi
+
+		last_pkg_base=""
+		while read -r pkgInAll;do
+			sh_splitpkg ${pkgInAll}
+			pkg_base=${aPKGSPLIT[$PKG_BASE]}
+			[[ -z "$pkg_base" ]] &&	continue
+
+			if [[ "${pkg_base}" == "${last_pkg_base}" ]]; then
+				continue
+			fi
+
+			(( pkgNumber++ ))
+			FilteredPackages=$(find "$PWD" -type f -iname "$pkg_base*.zst" | grep -E "*$pkg_base-([0-9])" | sort )
+
+			array=("${FilteredPackages[*]}")
+			arr=(${FilteredPackages[*]})
+			nfiles=${#arr[*]}
+
+			if (( verbose >= 3 )); then
+				printf "     ${white}verifying package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${blue} => %s\n" "$pkgNumber" "$pkg_base" "$nfiles" "${pkgInAll}"
+			fi
+
+			if [[ $nfiles -lt 2 ]]; then
+				continue
+			fi
+
+			last_pkg_search=${arr[@]: -1}
+			if (( verbose == 2 )); then
+				printf "<     ${white}candidate package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${yellow} => %s\n" "$pkgFilter" "$pkg_base" "$nfiles" "${last_pkg_search}"
+			fi
+			while read -r pkg;do
+#				sh_splitpkg ${pkg}
+#				pkg_search=${aPKGSPLIT[$PKG_BASE]}
+#				[[ -z "$pkg_search" ]] &&	continue
+
+#				nlen=${#pkg_base}
+#				[[ "${pkg_search::$nlen}" > "${pkg_base::$nlen}" ]] && break
+				(( pkgFilter++ ))
+
+#				if [[ "${candidates[@]}" =~ "${pkg}" ]]; then
+#					#info "$pkgInAll\n${BASH_REMATCH[0]}"
+#					continue
+#				fi
+#				if [[ "${pkg_base}" =~ "${pkg_search}" ]]; then
+					if [[ "$(vercmp ${last_pkg_search} ${pkg})" -lt 0 ]]; then
+						if (( verbose == 2 )); then
+							printf "<     ${white}candidate package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${yellow} => %s\n" "$pkgFilter" "$pkg_base" "$nfiles" "${pkg}"
+						fi
+						candidates+=("${last_pkg_search}")
+						[[ -e "${pkgInAll}.desc" ]] && candesc+=("${pkgInAll}.desc")
+					elif [[ "$(vercmp ${last_pkg_search} ${pkg})" -gt 0 ]]; then
+						if (( verbose == 2 )); then
+							printf ">     ${white}candidate package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${yellow} => %s\n" "$pkgFilter" "$pkg_base" "$nfiles" "${pkg}"
+						fi
+						candidates+=("${pkg}")
+						[[ -e "${pkg}.desc" ]] && candesc+=("${pkg}.desc")
+					fi
+#				fi
+#			done < <(printf '%s\n' "$(find "$PWD" -type f -name "$pkg_base*.zst" | grep -E "*$pkg_base-([0-9])" | sort )")
+			done < <(printf '%s\n' "$array")
+			last_pkg_base=$pkg_base
+#		done < <(printf '%s\n' "$(find "$PWD" -type f -name "*.chi.zst" | sort )")
+		done < <(printf '%s\n' "$arrayfull")
+		popd >/dev/null 2>&1
+	done
+
+	if (( ! ${#candidates[*]} )); then
+		echo
+		printf "${red}  E  NO packages found for pruning\n"
+		exit 0
+	fi
+
+	if (( verbose )); then
+		echo
+		Number=0
+		while read -r pkg
+		do
+			(( Number++ ))
+			sh_splitpkg ${pkg}
+			pkg_base=${aPKGSPLIT[$PKG_BASE]}
+			printf "     ${white}found package ${purple}(%04d) ${green}[%40s]${purple}(%04d)${red} => %s\n" "$Number" "$pkg_base" "$Number" "${pkg}"
+		done < <(printf '%s\n' "${candidates[@]}")
+	fi
+
+	pkgcount=${#candidates[*]}
+	totalsaved=$(printf '%s\0' "${candidates[@]}" | xargs -0 stat -c %s | awk '{ sum += $1 } END { print sum }')
+	set -o errexit # Exit immediately if a pipeline returns non-zero.
+
+	(( verbose )) && cmdopts+=(-v)
+	if (( delete )); then
+		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 rm "${cmdopts[@]}"
+		printf '%s\0' "${candesc[@]}"    | runcmd xargs -0 rm "${cmdopts[@]}"
+	elif (( move )); then
+		printf '%s\0' "${candidates[@]}" | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
+		printf '%s\0' "${candesc[@]}"    | runcmd xargs -0 mv "${cmdopts[@]}" -t "$movedir"
+	fi
+	echo
+	if (( dryrun )); then
+		msg "${yellow}$output finish dry-run (files found: $pkgcount) (disk space saved: %s)" "$(size_to_human "$totalsaved")"
+	else
+		msg "$output (files found: $pkgcount) (disk space saved: %s)" "$(size_to_human "$totalsaved")"
+	fi
+}
+
 function main()
 {
 	local nfiles=0

@@ -311,6 +311,20 @@ function die()
 	exit 1
 }
 
+function runcmd(){
+	if (( EUID != 0 )); then
+		msg "Privilege escalation required"
+		if sudo -v &>/dev/null && sudo -l &>/dev/null; then
+			sudo "$@"
+		else
+			die 'Unable to escalate privileges using sudo'
+		fi
+	else
+		"$@"
+	fi
+}
+export -f runcmd
+
 function evaluate_retval()
 {
    local error_value="${?}"
@@ -341,6 +355,13 @@ function info(){
 	return $result
 }
 export -f info
+
+function debug()
+{
+	info "$*"
+	return $?
+}
+export -f debug
 
 # Modulo para emular o comando cat
 # Agradecimentos a SlackJeff
@@ -645,6 +666,89 @@ function size_to_human(){
 	}'
 }
 
+join(){
+	{
+		local indelimiter="${1- }"
+		local outdelimiter="${2-.}"
+	}
+
+	local car
+	local cdr
+	local IFS
+
+	IFS="${indelimiter}"
+	read -t 1 car cdr || return
+	test "${cdr}" || { echo "${car}" ; return ; }
+	echo "${car}${outdelimiter}${cdr}" | ${FUNCNAME} "${indelimiter}" "${outdelimiter}"
+}
+
+function len()
+{
+	return $#
+}
+
+function seeek()
+{
+	count=0
+	while [ "x${wholist[count]}" != "x" ]
+	do
+		(( count++ ))
+	done
+}
+
+function ascan4(){
+	true=0
+	false=1
+	array=($(ls -1 /etc/ | sort ))
+	search='passwd'
+
+	if [[ "${array[@]}" =~ "${search}" ]]; then
+	    echo "${!array[*]}"
+	    echo "${BASH_REMATCH[0]}"
+	fi
+
+}
+
+function ascan3()
+{
+	local myarray="$1"
+	local match="$2"
+	printf '%s\n' "${myarray[@]}" | grep -P '^math$'
+}
+
+function ascan2()
+{
+	local myarray="$1"
+	local match="$2"
+	case "${myarray[@]}" in
+		*"$match"*)
+			return $true
+			;;
+	esac
+	return $false
+}
+
+function ascan()
+{
+  local e match="$1"
+  shift
+  for e; do [[ "$e" == "$match" ]] && return $true; done
+  return $false
+}
+
+function contains()
+{
+	local n=$#
+	local value=${!n}
+
+	for ((i=1;i < $#;i++)) {
+		if [ "${!i}" == "${value}" ]; then
+			return $i
+		fi
+	}
+	return $n
+}
+
 function ex()
 {
 	if [ -f $1 ] ; then
@@ -875,6 +979,24 @@ function sh_checkparametros()
 		[[ $(toupper "${s}") = "-F" ]]        && LFORCE=$true
 		[[ $(toupper "${s}") = "OFF" ]]       && LLIST=$false
 	done
+}
+
+checkDependencies() {
+  local errorFound=0
+
+  for command in "${DEPENDENCIES[@]}"; do
+    if ! which "$command"  &> /dev/null ; then
+      echo "ERRO: não encontrei o comando '$command'" >&2
+      errorFound=1
+    fi
+  done
+
+  if [[ "$errorFound" != "0" ]]; then
+    echo "---IMPOSSÍVEL CONTINUAR---"
+    echo "Esse script precisa dos comandos listados acima" >&2
+    echo "Instale-os e/ou verifique se estão no seu \$PATH" >&2
+    exit 1
+  fi
 }
 
 #   parseopts.sh - getopt_long-like parser
