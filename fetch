@@ -191,13 +191,13 @@ function sh_list()
 		fi
 		pkgCheckNumber=0
 		if [[ $nfiles -gt 0 ]]; then
-			if (( verbose )); then
+			if (( verbose >= 2 )); then
 				sh_cabec $nfiles
 			fi
 
 			for i in $pkg; do
 				((pkgCheckNumber++))
-				if (( verbose )); then
+				if (( verbose >= 2 )); then
 					[[ $LLIST = $true ]] && sh_write $i $pkgCheckNumber
 				fi
 			done
@@ -538,9 +538,22 @@ function sh_show()
 			fi
 
     		if [ ${error_value} = 0 ]; then
-    			echo -n -e "${cyan}"
-    			cat $cpacote
-    			echo -e "${reset}"
+    			printf "${cyan}"
+    			#cat $cpacote
+    			source "$cpacote"
+				printf "Name         : ${pkgname}\n"
+				printf "Version      : ${version}\n"
+				printf "Description  : ${desc}\n"
+				printf "Architecture : ${arch}\n"
+				printf "URL          : ${url}\n"
+				printf "Licenses     : ${license}\n"
+				printf "Dependencies : ${depend}\n"
+				printf "Size         : $(size_to_human ${size})\n"
+				printf "Packer       : ${maintainer}\n"
+				printf "Distro       : ${distro}\n"
+				printf "Init         : ${lfs_init}\n"
+				printf "LSB          : ${lfs_version}\n"
+    			printf "${reset}\n"
     		else
     			log_failure_msg2 "ERROR Downloading ${red}$cfullname${reset}"
     		fi
@@ -779,16 +792,22 @@ function sh_wgetresponse()
 	local i="$1"
 	local response
 
-	log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}"
+	if (( verbose >= 2 )); then
+		log_info_msg "${cyan}Fetching package ${cRaw}/packages/${orange}${i}"
+	fi
 	response=$(curl -s -w "%{http_code}\n" -k -O "${cRaw}/packages/$i")
 	if [[ $response -eq 404 ]]; then
 		evaluate_retval $NEG
 		cfile=$(echo ${i##*/})
 		rm -f $VARCACHE_ARCHIVES/$cfile &> /dev/null
-		log_failure_msg2 "${red}error${reset}: NOT FOUND file ${orange}${cfile} ${reset}at $SITE"
+		if (( verbose >= 2 )); then
+			log_failure_msg2 "${red}error${reset}: NOT FOUND file ${orange}${cfile} ${reset}at $SITE"
+		fi
 		return 1
 	fi
-	evaluate_retval
+	if (( verbose >= 2 )); then
+		evaluate_retval
+	fi
 	return 0
 }
 
@@ -2819,6 +2838,7 @@ function init()
       	-V*|--version)									logo;exit 0;;
       	-f*|--force)									LFORCE=1;;
       	-y*|--auto)										LAUTO=1;;
+      	-exact|--exact)								LEXACT=1;;
       	-q|--quiet)										verbose=0;;
       	--nocolor)										unsetvarcolors;USE_COLOR='n';;
       	-v|--no-verbose|--verbose)					(( ++verbose ));test "${1:0:5}" = "--no-" && verbose=0;;
