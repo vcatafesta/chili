@@ -66,7 +66,6 @@ fi
 barra=$'\x5c'
 check=$'\0xfb'
 reg=$'\0x2a'
-SYSCONFDIR='/etc/fetch'
 NORMAL="\\033[0;39m"         # Standard console grey
 SUCCESS="\\033[1;32m"        # Success is green
 WARNING="\\033[1;33m"        # Warnings are yellow
@@ -116,6 +115,7 @@ CURS_ZERO="\\033[0G"
 : ${PKG_BASE_VERSION=4}
 : ${PKG_VERSION=5}
 : ${PKG_BUILD=6}
+: ${PKG_SIZE=7}
 
 # SUBROUTINES
 
@@ -807,7 +807,7 @@ function dwup()
 
 function sh_version()
 {
-	printf "$0 $_VERSION_\n\n"
+	printf "$0 $_VERSION_\n"
 }
 
 function conf()
