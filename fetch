@@ -784,7 +784,7 @@ function sh_getdeps()
   	for i in ${deps[*]}
   	do
   		((ncontadep++))
-  		pkgdep=$(cat $VARCACHE_SEARCH/packages-split | grep ^${i}: | awk -F$SEP '{print $5}')
+  		pkgdep=$(cat $VARCACHE_SEARCH/packages-split | grep ^${i}$SEP | awk -F$SEP '{print $5}')
   		if [[ $pkgdep = "" ]]; then
 			if (( verbose )); then
   				printf "${red}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${i}" "WARNING! Dependencia nao localizada na base de dados. ${reset}Use: # ${APP} -Sy to update with the repository${reset}"#
