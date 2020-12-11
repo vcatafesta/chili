@@ -106,6 +106,7 @@ CURS_UP="\\033[1A\\033[0G"   # Up one line, at the 0'th char
 CURS_ZERO="\\033[0G"
 
 # flag's para split package
+: ${aPKGARRAY=()}
 : ${aPKGSPLIT=()}
 : ${aPKGLIST=}
 : ${PKG_FOLDER_DIR=0}
@@ -268,8 +269,8 @@ function log_failure_msg()
 {
 	#echo -n -e "${BMPREFIX}${@}"
 	#echo -e "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}"
-	printf "${BMPREFIX}${@}"
-	printf "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}\n"
+	printf "${DOTPREFIX}${@}\n"
+	#printf "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}\n"
 	#echo "FAIL" >> ${BOOTLOG}
 	return 0
 }
@@ -356,10 +357,17 @@ function info(){
 }
 export -f info
 
-function debug()
-{
-	info "$*"
-	return $?
+function debug(){
+	dialog							\
+		--title     "[debug]$0"	\
+		--backtitle "[debug]$0"	\
+		--yesno     "\n${*}\n"	\
+	0 0
+	result=$?
+	if (( $result )); then
+		exit
+	fi
+	return $result
 }
 export -f debug
 
@@ -433,8 +441,8 @@ function importlib()
 
 function toupper()
 {
-    declare -u TOUPPER=${@}
-    echo -e "${TOUPPER}"
+	declare -u TOUPPER=${@}
+	echo -e "${TOUPPER}"
 }
 
 function tolower()
