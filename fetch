@@ -334,7 +334,7 @@ function sh_list()
 
 	if (( $LALL )) || [[ "$cListSearch" == "" ]]; then
 		if (( $LALL )); then
-			pkg=$(cat $VARCACHE_SEARCH/packages-split | cut -d$SEP -f5)
+			pkg=$(cat $VARCACHE_SEARCH/packages-split | cut -d$SEP -f1)
 		else
 			log_failure_msg2 "${red}error${reset}: nenhum alvo definido (use -h para obter ajuda)"
 			exit 1
@@ -342,9 +342,9 @@ function sh_list()
 	else
 		for x in ${cListSearch}; do
 			if (( $LEXACT )); then
-				pkg="$pkg $(grep ^$x$SEP $VARCACHE_SEARCH/packages-split | cut -d$SEP -f5)"
+				pkg="$pkg $(grep ^$x$SEP $VARCACHE_SEARCH/packages-split | cut -d$SEP -f1)"
 			else
-				pkg="$pkg $(grep $x $VARCACHE_SEARCH/packages-split | cut -d$SEP -f5)"
+				pkg="$pkg $(grep $x $VARCACHE_SEARCH/packages-split | cut -d$SEP -f1)"
 			fi
 		done
 	fi
@@ -363,7 +363,7 @@ function sh_list()
 			for i in $pkg; do
 				((pkgCheckNumber++))
 				if (( verbose )); then
-					[[ $LLIST = $true ]] && sh_write $i $pkgCheckNumber
+					[[ $LLIST = $true ]] && sh_write $i "0" $pkgCheckNumber
 				fi
 			done
 		else
@@ -622,7 +622,7 @@ function sh_pkgoutcache()
 	evaluate_retval
 
 	local aPkgOut=()
-	local aRepository=$(_CAT $VARCACHE_SEARCH/packages)
+	local aRepository=$(_CAT $VARCACHE_SEARCH/packages-split | cut -d$SEP -f1)
 	local x
 	local y
 	local index=0
@@ -640,13 +640,14 @@ function sh_pkgoutcache()
 			aPkgOut[$index]=$x
 			((index++))
 		fi
-    done
+	done
 	local nfilesoutcache=${#aPkgOut[*]}
 	[ $nfilesoutcache <> 0 ] || maxcol; replicate "=" $?
-    index=1
+   index=1
 	for y in ${aPkgOut[*]}
 	do
-		log_failure_msg2 "NOT IN CACHE: [$index]${orange}$y${reset}"
+		sh_write "$y" "0" "$index"
+		#log_msg "NOT IN CACHE: [$index]${orange}$y${reset}"
 		((index++))
 	done
 	[ $nfilesoutcache <> 0 ] || maxcol; replicate "=" $?
@@ -2692,7 +2693,6 @@ function init()
 			-La|--list-avaiable|list-avaiable) 		shift;sh_list "$@";exit;;
 			-Lc|--list-cache|list-cache) 	        	shift;sh_FilesInCache "${param}";exit;;
 			-Li|--list-installed|list-installed)	shift;sh_listinstalled "${@}";exit;;
-			-Pi|--in-cache|in-cache)	            shift;sh_FilesInCache "${param}";exit;;
 			-Po|--out-cache|out-cache)	            shift;sh_pkgoutcache "${param}";exit;;
 			-Qi|--show|show) 								shift;sh_show "$@";exit;;
 			-Su|--upgrade|upgrade)						shift;sh_upgrade "$@";exit;;
