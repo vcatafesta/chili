@@ -766,8 +766,8 @@ function ex()
          *.tar.xz)    tar Jxvf $1     ;;
          *.lz)        lzip -d -v $1   ;;
          *.chi)       tar Jxvf $1     ;;
-         *.chi.zst)   tar -xvf $1     ;;
-         *.tar.zst)   tar -xvf $1     ;;
+         *.chi.zst)   tar --force-local -xvf $1     ;;
+         *.tar.zst)   tar --force-local -xvf $1     ;;
          *.mz)        tar Jxvf $1     ;;
          *.cxz)       tar Jxvf $1     ;;
          *.chi)       tar Jxvf $1     ;;

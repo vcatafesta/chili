@@ -34,6 +34,8 @@
 
 function configure()
 {
+	export LC_ALL=C
+	export LANG=C
 	readonly _VERSION_="2.05.00.20201211"
 	readonly DEPENDENCIES=(which gpg find tar zstd curl sed grep cat awk tput dialog stat)
 
@@ -940,7 +942,7 @@ function sh_getdeps()
   		pkgdep=$(cat $VARCACHE_SEARCH/packages-split | grep ^${i}$SEP | awk -F$SEP '{print $5}')
   		if [[ $pkgdep = "" ]]; then
 			if (( verbose )); then
-  				printf "${red}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${i}" "WARNING! Dependencia nao localizada na base de dados. ${reset}Use: # ${APP} -Sy to update with the repository${reset}"#
+  				printf "${red}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${i}" "WARNING! Dependency not found in the database. ${reset}Use: # fetch -Sy to update with the repository${reset}"
 			fi
   		else
   			GETDEPS="$GETDEPS $(echo $pkgdep)"
@@ -1740,7 +1742,7 @@ function _CREATE_LIST()
 {
 	local packname="$1"
 
-	if ! tar --list --file "$packname" > "${VARLIB_LIST}/${name_version_build}.list"; then
+	if ! tar --force-local --list --file "$packname" > "${VARLIB_LIST}/${name_version_build}.list"; then
 		log_failure_msg2 "ERROR! Can not create ${VARLIB_LIST}/${name_version_build}.list"
 		return 1
 	fi
@@ -1886,7 +1888,7 @@ function sh_doinstallpkg()
 	local PRE_SH='pre.sh'
 	local INSTALL_SH='.INSTALL'
 
-	if ! tar --use-compress-program=zstd --extract --preserve-permissions --touch --file "${packname}" -C "/tmp/" "./${descme}"; then
+	if ! tar --force-local --use-compress-program=zstd --extract --preserve-permissions --touch --file "${packname}" -C "/tmp/" "./${descme}"; then
 		log_failure_msg2 "${red}ERROR! ${reset}I could not unzip the file: ${orange}${packname}.desc${reset}"
 		return 1
 	fi
@@ -1896,16 +1898,16 @@ function sh_doinstallpkg()
 		return 1
 	fi
 
-	if tar --use-compress-program=zstd --list --file "${packname}" "./info/$PRE_SH" &>/dev/null; then
-		if ! tar --use-compress-program=zstd --extract --preserve-permissions --file "$packname" -C /tmp "./info/$PRE_SH" &>/dev/null; then
+	if tar --force-local --use-compress-program=zstd --list --file "${packname}" "./info/$PRE_SH" &>/dev/null; then
+		if ! tar --force-local --use-compress-program=zstd --extract --preserve-permissions --file "$packname" -C /tmp "./info/$PRE_SH" &>/dev/null; then
 			log_failure_msg2 "ERROR! Cannot extract ${PRE_SH}, ABORT"
 			return 1
 		fi
 		bash "/tmp/info/$PRE_SH"
 	fi
 
-	if tar --use-compress-program=zstd --list --file "${packname}" "./info/$INSTALL_SH" &>/dev/null; then
-		if ! tar --use-compress-program=zstd --extract --preserve-permissions --file "$packname" -C /tmp "./info/$INSTALL_SH" &>/dev/null; then
+	if tar --force-local --use-compress-program=zstd --list --file "${packname}" "./info/$INSTALL_SH" &>/dev/null; then
+		if ! tar --force-local --use-compress-program=zstd --extract --preserve-permissions --file "$packname" -C /tmp "./info/$INSTALL_SH" &>/dev/null; then
 			log_failure_msg2 "ERROR! Cannot extract ${INSTALL_SH}, ABORT"
 			return 1
 		fi
@@ -1914,7 +1916,7 @@ function sh_doinstallpkg()
 	#name_version_build="${pkgname}-${version}-${build}"
 	sh_splitpkg ${packname}
 	name_version_build=${aPKGSPLIT[$PKG_BASE_VERSION]}
-	tar --use-compress-program=zstd --extract --preserve-permissions --touch --file "${packname}" -C / | tee -a ${VARLIB_LIST}/"${name_version_build}.list" &>/dev/null || return 1
+	tar --force-local --use-compress-program=zstd --extract --preserve-permissions --touch --file "${packname}" -C / | tee -a ${VARLIB_LIST}/"${name_version_build}.list" &>/dev/null || return 1
 
 	_CREATE_LIST "$1" || return 1
 	_MANAGE_SCRIPTS_AND_ARCHIVES "${name_version_build}" || return 1
@@ -2185,7 +2187,7 @@ function _CREATE_PKG()
 	local package="${1/%.${PKG_EXT}/}"
 	local ext_desc='desc'
 
-	if tar --use-compress-program zstd --create --file ../${package}.${PKG_EXT} .; then
+	if tar --force-local --use-compress-program zstd --create --file ../${package}.${PKG_EXT} .; then
 		cp "$descme" ../${package}.${PKG_EXT}.${ext_desc} &>/dev/null
 		pushd .. &>/dev/null
 		if (( $CREATE_SHA256 )); then
@@ -2362,7 +2364,7 @@ function sh_alienpkg_exec()
 
 		((ncount++))
 		log_info_msg "$(fmt) Unpacking package $package at $destdir"
-		tar --extract --file $package -C $destdir >/dev/null 2>&1
+		tar --force-local --extract --file $package -C $destdir >/dev/null 2>&1
 		evaluate_retval
 
 		case $packagedir in
