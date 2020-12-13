@@ -670,7 +670,8 @@ function size_to_human(){
 	}'
 }
 
-join(){
+function join()
+{
 	{
 		local indelimiter="${1- }"
 		local outdelimiter="${2-.}"

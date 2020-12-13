@@ -2,7 +2,7 @@
  # fetch - search, install, create, remove, upgrade packages in ChiliOS
  #
  # Created: 2019/04/05
- # Altered: 2020/12/11
+ # Altered: 2020/12/12
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -36,7 +36,7 @@ function configure()
 {
 	export LC_ALL=C
 	export LANG=C
-	readonly _VERSION_="2.05.00.20201211"
+	readonly _VERSION_="2.05.00.20201212"
 	readonly DEPENDENCIES=(which gpg find tar zstd curl sed grep cat awk tput dialog stat)
 
 	# Import lib
@@ -712,10 +712,7 @@ function sh_show()
 		log_msg "Reading package lists..."
 	fi
 
-#	sh_listinstalled ${param} "OFF" "EXACT"
-#	sh_list ${param}
 	sh_listpkgdisp	"$VARCACHE_SEARCH/packages-split" ${param} --nodeps "EXACT"
-
 	local ntotal_pkg_installed=${public_ntotal_pkg_installed}
 	local ntotal_pkg_listed=${public_ntotal_pkg_listed}
 
@@ -760,7 +757,6 @@ function _PRE_REMOVE()
 	local search_pack
 
 	pushd $VARLIB_DESC 1>/dev/null
-#	local alldesc=$(echo $pkgsearch*)
 	local alldesc=$packname.desc
 
 	for search_pack in $alldesc; do
@@ -1301,8 +1297,6 @@ function sh_search()
 {
 	local oldverbose=$verbose
 	local param=$@
-#	sh_list $param
-#	[[ $verbose -gt 1 ]] && (( verbose-- )) || (( verbose=0 ))
 	[[ $verbose -gt 1 ]] || (( verbose=0 ))
 	sh_listpkgdisp	"$VARCACHE_SEARCH/packages-split" ${param} --nodeps
 	local ntotal_pkg_installed=${public_ntotal_pkg_installed}
@@ -1693,7 +1687,6 @@ function _SUBSHELL_STATUS()
 function _MANAGE_SCRIPTS_AND_ARCHIVES()
 {
 	sh_splitpkg "${1}"
-#	local packname="${1/%.${PKG_EXT}/}"
 	local packname=${aPKGSPLIT[PKG_BASE_VERSION]}
 	local dir_desc="${VARLIB_LIST/list/desc}"
 
