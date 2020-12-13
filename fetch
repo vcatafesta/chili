@@ -1272,7 +1272,7 @@ function sh_install()
 	sh_checkdir "OFF"
 	sh_checkparametros $param
 	[[ $verbose -eq 0 ]] && (( verbose=1 ))
-	sh_listpkgdisp	"$VARCACHE_SEARCH/packages-split" ${param} exact
+	sh_listpkgdisp	"$VARCACHE_SEARCH/packages-split" ${param}
 	local ntotal_pkg_installed=${public_ntotal_pkg_installed}
 	local ntotal_pkg_listed=${public_ntotal_pkg_listed}
 
