@@ -324,7 +324,6 @@ function runcmd(){
 		"$@"
 	fi
 }
-export -f runcmd
 
 function evaluate_retval()
 {
@@ -355,7 +354,6 @@ function info(){
 	fi
 	return $result
 }
-export -f info
 
 function debug(){
 	dialog							\
@@ -369,7 +367,6 @@ function debug(){
 	fi
 	return $result
 }
-export -f debug
 
 # Modulo para emular o comando cat
 # Agradecimentos a SlackJeff
@@ -638,7 +635,6 @@ function as_root()
 	else                            su -c \\"$*\\"
 	fi
 }
-export -f as_root
 
 which2()
 {
@@ -893,7 +889,11 @@ function newtemp()
 		echo "usar $0 <qtde> <ext>"
 		# Sai do script com código de erro 1 (falha)
 	else
-		for((i=1;i<=${1};i++)) ; do touch tmp-${i}.${2} ; echo -e tmp-${i}.${2}; done
+		for((i=1; i<=${1}; i++))
+		do
+			touch tmp-${i}.${2}
+			echo -e tmp-${i}.${2}
+		done
 	fi
 }
 
