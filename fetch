@@ -2,7 +2,7 @@
  # fetch - search, install, create, remove, upgrade packages in ChiliOS
  #
  # Created: 2019/04/05
- # Altered: 2020/12/12
+ # Altered: 2020/12/13
  #
  # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -36,7 +36,7 @@ function configure()
 {
 	export LC_ALL=C
 	export LANG=C
-	readonly _VERSION_="2.05.00.20201212"
+	readonly _VERSION_="2.05.00.20201213"
 	readonly DEPENDENCIES=(which gpg find tar zstd curl sed grep cat awk tput dialog stat)
 
 	# Import lib
@@ -83,18 +83,28 @@ function sh_touchconf(){
 ######################################################################
 # Arquivo de configuracao
 ######################################################################
-
 # extensao dos pacotes: chilios=chi.zst, mazon=mz
 #PKG_EXT='mz'			#mazonos
 PKG_EXT='chi.zst'		#ChiliOS
 
-# site de hospedagem da distro
-#PKG_SITE='http://localhost'
-#PKG_SITE='http://201.7.66.107'
-#PKG_SITE='http://mazonos.com'
-PKG_SITE='https://github.com/vcatafesta/ChiliOS/tree/master'
-PKG_RAW_FILE='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master/packages/t/tree-1.8.0-2.chi.zst'
-PKG_RAW='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master'
+# pacotes hospedado no repositorio do github: sim='1', nao='0'
+GITSITE='0'
+
+if (( $GITSITE )); then
+	PKG_SITE='https://github.com/vcatafesta/ChiliOS/tree/master'
+	PKG_RAW='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master'
+	PKG_RAW_FETCH='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master/updater/fetch' 
+	PKG_RAW_FILE='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master/packages/t/tree-1.8.0-2.chi.zst'
+else
+	# site de hospedagem da distro
+	PKG_SITE='http://localhost'
+	#PKG_SITE='http://201.7.66.107'
+	#PKG_SITE='http://mazonos.com'
+	PKG_RAW_FETCH="$PKG_SITE/updater/fetch"
+	PKG_RAW_FILE="$PKG_SITE/packages/t/tree-1.8.0-2.chi.zst"
+	PKG_RAW='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master'
+fi
+
 AUTO_YES='1'
 MAINTAINER='Vilmar Catafesta <vcatafesta@gmail.com>'
 GPG_SIGN='0'
@@ -103,7 +113,7 @@ DESC_BUILD='2'
 REWRITE_SIG='1'
 URL='http://www.linuxfromscratch.org/lfs/view/systemd/'
 LICENSE='GPL2'
-LFS_VERSION='8.4'
+LFS_VERSION='10.0'
 LFS_INIT='SYSTEMD'
 ARCH='x86_64'
 DISTRO='chili'
@@ -111,11 +121,9 @@ LFS_VARCACHE='fetch'
 GITDIR='/github/ChiliOS'
 PKGCORE="$GITDIR/packages/core"
 PKGDIR="$PKGCORE"
+CACHEDIR='/var/cache/fetch/'
 ALIEN_CACHE_DIR='/var/cache/pacman/pkg'
 IGNOREPKG=('glibc' 'file')
-
-# pacotes hospedado no repositorio do github: sim='1', nao='0'
-GITSITE='1'
 _EOF_
 }
 
@@ -403,7 +411,7 @@ function sh_selfupdate()
 	fi
 
 	if (( $LAUTO )) || (( $LFORCE )); then
-		local link='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master/updater/fetch'
+		local link="$PKG_RAW_FETCH"
 		local tmp_dir_full="/tmp/${APP}"
 		local tmp_dir="/tmp/${APP}/src"
 		local m
@@ -1881,7 +1889,7 @@ function sh_doinstallpkg()
 	local PRE_SH='pre.sh'
 	local INSTALL_SH='.INSTALL'
 
-	if ! tar --force-local --use-compress-program=zstd --extract --preserve-permissions --touch --file "${packname}" -C "/tmp/" "./${descme}"; then
+	if ! tar -h --force-local --use-compress-program=zstd --extract --preserve-permissions --touch --file "${packname}" -C "/tmp/" "./${descme}"; then
 		log_failure_msg2 "${red}ERROR! ${reset}I could not unzip the file: ${orange}${packname}.desc${reset}"
 		return 1
 	fi
@@ -1891,16 +1899,16 @@ function sh_doinstallpkg()
 		return 1
 	fi
 
-	if tar --force-local --use-compress-program=zstd --list --file "${packname}" "./info/$PRE_SH" &>/dev/null; then
-		if ! tar --force-local --use-compress-program=zstd --extract --preserve-permissions --file "$packname" -C /tmp "./info/$PRE_SH" &>/dev/null; then
+	if tar -h --force-local --use-compress-program=zstd --list --file "${packname}" "./info/$PRE_SH" &>/dev/null; then
+		if ! tar -h --force-local --use-compress-program=zstd --extract --preserve-permissions --file "$packname" -C /tmp "./info/$PRE_SH" &>/dev/null; then
 			log_failure_msg2 "ERROR! Cannot extract ${PRE_SH}, ABORT"
 			return 1
 		fi
 		bash "/tmp/info/$PRE_SH"
 	fi
 
-	if tar --force-local --use-compress-program=zstd --list --file "${packname}" "./info/$INSTALL_SH" &>/dev/null; then
-		if ! tar --force-local --use-compress-program=zstd --extract --preserve-permissions --file "$packname" -C /tmp "./info/$INSTALL_SH" &>/dev/null; then
+	if tar -h --force-local --use-compress-program=zstd --list --file "${packname}" "./info/$INSTALL_SH" &>/dev/null; then
+		if ! tar -h --force-local --use-compress-program=zstd --extract --preserve-permissions --file "$packname" -C /tmp "./info/$INSTALL_SH" &>/dev/null; then
 			log_failure_msg2 "ERROR! Cannot extract ${INSTALL_SH}, ABORT"
 			return 1
 		fi
@@ -1909,7 +1917,7 @@ function sh_doinstallpkg()
 	#name_version_build="${pkgname}-${version}-${build}"
 	sh_splitpkg ${packname}
 	name_version_build=${aPKGSPLIT[$PKG_BASE_VERSION]}
-	tar --force-local --use-compress-program=zstd --extract --preserve-permissions --touch --file "${packname}" -C / | tee -a ${VARLIB_LIST}/"${name_version_build}.list" &>/dev/null || return 1
+	tar -h --force-local --use-compress-program=zstd --extract --preserve-permissions --touch --file "${packname}" -C / | tee -a ${VARLIB_LIST}/"${name_version_build}.list" &>/dev/null || return 1
 
 	_CREATE_LIST "$1" || return 1
 	_MANAGE_SCRIPTS_AND_ARCHIVES "${name_version_build}" || return 1
@@ -2180,7 +2188,7 @@ function _CREATE_PKG()
 	local package="${1/%.${PKG_EXT}/}"
 	local ext_desc='desc'
 
-	if tar --force-local --use-compress-program zstd --create --file ../${package}.${PKG_EXT} .; then
+	if tar --force-local --use-compress-program="zstd -19" --create --file ../${package}.${PKG_EXT} .; then
 		cp "$descme" ../${package}.${PKG_EXT}.${ext_desc} &>/dev/null
 		pushd .. &>/dev/null
 		if (( $CREATE_SHA256 )); then
