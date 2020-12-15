@@ -63,8 +63,9 @@ function configure()
 	VARCACHE_SEARCH="/var/cache/${APP}/search"
 	LIBRARY=${LIBRARY:-'/usr/share/${APP}'}
 	USE_COLOR='y'
-	TMP_DIR_BACKUP="/tmp/${APP}/${VARCACHE_SEARCH}"
-	TMP_ROOT_BACKUP="/tmp/${APP}"
+	TMP_DIR_ROOT="/tmp/$(mktemp -d)/${APP}"
+	TMP_DIR_BACKUP="${TMP_DIR_ROOT}/${VARCACHE_SEARCH}"
+	TMP_DIR_FOLDERS="${TMP_DIR_ROOT}/${VARCACHE}/folders"
 	export descme='info/desc'
 	export PKG_EXT="${PKG_EXT:='chi.zst'}"
 	export LFS_VARCACHE="${LFS_VARCACHE:='fetch'}"
@@ -544,15 +545,16 @@ function sh_update()
 	local Folders
 
 	for Folders in ${FoldersInRepo}; do
+		FOLDER_TEMP="$TMP_DIR_FOLDERS/$Folders"
 		if !(( $GITSITE )); then
 			#site normal
 #			PackagesInFolders=$(curl -k --silent --url "${SITE}/packages/${Folders}/"|sed 's/^.*href="//' | sed 's/".*$//' | grep ".${PRG}$" | awk '{print $1}')
 #			MetaPkgInFolders=$(curl -k --silent --url "${SITE}/packages/${Folders}/"|sed 's/^.*href="//' | sed 's/".*$//' | grep ".meta$" | awk '{print $1}')
-			response=$(curl -s -w "%{http_code}\n" -k --url "${SITE}/packages/${Folders}/" --output /tmp/$Folders)
-			PackagesInFolders=($(grep '.chi\.zst\"' /tmp/$Folders | cut -d'"' -f2 ))
-		   PackagesInFolders=($(grep -E -o '>(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst<' /tmp/$Folders | sed 's/>//g' | sed 's/<//g'))
-			MetaPkgInFolders=($(grep '.meta\"' /tmp/$Folders | cut -d'"' -f2 ))
-			SizePkgInFolders=($(grep '.chi\.zst\"' /tmp/$Folders | awk '{print $5}' ))
+			response=$(curl -s -w "%{http_code}\n" -k --url "${SITE}/packages/${Folders}/" --output $FOLDER_TEMP)
+			PackagesInFolders=($(grep '.chi\.zst\"' $FOLDER_TEMP | cut -d'"' -f2 ))
+		   PackagesInFolders=($(grep -E -o '>(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst<' $FOLDER_TEMP | sed 's/>//g' | sed 's/<//g'))
+			MetaPkgInFolders=($(grep '.meta\"' $FOLDER_TEMP | cut -d'"' -f2 ))
+			SizePkgInFolders=($(grep '.chi\.zst\"' $FOLDER_TEMP | awk '{print $5}' ))
 		else
 			#repositorio github
 			PackagesInFolders=$(curl --insecure --silent --url "${SITE}/packages/${Folders}/"|sed 's/^.*href="//' | sed 's/".*$//' | sed 's/\// /g' | grep ".${PRG}$"| awk '{print $NF}')
@@ -581,6 +583,7 @@ function sh_update()
 
 	sh_recreatefilepackagesinstalled
 	sh_cleaning
+	unset $FOLDER_TEMP
 
 	local nfilesInReposit=$(cat $VARCACHE_SEARCH/packages-split | wc -l)
 	local nfilesInstalled=$(cat $VARCACHE_SEARCH/packages-installed-split | wc -l)
@@ -2596,7 +2599,7 @@ function checkDependencies()
 function sh_cleaning()
 {
 	log_msg "Cleaning..."
-	rm -rf $TMP_ROOT_BACKUP/ &> /dev/null
+	rm -rf $TMP_DIR_ROOT/ &> /dev/null
 }
 
 function cleanup()
@@ -2614,6 +2617,7 @@ function sh_backup()
 		log_wait_msg "Making backup: $VARCACHE_SEARCH/"
 	fi
 	mkdir -p $TMP_DIR_BACKUP/ &> /dev/null
+	mkdir -p $TMP_DIR_FOLDERS/ &> /dev/null
 	cp -f $VARCACHE_SEARCH/* $TMP_DIR_BACKUP/ &> /dev/null
 }
 
@@ -2735,7 +2739,6 @@ configure
 sh_checkroot
 checkDependencies
 setvarcolors
-sh_backup
 
 # sanity checks
 #case $(( dryrun+delete+move )) in
