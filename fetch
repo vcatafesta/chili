@@ -102,21 +102,14 @@ PKG_EXT='chi.zst'		#ChiliOS
 # pacotes hospedado no repositorio do github: sim='1', nao='0'
 GITSITE='0'
 
-if (( $GITSITE )); then
-	PKG_SITE='https://github.com/vcatafesta/ChiliOS/tree/master'
-	PKG_RAW='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master'
-	PKG_RAW_FETCH='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master/updater/fetch' 
-	PKG_RAW_FILE='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master/packages/t/tree-1.8.0-2.chi.zst'
-else
-	# site de hospedagem da distro
-	PKG_SITE='http://localhost'
-	#PKG_SITE='http://201.7.66.107'
-	#PKG_SITE='http://mazonos.com'
-	PKG_RAW_FETCH="$PKG_SITE/updater/fetch"
-	PKG_RAW_FILE="$PKG_SITE/packages/t/tree-1.8.0-2.chi.zst"
-	PKG_RAW='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master'
-fi
-
+# site de hospedagem da distro
+PKG_SITE='https://github.com/vcatafesta/ChiliOS/tree/master'		# for use set GITSITE=1
+PKG_SITE='http://localhost'													# for use set GITSITE=0
+#PKG_SITE='http://201.7.66.107'												# for use set GITSITE=0
+#PKG_SITE='http://mazonos.com'												# for use set GITSITE=0
+PKG_RAW='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master'
+PKG_RAW_FETCH='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master/updater/fetch' 
+PKG_RAW_FILE='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master/packages/t/tree-1.8.0-2.chi.zst'
 AUTO_YES='1'
 MAINTAINER='Vilmar Catafesta <vcatafesta@gmail.com>'
 GPG_SIGN='0'
