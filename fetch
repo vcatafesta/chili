@@ -719,7 +719,7 @@ function sh_ShortCatPkg()
 
   	source "$cpacote"
 	if (( $LSHOW )); then
-		printf "%s (%s) %s\n" "${yellow}${aPKGSPLIT[$PKG_FOLDER_DIR]}/${pkgname}" "${pink}${version}-${build}" "${white}${desc}"
+		printf "%s  %s %s\n" "${yellow}${aPKGSPLIT[$PKG_FOLDER_DIR]}/${pkgname}" "${pink}${version}-${build}" "${white}${desc}"
     	printf "${reset}"
 	fi
 	retval=${size}
