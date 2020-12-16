@@ -1,4 +1,5 @@
 #!/bin/bash
+
  # fetch - search, install, create, remove, upgrade packages compatible with:
  # ChiliOS GNU/Linux - https://github.com/vcatafesta/ChiliOS
  # MazonOS GNU/Linux - http://mazonos.com
