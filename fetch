@@ -1,11 +1,15 @@
 #!/bin/bash
- # fetch - search, install, create, remove, upgrade packages in ChiliOS
+ # fetch - search, install, create, remove, upgrade packages compatible with:
+ # ChiliOS GNU/Linux - https://github.com/vcatafesta/ChiliOS
+ # MazonOS GNU/Linux - http://mazonos.com
  #
  # Created: 2019/04/05
- # Altered: 2020/12/13
+ # Altered: 2020/12/16
  #
- # Copyright (c) 2019 - 2019, Vilmar Catafesta <vcatafesta@gmail.com>
+ # Copyright (c) 2019 - 2020, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
+ #
+ # contains portion of software https://bananapkg.github.io/
  #
  # Redistribution and use in source and binary forms, with or without
  # modification, are permitted provided that the following conditions
@@ -36,7 +40,7 @@ function configure()
 {
 	export LC_ALL=C
 	export LANG=C
-	readonly _VERSION_="2.05.00.20201213"
+	readonly _VERSION_="2.05.00.20201216"
 	readonly DEPENDENCIES=(which gpg find tar zstd curl sed grep cat awk tput dialog stat)
 
 	# Import lib
@@ -63,9 +67,9 @@ function configure()
 	VARCACHE_SEARCH="/var/cache/${APP}/search"
 	LIBRARY=${LIBRARY:-'/usr/share/${APP}'}
 	USE_COLOR='y'
-	TMP_DIR_ROOT="/tmp/$(mktemp -d)/${APP}"
-	TMP_DIR_BACKUP="${TMP_DIR_ROOT}/${VARCACHE_SEARCH}"
-	TMP_DIR_FOLDERS="${TMP_DIR_ROOT}/${VARCACHE}/folders"
+	TMP_DIR_ROOT="$(mktemp -d -u)"
+	TMP_DIR_BACKUP="${TMP_DIR_ROOT}/${APP}/${VARCACHE_SEARCH}"
+	TMP_DIR_FOLDERS="${TMP_DIR_ROOT}/${APP}/${VARCACHE}/folders"
 	export descme='info/desc'
 	export PKG_EXT="${PKG_EXT:='chi.zst'}"
 	export LFS_VARCACHE="${LFS_VARCACHE:='fetch'}"
@@ -221,7 +225,7 @@ function sh_write()
 #	sh_splitpkg $1
 #  printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%s\n" "     " "$pkgCheckNumber" "${aPKGSPLIT[$PKG_BASE]}" "${aPKGSPLIT[$PKG_VERSION]}" "${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}"
 	sh_ascanpkg "$pkgsearch" "$pkgfile"
-	printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%15s %s\n" "     " "$pkgCheckNumber" "${aPKGARRAY[0]}" "${aPKGARRAY[1]}" "$(size_to_human ${aPKGARRAY[6]})" "${aPKGARRAY[4]}"
+	printf "${green}%s(%04d) ${orange}%-43s ${reset}%-15s%15s %s\n" "     " "$pkgCheckNumber" "${aPKGARRAY[0]}" "${aPKGARRAY[1]}" "$(size_to_human ${aPKGARRAY[6]})" "${SITE}/packages/${aPKGARRAY[4]}"
 
 }
 
@@ -536,7 +540,8 @@ function sh_update()
 		#sites com gninx/apache/etc
 		#curl --insecure --silent --url "${SITE}/packages/"| grep "/</a" | grep '[a-z]' | sed 's/<[^>]*>//g'| cut -d/ -f1|sed 's/^[ \t]*//;s/[ \t]*$//'|sed 's/Index of//g' > ${VARCACHE_SEARCH}/folders
 		#curl --insecure --silent --url "${SITE}/packages/"|sed 's/<[^>]*>//g'| cut -d/ -f1|sed 's/^[ \t]*//;s/[ \t]*$//'|sed 's/Index of//g' > ${VARCACHE_SEARCH}/folders
-		curl --insecure --silent --url "${SITE}/packages/"|grep href|sed 's/[*<>]//g'|sed 's/[*=/"]/:/g'|cut -d: -sf3 > ${VARCACHE_SEARCH}/folders
+		#curl --insecure --silent --url "${SITE}/packages/"|grep href|sed 's/[*<>]//g'|sed 's/[*=/"]/:/g'|cut -d: -sf3 > ${VARCACHE_SEARCH}/folders
+		curl --insecure --silent --url "${SITE}/packages/"|grep -E -o '>[[:alnum:]]*/'|sed 's/>//g' | sed 's/\///g' > ${VARCACHE_SEARCH}/folders
 	else
 		#repositorio github
 		curl --insecure --silent --url "${SITE}/packages/"|grep /packages/ | sed 's/<[^>]*>//g' | sed 's/ //g' > ${VARCACHE_SEARCH}/folders
@@ -559,7 +564,6 @@ function sh_update()
 #			MetaPkgInFolders=$(curl -k --silent --url "${SITE}/packages/${Folders}/"|sed 's/^.*href="//' | sed 's/".*$//' | grep ".meta$" | awk '{print $1}')
 			response=$(curl -s -w "%{http_code}\n" -k --url "${SITE}/packages/${Folders}/" --output $FOLDER_TEMP)
 #			PackagesInFolders=($(grep $GREP_RE $FOLDER_TEMP | cut -d'"' -f2 ))
-#		   PackagesInFolders=($(grep -E -o '>(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst<' $FOLDER_TEMP | sed 's/>//g' | sed 's/<//g'))
 		   PackagesInFolders=($(grep -E -o '>'$PKG_RE'<' $FOLDER_TEMP | sed 's/>//g' | sed 's/<//g'))
 			MetaPkgInFolders=($(grep '.meta\"' $FOLDER_TEMP | cut -d'"' -f2 ))
 			SizePkgInFolders=($(grep $GREP_RE $FOLDER_TEMP | awk '{print $5}' ))
@@ -685,7 +689,6 @@ function sh_CatAndSizePkg()
 
 	source "$cpacote"
 	if (( $LSHOW )); then
-		printf "${cyan}"
 		printf "${cyan}BaseName     : ${yellow}${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}\n"
 		printf "${cyan}Name         : ${yellow}${pkgname}\n"
 		printf "${cyan}Version      : ${yellow}${version}\n"
@@ -875,47 +878,42 @@ function sh_doremove()
 
 function sh_download()
 {
-	[[ $(toupper "${1}") = "ALL" ]] && LALL=$true   || LALL=$false
-	[[ $(toupper "${2}") = "-F"  ]] && LFORCE=$true || LFORCE=$false
-
-	sh_list $@ "ON"
+	local param=$@
+	local error_value=0
 	local nFilesDownloaded=0
-	local nTotalFiles=$pkgCheckNumber
-	local cspace=$(printf "%20s" ' ')
 
-	# Check package exist.
-	if [[ $pkg != "" ]]; then
-		if [ $# -ge 1 ]; then
-			if [ ${LALL} = $true ]; then
-				pkgCheckNumber='1'
-			fi
-		fi
+	if (( verbose )); then
+		log_msg "Downloading package..."
+	fi
 
+	sh_listpkgdisp	"$VARCACHE_SEARCH/packages-split" ${param} --nodeps "EXACT"
+	local ntotal_pkg_installed=${public_ntotal_pkg_installed}
+	local ntotal_pkg_listed=${public_ntotal_pkg_listed}
+
+	if [[ $public_pkg != "" ]]; then
 		#internet?
 		sh_checknet; [[ $? = $false ]] || { return 1;}
+		pushd $VARCACHE_ARCHIVES/ &>/dev/null
+		for i in $public_pkg; do
+			local nTotalFiles=$ntotal_pkg_listed
+			local cspace=$(printf "%20s" ' ')
 
-		for i in $pkg; do
-			sh_splitpkg ${i}
-			local cfullname=${aPKGSPLIT[$PKG_FULLNAME]}
-			local cbase=${aPKGSPLIT[$PKG_BASE]}
-			local cBaseVersion=${aPKGSPLIT[$PKG_BASE_VERSION]}
-			local cpacote=${aPKGSPLIT[$PKG_BASE_VERSION]}
-			local cVersion=${aPKGSPLIT[$PKG_VERSION]}
-			local cBuild=${aPKGSPLIT[$PKG_BUILD]}
-
-			## Download package.
-			((nFilesDownloaded++))
-			cd $VARCACHE_ARCHIVES/
-			if (( verbose >=2 )); then
-				log_wait_msg "File ${red}#${nFilesDownloaded} of ${nTotalFiles}${reset}|Checking package ${orange}${cfullname} ${cspace}"
+#    		[[ $LFORCE = $true ]] && sh_wgetfull $cfullname || test -e $VARCACHE_ARCHIVES/$cfullname || sh_wgetfull $cfullname
+    		if (( $LFORCE )); then
+				sh_wgetfull
+				[[ $? -eq 0 ]] && (( nFilesDownloaded++ ))
+			else
+			 	if test -e $VARCACHE_ARCHIVES/$cfullname; then
+ 					log_failure_msg2 "${orange}${i##*/} ${reset}Package is already downloaded. Use the -f option to force download."
+				else
+					sh_wgetfull
+					[[ $? -eq 0 ]] && (( nFilesDownloaded++ ))
+				fi
 			fi
-    		[[ $LFORCE = $true ]] && sh_wgetfull || test -e $VARCACHE_ARCHIVES/$cfullname || sh_wgetfull
 		done
-		log_success_msg2 "${cyan}($nFilesDownloaded) packages(s) downloaded."
-	else
-		printf "\nChoose one package for download or install.\n"
+		log_msg "${cyan}($nFilesDownloaded) packages(s) downloaded."
+		popd &>/dev/null
 	fi
-	sh_cdroot
 }
 
 function sh_getdeps()
