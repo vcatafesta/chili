@@ -73,9 +73,15 @@ function configure()
 	export VARLIB_DESC="/var/cache/${APP}/desc"
 	export VARLIB_REMO="/var/cache/${APP}/remove"
 	verbose=1
-	#pkg_re='^([a-z-]+)(-)([0-9\\.]+)(-)([0-9])(-)(.*)(.chi.zst)$'
-	#pkg_re='([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)-(([0-9]+(\.[0-9]+)*)(-([0-9]+))?)-([^.]+).*'
-	pkg_re='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 	#SOEN
+	#PKG_RE='^([a-z-]+)(-)([0-9\\.]+)(-)([0-9])(-)(.*)(.chi.zst)$'
+	#PKG_RE='([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)-(([0-9]+(\.[0-9]+)*)(-([0-9]+))?)-([^.]+).*'
+	if [[ "$PKG_EXT" = "chi.zst" ]]; then
+		PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 	#SOEN
+		GREP_RE='.chi\.zst\"'
+	else
+		PKG_RE='(.+)-(([^-]+)-([0-9]+))\.mz' 						#SOEN
+		GREP_RE='.mz\"'
+	fi
 }
 
 function sh_touchconf(){
@@ -187,6 +193,7 @@ function sh_ascanpkg()
 	if [[ -z $indice ]]; then
 		return $false
 	fi
+
 	(( indice-- ))
 	aPKGARRAY=(	"${public_pkg_base[$indice]}"
 					"${public_pkg_version[$indice]}"
@@ -551,10 +558,11 @@ function sh_update()
 #			PackagesInFolders=$(curl -k --silent --url "${SITE}/packages/${Folders}/"|sed 's/^.*href="//' | sed 's/".*$//' | grep ".${PRG}$" | awk '{print $1}')
 #			MetaPkgInFolders=$(curl -k --silent --url "${SITE}/packages/${Folders}/"|sed 's/^.*href="//' | sed 's/".*$//' | grep ".meta$" | awk '{print $1}')
 			response=$(curl -s -w "%{http_code}\n" -k --url "${SITE}/packages/${Folders}/" --output $FOLDER_TEMP)
-			PackagesInFolders=($(grep '.chi\.zst\"' $FOLDER_TEMP | cut -d'"' -f2 ))
-		   PackagesInFolders=($(grep -E -o '>(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst<' $FOLDER_TEMP | sed 's/>//g' | sed 's/<//g'))
+#			PackagesInFolders=($(grep $GREP_RE $FOLDER_TEMP | cut -d'"' -f2 ))
+#		   PackagesInFolders=($(grep -E -o '>(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst<' $FOLDER_TEMP | sed 's/>//g' | sed 's/<//g'))
+		   PackagesInFolders=($(grep -E -o '>'$PKG_RE'<' $FOLDER_TEMP | sed 's/>//g' | sed 's/<//g'))
 			MetaPkgInFolders=($(grep '.meta\"' $FOLDER_TEMP | cut -d'"' -f2 ))
-			SizePkgInFolders=($(grep '.chi\.zst\"' $FOLDER_TEMP | awk '{print $5}' ))
+			SizePkgInFolders=($(grep $GREP_RE $FOLDER_TEMP | awk '{print $5}' ))
 		else
 			#repositorio github
 			PackagesInFolders=$(curl --insecure --silent --url "${SITE}/packages/${Folders}/"|sed 's/^.*href="//' | sed 's/".*$//' | sed 's/\// /g' | grep ".${PRG}$"| awk '{print $NF}')
@@ -675,11 +683,13 @@ function sh_CatAndSizePkg()
 	local LSHOW=$2
 	local retval=0
 
-  	source "$cpacote"
+	source "$cpacote"
 	if (( $LSHOW )); then
 		printf "${cyan}"
+		printf "${cyan}BaseName     : ${yellow}${aPKGSPLIT[$PKG_FOLDER_DIR]}/${aPKGSPLIT[$PKG_FULLNAME]}\n"
 		printf "${cyan}Name         : ${yellow}${pkgname}\n"
 		printf "${cyan}Version      : ${yellow}${version}\n"
+		printf "${cyan}Build        : ${yellow}${build}\n"
 		printf "${cyan}Description  : ${yellow}${desc}\n"
 		printf "${cyan}Architecture : ${yellow}${arch}\n"
 		printf "${cyan}URL          : ${yellow}${url}\n"
@@ -694,7 +704,7 @@ function sh_CatAndSizePkg()
     	printf "${reset}\n"
 	fi
 	retval=${size}
-	unset pkgname version desc arch url license depend dep size mainteiner distro lfs_init lfs_version
+	unset pkgname version build desc arch url license depend dep size mainteiner distro lfs_init lfs_version
 	return $retval
 }
 
@@ -706,7 +716,7 @@ function sh_ShortCatPkg()
 
   	source "$cpacote"
 	if (( $LSHOW )); then
-		printf "${yellow}${pkgname}  ${pink}${version}  ${white}${desc}\n"
+		printf "${yellow}${aPKGSPLIT[$PKG_FOLDER_DIR]}/${pkgname}  ${pink}${version}  ${white}${desc}\n"
     	printf "${reset}"
 	fi
 	retval=${size}
@@ -1131,7 +1141,7 @@ function sh_splitpkgre()
 	pkg_folder_dir=$(echo ${file%/*})							#remove arquivo deixando somente o diretorio/repo
 	pkg_fullname=$(echo ${file##*/})    						#remove diretorio deixando somente nome do pacote
 
-	[[ $pkg_fullname =~ $pkg_re ]] &&
+	[[ $pkg_fullname =~ $PKG_RE ]] &&
 		pkg_fullname="${BASH_REMATCH[0]}"
 		pkg_base="${BASH_REMATCH[1]}"
 		pkg_version_build="${BASH_REMATCH[2]}"
