@@ -750,9 +750,10 @@ function sh_show()
 			local cpacote=${aPKGSPLIT[$PKG_BASE_VERSION]}.desc
 			local cVersion=${aPKGSPLIT[$PKG_VERSION]}
 			local cBuild=${aPKGSPLIT[$PKG_BUILD]}
+	    	local error_value=0
 
 			cpacote=$VARCACHE_ARCHIVES/$cfullname
-  			if [[ $LFORCE ]] || [[ -e $cpacote ]]; then
+			if [[ $LFORCE = $true ]] || ! [[ -e ${cpacote} ]]; then
 				sh_wgetdesc
 	    		error_value="${?}"
 			fi
