@@ -719,7 +719,7 @@ function sh_ShortCatPkg()
 
   	source "$cpacote"
 	if (( $LSHOW )); then
-		printf "${yellow}${aPKGSPLIT[$PKG_FOLDER_DIR]}/${pkgname}  ${pink}${version}  ${white}${desc}\n"
+		printf "%s (%s) %s\n" "${yellow}${aPKGSPLIT[$PKG_FOLDER_DIR]}/${pkgname}" "${pink}${version}-${build}" "${white}${desc}"
     	printf "${reset}"
 	fi
 	retval=${size}
@@ -1316,6 +1316,7 @@ function sh_search()
 {
 	local oldverbose=$verbose
 	local param=$@
+
 	[[ $verbose -gt 1 ]] || (( verbose=0 ))
 	sh_listpkgdisp	"$VARCACHE_SEARCH/packages-split" ${param} --nodeps
 	local ntotal_pkg_installed=${public_ntotal_pkg_installed}
@@ -1330,14 +1331,15 @@ function sh_search()
 			local cpacote=${aPKGSPLIT[$PKG_BASE_VERSION]}.desc
 			local cVersion=${aPKGSPLIT[$PKG_VERSION]}
 			local cBuild=${aPKGSPLIT[$PKG_BUILD]}
+			local	error_value=0
 
 			cpacote=$VARCACHE_ARCHIVES/$cfullname
-  			if [[ $LFORCE ]] || [[ -e $cpacote ]]; then
+			if [[ $LFORCE = $true ]] || ! [[ -e ${cpacote} ]]; then
 				sh_wgetdesc
 	    		error_value="${?}"
 			fi
 
-    		if [ ${error_value} = 0 ]; then
+    		if [[ ${error_value} = 0 ]]; then
 				sh_ShortCatPkg "$cpacote" $true
     		else
     			log_failure_msg2 "ERROR Downloading ${red}$cfullname${reset}"
