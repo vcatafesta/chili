@@ -93,23 +93,27 @@ function sh_touchconf(){
 	[[ -d "${SYSCONFDIR}" ]] || mkdir -p $SYSCONFDIR &> /dev/null
 	cat > $SYSCONFDIR/fetch.conf << '_EOF_'
 ######################################################################
-# Arquivo de configuracao
+# fetch.conf
 ######################################################################
-# extensao dos pacotes: chilios=chi.zst, mazon=mz
-#PKG_EXT='mz'			#mazonos
-PKG_EXT='chi.zst'		#ChiliOS
+# extension of packages: chilios=chi.zst, mazonos=mz
+#PKG_EXT='mz'			# http://mazonos.com
+PKG_EXT='chi.zst'		# https://github.com/vcatafesta/ChiliOS
 
-# pacotes hospedado no repositorio do github: sim='1', nao='0'
+# packages hosted on GITHUB repository: yes='1', not='0'
 GITSITE='0'
 
-# site de hospedagem da distro
-PKG_SITE='https://github.com/vcatafesta/ChiliOS/tree/master'		# for use set GITSITE=1
+# distro hosting website/packages
+#PKG_SITE='https://github.com/vcatafesta/ChiliOS/tree/master'		# for use set GITSITE=1
 PKG_SITE='http://localhost'													# for use set GITSITE=0
 #PKG_SITE='http://201.7.66.107'												# for use set GITSITE=0
 #PKG_SITE='http://mazonos.com'												# for use set GITSITE=0
+
+#not needed change
 PKG_RAW='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master'
-PKG_RAW_FETCH='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master/updater/fetch' 
+PKG_RAW_FETCH='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master/updater/fetch'
 PKG_RAW_FILE='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master/packages/t/tree-1.8.0-2.chi.zst'
+
+# configuration for generation new packages
 AUTO_YES='1'
 MAINTAINER='Vilmar Catafesta <vcatafesta@gmail.com>'
 GPG_SIGN='0'
