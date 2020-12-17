@@ -493,6 +493,7 @@ function sh_checkdir()
 		log_msg "Checking job directories"
 	fi
 
+	[[ -e $VARCACHE_SEARCH/packages-split ]]           || > $VARCACHE_SEARCH/packages-split
 	[[ -e $VARCACHE_SEARCH/packages-installed-split ]] || > $VARCACHE_SEARCH/packages-installed-split
 
 	if [ $# -lt 1 ]; then
@@ -2748,6 +2749,7 @@ configure
 sh_checkroot
 checkDependencies
 setvarcolors
+sh_checkdir "OFF"
 
 # sanity checks
 #case $(( dryrun+delete+move )) in
