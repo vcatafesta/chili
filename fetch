@@ -285,7 +285,7 @@ function sh_listpkgdisp()
 			if [[ -n "$pkg_grep" ]]; then
 				public_pkg="$public_pkg $(echo $pkg_grep)"
 			else
-				log_failure_msg "${red}error${reset}: ${orange}${x} ${reset}target not found."
+				log_failure_msg "${red}error${reset}: ${orange}${x} ${reset}target was ${red}NOT ${reset}found."
 				public_pkg_not_found+=("$x")
 			fi
 		done
@@ -317,8 +317,8 @@ function sh_listpkgdisp()
 				sh_write $i "4" $pkgNumber
   			done
 		fi
-	else
-		log_msg "($ncontapkg) package(s) found."
+	#else
+	#	log_msg "($ncontapkg) package(s) found."
 	fi
 	sh_cdroot
 	return $public_ntotal_pkg_listed
@@ -386,10 +386,6 @@ function sh_list()
 					[[ $LLIST = $true ]] && sh_write $i "0" $pkgCheckNumber
 				fi
 			done
-		else
-			if (( verbose )); then
-				log_failure_msg2 "ERROR: package ${green}'$param' ${red}was NOT FOUND${reset}"
-			fi
 		fi
 	fi
 	sh_cdroot
@@ -731,7 +727,7 @@ function sh_show()
 	local param=$@
 	local error_value=0
 
-	if (( verbose )); then
+	if (( verbose >= 2  )); then
 		log_msg "Reading package lists..."
 	fi
 
@@ -763,8 +759,6 @@ function sh_show()
     		fi
 
 		done
-	else
-		log_failure_msg2 "ERROR: package ${green}'$param' ${red}was NOT FOUND${reset}"
 	fi
 	sh_cdroot
 }
@@ -1346,8 +1340,6 @@ function sh_search()
     		fi
 
 		done
-	else
-		log_failure_msg2 "ERROR: package ${green}'$param' ${red}was NOT FOUND${reset}"
 	fi
 	verbose=$oldverbose
 }
@@ -1698,6 +1690,11 @@ function _LIST_ARCHIVES_DIRECTORIES()
 			sed -i "/^${view}$/d" "${VARLIB_LIST}/${packname}"
 		fi
 	done < "${VARLIB_LIST}/${packname}"
+}
+
+function retstat()
+{
+	[[ "$?" -ne '0' ]] && return 1 || return 0
 }
 
 function _SUBSHELL_STATUS()
