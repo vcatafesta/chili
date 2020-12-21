@@ -5,7 +5,7 @@
  # MazonOS GNU/Linux - http://mazonos.com
  #
  # Created: 2019/04/05
- # Altered: 2020/12/16
+ # Altered: 2020/12/17
  #
  # Copyright (c) 2019 - 2020, Vilmar Catafesta <vcatafesta@gmail.com>
  # All rights reserved.
@@ -41,7 +41,7 @@ function configure()
 {
 	export LC_ALL=C
 	export LANG=C
-	readonly _VERSION_="2.05.00.20201216"
+	readonly _VERSION_="2.05.00.20201217"
 	readonly DEPENDENCIES=(which gpg find tar zstd curl sed grep cat awk tput dialog stat)
 
 	# Import lib
@@ -210,8 +210,8 @@ function sh_ascanpkg()
 
 function sh_cabec()
 {
-	#local nfiles=$1
-	#printf "${reset}%5s(${pink}%04d${reset})${green} Package%37sversion%8s%11ssize fullname\n" "" "${nfiles}"
+	local nfiles=$1
+	printf "${reset}%5s(${pink}%04d${reset})${green} Package%37sversion%8s%11ssize fullname\n" "" "${nfiles}"
 	echo -n
 }
 
@@ -520,15 +520,12 @@ function sh_update()
 
 	#internet?
 	sh_checknet; [[ $? = $false ]] || { return 1;}
-	sh_checkdir "OFF"
 
-	cd $VARCACHE_SEARCH/
+	pushd $VARCACHE_SEARCH/ &>/dev/null
 	sh_backup
 
 	log_info_msg "Cleaning up $VARCACHE_SEARCH/"
 	> $VARCACHE_SEARCH/folders
-#	> $VARCACHE_SEARCH/folders_packages
-#	> $VARCACHE_SEARCH/packages
 	> $VARCACHE_SEARCH/packages-split
 	> $VARCACHE_SEARCH/folders_metapackages
 	> $VARCACHE_SEARCH/metapackages
@@ -537,13 +534,13 @@ function sh_update()
 	log_info_msg "Updating Folders from ${SITE}"
 	if !(( $GITSITE )); then
 		#sites com gninx/apache/etc
-		#curl --insecure --silent --url "${SITE}/packages/"| grep "/</a" | grep '[a-z]' | sed 's/<[^>]*>//g'| cut -d/ -f1|sed 's/^[ \t]*//;s/[ \t]*$//'|sed 's/Index of//g' > ${VARCACHE_SEARCH}/folders
-		#curl --insecure --silent --url "${SITE}/packages/"|sed 's/<[^>]*>//g'| cut -d/ -f1|sed 's/^[ \t]*//;s/[ \t]*$//'|sed 's/Index of//g' > ${VARCACHE_SEARCH}/folders
+		#curl --insecure --silent --url "${SITE}/packages/"|grep "/</a" |grep '[a-z]'|sed 's/<[^>]*>//g'|cut -d/ -f1|sed 's/^[ \t]*//;s/[ \t]*$//'|sed 's/Index of//g' > ${VARCACHE_SEARCH}/folders
+		#curl --insecure --silent --url "${SITE}/packages/"|sed 's/<[^>]*>//g'|cut -d/ -f1|sed 's/^[ \t]*//;s/[ \t]*$//'|sed 's/Index of//g' > ${VARCACHE_SEARCH}/folders
 		#curl --insecure --silent --url "${SITE}/packages/"|grep href|sed 's/[*<>]//g'|sed 's/[*=/"]/:/g'|cut -d: -sf3 > ${VARCACHE_SEARCH}/folders
-		curl --insecure --silent --url "${SITE}/packages/"|grep -E -o '>[[:alnum:]]*/'|sed 's/>//g' | sed 's/\///g' > ${VARCACHE_SEARCH}/folders
+		curl --insecure --silent --url "${SITE}/packages/"|grep -E -o '>[[:alnum:]]*/'|sed 's/>//g;s/\///g' > ${VARCACHE_SEARCH}/folders
 	else
 		#repositorio github
-		curl --insecure --silent --url "${SITE}/packages/"|grep /packages/ | sed 's/<[^>]*>//g' | sed 's/ //g' > ${VARCACHE_SEARCH}/folders
+		curl --insecure --silent --url "${SITE}/packages/"|grep /packages/ |sed 's/<[^>]*>//g;s/ //g' > ${VARCACHE_SEARCH}/folders
 	fi
 
 #	FoldersInRepo='arch base dev extra games lib meta net sec theme x xapp'
@@ -552,7 +549,7 @@ function sh_update()
 	evaluate_retval
 	log_msg "${pink}Updating packages lists from ${SITE}...${reset}"
 	FoldersInRepo=$(cat $VARCACHE_SEARCH/folders)
-#	spinner & pid=$!
+	spinner & SPINNERPID=$!
 	local Folders
 
 	for Folders in ${FoldersInRepo}; do
@@ -562,8 +559,10 @@ function sh_update()
 #			PackagesInFolders=$(curl -k --silent --url "${SITE}/packages/${Folders}/"|sed 's/^.*href="//' | sed 's/".*$//' | grep ".${PRG}$" | awk '{print $1}')
 #			MetaPkgInFolders=$(curl -k --silent --url "${SITE}/packages/${Folders}/"|sed 's/^.*href="//' | sed 's/".*$//' | grep ".meta$" | awk '{print $1}')
 			response=$(curl -s -w "%{http_code}\n" -k --url "${SITE}/packages/${Folders}/" --output $FOLDER_TEMP)
-#			PackagesInFolders=($(grep $GREP_RE $FOLDER_TEMP | cut -d'"' -f2 ))
-		   PackagesInFolders=($(grep -E -o '>'$PKG_RE'<' $FOLDER_TEMP | sed 's/>//g' | sed 's/<//g'))
+		   PackagesInFolders=($(grep -E -o '>'$PKG_RE'<' $FOLDER_TEMP | sed 's/>//g; s/<//g'))
+#		   PackagesInFolders=($(grep -E -o '>[^"]*.'${PKG_EXT} $FOLDER_TEMP| sed 's/>//g'| sort -u))
+#		   PackagesInFolders=($(grep -oP '>\K.*\.chi.zst(?=<)' $FOLDER_TEMP))
+#		   PackagesInFolders=($(sed 's/<[^>]*>//g;s/ .*//;/.desc/d' $FOLDER_TEMP))
 			MetaPkgInFolders=($(grep '.meta\"' $FOLDER_TEMP | cut -d'"' -f2 ))
 			SizePkgInFolders=($(grep $GREP_RE $FOLDER_TEMP | awk '{print $5}' ))
 		else
@@ -574,7 +573,8 @@ function sh_update()
 
 		local count=0
 		for pkgInFolder in ${PackagesInFolders[@]}; do
-			sh_splitpkgre ${pkgInFolder}
+#			sh_splitpkgre ${pkgInFolder}
+			sh_splitpkg ${pkgInFolder}
 			pkg_size=${SizePkgInFolders[$count]}
 			echo "${aPKGSPLIT[$PKG_BASE]}$SEP${aPKGSPLIT[$PKG_VERSION]}$SEP${aPKGSPLIT[$PKG_BUILD]}$SEP${aPKGSPLIT[$PKG_FULLNAME]}$SEP${Folders}/${pkgInFolder}$SEP${aPKGSPLIT[$PKG_BASE_VERSION]}$SEP${pkg_size}" >> $VARCACHE_SEARCH/packages-split
 			((count++))
@@ -590,7 +590,7 @@ function sh_update()
 		#[[ ${count} != 0 ]] || log_failure_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
 		log_success_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
 	done
-#	{ kill $pid; wait $pid 2>/dev/null; echo ;}
+	{ kill $SPINNERPID; wait $SPINNERPID 2>/dev/null; echo ;}
 
 	sh_recreatefilepackagesinstalled
 	sh_cleaning
@@ -603,7 +603,7 @@ function sh_update()
 	log_msg "${green}($(strzero $nfilesInstalled 5)) packages installed${reset}"
 	echo
 	log_msg "${reset}Use: # $0 --help for helping${reset}"
-	sh_cdroot
+	popd &>/dev/null
 }
 
 function sh_FilesInCache()

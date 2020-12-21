@@ -760,14 +760,13 @@ function ex()
 		case $1 in
 			*.tar.bz2)   tar xvjf $1     ;;
 			*.tar.gz)    tar xvzf $1     ;;
-         *.tar.xz)    tar Jxvf $1     ;;
+			*.tar.xz)    tar Jxvf $1     ;;
          *.lz)        lzip -d -v $1   ;;
-         *.chi)       tar Jxvf $1     ;;
          *.chi.zst)   tar --force-local -xvf "$@" ;;
-         *.tar.zst)   tar --force-local -xvf $1 ;;
-         *.mz)        tar Jxvf $1     ;;
+         *.tar.zst)   tar --force-local -xvf "$@" ;;
+         *.chi)       tar --force-local -xvf "$@";;
+         *.mz)        tar --force-local Jxvf "$@";;
          *.cxz)       tar Jxvf $1     ;;
-         *.chi)       tar Jxvf $1     ;;
          *.tar)       tar xvf $1      ;;
          *.tbz2)      tar xvjf $1     ;;
          *.tgz)       tar xvzf $1     ;;
