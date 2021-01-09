@@ -590,7 +590,7 @@ function sh_update()
 
 	sh_recreatefilepackagesinstalled
 	sh_cleaning
-	unset $FOLDER_TEMP
+	unset FOLDER_TEMP
 
 	local nfilesInReposit=$(cat $VARCACHE_SEARCH/packages-split | wc -l)
 	local nfilesInstalled=$(cat $VARCACHE_SEARCH/packages-installed-split | wc -l)
