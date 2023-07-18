@@ -1,0 +1,11 @@
+#! /bin/bash
+#  Exemplo do diálogo --combobox
+
+Oper=$(kdialog --caption "Trabalhando com imagens" \
+    --geometry  170x90-400-300                     \
+    --default deletar                              \
+    --combobox "O que deseja fazer?"               \
+        girar                                      \
+        redimensionar                              \
+        deletar                                    \
+        converter)

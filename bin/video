@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+# Source: https://bbs.archlinux.org/viewtopic.php?id=140315
+#
+
+r=$(zenity --width 400 --height 250 --title "Display setup" --text "Choose display mode:" --list --column "Modes" "Internal" "External" "Clone" "Extended")
+
+case "$r" in
+Internal)
+    xrandr --output LVDS1  --auto \
+           --output VGA1 --off ;;
+External)
+    xrandr --output LVDS1  --off \
+           --output VGA1 --auto ;;
+Clone)
+    xrandr --output LVDS1  --auto \
+           --output VGA1 --auto --same-as LVDS1 ;;
+Extended)
+    xrandr --output LVDS1  --auto --primary \
+           --output VGA1 --auto --left-of LVDS1 ;;
+esac

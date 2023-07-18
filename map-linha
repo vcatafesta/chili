@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+map1(){
+	func(){
+		case $(($1 % 3)) in
+		0) if [[ $2 == *$'\n'* ]]; then
+			campo1+=(${2%$'\n'*})
+			campo2+=(${2#*$'\n'})
+		else
+			campo2+=($2)
+		fi
+		;;
+		1) campo3+=($2);;
+		2) campo4+=($2);;
+		esac
+	}
+	mapfile -td, -c1 -C func < /var/cache/fetch/search/packages-split.csv
+
+	for n in {0..5425}; do
+		echo "$n|${campo1[n]}|${campo2[n]}|${campo3[n]}|${campo4[n]}"
+	done
+}
+
+map2(){
+  callback(){
+      local IFS=,
+      eval linha$1=\($2\)
+   }
+	mapfile -t -c1 -C callback < /var/cache/fetch/search/packages-split.csv
+
+campo=( base version build fullname dirfullname base_version size site )
+
+for i in {0..5425}
+do
+   for j in ${!campo[*]}
+   {
+      eval       public_pkg_${campo[j]}+=\("\${linha$i[j]}"\)
+      #eval echo ${public_pkg_"\$campo$j[$i]"\}
+   }
+done
+}
+
+map3(){
+	ent=($(</var/cache/fetch/search/packages-split.csv));
+	for a in bas ver bui nam dir bsv siz sit;
+	do
+		eval ppkg_${a}=\(${ent[@]/,*}\)
+		ent=(${ent[@]#*,})
+	done
+
+	for a in ${!ppkg_*};
+	do
+		echo $a
+		eval echo "\${$a[@]}"
+	done
+}
+
+#map1
+#map2
+map3

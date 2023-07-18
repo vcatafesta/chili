@@ -1,0 +1,45 @@
+#!/bin/bash
+#  Este programa extrai as condições climáticas de
+#+ diversos pontos das cidades brasileiras que
+#+ estão no site http://weather.noaa.gov/ usando
+#+ lynx, que é um navegador orientado a caractere
+
+#  Quais são as cidades com dados disponíveis?
+Locais=$(lynx -source http://weather.noaa.gov/\
+weather/BR_cc.html | sed -n '/="cccc"/,/\/select/p' |
+    sed -nr 's/.*="([[:alpha:]]*)"> (.*)/\1 \2/p' |
+    sed "s/ $//;s/ / \'/;s/$/\'/")
+
+#  Agora a variável $Locais tem o seguinte formato:
+#+ SBAF 'Afonsos Aeroporto'
+#+ SBAT 'Alta Floresta Aeroporto'
+#+ SBHT 'Altamira'
+#+ SBAN 'Anapolis Braz-Afb'
+#+ Ou seja o código e o nome da localidade.
+
+#  Alinha a seguir, mostrará a lista de localidades,
+#+ escondendo o código
+Escolha=$(eval yad --list --title Local             \
+    --text \"Escolha o local mais próximo de você\" \
+    --width 256 --height 300 --search-column 2      \
+    --column NULL --column Cidade --hide-column 1   \
+    $Locais) || {
+        yad --text "Usuário descontinuou"           \
+            --button gtk-ok
+        exit 1; }
+CodLocal=${Escolha%%|*}                # Código do local
+Local=${Escolha%|*}; Local=${Local#*|} # Cidade
+
+#  A enorme linha a seguir, pesquisa os dados no
+#+ site, limpa o HTML, formata-os e usa o diálogo
+#+ --text-info para apresentá-los
+lynx -source http://weather.noaa.gov/\
+weather/current/$CodLocal.html |
+    grep -EA2 ' (Wind|Visibility|Sky conditions|Temperature|Dew Point|Relative Humidity|Pressure \(altimeter\)) ' |
+    sed -r '/^$/d;/^--$/d;s/.*> ([A-Z][a-z][A-Za-z ()]+) <.*/\1/;s/.*  //;s/ <\/.*//' |
+    paste - - | column -ts'	' |
+    yad --text-info --fontname 'monospace'      \
+        --text "Condições climáticas em $Local" \
+        --width 600 --height 270 --image-on-top \
+        --image stock_weather-few-clouds        \
+        --button gtk-ok

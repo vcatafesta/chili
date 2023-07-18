@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+#!/usr/bin/env bash
+declare -A Amirrors=([void.chililinux.com]="http://void.chililinux.com/voidlinux/|South and Central America|Pimenta Bueno, Brazil|2|"
+                     [voidlinux.com.br]="https://voidlinux.com.br/repo/|South and Central America|Ouro Preto, Brazil|2|"
+                     [mirror.sjtu.edu.cn]="https://mirror.sjtu.edu.cn/voidlinux/|Asia|Shanghai, China|2|"
+                     [mirrors.servercentral.com]="https://mirrors.servercentral.com/voidlinux/|North America|Chicago, USA|1|"
+                     [mirror.clarkson.edu]="https://mirror.clarkson.edu/voidlinux/|North America|New York, USA|2|"
+                     [void.webconverger.org]="https://void.webconverger.org/|Asia|Singapore|2|"
+                     [ftp.swin.edu.au]="https://ftp.swin.edu.au/voidlinux/|Oceania|Melbourne, Australia|2|"
+                     [ftp.debian.ru]="http://ftp.debian.ru/mirrors/voidlinux/|Europe|Russia|2|"
+                     [mirror.yandex.ru]="https://mirror.yandex.ru/mirrors/voidlinux/|Europe|Russia|2|"
+                     [ftp.dk.xemacs.org]="http://ftp.dk.xemacs.org/voidlinux/|Europe|Denmark|2|"
+                     [ftp.lysator.liu.se]="https://ftp.lysator.liu.se/pub/voidlinux/|Europe|Sweden|2|"
+                     [mirror.nju.edu.cn]="https://mirror.nju.edu.cn/voidlinux/|Asia|China|2|"
+                     [mirror2.sandyriver.net]="https://mirror2.sandyriver.net/pub/voidlinux/|North America|Kentucky, USA|2|"
+                     [mirror.accum.se]="https://mirror.accum.se/mirror/voidlinux/|Europe|Sweden|2|"
+                     [mirrors.tuna.tsinghua.edu.cn]="https://mirrors.tuna.tsinghua.edu.cn/voidlinux/|Asia|Beijing, China|2|"
+                     [repo-de.voidlinux.org]="https://repo-de.voidlinux.org/|Europe|Frankfurt, Germany|1|" )
+
+#for key in "${!Amirrors[@]}"; { echo "$key|${Amirrors[$key]}"; } | sort -t\| -k3 | column -ts\|
+sorted_list=$(for key in "${!Amirrors[@]}"; { echo "$key|${Amirrors[$key]}"; } | sort -t\| -k3)
+
+Amirrors=()
+echo 1
+for key in "${!Amirrors[@]}"; { echo "$key|${Amirrors[$key]}"; }
+
+echo 2
+while IFS='|' LC_ALL=C read -r -a fields; do
+   echo ["${fields[0]}"]="${fields[1]}|${fields[2]}|${fields[3]}|${fields[4]}|${fields[5]}"
+   Amirrors+=(["${fields[0]}"]="${fields[1]}|${fields[2]}|${fields[3]}|${fields[4]}|${fields[5]}")
+done <<< "${sorted_list[@]}"
+#done <<< "$(printf '%s\n' "${sorted_list[@]}")"
+#done <<< $(printf '%s\n' "$sorted_list")
+#done < <(printf '%s\n' "${sorted_list[*]}")
+#done < <(printf '%s\n' "${sorted_list[@]}")
+#done < <(printf '%s\n' "$sorted_list")
+
+echo 3
+#for key in "${!Amirrors[@]}"; { echo "$key|${Amirrors[$key]}"; } | sort -t\| -k3
+for key in "${!Amirrors[@]}"; {
+	echo 1
+}

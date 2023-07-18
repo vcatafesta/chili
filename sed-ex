@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+sed 's/a/X/g' <<< abracadabra   # substitui todos os 'a' por 'X'
+sed 's/a/X/'  <<< abracadabra   # substitui só o primeiro 'a' por 'X'
+sed 's/a/X/3' <<< abracadabra   # substitui a 3 ocorrencia 'a' por 'X'
+sed 's/a/X/3g' <<< abracadabra  # substitui a partir da 3 ocorrencia 'a' por 'X'

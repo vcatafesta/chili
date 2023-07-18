@@ -1,0 +1,12 @@
+#!/usr/bin/bash
+
+[[ -e /tmp/hi.mp3 ]] || dd if=/dev/zero of=/tmp/hi.mp3 bs=1024 count=2000
+ARRAY=$(find "/tmp/" -type f -name '*.mp3')
+COUNT=0
+
+for i in "${ARRAY}"
+do
+    split -b 1M $i $i.
+    (( COUNT++ ))
+    echo "$COUNT): $i"
+done

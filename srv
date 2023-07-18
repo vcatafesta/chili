@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+# Tratamento de sinal
+cleanup() {
+    echo "Saindo..."
+    # Encerra o processo NC se ele estiver em execução
+    if [[ -n $NC_PID ]]; then
+        kill "$NC_PID"
+    fi
+    exit 0
+}
+
+# Configurações padrão
+port="3333"
+
+# Processa as opções de linha de comando
+while getopts "p:" opt; do
+    case ${opt} in
+        p )
+            port="$OPTARG"
+            ;;
+        \? )
+            echo "Opção inválida: -$OPTARG" 1>&2
+            exit 1
+            ;;
+        : )
+            echo "A opção -$OPTARG requer um argumento." 1>&2
+            exit 1
+            ;;
+    esac
+done
+
+# Define a função que lida com as conexões
+handle_connection() {
+    while true; do
+        if read -r line <&${COPROC[0]}; then
+            echo "$line"
+        fi
+
+        read -p "" msg
+        [[ -n $msg ]] && echo "$msg" >&${COPROC[1]}
+    done
+}
+
+# Configura o servidor
+setup_server() {
+    # Configura o tratamento de sinal
+    trap cleanup SIGINT SIGTERM
+
+    # Configura a porta
+    echo "Escutando na porta $port"
+    exec {COPROC[0]}<>/dev/tcp/localhost/"$port"
+    COPROC_PID=$!
+
+    # Salva o PID do processo NC para encerrá-lo posteriormente
+    NC_PID=$(pgrep -P $COPROC_PID nc)
+
+    # Lida com as conexões
+    handle_connection
+}
+
+# Inicia o servidor
+setup_server

@@ -1,0 +1,9 @@
+#! /bin/bash
+#  Exemplos do diálogo --warningcontinuecancel
+
+#  Para funcionar é necessário antes atribuir um
+#+ valor à variável $pid
+
+kdialog --title "Exemplo de warningcontinuecancel" \
+    --warningcontinuecancel "O programa com PID = $pid está demorando muito para terminar.
+Deseja encerrá-lo?" && kill $pid

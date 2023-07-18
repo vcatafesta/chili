@@ -1,0 +1,118 @@
+Build started at 2020-09-13T14:04:15.230473
+Main binary: /usr/bin/python
+Build Options: 
+Python system: Linux
+The Meson build system
+Version: 0.55.2
+Source dir: /github/chili/c/gtk
+Build dir: /github/chili/c/gtk/build
+Build type: native build
+None of 'PKG_CONFIG_PATH' are defined in the environment, not changing global flags.
+None of 'PKG_CONFIG_PATH' are defined in the environment, not changing global flags.
+Project name: tutorial
+Project version: undefined
+None of 'CC' are defined in the environment, not changing global flags.
+Using 'CFLAGS' from environment with value: '-mtune=generic -fPIC -Os -pipe -fomit-frame-pointer -Wunused-local-typedefs -Wunused-but-set-variable -Wunused-function -Wno-declaration-after-statement -Wno-error=deprecated-declarations -Wno-deprecated-declarations -Wno-suggest-attribute=format -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-parentheses'
+None of 'LDFLAGS' are defined in the environment, not changing global flags.
+None of 'CPPFLAGS' are defined in the environment, not changing global flags.
+None of 'CC_LD' are defined in the environment, not changing global flags.
+Sanity testing C compiler: cc
+Is cross compiler: False.
+None of 'CC_LD' are defined in the environment, not changing global flags.
+Sanity check compiler command line: cc /github/chili/c/gtk/build/meson-private/sanitycheckc.c -o /github/chili/c/gtk/build/meson-private/sanitycheckc.exe -mtune=generic -fPIC -Os -pipe -fomit-frame-pointer -Wunused-local-typedefs -Wunused-but-set-variable -Wunused-function -Wno-declaration-after-statement -Wno-error=deprecated-declarations -Wno-deprecated-declarations -Wno-suggest-attribute=format -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-parentheses -pipe -D_FILE_OFFSET_BITS=64
+Sanity check compile stdout:
+
+-----
+Sanity check compile stderr:
+
+-----
+Running test binary command: /github/chili/c/gtk/build/meson-private/sanitycheckc.exe
+C compiler for the build machine: cc (gcc 10.2.0 "cc (GCC) 10.2.0")
+C linker for the build machine: cc ld.bfd 2.35
+None of 'AR' are defined in the environment, not changing global flags.
+None of 'CC' are defined in the environment, not changing global flags.
+Using 'CFLAGS' from environment with value: '-mtune=generic -fPIC -Os -pipe -fomit-frame-pointer -Wunused-local-typedefs -Wunused-but-set-variable -Wunused-function -Wno-declaration-after-statement -Wno-error=deprecated-declarations -Wno-deprecated-declarations -Wno-suggest-attribute=format -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-parentheses'
+None of 'LDFLAGS' are defined in the environment, not changing global flags.
+None of 'CPPFLAGS' are defined in the environment, not changing global flags.
+None of 'CC_LD' are defined in the environment, not changing global flags.
+Sanity testing C compiler: cc
+Is cross compiler: False.
+None of 'CC_LD' are defined in the environment, not changing global flags.
+Sanity check compiler command line: cc /github/chili/c/gtk/build/meson-private/sanitycheckc.c -o /github/chili/c/gtk/build/meson-private/sanitycheckc.exe -mtune=generic -fPIC -Os -pipe -fomit-frame-pointer -Wunused-local-typedefs -Wunused-but-set-variable -Wunused-function -Wno-declaration-after-statement -Wno-error=deprecated-declarations -Wno-deprecated-declarations -Wno-suggest-attribute=format -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-parentheses -pipe -D_FILE_OFFSET_BITS=64
+Sanity check compile stdout:
+
+-----
+Sanity check compile stderr:
+
+-----
+Running test binary command: /github/chili/c/gtk/build/meson-private/sanitycheckc.exe
+C compiler for the host machine: cc (gcc 10.2.0 "cc (GCC) 10.2.0")
+C linker for the host machine: cc ld.bfd 2.35
+None of 'AR' are defined in the environment, not changing global flags.
+Build machine cpu family: x86_64
+Build machine cpu: x86_64
+Host machine cpu family: x86_64
+Host machine cpu: x86_64
+Target machine cpu family: x86_64
+Target machine cpu: x86_64
+Pkg-config binary for MachineChoice.HOST is not cached.
+None of 'PKG_CONFIG' are defined in the environment, not changing global flags.
+Pkg-config binary missing from cross or native file, or env var undefined.
+Trying a default Pkg-config fallback at pkg-config
+Found pkg-config: /usr/bin/pkg-config (0.29.2)
+Determining dependency 'gtk+-3.0' with pkg-config executable '/usr/bin/pkg-config'
+PKG_CONFIG_PATH: 
+Called `/usr/bin/pkg-config --modversion gtk+-3.0` -> 0
+3.24.23
+PKG_CONFIG_PATH: 
+Called `/usr/bin/pkg-config --cflags gtk+-3.0` -> 0
+-pthread -I/usr/include/gtk-3.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/at-spi-2.0 -I/usr/include/dbus-1.0 -I/usr/lib/dbus-1.0/include -I/usr/include/gtk-3.0 -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/fribidi -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/harfbuzz -I/usr/include/libpng16 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include
+PKG_CONFIG_PATH: 
+Called `/usr/bin/pkg-config gtk+-3.0 --libs` -> 0
+-L/usr/lib -lgtk-3 -lgdk-3 -lz -lpangocairo-1.0 -lpango-1.0 -lharfbuzz -latk-1.0 -lcairo-gobject -lcairo -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0
+PKG_CONFIG_PATH: 
+Called `/usr/bin/pkg-config gtk+-3.0 --libs` -> 0
+-lgtk-3 -lgdk-3 -lz -lpangocairo-1.0 -lpango-1.0 -lharfbuzz -latk-1.0 -lcairo-gobject -lcairo -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0
+None of 'PKG_CONFIG_PATH' are defined in the environment, not changing global flags.
+None of 'CC_LD' are defined in the environment, not changing global flags.
+Running compile:
+Working directory:  /github/chili/c/gtk/build/meson-private/tmptn4_qxlb
+Command line:  cc /github/chili/c/gtk/build/meson-private/tmptn4_qxlb/testfile.c -o /github/chili/c/gtk/build/meson-private/tmptn4_qxlb/output.exe -pipe -mtune=generic -fPIC -Os -fomit-frame-pointer -Wunused-local-typedefs -Wunused-but-set-variable -Wunused-function -Wno-declaration-after-statement -Wno-error=deprecated-declarations -Wno-deprecated-declarations -Wno-suggest-attribute=format -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-parentheses -D_FILE_OFFSET_BITS=64 -O0 
+
+Code:
+ #include<stdio.h>
+        
+        int main(void) {
+            printf("%ld\n", (long)(sizeof(void *)));
+            return 0;
+        };
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Running compile:
+Working directory:  /github/chili/c/gtk/build/meson-private/tmp9qcd1wmy
+Command line:  cc /github/chili/c/gtk/build/meson-private/tmp9qcd1wmy/testfile.c -o /github/chili/c/gtk/build/meson-private/tmp9qcd1wmy/output.obj -pipe -c -mtune=generic -fPIC -Os -fomit-frame-pointer -Wunused-local-typedefs -Wunused-but-set-variable -Wunused-function -Wno-declaration-after-statement -Wno-error=deprecated-declarations -Wno-deprecated-declarations -Wno-suggest-attribute=format -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-parentheses -D_FILE_OFFSET_BITS=64 -O0 --print-search-dirs 
+
+Code:
+ 
+Compiler stdout:
+ install: /usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/
+programs: =/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/:/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../x86_64-pc-linux-gnu/bin/x86_64-pc-linux-gnu/10.2.0/:/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../x86_64-pc-linux-gnu/bin/
+libraries: =/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/:/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../x86_64-pc-linux-gnu/lib/x86_64-pc-linux-gnu/10.2.0/:/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../x86_64-pc-linux-gnu/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../../x86_64-pc-linux-gnu/10.2.0/:/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../lib/:/lib/x86_64-pc-linux-gnu/10.2.0/:/lib/../lib/:/usr/lib/x86_64-pc-linux-gnu/10.2.0/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../x86_64-pc-linux-gnu/lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../../:/lib/:/usr/lib/
+
+Compiler stderr:
+ 
+Run-time dependency gtk+-3.0 found: YES 3.24.23
+Build targets in project: 1
+
+Found ninja-1.10.1 at /usr/bin/ninja
+None of 'STRIP' are defined in the environment, not changing global flags.
+None of 'STRIP' are defined in the environment, not changing global flags.

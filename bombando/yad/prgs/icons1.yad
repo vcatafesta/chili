@@ -1,0 +1,10 @@
+#! /bin/bash
+#  Exemplos do uso do diálogo --icon
+#+ com o uso da opção --stdin  para
+#+ fazer passagem de parâmetros
+
+eval $(grep -E "^(Name|Comment|Icon|Exec|Term)" \
+    scale.desktop | sed -r 's/=(.*)$/="\1"/')
+echo -e "$Name\n$Comment\n$Icon\n$Exec $1\n$Terminal" |
+    yad --icons --stdin --no-buttons            \
+        --width 176 --height 153 --item-width 150

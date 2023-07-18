@@ -1,0 +1,38 @@
+#!/bin/bash
+#  Redimensiona imagem, cujo nome será
+#+ passado como parâmetro. Necessário
+#+ instalar a suite ImageMagick
+
+Titulo="Redimensiona Imagens"
+Imagem=insert-image
+
+[ "$1" ] || {
+    yad --title "$Titulo "                \
+        --text "Faltou informar a imagem" \
+        --image $Imagem --button gtk-ok
+    exit 1
+}
+
+Nome=${1%%.*}  # Somente o nome
+Ext=${1#*.}    # Somente extensões
+
+#  Para pegar percentual de redução/ampliação da imagem
+Perc=$(yad --scale --title "$Titulo"                   \
+    --text "Percentual de redimensionamento da imagem" \
+    --image $Imagem --image-on-top --min-value 10      \
+    --max-value 190 --step 10 --value 100) || exit 1
+
+#  convert é um utilitário da suíte ImageMagick
+convert $1 -resize $Perc% ${Nome}_redim.$Ext || {
+    yad --title "$Titulo "                  \
+        --text "$1 não é uma imagem válida" \
+        --image $Imagem --button gtk-ok
+    exit 1
+}   
+
+#  identify é outro utilitário da suíte ImageMagick
+identify ${Nome}_redim.$Ext | yad --text-info \
+    --title "$Titulo"                         \
+    --text "Foi gerado o arquivo <b>${Nome}_redim.$Ext</b> com as seguintes carcteristicas:" \
+    --image insert-image --image-on-top --button gtk-ok
+

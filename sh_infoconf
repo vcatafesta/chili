@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+function sh_infoconf() {
+	infotitle=$1
+	inforesult=$2
+	conftitle=$3
+	shift 3
+	dialog      --title "$infotitle"                       \
+	            --begin 05 10 --infobox "$inforesult" 14 75	\
+	            --and-widget                             \
+	            --begin 20 10 										\
+         --colors                                 	    \
+         --title     "$conftitle"                	    \
+         --backtitle "$ccabec"                        \
+         --no-collapse                                \
+         --no-cr-wrap                                 \
+         --yes-label "${cmsg_yeslabel[$LC_DEFAULT]}"  \
+         --no-label  "${cmsg_nolabel[$LC_DEFAULT]}"   \
+         --yesno     "$*"                             \
+         10 75
+   nchoice=$?
+   return "$nchoice"
+}
+
+infoconf "TITULO" "$(fdisk -l /dev/loop8)" "TITULO 2" "PAR1" "PAR2" "PAR3"
+

@@ -1,0 +1,13 @@
+#!/bin/bash
+#  Demo do uso do diálogo --list com campos
+#+ definidos com :IMG e saída sem tratamento
+#
+Sai=$(yad --list --column "Clique:IMG"  \
+	--column "Para"                     \
+	--image input-mouse                 \
+	--width 250 --height 130            \
+	utilities-terminal Terminal         \
+	preferences-desktop-accessibility Acessibilidade) &&
+		yad --text "\nA saida foi $Sai" \
+	    	--image input-mouse         \
+			--button gtk-ok

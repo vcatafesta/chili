@@ -1,0 +1,20 @@
+#!/bin/bash
+#  Exemplo do diálogo --entry
+#+ com a opção --editable
+#
+UF=$(yad --entry --title "Unidade da Federação" \
+	--text "Escolha ou digite a UF"             \
+	--image ../icones/Brasil.png                \
+	--editable --completion                     \
+	--entry-text "Nova UF" $(cat UFs))
+#  Inserção em UFs de uma possível UF inexistente
+grep -q "$UF" UFs || {  # se não achou $UF em UFs...
+	echo $UF >> UFs
+	sort -o UFs UFs  # Classifica UFs com saída em UFs
+	#  Exibição do conteúdo de UFs. Existem formas
+	#+ melhores de exibir conteúdo de arquivos
+	yad --text "UFs cadastradas\n$(cat UFs  | 
+	    xargs -n1 echo '       - ')" \
+		--image ../icones/Brasil.png --button gtk-ok
+	}
+

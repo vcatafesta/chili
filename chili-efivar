@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+if [[ -d /sys/firmware/efi/efivars/ ]]; then
+	ls -1 /sys/firmware/efi/efivars/
+else
+	printf "chili-efivar: error listing variables: Function not implemented\n"
+	printf "chili-efivar: EFI variables are not supported on this system.\n"
+fi
+
+

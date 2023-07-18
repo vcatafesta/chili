@@ -1,0 +1,38 @@
+#!/bin/bash
+#  Exemplos de uso do diálogo --list
+#+ com a opção --checklist
+
+zenity --list                                         \
+    --title "Compras na quitanda"                     \
+    --text "Marque o que precisa comprar na quitanda" \
+    --checklist                                       \
+    --column  Escolha                                 \
+    --column  Frutas                                  \
+        true  Pera                                    \
+        true  Uva                                     \
+        true  Maçã                                    \
+        false Melancia
+
+#  Usando a opção --separator com mais de um caractere
+Usus='-user '$(zenity --list                         \
+    --checklist                                      \
+    --title "Pesquisa de arquivos por usuário"       \
+    --text "Selecione usuários para listar arquivos" \
+    --height 400                                     \
+    --width 260                                      \
+    --separator ' -o -user '                         \
+    --column Marque                                  \
+    --column "Login Name"                            \
+    --column UID                                     \
+        $(cut -f1,3 -d: /etc/passwd | sort |         \
+            tr : ' ' | xargs -L1 echo FALSE))
+[[ "$Usus" == "-user " ]] && {
+    zenity --error --text "Sem usuários"
+    exit 1
+}
+Arqs=$(find . -type f $Usus)
+[ "$Arqs" ] || {
+    zenity --error --text "Usuário sem arquivos"
+    exit 1
+}
+zenity --list --multiple --column Arquivos $Arqs

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+port="3333"
+echo "Escutando na porta $port"
+
+function handle_connection {
+    local line
+    coproc nc -l -p "$port"
+
+    while true; do
+        if read -r line <&${COPROC[0]}; then
+            echo "$line"
+        fi
+
+        read -p "" msg
+        [[ -n $msg ]] && echo "$msg" >&${COPROC[1]}
+    done
+}
+
+function main {
+    while true; do
+        handle_connection &
+        wait -n
+        # Limita o número de processos em execução simultaneamente para 10.
+        while (( $(jobs -r -p | wc -l) >= 10 )); do
+            sleep 1
+        done
+    done
+}
+
+# Define o tratamento de erros para o script.
+set -euo pipefail
+
+# Executa a função principal.
+main

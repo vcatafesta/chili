@@ -1,0 +1,299 @@
+#!/bin/sh
+#
+#  scratchpkg
+#
+#  Copyright (c) 2018 by Emmett1  (emmett1.2miligrams@gmail.com)
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+trap "interrupted" 1 2 3 15
+
+export LC_ALL=C
+
+interrupted() {
+	echo
+	ret 1
+}
+
+msg() {
+	echo "==> $1"
+}
+
+msg2() {
+	echo " -> $1"
+}
+
+msgerr() {
+	echo "==> ERROR: $1" >&2
+}
+
+msgwarn() {
+	echo "==> WARNING: $1" >&2
+}
+
+help() {
+	cat << EOF
+Usage:
+  $(basename $0) [ <options> <package.spkg.txz> ]
+
+Options:
+  -u, --upgrade              upgrade package
+  -r, --reinstall            reinstall package
+  -c, --ignore-conflict      ignore conflict when installing package
+  -v, --verbose              print files installed
+  -h, --help                 show this help message
+      --no-preinstall        skip preinstall script before build/install package
+      --no-postinstall       skip postinstall script after install package
+      --no-preupgrade        skip preupgrade script before upgrade package
+      --no-postupgrade       skip postupgrade script after upgrade package
+      --no-backup            skip backup when upgrading package
+      --print-dbdir          print package database path
+      --root=<path>          install to custom root directory
+      
+EOF
+}
+
+extract_opts() {
+	while [ "$1" ]; do
+		case $1 in
+			--*) opts="$opts $1";;
+			-*) char=${#1}; count=1
+			    while [ "$count" != "$char" ]; do
+			        count=$((count+1))
+			        opts="$opts -$(echo $1 | cut -c $count)"
+			   done;;
+			*) opts="$opts $1"
+		esac
+		shift
+	done
+	echo $opts
+}
+
+parse_opts() {
+	if [ -z "$1" ]; then
+		SHOWHELP=yes
+	else
+		while [ "$1" ]; do
+			case $1 in
+			-u |           --upgrade) UPGRADE_PKG=yes ;;
+			-r |         --reinstall) REINSTALL_PKG=yes ;;
+			-c |   --ignore-conflict) IGNORE_CONFLICT=yes ;;
+			-v |           --verbose) VERBOSE_INSTALL="-v" ;;
+			-h |              --help) SHOWHELP=yes ;;
+			         --no-preinstall) NO_PREINSTALL=yes ;;
+			        --no-postinstall) NO_POSTINSTALL=yes ;;
+			         --no-preupgrade) NO_PREUPGRADE=yes ;;
+			        --no-postupgrade) NO_POSTUPGRADE=yes ;;
+			             --no-backup) NO_BACKUP=yes ;;
+			           --print-dbdir) PRINTDBDIR=yes ;;
+			                --root=*) ROOT_DIR="${1#*=}" ;;
+			            *.spkg.tar.*) PKGNAME="$(realpath $1)" ;;
+			                       *) msg "Invalid option! ($1)"; exit 1 ;;
+			esac
+			shift
+		done
+	fi
+}
+
+ret() {
+	# remove lock and all tmp files on exit
+	rm -f "$ROOT_DIR/$LOCK_FILE" "$TMP_PKGADD" "$TMP_PKGINSTALL" "$TMP_CONFLICT"
+	exit $1
+}
+
+isinstalled() {
+	if [ -s "$ROOT_DIR/$PKGDB_DIR/$1" ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+parse_opts $(extract_opts "$@")
+
+SCRATCHPKG_DIR="var/lib/scratchpkg"
+PKGDB_DIR="$SCRATCHPKG_DIR/db"
+PKGDBPERMS_DIR="$PKGDB_DIR.perms"
+LOCK_FILE="$SCRATCHPKG_DIR/spkg.lock"
+
+ROOT_DIR="${ROOT_DIR%/}" # remove trailing slash
+
+[ "$PRINTDBDIR" ] && {
+	echo "$ROOT_DIR/$PKGDB_DIR"
+	ret 0
+}
+
+# show help page
+[ "$SHOWHELP" ] || [ -z "$PKGNAME" ] && {
+	help
+	ret 0
+}
+
+[ -d "$ROOT_DIR/$PKGDB_DIR" ] || {
+	msgerr "Package's database directory does not exist: $ROOT_DIR/$PKGDB_DIR"
+	ret 1
+}
+
+# check for root access
+[ "$(id -u)" = "0" ] || {
+	msgerr "Installing packages requires root access!"
+	ret 1
+}
+
+# check for lock file
+[ -f "$ROOT_DIR/$LOCK_FILE" ] && {
+	msgerr "Cannot install/remove package simultaneously."
+	msgerr "remove '$ROOT_DIR/$LOCK_FILE' if no install/remove package process running."
+	exit 1
+}
+
+touch "$ROOT_DIR/$LOCK_FILE" 2>/dev/null || {
+	msgerr "Cannot create lock file in '$ROOT_DIR/$LOCK_FILE'."
+	exit 1
+}
+
+BASEPKGNAME=$(basename $PKGNAME)
+
+# check existence of package file
+[ -f "$PKGNAME" ] || {
+	msgerr "Package '$1' does not exist!"
+	ret 1
+}
+
+noextname=${BASEPKGNAME%*.spkg.tar.*}
+release=${noextname##*-}
+noextname=${noextname%-*}
+version=${noextname##*-}
+name=${noextname%-*}
+
+# get package information if installed
+if isinstalled $name; then
+	iversion=$(head -n1 $ROOT_DIR/$PKGDB_DIR/$name | awk '{print $1}')
+	irelease=$(head -n1 $ROOT_DIR/$PKGDB_DIR/$name | awk '{print $2}')
+	ALREADYINSTALLED=yes
+fi
+
+if [ "$ALREADYINSTALLED" = "yes" ] && [ ! "$UPGRADE_PKG" ] && [ ! "$REINSTALL_PKG" ]; then
+	echo "Package '$name' already installed. ($iversion-$irelease)"
+	ret 0
+fi
+
+# cant reinstall if not installed and cant upgrade if up-to-date
+if [ "$UPGRADE_PKG" ] || [ "$REINSTALL_PKG" ]; then	
+	if [ "$ALREADYINSTALLED" != "yes" ]; then
+		msgerr "Package '$name' not installed."
+		ret 1
+	fi
+	if [ "$UPGRADE_PKG" ]; then	
+		if [ "$version-$release" = "$iversion-$irelease" ]; then
+			echo "Package '$name' is up-to-date. ($iversion-$irelease)"
+			ret 0
+		fi
+	fi
+fi
+
+TMP_PKGADD="$ROOT_DIR/$SCRATCHPKG_DIR/.tmp_pkgadd"
+TMP_PKGINSTALL="$ROOT_DIR/$SCRATCHPKG_DIR/.tmp_pkginstall"
+TMP_CONFLICT="$ROOT_DIR/$SCRATCHPKG_DIR/.tmp_conflict"
+
+# check integrity of package and save list file/dirs to install in the meantime
+tar -tvf $PKGNAME > $TMP_PKGADD 2>/dev/null || {
+	msgerr "Package '$1' is corrupted!"
+	ret 1
+}
+
+# set operation whether install/upgrade/reinstall
+# install is default
+opr=install
+[ "$UPGRADE_PKG" ] && opr=upgrade
+[ "$REINSTALL_PKG" ] && opr=reinstall
+echo "$opr: $name-$version-$release..."
+
+# check for file conflict
+if [ ! "$IGNORE_CONFLICT" ]; then
+	grep -v '/$' "$TMP_PKGADD" | awk '{print $6}' | while read -r line; do
+		if [ "$line" = "${line%.*}.spkgnew" ]; then
+			line=${line%.*}
+		fi
+		if [ -e "$ROOT_DIR/$line" ] || [ -L "$ROOT_DIR/$line" ]; then
+			if [ "$UPGRADE_PKG" ] || [ "$REINSTALL_PKG" ]; then
+				if ! grep -Fqx "$line" "$ROOT_DIR/$PKGDB_DIR/$name"; then
+					_f=$(grep -x ^"$line"$ $ROOT_DIR/$PKGDB_DIR/* | cut -d : -f1 | awk -F / '{print $(NF)}' | head -n1 | grep -v $name)
+					_f=${_f:-(none)}
+					echo "$_f $line"
+					touch "$TMP_CONFLICT"
+				fi
+			else
+				_f=$(grep -x ^"$line"$ $ROOT_DIR/$PKGDB_DIR/* | cut -d : -f1 | awk -F / '{print $(NF)}' | head -n1)
+				_f=${_f:-(none)}
+				echo "$_f $line"
+				touch "$TMP_CONFLICT"
+			fi
+		fi
+	done
+	
+	if [ -e "$TMP_CONFLICT" ]; then
+		msgerr "File conflict found!"
+		ret 1
+	fi
+fi
+
+rm -f $TMP_PKGINSTALL
+
+# extract package into ROOT_DIR
+tar -xvhpf "$PKGNAME" -C "$ROOT_DIR"/ | while read -r line; do
+	if [ "$line" = "${line%.*}.spkgnew" ]; then
+		line=${line%.*}
+		if [ "$UPGRADE_PKG" ] || [ "$REINSTALL_PKG" ]; then
+			if [ ! -e "$ROOT_DIR/$line" ] || [ "$NO_BACKUP" = yes ]; then
+				mv "$ROOT_DIR/$line".spkgnew "$ROOT_DIR/$line"
+			fi
+		else
+			mv "$ROOT_DIR/$line".spkgnew "$ROOT_DIR/$line"
+		fi
+	fi
+	[ "$VERBOSE_INSTALL" ] && echo "extracted '$line'"
+	echo "$line" >> $TMP_PKGINSTALL
+done
+
+# remove old files from old package that not exist in new package
+if [ "$UPGRADE_PKG" ] || [ "$REINSTALL_PKG" ]; then
+	tail -n+2 "$ROOT_DIR/$PKGDB_DIR/$name" | tac | while read -r line; do
+		case $line in
+			*/[) ;;
+			*/) grep "^$line$" $ROOT_DIR/$PKGDB_DIR/* "$TMP_PKGINSTALL" 2>/dev/null | grep -qv "$ROOT_DIR/$PKGDB_DIR/$name" || rmdir $([ "$VERBOSE_INSTALL" ] && echo -v) "$ROOT_DIR/$line";;
+			 *) grep -q "^$line$" "$TMP_PKGINSTALL" || rm $([ "$VERBOSE_INSTALL" ] && echo -v) "$ROOT_DIR/$line";;
+		esac
+	done
+fi
+
+# register package into database
+echo "$version $release" > "$ROOT_DIR/$PKGDB_DIR/$name"
+cat "$TMP_PKGINSTALL" >> "$ROOT_DIR/$PKGDB_DIR/$name"
+mkdir -p "$ROOT_DIR/$PKGDBPERMS_DIR"
+rm -f "$ROOT_DIR/$PKGDBPERMS_DIR/$name"
+grep '/$' $TMP_PKGADD | while read -r perms own junk1 junk2 junk3 dir junk4; do
+	if [ "$perms" != drwxr-xr-x ] || [ "$own" != root/root ]; then
+		echo "$perms $own $dir" >> "$ROOT_DIR/$PKGDBPERMS_DIR/$name"
+		[ -s "$ROOT_DIR/$PKGDBPERMS_DIR/$name" ] || rm "$ROOT_DIR/$PKGDBPERMS_DIR/$name"
+	fi
+done
+
+# running ldconfig
+if [ -x "$ROOT_DIR"/sbin/ldconfig ]; then
+	"$ROOT_DIR"/sbin/ldconfig -r "$ROOT_DIR"/
+fi
+
+ret 0

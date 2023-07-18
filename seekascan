@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+
+source /chili/core.sh
+setvarcolors
+export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
+#set -x
+array_slice() {
+    local __doc__='
+    Returns a slice of an array (similar to Python).
+
+    From the Python documentation:
+    One way to remember how slices work is to think of the indices as pointing
+    between elements, with the left edge of the first character numbered 0.
+    Then the right edge of the last element of an array of length n has
+    index n, for example:
+    ```
+    +---+---+---+---+---+---+
+    | 0 | 1 | 2 | 3 | 4 | 5 |
+    +---+---+---+---+---+---+
+    0   1   2   3   4   5   6
+    -6  -5  -4  -3  -2  -1
+    ```
+
+    >>> local a=(0 1 2 3 4 5)
+    >>> echo $(array.slice 1:-2 "${a[@]}")
+    1 2 3
+    >>> local a=(0 1 2 3 4 5)
+    >>> echo $(array.slice 0:1 "${a[@]}")
+    0
+    >>> local a=(0 1 2 3 4 5)
+    >>> [ -z "$(array.slice 1:1 "${a[@]}")" ] && echo empty
+    empty
+    >>> local a=(0 1 2 3 4 5)
+    >>> [ -z "$(array.slice 2:1 "${a[@]}")" ] && echo empty
+    empty
+    >>> local a=(0 1 2 3 4 5)
+    >>> [ -z "$(array.slice -2:-3 "${a[@]}")" ] && echo empty
+    empty
+    >>> [ -z "$(array.slice -2:-2 "${a[@]}")" ] && echo empty
+    empty
+
+    Slice indices have useful defaults; an omitted first index defaults to
+    zero, an omitted second index defaults to the size of the string being
+    sliced.
+    >>> local a=(0 1 2 3 4 5)
+    >>> # from the beginning to position 2 (excluded)
+    >>> echo $(array.slice 0:2 "${a[@]}")
+    >>> echo $(array.slice :2 "${a[@]}")
+    0 1
+    0 1
+
+    >>> local a=(0 1 2 3 4 5)
+    >>> # from position 3 (included) to the end
+    >>> echo $(array.slice 3:"${#a[@]}" "${a[@]}")
+    >>> echo $(array.slice 3: "${a[@]}")
+    3 4 5
+    3 4 5
+
+    >>> local a=(0 1 2 3 4 5)
+    >>> # from the second-last (included) to the end
+    >>> echo $(array.slice -2:"${#a[@]}" "${a[@]}")
+    >>> echo $(array.slice -2: "${a[@]}")
+    4 5
+    4 5
+
+    >>> local a=(0 1 2 3 4 5)
+    >>> echo $(array.slice -4:-2 "${a[@]}")
+    2 3
+
+    If no range is given, it works like normal array indices.
+    >>> local a=(0 1 2 3 4 5)
+    >>> echo $(array.slice -1 "${a[@]}")
+    5
+    >>> local a=(0 1 2 3 4 5)
+    >>> echo $(array.slice -2 "${a[@]}")
+    4
+    >>> local a=(0 1 2 3 4 5)
+    >>> echo $(array.slice 0 "${a[@]}")
+    0
+    >>> local a=(0 1 2 3 4 5)
+    >>> echo $(array.slice 1 "${a[@]}")
+    1
+    >>> local a=(0 1 2 3 4 5)
+    >>> array.slice 6 "${a[@]}"; echo $?
+    1
+    >>> local a=(0 1 2 3 4 5)
+    >>> array.slice -7 "${a[@]}"; echo $?
+    1
+    '
+    local start end array_length length
+    if [[ $1 == *:* ]]; then
+        IFS=":"; read -r start end <<<"$1"
+        shift
+        array_length="$#"
+        # defaults
+        [ -z "$end" ] && end=$array_length
+        [ -z "$start" ] && start=0
+        (( start < 0 )) && let "start=(( array_length + start ))"
+        (( end < 0 )) && let "end=(( array_length + end ))"
+    else
+        start="$1"
+        shift
+        array_length="$#"
+        (( start < 0 )) && let "start=(( array_length + start ))"
+        let "end=(( start + 1 ))"
+    fi
+    let "length=(( end - start ))"
+    (( start < 0 )) && return 1
+    # check bounds
+    (( length < 0 )) && return 1
+    (( start < 0 )) && return 1
+    (( start >= array_length )) && return 1
+    # parameters start with $1, so add 1 to $start
+    let "start=(( start + 1 ))"
+    echo "${@: $start:$length}"
+}
+alias array.slice="array_slice"
+
+seekascan()
+{
+   local n=$(($#-1))
+   local value=${!n}
+
+	array=("${@:1}")
+	array=("${array[@]: 0:$n}") #retira ultimo elemento
+#	unset array[$n]
+	echo "${array[@]}"
+	echo "tamanho: $n"
+	echo "search value    : $value"
+	echo "search indirecao: ${!n}"
+	declare -p array
+
+   for ((i=1;i < $#;i++)) {
+      if [ "${!i}" == "${value}" ]; then
+         ((--i)); echo $i
+         return 0
+      fi
+   }
+   return 1
+}
+seektest(){
+Unix=('Debian' 'RedHat' 'Ubuntu' 'Suse' 'Fedora' 'UTS' 'OpenLinux');
+echo ${Unix[@]:3:2}
+echo ${Unix[@]/Ubuntu/SCOUnix}
+declare -a patter=( ${Unix[@]/Red*/} )
+echo ${patter[@]}
+
+echo
+A=({a..z})
+B=("${A[@]:1:2}") ; echo "${B[@]}"
+C=("${A[@]:1}")   ; echo "${C[@]}"
+echo "${B[1]}"
+echo "${C[@]: -2:2}"
+
+version=4.7.1
+A=( ${version//\./ } )
+echo "${A[@]}"    # 4 7 1
+B=( "${A[@]:1}" )
+echo "${B[@]}"    # 7 1
+echo "${A[@]::1}"
+#echo "${${@}[@]:1}"
+}
+
+arr=({a..z})
+search=c
+#seekascan "${arr[@]}" $search
+#exit
+
+if value=$(seekascan "${arr[@]}" $search); then
+	echo $value
+else
+	echo não encontrado
+fi
+

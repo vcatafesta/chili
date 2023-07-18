@@ -1,0 +1,27 @@
+#!/bin/bash
+#  Programa exemplo do diálogo --form,
+#+ usando seletor de arquivos, seletor
+#+ de diretórios e checkbox.
+#
+Saida=$(yad --form                                   \
+	--title "Copia ou move arquivos"                 \
+	--image filesave --align right                   \
+	--field "Arquivo origem:FL"                      \
+	--field "Diretório destino:DIR"                  \
+	--field "Marque este campo se desejar mover:CHK" \
+	"" ~ FALSE) || exit 1
+IFS='|' read Origem Destino Cmd <<< "$Saida"
+#  Para não dar erro, O diretório de $Destino tem de
+#+ ter direito de gravação e se $Cmd for TRUE (mv)
+#+ $Origem tb precisa do mesmo direito
+[ ! -w $Destino -o \( $Cmd = TRUE -a \
+    ! -w ${Origem%/*} \) ] && {
+    yad --text "Sem permissão para gravar em\n$Destino" \
+		--image filesave --button gtk-ok
+	exit 1
+	}
+[[ $Cmd == FALSE ]] && Cmd=cp || Cmd=mv
+#  Para ser um prg profissional, aqui deveríamos
+#+ testar se no diretório $Destino, não existe
+#+ arquivo com o mesmo nome do arquivo de $Origem
+eval $Cmd $Origem $Destino

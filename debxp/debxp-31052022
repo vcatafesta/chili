@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+#https://www.youtube.com/watch?v=QYNahnCeRcI
+
+echo ${0##*/}
+echo ${BASH_ARGC[@]}
+echo ${BASH_ARGV[@]}
+echo Indice: ${!BASH_ARGC[@]} Qtd: ${BASH_ARGC[@]}
+echo
+
+for i in ${BASH_ARGC[@]}; do
+	echo $i = ${BASH_ARGC[i]}
+	echo $i = ${BASH_ARGV[i]}
+done
+
+echo
+for i in ${!BASH_ARGC[@]}; do
+	echo $i = ${BASH_ARGC[i]}
+	echo $i = ${BASH_ARGV[i]}
+done
+
+echo
+for i in ${!BASH_ARGV[@]}; do
+	echo $i = ${BASH_ARGC[i]}
+	echo $i = ${BASH_ARGV[i]}
+done
+
+echo
+for i in ${!BASH_ARGV[@]}; do
+	echo $i = ${BASH_ARGC[i]}
+	echo $i = ${BASH_ARGV[i]}
+done
+
+declare -p BASH_ARGV
+declare -p BASH_ARGC
+
+func()
+{
+	echo 'func()'
+	declare -p BASH_ARGV
+	declare -p BASH_ARGC
+}
+
+shopt -s extdebug #ativa o empilhamento dos parametros passados para uma funcao
+#shopt -u extdebug #default: desativa o empilhamento dos parametros passados para uma funcao.
+
+func x y z

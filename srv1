@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+port="3333"
+echo "escutando na porta $port"
+interrupted=false
+
+function interrupt {
+	interrupted=true
+}
+
+trap interrupt SIGINT
+
+while [ "$interrupted" == false ]; do
+	# Lidando com possíveis erros ao inicializar o socket
+	if ! coproc nc -l -p "$port"; then
+		echo "Erro ao inicializar o socket na porta $port"
+		exit 1
+	fi
+
+	while true; do
+	    # Lendo a entrada do cliente
+	    if read -r line <&"${COPROC[0]}"; then
+	        echo "$line"
+	    fi
+
+	    # Enviando a resposta do servidor
+	    read -r -p "Digite sua mensagem: " msg
+	    [[ -n "$msg" ]] && echo "$msg" >&"${COPROC[1]}"
+	done
+
+	# Esperando pelo processo filho
+	wait "$!"
+
+done
+echo "Programa encerrado"

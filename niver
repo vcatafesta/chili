@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+for i in {0..100..9}
+do
+	[[ i -gt 20 && i -lt 30 ]] && echo "Dos 20 aos 30: Ele urubu, come tudo que vê e aparece!Sou o cara"
+	[[ i -gt 31 && i -lt 40 ]] && echo "Dos 31 aos 40: Ele é águia, escolhe o que comer!"
+	[[ i -gt 41 && i -lt 50 ]] && echo "Dos 41 aos 50: Ele é papagaio, fala mais do que come!"
+	[[ i -gt 51 && i -lt 60 ]] && echo "Dos 51 aos 60: Ele é lobo, corre o dia inteiro atrás da Chapeuzinho Vermelho e volta para casa para comer a Vovozinha!"
+	[[ i -gt 61 && i -lt 70 ]] && echo "Dos 61 aos 70: Ele é pombo, só faz sujeiro!"
+	[[ i -gt 71 && i -lt 80 ]] && echo "Dos 70 para cima: Nem sujeira faz, só fica catando!!!"
+	[[ i -gt 81 && i -lt 180 ]] && echo "MIlagre estar vivo!"
+done
+

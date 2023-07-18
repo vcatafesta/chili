@@ -1,0 +1,244 @@
+1. Declaring an Array and Assigning values
+
+In bash, array is created automatically when a variable is used in the format like,
+
+name[index]=value
+
+    name is any name for an array
+    index could be any number or expression that must evaluate to a number greater than or equal to zero.You can declare an explicit array using declare -a arrayname.
+
+$ cat arraymanip.sh
+#! /bin/bash
+Unix[0]='Debian'
+Unix[1]='Red hat'
+Unix[2]='Ubuntu'
+Unix[3]='Suse'
+
+echo ${Unix[1]}
+
+$./arraymanip.sh
+Red hat
+
+To access an element from an array use curly brackets like ${name[index]}.
+2. Initializing an array during declaration
+
+Instead of initializing an each element of an array separately, you can declare and initialize an array by specifying the list of elements (separated by white space) with in a curly braces.
+
+Syntax:
+declare -a arrayname=(element1 element2 element3)
+
+If the elements has the white space character, enclose it with in a quotes.
+
+#! /bin/bash
+$cat arraymanip.sh
+declare -a Unix=('Debian' 'Red hat' 'Red hat' 'Suse' 'Fedora');
+
+declare -a declares an array and all the elements in the parentheses are the elements of an array.
+3. Print the Whole Bash Array
+
+There are different ways to print the whole elements of the array. If the index number is @ or *, all members of an array are referenced. You can traverse through the array elements and print it, using looping statements in bash.
+
+echo ${Unix[@]}
+
+# Add the above echo statement into the arraymanip.sh
+#./t.sh
+Debian Red hat Ubuntu Suse
+
+Referring to the content of a member variable of an array without providing an index number is the same as referring to the content of the first element, the one referenced with index number zero.
+4. Length of the Bash Array
+
+We can get the length of an array using the special parameter called $#.
+
+${#arrayname[@]} gives you the length of the array.
+
+$ cat arraymanip.sh
+declare -a Unix=('Debian' 'Red hat' 'Suse' 'Fedora');
+echo ${#Unix[@]} #Number of elements in the array
+echo ${#Unix}  #Number of characters in the first element of the array.i.e Debian
+$./arraymanip.sh
+4
+6
+
+5. Length of the nth Element in an Array
+
+${#arrayname[n]} should give the length of the nth element in an array.
+
+$cat arraymanip.sh
+#! /bin/bash
+
+Unix[0]='Debian'
+Unix[1]='Red hat'
+Unix[2]='Ubuntu'
+Unix[3]='Suse'
+
+echo ${#Unix[3]} # length of the element located at index 3 i.e Suse
+
+$./arraymanip.sh
+4
+
+6. Extraction by offset and length for an array
+
+The following example shows the way to extract 2 elements starting from the position 3 from an array called Unix.
+
+$cat arraymanip.sh
+Unix=('Debian' 'Red hat' 'Ubuntu' 'Suse' 'Fedora' 'UTS' 'OpenLinux');
+echo ${Unix[@]:3:2}
+
+$./arraymanip.sh
+Suse Fedora
+
+The above example returns the elements in the 3rd index and fourth index. Index always starts with zero.
+7. Extraction with offset and length, for a particular element of an array
+
+To extract only first four elements from an array element . For example, Ubuntu which is located at the second index of an array, you can use offset and length for a particular element of an array.
+
+$cat arraymanip.sh
+#! /bin/bash
+
+Unix=('Debian' 'Red hat' 'Ubuntu' 'Suse' 'Fedora' 'UTS' 'OpenLinux');
+echo ${Unix[2]:0:4}
+
+./arraymanip.sh
+Ubun
+
+The above example extracts the first four characters from the 2nd indexed element of an array.
+8. Search and Replace in an array elements
+
+The following example, searches for Ubuntu in an array elements, and replace the same with the word ‘SCO Unix’.
+
+$cat arraymanip.sh
+#!/bin/bash
+Unix=('Debian' 'Red hat' 'Ubuntu' 'Suse' 'Fedora' 'UTS' 'OpenLinux');
+
+echo ${Unix[@]/Ubuntu/SCO Unix}
+
+$./arraymanip.sh
+Debian Red hat SCO Unix Suse Fedora UTS OpenLinux
+
+In this example, it replaces the element in the 2nd index ‘Ubuntu’ with ‘SCO Unix’. But this example will not permanently replace the array content.
+9. Add an element to an existing Bash Array
+
+The following example shows the way to add an element to the existing array.
+
+$cat arraymanip.sh
+Unix=('Debian' 'Red hat' 'Ubuntu' 'Suse' 'Fedora' 'UTS' 'OpenLinux');
+Unix=("${Unix[@]}" "AIX" "HP-UX")
+echo ${Unix[7]}
+
+$./arraymanip.sh
+AIX
+
+In the array called Unix, the elements ‘AIX’ and ‘HP-UX’ are added in 7th and 8th index respectively.
+10. Remove an Element from an Array
+
+unset is used to remove an element from an array.unset will have the same effect as assigning null to an element.
+
+$cat arraymanip.sh
+#!/bin/bash
+Unix=('Debian' 'Red hat' 'Ubuntu' 'Suse' 'Fedora' 'UTS' 'OpenLinux');
+
+unset Unix[3]
+echo ${Unix[3]}
+
+The above script will just print null which is the value available in the 3rd index. The following example shows one of the way to remove an element completely from an array.
+
+$ cat arraymanip.sh
+Unix=('Debian' 'Red hat' 'Ubuntu' 'Suse' 'Fedora' 'UTS' 'OpenLinux');
+pos=3
+Unix=(${Unix[@]:0:$pos} ${Unix[@]:$(($pos + 1))})
+echo ${Unix[@]}
+
+$./arraymanip.sh
+Debian Red hat Ubuntu Fedora UTS OpenLinux
+
+In this example, ${Unix[@]:0:$pos} will give you 3 elements starting from 0th index i.e 0,1,2 and ${Unix[@]:4} will give the elements from 4th index to the last index. And merge both the above output. This is one of the workaround to remove an element from an array.
+11. Remove Bash Array Elements using Patterns
+
+In the search condition you can give the patterns, and stores the remaining element to an another array as shown below.
+
+$ cat arraymanip.sh
+#!/bin/bash
+declare -a Unix=('Debian' 'Red hat' 'Ubuntu' 'Suse' 'Fedora');
+declare -a patter=( ${Unix[@]/Red*/} )
+echo ${patter[@]}
+
+$ ./arraymanip.sh
+Debian Ubuntu Suse Fedora
+
+The above example removes the elements which has the patter Red*.
+12. Copying an Array
+
+Expand the array elements and store that into a new array as shown below.
+
+#!/bin/bash
+Unix=('Debian' 'Red hat' 'Ubuntu' 'Suse' 'Fedora' 'UTS' 'OpenLinux');
+Linux=("${Unix[@]}")
+echo ${Linux[@]}
+
+$ ./arraymanip.sh
+Debian Red hat Ubuntu Fedora UTS OpenLinux
+
+13. Concatenation of two Bash Arrays
+
+Expand the elements of the two arrays and assign it to the new array.
+
+$cat arraymanip.sh
+#!/bin/bash
+Unix=('Debian' 'Red hat' 'Ubuntu' 'Suse' 'Fedora' 'UTS' 'OpenLinux');
+Shell=('bash' 'csh' 'jsh' 'rsh' 'ksh' 'rc' 'tcsh');
+
+UnixShell=("${Unix[@]}" "${Shell[@]}")
+echo ${UnixShell[@]}
+echo ${#UnixShell[@]}
+
+$ ./arraymanip.sh
+Debian Red hat Ubuntu Suse Fedora UTS OpenLinux bash csh jsh rsh ksh rc tcsh
+14
+
+It prints the array which has the elements of the both the array ‘Unix’ and ‘Shell’, and number of elements of the new array is 14.
+14. Deleting an Entire Array
+
+unset is used to delete an entire array.
+
+$cat arraymanip.sh
+#!/bin/bash
+Unix=('Debian' 'Red hat' 'Ubuntu' 'Suse' 'Fedora' 'UTS' 'OpenLinux');
+Shell=('bash' 'csh' 'jsh' 'rsh' 'ksh' 'rc' 'tcsh');
+
+UnixShell=("${Unix[@]}" "${Shell[@]}")
+unset UnixShell
+echo ${#UnixShell[@]}
+
+$ ./arraymanip.sh
+0
+
+After unset an array, its length would be zero as shown above.
+15. Load Content of a File into an Array
+
+You can load the content of the file line by line into an array.
+
+#Example file
+$ cat logfile
+Welcome
+to
+thegeekstuff
+Linux
+Unix
+
+$ cat loadcontent.sh
+#!/bin/bash
+filecontent=( `cat "logfile" `)
+
+for t in "${filecontent[@]}"
+do
+echo $t
+done
+echo "Read file content!"
+
+$ ./loadcontent.sh
+Welcome
+to
+thegeekstuff
+Linux
+Unix
+Read file content!

@@ -1,0 +1,111 @@
+#!/usr/bin/env/bash
+
+# debug
+#source /chili/core.sh
+#setvarcolors
+#export PS4=$'${red}${0##*/}${cyan}[$LINENO]${reset} '
+#set -x
+
+#You must declare your array before use with
+#declare -A myArray
+#myArray=([red]=1 [orange]=2 [green]=3)
+#echo ${myArray['orange']}
+
+#array=({a..z})
+#echo ${array[@]}
+#echo ${array[@]/b//}
+#echo ${array[@]/b//} | cut -d/ -f1
+#echo ${array[@]/green//} | cut -d/ -f1 | wc -w | tr -d ' '
+#search=z
+#n=$(cut -d/ -f1 <<< "${array[@]/$search//}" | wc -w | tr -d ' ')
+#echo $n
+#echo ${array[n]}
+
+#unset array
+#mapfile -t array < /var/cache/fetch/search/packages-split.csv
+#array=($(awk -F',' '{ print $1 }' /var/cache/fetch/search/packages-split.csv))
+#echo ${array[@]}
+#echo ${array[@]/b//}
+#echo ${array[@]/b//} | cut -d/ -f1
+#echo ${array[@]/green//} | cut -d/ -f1 | wc -w | tr -d ' '
+
+#search='tree'
+#echo ${array[@]}
+#cut -d/ -f1 <<< "${array[@]/$search//}" | wc -w | tr -d ' '
+#n=$(cut -d/ -f1 <<< "${array[@]/$search//}" | wc -w | tr -d ' ')
+#echo $n
+#echo ${array[n]}
+
+declare +n array; unset numv simv array
+declare -a numv=( uva limão maçã limão)
+declare -A simv=( [a]=uva [b]=limão [c]=maçã [d]=limão )
+
+index1() {
+  	local -n a=array
+	local s=$search
+  	declare -p ${!a} | grep -oP "\[\K[^]]+(?=\]=\"$s\")"
+}
+export -f index1
+
+index2() {
+  	local -n a=array
+	local s=$search
+  	for k in "${!a[@]}"; { [[ ${a[$k]} == $s ]] && echo $k; }
+}
+export -f index2
+
+index3() {
+	local -n a=array
+	local s=$search
+	echo ${a[$s]}
+}
+export -f index3
+
+index4() {
+	local -n a=array
+	local s=$search
+	cut -d/ -f1 <<< "${a[@]/$s//}" | wc -w | tr -d ' '
+}
+export -f index4
+
+search=limão
+#echo 'index1'; index1
+#echo 'index2'; index2
+#echo 'index4'; index4
+
+declare -n array=simv
+#echo 'index1'; index1
+#echo 'index2'; index2
+echo 'index3'; index3
+declare -p simv
+echo "${simv[d]}"
+echo ${simv[uva]}
+
+index5()
+{
+  local -n a=${1:-array}; local s=${2:-$search}
+  declare -p ${!a} | grep -oP "\[\K[^]]+(?=\]=\"$s\")"
+}
+
+index6()
+{
+  local -n a=${1:-array}; local s=${2:-$search}
+  for k in "${!a[@]}"; { [[ ${a[$k]} =~ $s ]] && echo $k; }
+}
+
+declare -a numv=( 'uva passa' 'lima da pérsia' limão maçã limão uva/passa )
+declare -A simv=( [a]='uva passa' [b]='lima da pérsia' [c]=limão [d]=maçã [e]=limão [f]=uva/passa )
+declare -p simv
+
+index5 numv 'lim.*'
+index6 numv 'lim.*'
+index5 simv 'lim.*'
+index6 simv 'lim.*'
+index5 numv '[^"]*p.*a.*[^"]*'
+index6 numv '[^"]*p.*a.*[^"]*'
+index5 simv '[^"]*p.*a.*[^"]*'
+index6 simv '[^"]*p.*a.*[^"]*'
+
+#source map-index; array=({1..100000}); search=999;benshmark 2000 index{1..4} %
+
+

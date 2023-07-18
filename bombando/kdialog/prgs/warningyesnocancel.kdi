@@ -1,0 +1,8 @@
+#! /bin/bash
+#  Exemplos do diálogo --warningyesnocancel
+
+kdialog --title                         \
+    "Exemplo semelhante ao LibreOffice" \
+    --warningyesnocancel                \
+    "O documento 'kdialog' foi alterado.
+Deseja salvar as alterações?

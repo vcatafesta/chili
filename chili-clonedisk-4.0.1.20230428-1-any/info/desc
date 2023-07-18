@@ -1,0 +1,17 @@
+######################################################################
+# Generated with fetch
+# Generated with alienpkg
+######################################################################
+maintainer='Vilmar Catafesta <vcatafesta@gmail.com>'
+pkgname='chili-clonedisk'
+version='4.0.1.20230428-1'
+build='1'
+license='GPL2'
+lfs_version='12.2'
+lfs_init='SYSTEMD'
+arch='any'
+distro='chili'
+desc='Chili utility to clone disks'
+size=''
+url='https://github.com/vcatafesta/chili/tree/master/chili-clonedisk-4.0.1.20230428-1-any/'
+dep=('')

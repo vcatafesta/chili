@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+declare -A jogos
+
+jogos[numero]=1
+jogos[tipo]='Sena'
+jogos[uf]='RO'
+
+echo "${jogos[numero]}"
+echo "${jogos[tipo]}"
+echo "${jogos[uf]}"
+
+echo "${jogos[@]}"
+
+
+
+
+

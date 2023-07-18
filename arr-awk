@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+mapfile -t arr < <(awk 'match($0, /^(.*),(.*),(.*),(.*),(.*),(.*),(.*)/, array) {
+	print array[1];
+	print array[2];
+	print array[3];
+	print array[4];
+	print array[5];
+	print array[6];
+	print array[7];
+	#print "=============================="
+}' packages-split.csv)
+
+echo "=============================="
+#echo "${arr[@]}"
+echo "=============================="
+echo "${arr[0]}"
+echo "${arr[1]}"
+echo "${arr[2]}"
+echo "${arr[3]}"
+echo "${arr[4]}"
+echo "${arr[5]}"
+echo "${arr[6]}"
+echo "=============================="
+echo "${arr[7]}"
+echo "${arr[8]}"
+echo "${arr[9]}"
+echo "${arr[10]}"
+echo "${arr[11]}"
+echo "${arr[12]}"
+echo "${arr[13]}"
+

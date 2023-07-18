@@ -1,0 +1,21 @@
+######################################################################
+# Generated with fetch    - https://chililinux.com
+# Generated with alienpkg - https://chililinux.com
+######################################################################
+maintainer='Vilmar Catafesta <vcatafesta@gmail.com>'
+pkgname='chili-contrib'
+version='20221209-1'
+build='1'
+pkgver='20221209'
+pkgrel='1'
+license='GPL2'
+lfs_version='11.2'
+lfs_init='SYSTEMD'
+arch='x86_64'
+distro='chili'
+desc='chili-contrib-20221209-1'
+pkgdesc='chili-contrib-20221209-1'
+size='77033'
+url='https://www.linuxfromscratch.org/lfs/view/stable/'
+source=('')
+dep=('')

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+readonly port="3333" # porta em que o script irá escutar
+
+function cleanup() {
+	echo "Encerrando script..."
+	exit 0
+}
+
+echo "Escutando na porta $port"
+trap cleanup INT TERM
+
+while true; do
+	# inicia o processo "ncat" para escutar conexões na porta especificada
+	coproc ncat -l -p "$port"
+	while true; do
+		# lê mensagens recebidas pelo processo "ncat"
+		if read -r line <&${COPROC[0]}; then
+			echo "$line"
+		fi
+	    # lê mensagens digitadas pelo usuário e envia para o processo "ncat"
+	    read -p "" msg
+	    [[ -n $msg ]] && echo "$msg" >&${COPROC[1]}
+	done
+
+	# espera o processo "ncat" encerrar para evitar vazamento de recursos
+	wait $!
+done
+
+
+

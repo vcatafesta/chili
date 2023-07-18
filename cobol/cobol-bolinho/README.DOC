@@ -1,0 +1,119 @@
+README.DOC
+
+March, 1987
+
+This file contains supplemental information for the use
+of the Microsoft COBOL Compiler Version 2.20.
+
+1) Single user and networked ISAM
+
+    This diskette contains two versions of ISAM. 
+
+    One version, ISAM.EXE, is version 2.41, and should be
+    used if you have a stand-alone, or non-IBM PC environment.
+    If it is used in a network environment, locking affects the
+    entire file instead of a single record.  It will allow ISAM
+    files OPENed for INPUT to be read simultaneously by
+    different processes, however.  There are also some speed im-
+    provements over ISAM.EXE version 2.26.  This version of ISAM
+    will support MS-NET compatible networks as well as the 
+    IBM PC-NET.
+
+    The second version of ISAM is designed to be used in an IBM
+    PC-NET network environment and requires PC-DOS v 3.1 or
+    greater.  It consists of three files: NISAM.EXE, ISAM.SRV,
+    and ISAM.RDR.
+    
+    NISAM.EXE is the front end ISAM command processor, version 
+    3.11.  The commands it accepts are:
+
+    NISAM START SRV | RDR {/S:NNNNN}  --start network ISAM
+                                     (/S: specifies buffer size)
+    NISAM STOP                        --stop ISAM & free memory
+    NISAM SHARE                       --show share list, as with
+                                        server
+    NISAM SHARE shortname=d:\path     --share a directory with
+                                        the specified shortname
+    NISAM SHARE d:\path               --share the specified
+                                        directory
+    NISAM SHARE shortname|d:\path /D  --stop sharing the short-
+                                        name or directory
+    NISAM FILE                        --show the currently OPEN
+                                        ISAM files
+    NISAM CLOSE name                  --close the specified open
+                                        file
+
+    ISAM.SRV is the server version of ISAM which can service 
+    ISAM requests.  It is activated by the NISAM START SRV 
+    command.  This command should be given on a network
+    server machine when requests for ISAM files located on that
+    machine will be made either locally or across the network.
+    
+    ISAM.RDR is the redirector version of ISAM, and is activated
+    by the NISAM START RDR command.  This command should be 
+    given on network machines that run programs that access ISAM
+    files located only on other, server machines.
+    
+    Thus, ISAM files must be located on a server, and the ISAM
+    on that machine must be activated with the NISAM START SRV
+    command.
+    
+    Note:  It is possible, in the same network, to have some 
+    machines running ISAM.EXE and others running NISAM.EXE.
+    We do not recommend it, however.  It is NOT possible to
+    have the same machine running both ISAM.EXE and NISAM.EXE
+    at the same time.
+
+    Like the network server, network directory paths must be
+    shared using the NISAM SHARE command.  The command syntax
+    has been modeled after the NET SHARE command.  You MUST
+    NISAM SHARE the same directories that you NET SHARE, using
+    the SAME syntax used in the NET SHARE command.
+    For example, on a server named ZEKE you would type:
+
+    NET SHARE PAYABLE=C:\LEDGER\PAYABLE
+    NISAM SHARE PAYABLE=C:\LEDGER\PAYABLE
+
+    Then, the user on another machine who wants to use an ISAM
+    file in the C:\LEDGER\PAYABLE directory on the server named
+    ZEKE would type:
+
+    NET USE E: \\ZEKE\PAYABLE
+
+    and then run the application which OPENs the ISAM file on 
+    drive E:.
+
+    The application can be passed the name of the machine\short-
+    name to do an explicit OPEN using the "VALUE OF FILE-ID"
+    clause.  For example:
+
+    VALUE OF FILE-ID "\\ZEKE\PAYABLE\MASTER.DAT".
+
+2) There is a limit of 10 alternate keys per ISAM file.
+
+3)  Some users who have complex systems, with several layers of
+    nested CALLs, for example, may run out of stack space.  This
+    condition results in an "Out of Memory" error at runtime.
+    The COBOL runtime can be configured to use additional
+    stack space by adding the "/ST" switch to the LINK step in the
+    "makerun.bat" batch file.  The default stack size is 2048 bytes.
+    A recommended setting would be /ST:3072.  For example, a 
+    modified LINK statement which increased the stack size to 3072
+    bytes would be:
+
+    link /st:3072 cobol asm %2 %3 %4 %5 %6 %7 %8 %9 %1,,cobol1 cobol2/NOD
+
+4)  CobRef: Cross reference utility
+
+    CobRef is the cross reference generator included with version 2.20
+    of Microsoft COBOL.  
+
+    - When invoking CobRef, it should be noted that spaces are NOT
+      allowed in the switches area.  In the following example,  note that
+      there are NO spaces between the filename and the switch.
+    
+          COBREF filename/N
+    
+    - Users should note that variables defined in 
+      COPY files will have an asterisk ('*') immediately following
+      the line number in the CobRef listing.

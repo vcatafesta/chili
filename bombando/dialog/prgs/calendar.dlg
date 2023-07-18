@@ -1,0 +1,17 @@
+#!/bin/bash
+# Um exemplo completo do uso de --calendar
+
+Data=$(dialog --stdout   \
+    --title "CALENDARIO" \
+    --calendar "Escolha a data..." 0 0)
+
+Msg=$(case $? in
+    (0)
+    echo Data Informada: $Data ;;
+    (1)
+    echo Saiu cancelando       ;;
+  (255)
+    echo Saiu com \<ESC\>      ;;
+esac)
+
+dialog --title CALENDARIO --infobox "$Msg" 0 0

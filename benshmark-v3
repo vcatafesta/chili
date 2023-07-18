@@ -1,0 +1,64 @@
+# vim: ft=sh
+
+# Arkanon <arkanon@lsd.org.br>
+# 2022/06/30 (Thu) 06:00:48 -03
+
+
+benshmark-v3()
+{
+  local rep=$1 mult unit undef p1 p2=ão p3=á lc=en_US.UTF-8
+  local TIMEFORMAT=%lR
+  locale -a 2>&- | grep -qi ${lc/-/-\\?}$ &&
+  local LC_ALL= LC_NUMERIC=$lc LANG=
+  shift
+  [[ ${@: -1} == % ]] &&
+  {
+    fator=100 unid=%%
+    set -- ${@:1:$(($#-1))}
+  } || fator=1 unid=vezes
+  [[ $* && $rep =~ ^[0-9]+$ ]] ||
+  {
+    echo "Uso: $FUNCNAME <repetições> <função> <função> [...] [%]" >&2
+    return 255
+  }
+  declare -F $* &> /dev/null ||
+  {
+    indef=( $(grep -vf <(declare -F $*) <(printf '%s\n' $*)) )
+    (( ${#indef[*]} > 1 )) && p1=s p2=ões p3=ão
+    echo "A$p1 funç$p2 (${indef[*]}) não est$p3 definida$p1." >&2
+    return 1
+  }
+  echo
+  for sol
+  {
+    echo -n "$sol  " >&2
+    IFS=ms read M S <<< $( { time for ((i=0;i<rep;i++)); { $sol; } &> /dev/null; } 2>&1 )
+    printf -v tempo "%02i:%06.3f" $M $S
+    echo ${tempo/./,} >&2
+    echo "$M*60+$S $sol"
+  } | sort -V | {
+    read mtempo msol
+    echo -e "\n$((n=1))º  $msol"
+    while read tempo sol
+    do
+      echo -n "$((++n))º  $sol/$msol  "
+      prop=$(
+        bc <<< "
+         t=$tempo
+         m=$mtempo
+         f=$fator
+         scale=3
+         if (m>0) f*(t-m)/m
+      ")
+      [[ $prop ]] && printf -v prop "%'10.3f $unid mais lenta" $prop || prop=∞
+      : "${prop/./;}"
+      : "${_//,/.}"
+      echo "${_/;/,}"
+    done
+  }
+  echo
+}
+
+
+
+# EOF

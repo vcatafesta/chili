@@ -1,0 +1,209 @@
+#!/usr/bin/env bash
+# ----------------------------------------------------------------------------
+# Script   : qn (quick note)
+# Descrição: Simples gerenciador de notas rápidas
+# Versão   : 0.0.2
+# Data     : 06/05/2021
+# Licença  : GNU/GPL v3.0
+# ----------------------------------------------------------------------------
+# Copyright (C) 2021  Blau Araujo <blau@debxp.org>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# ----------------------------------------------------------------------------
+# Uso: qn [opções] [nota|número]
+#
+# Opções:
+#
+#     -n|-new [nota]      Criar uma nova nota. Opcionalmente, a nota pode
+#                         ser omitida, o que causa a abertura do editor.
+#
+#     -e|-edit [número]   Edita a nota selecionada em um menu ou pelo
+#                         número informado opcionalmente no comando.
+#
+#     -d|-del [número]    Remove a nota selecionada em um menu ou pelo
+#                         número informado opcionalmente no comando.
+#
+#     -l|-list            Lista as notas em formato simplificado.
+#
+#     -h|-help            Exibe esta ajuda.
+#
+#                         Sem argumentos, lista todas as notas.
+#
+# ----------------------------------------------------------------------------
+source /chili/core.sh
+
+# Arquivo de notas...
+QN_FILE="$HOME/.qnotes"
+
+# Se o arquivo não existir, ele é criado...
+[[ -f $QN_FILE ]] || >> $QN_FILE
+
+QN_CONTENTS=$(< $QN_FILE)
+
+# Strings...
+PS3=$'\nSelecione uma opção do menu (enter mostra menu): '
+str_del='EXCLUIR NOTAS'
+str_quit='Tecle algo para sair...'
+str_pdel='Excluir nota número (`q` para sair): '
+str_pconfirm='Tecle `s` para confirmar: '
+
+usage() {
+	echo "Quick Note (qn) - Gerenciador de notas rápidas
+
+USO: qn [opções] [nota|número]
+
+OPÇÕES:
+    -n|-new [nota]      Criar uma nova nota. Opcionalmente, a nota pode ser omitida, o que causa a abertura do editor.
+    -e|-edit [número]   Edita a nota selecionada em um menu ou pelo número informado opcionalmente no comando.
+    -d|-del [número]    Remove a nota selecionada em um menu ou pelo número informado opcionalmente no comando.
+    -l|-list            Lista as notas em formato simplificado.
+    -h|-help            Exibe esta ajuda.
+                        Sem argumentos, lista todas as notas."
+}
+
+get_mode() case ${1,,} in
+       -new|-n) QN_MODE=0;;
+      -edit|-e) QN_MODE=1;;
+       -del|-d) QN_MODE=2;;
+             *) QN_MODE=3;;
+esac
+
+draw_line() {
+    printf -v line "%$(tput cols)s"
+    printf "\e[38;5;240m${line// /─}\e[0m"
+}
+
+print_note() {
+    draw_line
+    printf "\e[35;1mData:\e[0m $1\n"
+    printf "\e[35;1mNota:\e[0m $2\n"
+    draw_line
+}
+
+list_notes() {
+    local line=$(draw_line)
+
+    [[ $1 == 'full' ]] && echo $line
+
+    awk -v l="$line" -v f="$1" '
+    {
+        if (f == "full") {
+            date = $1"\n"
+            line = l"\n"
+        }
+        gsub("^"$1" ", "", $0)
+        printf "%d: ", NR
+        printf "%s", date
+        printf "%s\n", $0
+        printf "%s", line
+    }
+    ' $QN_FILE
+}
+
+# Exibir menu de notas....
+show_menu_notes() {
+    local num
+    local max
+    local menu=$(draw_line)$'\n'$(list_notes)$'\n'$(draw_line)
+    local prompt="$menu"$'\n'"$1"
+
+    while [[ ${num,,} != 'q' ]]; do
+        read -e -p "$prompt" num
+        max=$(wc -l <<< $QN_CONTENTS)
+        [[ $num =~ ^[0-9]+$ && $num -le $max ]] && break
+        prompt="$1"
+    done
+    printf $num
+}
+
+# Deletar notas...
+del_notes()  {
+
+    # Título
+    echo "$str_del"
+
+    local confirm
+    local num=${1:-$(show_menu_notes "$str_pdel")}
+
+    # Sair se 'num' for 'q'...
+    [[ $num == 'q' ]]  && return
+
+    # Exibir a linha do arquivo...
+    draw_line
+    sed -n "${num}p" <<< "$QN_CONTENTS"
+    draw_line
+
+    # Confirmar a exclusão...
+    while :; do
+        read -e -N1 -p "$str_pconfirm" confirm
+        [[ ${confirm,,} == [sy] ]] && sed -i "${num}d" $QN_FILE
+        break
+    done
+
+    echo
+}
+
+# Testes ---------------------------------------------------------------------
+
+sh_add_reg()    { printf 'TODO\n'; draw_line; inkey 0.2; return; }
+sh_edit_reg()   { printf 'TODO\n'; draw_line; inkey 0.2; return; }
+sh_search_reg() { printf 'TODO\n'; draw_line; inkey 0.2; return; }
+
+inkey()
+{
+	read -t "$1" -n1 -r -p "" lastkey
+}
+
+sh_quit()
+{
+	exit 0
+}
+
+main()
+{
+	declare -A amenu=([Adicionar]=sh_add_reg
+							[Remover]=del_notes
+							[Editar]=sh_edit_reg
+							[Listar]=list_notes
+							[Buscar]=sh_search_reg
+							[Sair]=sh_quit
+							)
+
+	#echo "${!amenu[@]}"
+	#echo "${amenu[@]}"
+
+	while :; do
+	   draw_line
+		select nchoice in "${!amenu[@]}"; do
+			clear
+			echo -e "nchoice: $nchoice"
+			echo -e "reply  : $REPLY"
+		   draw_line
+	  		[[ $REPLY =~ ^[0-6]+$ ]] || sh_quit
+	  		[[ -z $(command -v $REPLY) ]] && eval ${amenu[$nchoice]}
+	  	done
+done
+}
+
+clear
+if [[ $1 = @(-h|--help) || $1 = "-h" || $1 = "--help" || $1 = "help" || $1 = "-help" ]]; then
+   usage
+   exit $(( $# ? 0 : 1 ))
+fi
+main
+#list_notes full
+# del_notes $1
+# list_notes
+# read -sN1 -p "$str_quit "
+# printf "\n\n"

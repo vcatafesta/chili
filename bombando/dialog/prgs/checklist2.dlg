@@ -1,0 +1,33 @@
+#!/bin/bash
+## Exemplo do diálogo --checklist
+
+trap '' 2   # Agora fica impossível interromper
+
+Escolha=$(dialog --separate-output --stdout  \
+    --checklist                              \
+    "Quais dentre esses podem ser chamados
+de Sistema Operacional?" 0 0 0               \
+    Maçã    "É frutinha"              off    \
+    Linux   "Tá botando prá quebrar"  ON     \
+    Janelas "Coisas de decorador"     oFF    \
+    Unix    "Encontrou um substituto" on) || {
+    dialog --infobox "A resposta era:
+Linux e Unix" 0 0
+    read
+    clear
+    exit 1
+}
+
+if  [[ $(echo $Escolha) == "Linux Unix" ]]
+then
+    dialog --infobox "Muito bem,
+você acertou." 0 0
+    read
+    clear
+else
+    dialog --infobox "Você não entende de
+Sistemas Operacionais" 0 0
+    read
+    clear
+fi
+

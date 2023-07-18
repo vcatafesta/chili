@@ -1,0 +1,43 @@
+#!/bin/bash
+## Demonstração do diálogo --mixedgauge
+
+function Gauge
+{
+    dialog --colors --title "Demo do diálogo --mixedgauge" \
+	--mixedgauge "O texto neste diálogo virá aqui" \
+		13 56 $6 \
+		"\Z7Um processo que será bem concluído:\Zn"	$1 \
+		"\Z7Processo aos trancos e barrancos:\Zn"	$2 \
+		"\Z7Um processo que será bem concluído:\Zn"	$3 \
+		"\Z7Este processo está todo bichado:\Zn"	$4 \
+		"\Z7Processo p/ fechar com chave de ouro:\Zn"	$5
+    sleep 0.1 
+}
+
+# Um processo que será bem concluído
+for ((i=1; i<100; i++))
+do 
+   Gauge -$i -0 -0 -0 -0 $((i/5))
+done
+# Processo aos trancos e barrancos
+for ((i=0; i<50; i+=10))
+do 
+   Gauge 3 -$i -0 -0 -0 $((i/5+20))
+   sleep 1.5
+done
+# Um processo que será bem concluído
+for ((i=1; i<100; i++))
+do
+   Gauge 3 6 -$i -0 -0 $((i/5+40))
+done
+# Este processo está todo bichado
+for ((i=1; i<30; i++))
+do
+   Gauge 3 6 3 -$i -0 $((i/5+60))
+done
+# Processo p/ fechar com chave de ouro
+for ((i=1; i<100; i+=2))
+do
+   Gauge 3 6 3 1 -$i $((i/5+80))
+done
+Gauge 3 6 3 1 5 100

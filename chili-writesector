@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+
+function sh_config() {
+	#debug
+	export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
+	#set -x
+	readonly DEPENDENCIES=(fdisk printf hdparm smartctl tput)
+   readonly bold=$(tput bold)
+   readonly reset=$(tput sgr0)
+	readonly black=$(tput setaf 0);
+	readonly red=$(tput setaf 1)
+	readonly green=$(tput setaf 2)
+	readonly yellow=$(tput bold)$(tput setaf 3)
+	readonly blue=$(tput setaf 4)
+	readonly pink=$(tput setaf 5)
+	readonly cyan=$(tput setaf 6)
+	readonly white=$(tput setaf 7)
+	readonly orange=$(tput setaf 3)
+	readonly purple=$(tput setaf 125);
+	readonly violet=$(tput setaf 61);
+}
+
+function sh_checkroot() {
+	[[ $1 = "-Qq" ]] && return
+	if [ "$(id -u)" != "0" ]; then
+		printf "${red}error: You cannot perform this operation unless you are root!\n"
+		exit 1
+	fi
+}
+
+function DOT() {
+	printf "%s" "${blue}:: ${reset}"
+}
+
+function die() {
+	local msg=$1; shift
+	printf "%-75s\n" "$(DOT)${bold}${red}$msg${reset}" >&2
+	exit 1
+}
+
+function sh_checkDependencies() {
+	local d
+	local errorFound=0
+	declare -a missing
+
+	for d in "${DEPENDENCIES[@]}"; do
+		[[ -z $(command -v "$d") ]] && missing+=("$d") && errorFound=1 && printf "${red}ERROR: I couldn't find the command ${cyan}'$d'${reset}\n"
+	done
+	if (( errorFound )); then
+		echo -e "${yellow}-------------IMPOSSIBLE TO CONTINUE-----------------${reset}"
+		echo -e "This script needs the commands listed above" >&2
+		echo -e "Install them and/or make sure they are on your \$PATH" >&2
+		echo -e "${yellow}----------------------------------------------------${reset}"
+		die "${APP} aborted..."
+	fi
+	return 0
+}
+
+function RealocarSectorDefeituoso() {
+	sectors=$(dmesg | grep $hd | grep sector | awk '{print $9}')
+	for s in $sectors
+	do
+		hdparm --yes-i-know-what-i-am-doing --write-sector $s /dev/$hd
+	done
+}
+
+function WriteOneBadSector() {
+	sector=$1
+	hdparm --yes-i-know-what-i-am-doing --write-sector $sector $DEVICE
+}
+
+function VerifyOneBadSector() {
+	for count in $(seq 1 100)
+	do
+		sector=$1
+		if ! hdparm --read-sector $sector $DEVICE > /dev/null; then
+			echo "Failure at sector $sector. To fix (relocate) try the following:"
+			hdparm --yes-i-know-what-i-am-doing --write-sector $sector $DEVICE
+		fi
+		printf "#Pass #$count DEVICE: $DEVICE - READING SECTOR FOR ERRORS : $sector/$sector\r"
+	done
+}
+
+function VerifyAllBadSector() {
+	#for dir in $(seq 1 100)
+	#do
+	   sector=1
+	   while [[ $sector != $MAX_SECTORS ]]  # but it errors if you try and read the last one, so 586072368-1
+		do
+			if ! hdparm --read-sector $sector $DEVICE >/dev/null 2>&- ; then
+				echo "${yellow}Failure at sector: $sector. Trying to fix (relocate)...${reset}"
+				if ! hdparm --yes-i-know-what-i-am-doing --write-sector $sector $DEVICE >/dev/null 2>&- ; then
+					echo "${red}Correction/Relocation Failed:${reset}"
+					echo
+				fi
+			fi
+		   printf "${cyan}DEVICE: ${pink}$DEVICE - ${orange}READING SECTOR FOR ERROR : ${yellow}$sector/${red}$MAX_SECTORS\r${reset}"
+		   ((++sector))
+		done
+	#done
+}
+
+sh_config
+
+if test $# -ge 1; then
+	sh_checkDependencies "$@"
+	sh_checkroot "$@"
+	DEVICE=$1
+	MAX_SECTORS=$(fdisk -l $DEVICE | head -1 | awk '{print $7}')
+	echo -n $green
+	fdisk -l $DEVICE
+	echo $yellow
+#	WriteOneBadSector $2
+#	VerifyOneBadSector $*
+	smartctl -d auto --health --attributes $DEVICE
+	echo -n $reset
+	VerifyAllBadSector
+else
+cat <<-EOF
+${cyan}usage:
+    ${yellow}chili-writesector /dev/sdx nsector${reset}
+EOF
+fi

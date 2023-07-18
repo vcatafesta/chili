@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+declare -A myArray=(
+  ["key1"]="value1"
+  ["key3"]="value3"
+  ["key2"]="value2"
+)
+
+# Converter o array associativo em uma string e ordenar as linhas usando o sort
+sorted=$(declare -p myArray | sort)
+declare -p myArray | sort -k1
+
+# Converter a string classificada de volta para um array associativo usando o eval
+eval "declare -A myArray="${sorted#*=}
+
+# Imprimir o array associativo classificado
+declare -p myArray
+
+
+declare -A array=( [b]=2 [c]=1 [a]=3 )
+for key in "${!array[@]}"; do
+    printf '%s:%s\n' "$key" "${array[$key]}"
+done | sort
+
+declare -A array=( [b]=2 [c]=1 [a]=3 )
+for value in "${array[@]}"; do
+    printf '%s\n' "$value"
+done | sort
+
+
+declare -A my_array
+my_array["key1"]="value1"
+my_array["key2"]="value2"
+my_array["key3"]="value3"
+
+for key in $(echo "${!my_array[@]}" | tr ' ' '\n' | sort); do
+    echo "$key: ${my_array[$key]}"
+done

@@ -1,0 +1,8 @@
+[
+  {
+    "directory": "/chili/c/main.srcdir",
+    "command": "cc -Imain@exe -I. -I.. -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -g -mtune=generic -fPIC -Os -fomit-frame-pointer -Wunused-local-typedefs -Wunused-but-set-variable -Wunused-function -Wno-declaration-after-statement -Wno-error=deprecated-declarations -Wno-deprecated-declarations -Wno-suggest-attribute=format -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-parentheses -MD -MQ 'main@exe/main.c.o' -MF 'main@exe/main.c.o.d' -o 'main@exe/main.c.o' -c ../main.c",
+    "file": "../main.c",
+    "output": "main@exe/main.c.o"
+  }
+]

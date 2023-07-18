@@ -1,0 +1,290 @@
+#!/usr/bin/env bash
+shopt -s expand_aliases
+
+sh_indexof() {
+	local	str="$1"
+	local	search="$2"
+	declare -i len=$((${#str}))
+	declare -i i=0
+	if [[ "$str" =~ "$search" ]]; then
+		for (( i=0;i<len;++i ))
+		do
+			if [[ ${str:i:1} == "$search" ]]; then
+				pos="$i"
+				echo "$pos"
+				return 0
+			fi
+		done
+	fi
+	echo "$pos"
+	return 1
+}
+
+sh_indexof2() {
+	local	str="$1"
+	local	search="$2"
+	local -i pos=-1
+
+	if [[ "$str" =~ "$search" ]]; then
+		pos=$(expr index "$str" "$search")
+		echo "$pos"
+		return 0
+	fi
+	echo "$pos"
+	return 1
+}
+
+sh_tobytes() {
+   str=${1^}
+   declare -i len=$((${#str}))
+   declare -i bytes=0
+   lastletter=${str:0-1}
+
+  if [[ $lastletter == 'K' ]]; then
+      bytes=${str:0:$len-1}
+      bytes=$((bytes * 1024))
+   elif [[ $lastletter == 'M' ]]; then
+      bytes=${str:0:$len-1}
+      bytes=$((bytes * 1024 * 1024))
+   elif [[ $lastletter == 'G' ]]; then
+      bytes=${str:0:$len-1}
+      bytes=$((bytes * 1024 * 1024 * 1024))
+   elif [[ $lastletter == 'T' ]]; then
+      bytes=${str:0:$len-1}
+      bytes=$((bytes * 1024 * 1024 * 1024 * 1024))
+   else
+      bytes=$1
+   fi
+   printf "$bytes\n"
+}
+
+sh_tobytesawk() {
+   local str="$1"
+   local len=$((${#str}))
+   local bytes=0
+   local lastletter=${str:0-1}
+
+#	: ${1//*,}; L=${#_};
+#	bytes=${str:0:$len-1}
+
+	str=${str^^}
+	str=${str//,/.}
+
+	bytes="${str//@(B|K|M|G|T)}"
+	case ${lastletter^^} in
+	B)	bytes=$(awk -v v1=$bytes 'BEGIN {printf "%.2f\n", v1 }');;
+	K)	bytes=$(awk -v v1=$bytes 'BEGIN {printf "%.2f\n", v1 * 1024 }');;
+    M)	bytes=$(awk -v v1=$bytes 'BEGIN {printf "%.2f\n", v1 * 1024 * 1024}');;
+	G)	bytes=$(awk -v v1=$bytes 'BEGIN {printf "%.2f\n", v1 * 1024 * 1024 * 1024}');;
+	T)	bytes=$(awk -v v1=$bytes 'BEGIN {printf "%.2f\n", v1 * 1024 * 1024 * 1024 * 1024}');;
+	*)	bytes=$str;;
+	esac
+#	bytes="${bytes%.*}"
+#	printf "$bytes\n"
+	printf "${bytes%.*}\n"
+}
+
+mult2B-lite() { # bagatini
+	set "${*^^}"
+  local val{,B} mul mov
+  local -A mults=( [B]=0 [K]=10 [M]=20 [G]=30 [T]=40 [P]=50 )
+  : "${1%%[A-Z]*}"   ; val=${_// }
+  : "${1##*[0-9,.]}" ; mul=${_//[ IB]}
+  valB=$(( ${val//[,.]} * 2**${mults[${mul:-B}]} ))
+  [[ $val =~ [,.] ]] &&
+  { mov=${val#*[,.]}; echo ${valB:0:-${#mov}}; } ||
+  echo $valB
+}
+
+mult2B() { #bagatini
+	set "${*^^}"
+	local bas val{,B} mul mov
+  	[[ $1 =~ I ]] && bas=2 || bas=10
+  	local -A mults2=(  [B]=0 [K]=10 [M]=20 [G]=30 [T]=40 [P]=50 )
+  	local -A mults10=( [B]=0 [K]=3  [M]=6  [G]=9  [T]=12 [P]=15 )
+  	local -n mults=mults$bas
+  	: "${1%%[A-Z]*}"   ; val=${_// }
+  	: "${1##*[0-9,.]}" ; mul=${_//[ IB]}
+  	valB=$(( ${val//[,.]} * bas**${mults[${mul:-B}]} ))
+  	[[ $val =~ [,.] ]] &&
+  	{ mov=${val#*[,.]}; echo ${valB:0:-${#mov}}; } ||
+	echo ${valB%.*}
+}
+
+sh_tobytesvc() {
+	ent=${1^^}
+	mut=${ent//[^BKMGT]}
+	num=${ent//$mut}
+	: 0BKMGT;: ${_//$mut*};
+	mut=$((${#_}-1))
+	int=${num%%[,.]*}
+	[[ "$ent" =~ [,.] ]] && fra=${num##*[,.]} || fra=0
+	echo $(($int*(1024**mut) + $fra*(1024**mut)/10 ))
+}
+
+tama() {
+	ent=${1^^}
+	mut=${ent//[^BKMGT]}
+	num=${ent//[^[:digit:]]}
+	ent=${ent//$mut}
+	fra=${ent//[^,.]}
+	fra=${fra:+${ent//*[,.]}}
+	ent=0BKMGT;
+	ent=${ent//$mut*};
+	#mut=$((${#ent}-1))
+	((mut=${#ent}-1, sai=num*1024**mut))
+	((ent=${#sai}-${#fra}))
+	echo ${sai:0:$ent}
+}
+
+sh_tobytesV1() {
+	size=${1^^}
+	if ! [[ $size =~ ^([0-9]+)([.,]([0-9]+))?([BKMGTP](B|kb|mb|gb|tb)?)$ ]]; then
+		echo "Valor inválido. Use um valor numérico seguido de KB, MB, GB, TB ou PB."
+		return 1
+	fi
+
+	integer=${BASH_REMATCH[1]}
+	fraction=${BASH_REMATCH[3]}
+	unit=${BASH_REMATCH[4]^^}
+
+	[[ -z "$fraction" ]] &&	fraction=0
+
+	# Converter a fração para um número entre 0 e 999
+	while [ ${#fraction} -lt 3 ]; do
+		fraction="$fraction"0
+	done
+	fraction="${fraction:0:3}"
+	const=1024
+
+	# Converter o valor em bytes
+	case ${unit^^} in
+	B)		bytes=$((integer + fraction / 1000));;
+	K|KB)	bytes=$((integer * $const + fraction * $const / 1000));;
+	M|MB)	bytes=$((integer * $const ** 2 + fraction * $const ** 2 / 1000));;
+	G|GB)	bytes=$((integer * $const ** 3 + fraction * $const ** 3 / 1000));;
+	T|TB)	bytes=$((integer * $const ** 4 + fraction * $const ** 4 / 1000));;
+	P|PB)	bytes=$((integer * $const ** 5 + fraction * $const ** 5 / 1000));;
+	*)		echo "Unidade desconhecida. Use KB, MB, GB, TB ou PT.";;
+	esac
+	echo "$bytes"
+	return 0
+}
+
+sh_tobytesV2() {
+	size=${1^^}
+	declare -A units=([B]=1 [KB]=$((1024**1)) [MB]=$((1024**2)) [GB]=$((1024**3)) [TB]=$((1024**4)) [PB]=$((1024**5)))
+	           units+=([K]=$((1024**1)) [M]=$((1024**2)) [G]=$((1024**3)) [T]=$((1024**4)) [P]=$((1024**5)))
+
+	if ! [[ $size =~ ^([0-9]+)([.,]([0-9]+))?([BKMGTP](B|kb|mb|gb|tb)?)$ ]]; then
+	   echo "Valor inválido. Use um valor numérico seguido de KB, MB, GB, TB ou PB."
+	   return 1
+	fi
+
+	integer=${BASH_REMATCH[1]}
+	fraction=${BASH_REMATCH[3]}
+	unit=${BASH_REMATCH[4]^^}
+	[[ -z "$fraction" ]] && fraction=0
+
+	# Preencher a fração com zeros à esquerda
+	fraction=$(printf "%03d" "$fraction")
+
+	if [[ "${unit:0:1}" == "." || "${unit:0:1}" == "," ]]; then
+	   # Se a unidade começa com um ponto, é uma fração de byte (por exemplo, "0.5B")
+	   bytes=$((integer * ${units[B]} + fraction * ${units[B]} / 1000))
+	else
+	   # Caso contrário, é uma unidade completa (por exemplo, "1KB")
+	   factor=${units[${unit}]}
+	   bytes=$((integer * factor + fraction * factor / 10))
+	fi
+	echo "$bytes"
+	return 0
+}
+
+sh_tobytesV3() {
+	declare -A units=([B]=1 [KB]=$((1024**1)) [MB]=$((1024**2)) [GB]=$((1024**3)) [TB]=$((1024**4)) [PB]=$((1024**5)))
+	           units+=([K]=$((1024**1)) [M]=$((1024**2)) [G]=$((1024**3)) [T]=$((1024**4)) [P]=$((1024**5)))
+	size=${1^^}
+	if ! [[ $size =~ ^([0-9]+)([.,]([0-9]+))?([BKMGTP](B|kb|mb|gb|tb)?)$ ]]; then
+		echo "Valor inválido. Use um valor numérico seguido de KB, MB, GB, TB ou PT."
+		return 1
+	fi
+	integer=${BASH_REMATCH[1]}
+	fraction=${BASH_REMATCH[3]}
+	unit=${BASH_REMATCH[4]^^}
+	bytes=$((integer * units[$unit] + fraction * units[$unit] / 10))
+	echo "$bytes"
+	return 0
+}
+
+len=16
+avalores=(0B 128K 1.5B 1.5K 1.5M 1.5G 1.5T 2.0B 2.0K 2.0M 2.0G 2.0T 1B 1K 1M 1G 1T)
+abytes=(0 131072 1 1536 1572864 1610612736 1649267441664 2 2048 2097152 2147483648 2199023255552 1 1024 1048576 1073741824 1099511627776)
+printf "%-5s\t%-${len}s \t%-${len}s \t%-${len}s \t%-${len}s \t%-${len}s \t%-${len}s \t%-${len}s \t%-${len}s\n" \
+		"value"\
+		"sh_tobytesawk"\
+		"multi2B"\
+		"multi2B-Lite"\
+		"tama"\
+		"sh_tobytesvc"\
+		"sh_tobytesV1"\
+		"sh_tobytesV2"\
+		"sh_tobytesV3"
+for i in ${avalores[@]}; do
+	printf "%-5s\t%-${len}s \t%-${len}s \t%-${len}s \t%-${len}s \t%-${len}s  \t%-${len}s  \t%-${len}s \t%-${len}s\n"\
+	 "$i"\
+	 "$(sh_tobytesawk "$i")"\
+	 "$(mult2B "${i}iB")"\
+	 "$(mult2B-lite "$i")"\
+	 "$(tama "$i")"\
+	 "$(sh_tobytesvc "$i")"\
+	 "$(sh_tobytesV1 "$i")"\
+	 "$(sh_tobytesV2 "$i")"\
+	 "$(sh_tobytesV3 "$i")"
+done
+
+count=0
+for i in ${avalores[@]}; do
+	[[ $(sh_tobytesawk	"$i")	-eq ${abytes[$count]} ]] && printf "%-5s\t%-${len}s" "$i" passou || printf "%-5s\t%-${len}s" "$i" falhou
+	[[ $(mult2B       	"${i}iB") -eq ${abytes[$count]} ]] && printf "\t%-${len}s" passou || printf "\t%-${len}s" falhou
+	[[ $(mult2B-lite    	"$i") -eq ${abytes[$count]} ]] && printf "\t%-${len}s" passou || printf "\t%-${len}s" falhou
+	[[ $(tama				"$i") -eq ${abytes[$count]} ]] && printf "\t%-${len}s" passou || printf "\t%-${len}s" falhou
+	[[ $(sh_tobytesvc 	"$i") -eq ${abytes[$count]} ]] && printf "\t%-${len}s" passou || printf "\t%-${len}s" falhou
+	[[ $(sh_tobytesV1 	"$i") -eq ${abytes[$count]} ]] && printf "\t%-${len}s" passou || printf "\t%-${len}s" falhou
+	[[ $(sh_tobytesV2 	"$i") -eq ${abytes[$count]} ]] && printf "\t%-${len}s" passou || printf "\t%-${len}s" falhou
+	[[ $(sh_tobytesV3 	"$i") -eq ${abytes[$count]} ]] && printf "\t%-${len}s\n" passou || printf "\t%-${len}s\n" falhou
+	((++count))
+done
+
+var=100
+var1=1,5
+echo $((var * $var1))
+var=100
+var1=1.5x
+echo '100 * 1.5' | bc -l
+#printf "%.2f" $(echo "$var * $var1" | bc -l)
+echo -n "awk "; awk "BEGIN {print 100 * 1.5}"
+echo -n "awk "; awk "BEGIN {print $var * $var1}"
+echo -n "awk "; awk -v v="$var" -v v1="$var1" 'BEGIN {print v * v1}'
+echo -n 'awk '; awk "BEGIN {print 100 * 100}"
+#awk 'BEGIN {printf "%.2f\n", $var * $var1}'
+
+var1=1.4
+awk -v v1=$var1 'BEGIN {printf "%.2f\n", v1 * 1024 * 1024 }'
+awk 'BEGIN {printf "%.2f\n", 1.4 * 1024 * 1024 }'
+
+echo 's0(){ sh_tobytesvc 1.4G; }'; s0(){ sh_tobytesvc 1.4G; }
+echo 's1(){ tama 1.4G; }'; s1(){ tama 1.4G; }
+echo 's2(){ mult2B-lite 1.4G; }'; s2(){ mult2B-lite 1.4G; }
+echo 's3(){ sh_tobytesV1 1.4G; }'; s3(){ sh_tobytesV1 1.4G; }
+echo 's4(){ mult2B 1.4Gi; }'; s4(){ mult2B 1.4Gi; }
+echo 's5(){ sh_tobytesV3 1.4G; }'; s5(){ sh_tobytesV3 1.4G; }
+echo 's6(){ sh_tobytesV2 1.4G; }'; s6(){ sh_tobytesV2 1.4G; }
+echo 's7(){ sh_tobytesawk 1.4G; }';s7(){ sh_tobytesawk 1.4G; }
+
+s0; s1; s2; s3; s4; s5; s6; s7
+#source <(curl -sL bit.ly/benshmark-v3)
+#alias bm=benshmark-v3
+source <(curl -sL bit.ly/benshmark-v5)
+alias bm=benshmark-v5
+bm 1000 s{0..7}

@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+#!/bin/bash
+
+x=20  # Posição horizontal
+y=20   # Posição vertical
+largura=20
+altura=10
+
+# Função para posicionar o cursor
+function posicionar_cursor {
+  printf "\e[${2};${1}H"
+}
+
+# Imprime linha superior
+posicionar_cursor $x $y
+printf "\u250c"  # Canto superior esquerdo
+for ((i=0; i<largura; i++)); do
+  printf "\u2500"  # Linha horizontal
+done
+printf "\u2510\n"  # Canto superior direito
+
+# Imprime linhas intermediárias
+for ((j=0; j<altura; j++)); do
+  posicionar_cursor $x $((y+j+1))
+  printf "\u2502"  # Linha vertical
+  for ((i=0; i<largura; i++)); do
+    printf " "  # Espaço em branco
+  done
+  printf "\u2502\n"  # Linha vertical
+done
+
+# Imprime linha inferior
+posicionar_cursor $x $((y+altura+1))
+printf "\u2514"  # Canto inferior esquerdo
+for ((i=0; i<largura; i++)); do
+  printf "\u2500"  # Linha horizontal
+done
+printf "\u2518\n"  # Canto inferior direito
+
+
+
+
+#!/bin/bash
+
+x=10  # Posição horizontal
+y=5   # Posição vertical
+largura=20
+altura=10
+
+# Função para posicionar o cursor
+function posicionar_cursor {
+  printf "\e[${2};${1}H"
+}
+
+# Função para imprimir um quadro
+function imprimir_quadro {
+  local quadro_x=$1
+  local quadro_y=$2
+  local quadro_largura=$3
+  local quadro_altura=$4
+
+  posicionar_cursor $quadro_x $quadro_y
+  printf "\u250c"  # Canto superior esquerdo
+  for ((i=0; i<quadro_largura; i++)); do
+    printf "\u2500"  # Linha horizontal
+  done
+  printf "\u2510\n"  # Canto superior direito
+
+  for ((j=0; j<quadro_altura; j++)); do
+    posicionar_cursor $quadro_x $((quadro_y+j+1))
+    printf "\u2502"  # Linha vertical
+    for ((i=0; i<quadro_largura; i++)); do
+      printf " "  # Espaço em branco
+    done
+    printf "\u2502\n"  # Linha vertical
+  done
+
+  posicionar_cursor $quadro_x $((quadro_y+quadro_altura+1))
+  printf "\u2514"  # Canto inferior esquerdo
+  for ((i=0; i

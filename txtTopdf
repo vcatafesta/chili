@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+input_file="$1"
+output_file="$2"
+
+#pandoc "$input_file" -o "$output_file" --from markdown --template eisvogel --listings --pdf-engine=pdflatex
+
+#enscript -f Courier-Bold11 -p output.ps "$input_file"
+#enscript --borders --font=Courier-Bold10 --footer="Macrosoft SCI for Linux" --color=true -p output.ps "$input_file"
+enscript --borders -p output.ps "$input_file"
+ps2pdf output.ps "$output_file"
+#pdftotext "$output_file" - | less
+
+

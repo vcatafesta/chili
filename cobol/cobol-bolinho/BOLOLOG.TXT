@@ -1,0 +1,15 @@
+
+            Microsoft COBOL Compiler
+Version 2.20 (C)Copyright Microsoft Corp. 1982-87
+
+
+** Scanning Environment Division...
+** Scanning Data Division...
+** Compiling Procedure Division...
+** Generating Object Code...
+
+   No errors or warnings
+
+   Data area size =  1764
+   Code area size =  2546
+

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+var='Joao da Silva,Av. das Flores, 134,Jd. das Flores,Osasco,SP'
+awk '
+	BEGIN {
+		FPAT="([^,]+)|([^,]+, +[^,]+)"
+	}
+	{
+		for (n=1; n <= NF; n++)
+		print $n
+	}' <<< "$var"
+
+

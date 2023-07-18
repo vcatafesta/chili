@@ -1,0 +1,82 @@
+#!/bin/bash
+
+# Função para posicionar o cursor
+function posicionar_cursor {
+  printf "\e[${2};${1}H"
+}
+
+# Função para imprimir um quadro
+function imprimir_quadro {
+  local quadro_x=$1
+  local quadro_y=$2
+  local quadro_largura=$3
+  local quadro_altura=$4
+
+  posicionar_cursor $quadro_x $quadro_y
+  printf "\u250c"  # Canto superior esquerdo
+  for ((i=0; i<quadro_largura-2; i++)); do
+    printf "\u2500"  # Linha horizontal
+  done
+  printf "\u2510\n"  # Canto superior direito
+
+  for ((j=0; j<quadro_altura-2; j++)); do
+    posicionar_cursor $quadro_x $((quadro_y+j+1))
+    printf "\u2502"  # Linha vertical
+    posicionar_cursor $((quadro_x+quadro_largura-1)) $((quadro_y+j+1))
+    printf "\u2502"  # Linha vertical
+  done
+
+  posicionar_cursor $quadro_x $((quadro_y+quadro_altura-1))
+  printf "\u2514"  # Canto inferior esquerdo
+  for ((i=0; i<quadro_largura-2; i++)); do
+    printf "\u2500"  # Linha horizontal
+  done
+  printf "\u2518\n"  # Canto inferior direito
+}
+
+# Função para dividir o quadro em quadros menores
+function dividir_quadro {
+  local quadro_x=$1
+  local quadro_y=$2
+  local quadro_largura=$3
+  local quadro_altura=$4
+
+  local quadro_interno_largura=$((quadro_largura / 3))
+  local quadro_interno_altura=$((quadro_altura / 3))
+
+  local pos_x=$quadro_x
+  local pos_y=$quadro_y
+
+  for ((i=0; i<3; i++)); do
+    for ((j=0; j<3; j++)); do
+      imprimir_quadro $pos_x $pos_y $quadro_interno_largura $quadro_interno_altura
+      pos_x=$((pos_x + quadro_interno_largura))
+    done
+    pos_x=$quadro_x
+    pos_y=$((pos_y + quadro_interno_altura))
+  done
+
+  # Conexões entre os quadros internos
+  posicionar_cursor $((quadro_x + quadro_interno_largura)) $quadro_y
+  printf "\u252c"  # Linha horizontal com conexão inferior
+  posicionar_cursor $((quadro_x + quadro_interno_largura)) $((quadro_y + quadro_altura - 1))
+  printf "\u2534"  # Linha horizontal com conexão superior
+
+  posicionar_cursor $quadro_x $((quadro_y + quadro_interno_altura))
+  printf "\u251c"  # Linha vertical com conexão à direita
+  posicionar_cursor $((quadro_x + quadro_largura - 1)) $((quadro_y + quadro_interno_altura))
+  printf "\u2524"  # Linha vertical com conexão à esquerda
+}
+
+# Define a posição inicial e tamanho do quadro
+pos_x=10  # Posição horizontal
+pos_y=5   # Posição vertical
+largura=30
+altura=15
+
+# Imprime o quadro na posição definida
+imprimir_quadro $pos_x $pos_y $largura $altura
+
+# Divide o quadro em quadros menores com conexões internas
+dividir_quadro $pos_x $pos_y $largura $altura
+

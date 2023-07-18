@@ -1,0 +1,87 @@
+#!/bin/bash
+#  Exemplo de uso do diálogo --list
+
+#  Par ou impar?
+until Escolha=$(zenity --list \
+    --column Ímpares          \
+    --column Pares            \
+        1 2                   \
+        3 4                   \
+        5 6                   \
+        7 8)
+do
+    zenity --error             \
+        --title "Par ou Ímpar" \
+        --text "Escolha uma dupla"
+done
+echo $Escolha
+
+#  Outro par ou impar
+until Escolha=$(zenity --list \
+    --column Ímpares          \
+    --column Pares            \
+    {1..8})
+do
+    zenity --error             \
+        --title "Par ou Ímpar" \
+        --text "Escolha uma dupla"
+done
+
+#  Escolha de usuário
+zenity --list          \
+    --column LoginName \
+    --column UID       \
+    $(cut -f1,3 -d: /etc/passwd | tr : ' ')
+
+#  Escolha de usuário
+#+ porém com melhor formatação
+zenity --list                             \
+    --title "Usuários Cadastrados"        \
+    --text "Selecione o usuário desejado" \
+    --height 300                          \
+    --column LoginName                    \
+    --column UID                          \
+        $(cut -f1,3 -d: /etc/passwd | tr : ' ')
+
+#  Exemplo da oção --multiple
+SO=$(zenity --list                                          \
+    --title "Sistemas Operacionais"                         \
+    --text "Quais podemos chamar de sistemas operacionais?" \
+    --height 230                                            \
+    --multiple                                              \
+    --column "Sistema Operacional"                          \
+        "M$ Vista"                                          \
+        "M$ XP"                                             \
+        Linux                                               \
+        Unix) 
+echo $SO
+
+#  Exemplo de formatação do separador da saída
+SO=$(zenity --list                                          \
+    --title "Sistemas Operacionais"                         \
+    --text "Quais podemos chamar de sistemas operacionais?" \
+    --height 230                                            \
+    --multiple                                              \
+    --separator ^                                           \
+    --column "Sistema Operacional"                          \
+        "M$ Vista"                                          \
+        "M$ XP"                                             \
+        Linux                                               \
+        Unix) 
+echo $SO
+
+#  Editando um arquivo com o diálogo --list
+UF=$(zenity --list                            \
+    --editable                                \
+    --title="UFs"                             \
+    --text "Pegue uma UF ou escolha uma nova" \
+    --column="UFs" "Nova UF" $(cat UFs))
+
+#  As linhas a seguir, pertencem ao exemplo anterior.
+#+ "descomentando-as", você poderá alterar o arquivo
+#+ UFs, se assim desejar.
+# grep -q "^$UF" UFs || {
+#     echo $UF >> UFs
+#     sort UFs -o UFs
+#     }
+

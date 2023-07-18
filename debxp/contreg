@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+# -----------------------------------------------------------------------------
+# Script   : contreg.sh
+# Descrição: Contagem regressiva
+# Versão   : 0.0.1
+# Data     : 04/11/2021
+# Licença  : GNU/GPL v3.0
+# -----------------------------------------------------------------------------
+# Copyright (C) 2021  Blau Araujo <blau@debxp.org>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# Uso: countdown SECONDS
+#      countdown MINUTES SECONDS
+#      countdown HOURS MINUTES SECONDS
+# -----------------------------------------------------------------------------
+
+version='0.0.1'
+
+# MESSAGES --------------------------------------------------------------------
+
+msg_usage="
+USAGE:
+
+    ./contreg.sh SECONDS
+    ./contreg.sh MINUTES SECONDS
+    ./contreg.sh HOURS MINUTES SECONDS
+
+COMMANDS:
+
+    While running...
+
+    s  Stop
+    r  Reset
+    p  Pause
+
+OPTIONS:
+
+    h, -h or --help     Show usage
+    v, -v or --version  Show version
+"
+
+msg_version="Contreg $version
+
+Copyright (C) 2021 Blau Araujo <blau@debxp.org>
+License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+"
+
+msg_error='Wrong number of arguments!'
+
+# FUNCTIONS -------------------------------------------------------------------
+
+die() {
+    printf "Contreg $version\n$msg_error\n$msg_usage\n"
+    exit 1
+}
+
+show_usage() {
+    printf "Contreg $version\n$msg_usage\n"
+    exit 0
+}
+
+show_version() {
+    echo "$msg_version"
+    exit 0
+}
+
+# By José Almeida
+# https://gist.github.com/joseafga/7926e457175d097f52c3d8c48b78aa30
+args2seconds() {
+    local args=(0 0 "$@")
+    echo $(( ${args[-1]} + ${args[-2]}*60 + ${args[-3]}*3600 ))
+}
+
+get_term_size() {
+    term_size=($(tput lines) $(tput cols))
+    term_center=($((${term_size[0]}/2)) $((${term_size[1]}/2-4)))
+}
+
+# CHECKS AND INFO -------------------------------------------------------------
+
+# Requires at least 1 arg...
+[[ $1 && $# -le 3 ]] || die
+
+# Usage or version options...
+case $1 in
+    h|-h|--help) show_usage;;
+    v|-v|--version) show_version;;
+esac
+
+# CONVERSION ------------------------------------------------------------------
+
+# Convert input time to seconds
+secs=$(args2seconds $*)
+reset=$secs
+
+# TRAPS -----------------------------------------------------------------------
+
+# Restore cursor in case of ^C...
+trap 'tput cnorm;exit 0' 2 # SIGINT
+trap 'get_term_size' 28    # SIGWINCH
+
+# MAIN LOOP -------------------------------------------------------------------
+
+get_term_size
+tput civis
+while [[ $secs -ge 0 ]]; do
+    tput clear
+    tput cup ${term_center[*]}
+    date -d"@$secs" -u '+%H:%M:%S'
+    ((secs--))
+    read -sN1 -t 0.995 action
+    case $action in
+        r) secs=$reset;;
+        p) read -sN1 cont;;
+        s) break;;
+    esac
+done
+tput cnorm

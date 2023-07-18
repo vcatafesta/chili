@@ -1,0 +1,17 @@
+#! /bin/bash
+#  Exemplo do Diálogo --textbox
+
+kdialog --title "Conteúdo de /etc/passwd" \
+    --textbox /etc/passwd 440 190
+
+#  Outro exemplo, algora temdo uma instrução
+#+ como entrada
+kdialog --title "Ping em 127.0.0.1" \
+    --textbox <(ping -c3 localhost) 520 190
+
+#  Mais um, desta vez a entrada será um
+#+ texto e uma instrução
+kdialog --caption "Macete:" --textbox \
+    <(cat <(echo -e "Explicação para meu texto\n") \
+    /etc/passwd) 350 200
+

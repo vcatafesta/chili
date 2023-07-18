@@ -1,0 +1,6 @@
+#!/bin/bash
+#  Exemplo de uso do diálogo --question
+Resp=n
+zenity --question      \
+    --title "Responda" \
+    --text "Deseja mudar para root?" && Resp=s

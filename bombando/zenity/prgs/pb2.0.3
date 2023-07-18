@@ -1,0 +1,15 @@
+#!/bin/bash
+#  Resolução do exercício do
+#+ Papo de Botequim 2.0.3
+
+emails=$(zenity --list                \
+    --title "Convites para a festa"   \
+    --text "Quem será convidado?"     \
+    --multiple                        \
+    --separator ' '                   \
+    --column Amigos                   \
+    --column ""                       \
+    --hide-column 2                   \
+    --print-column 2                  \
+    $(cut -f2-3 -d: amigos | tr : ' ' | sort))
+echo $emails

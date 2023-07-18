@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+LIBRARY=${LIBRARY:-'/usr/share/fetch'}
+source /usr/lib/lsb/init-functions
+source "$LIBRARY"/core.sh
+
+set -e
+
+if test $# -ge 1; then
+	POINT=$1
+	[[ $POINT = "." ]] && POINT=$PWD
+else
+	POINT=$PWD
+fi
+log_wait_msg "Generate dirs in $POINT"
+for i in /proc /sys /dev /dev/pts /dev/shm /run /tmp /hostrun; do
+	[[ -d ${POINT}${i} ]] || mkdir -pv ${POINT}${i}
+done
+
+mount --types proc /proc $POINT/proc
+mount --rbind /sys $POINT/sys
+mount --make-rslave $POINT/sys
+mount --rbind /dev $POINT/dev
+mount --make-rslave $POINT/dev
+mount --bind /run $POINT/run
+mount --bind /run $POINT/hostrun
+mount --make-slave $POINT/run
+
+chroot $POINT /bin/bash
+umount -l $POINT/dev{/shm,/pts,}
+umount -rl $POINT/sys
+umount -rl $POINT/run
+umount -rl $POINT/hostrun
+umount $POINT{/boot,/sys,/proc,}

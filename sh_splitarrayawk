@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+function sh_splitarrayawk() {
+	local str="$1"
+	local pos="\$$2"
+	local sep='|'
+
+	[[ $# -eq 1 ]] && pos='$1'
+	[[ $# -eq 3 ]] && sep="$3"
+	awk -F"$sep" '{ print '"$pos"' }' <(printf "%s" "$str")
+}
+
+function sh_splitarray() {
+	local str="$1"
+	local pos="$2"
+	local sep='|'
+	local array
+
+	[[ $# -eq 1 ]] && pos='1'
+	[[ $# -eq 3 ]] && sep="$3"
+	array=(${str//"$sep"/ })
+	echo "${array[$pos-1]}"
+}
+
+declare -A Adisco
+Adisco+=(["/dev/sda"]="Samsung|200G|gpt|sata")
+Adisco+=(["/dev/sdb"]="Netac|1TB|gpt|nvme")
+
+sh_splitarrayawk "${Adisco[/dev/sda]}"
+sh_splitarrayawk "${Adisco[/dev/sda]}" 1
+sh_splitarrayawk "${Adisco[/dev/sda]}" 2
+sh_splitarrayawk "${Adisco[/dev/sda]}" 3 '|'
+sh_splitarrayawk "${Adisco[/dev/sda]}" 4
+
+echo
+sh_splitarray "${Adisco[/dev/sdb]}"
+sh_splitarray "${Adisco[/dev/sdb]}" 1
+sh_splitarray "${Adisco[/dev/sdb]}" 2
+sh_splitarray "${Adisco[/dev/sdb]}" 3
+sh_splitarray "${Adisco[/dev/sdb]}" 4
+

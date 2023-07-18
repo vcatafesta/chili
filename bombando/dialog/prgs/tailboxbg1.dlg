@@ -1,0 +1,24 @@
+#!/bin/bash
+## Demo do diálogo --tailboxbg
+
+## Para não deixar sujeira:
+trap 'rm log.log /tmp/$$; clear; exit' 0 1 2 3 15
+
+## Vamos criar um arquivo para usar como massa de teste
+echo Inialização do arquivo de log > log.log
+date >> log.log
+
+dialog --stdout --title "Teste com tailboxbg" \
+      --begin 2 10 --tailboxbg log.log 9 35 \
+      --and-widget \
+      --begin 10 10 --ok-label Terminar \
+      --msgbox "Clique no botão <Terminar>" 5 35 2> /tmp/$$ &
+MeuPid=$!
+for i in {1..15}
+    do echo $i >> log.log
+    sleep 1
+    ps | grep -q $MeuPid || exit
+done
+echo Done. >> log.log
+wait $MeuPid
+rm -f log.log /tmp/$$

@@ -1,0 +1,3 @@
+[submodule "codeberg/codeberg/chili"]
+	path = codeberg/codeberg/chili
+	url = https://github.com/vcatafesta/chili

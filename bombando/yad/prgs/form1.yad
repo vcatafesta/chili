@@ -1,0 +1,11 @@
+#!/bin/bash
+#  Exemplos de uso do diálogo --form
+#+ para capturar ano e mes
+#
+Sai=$(yad --form --title "Monta data" \
+	--image stock_web-calendar        \
+	--field Ano:NUM                   \
+	--field Mês:NUM                   \
+	'2000!2000..2100!4'               \
+	'1!1..12')
+echo $Sai

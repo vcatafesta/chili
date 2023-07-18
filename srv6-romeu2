@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+sport=$1
+dport=$2
+
+# Verifica os argumentos
+if [ $# -ne 2 ]; then
+    echo "Uso: $0 <porta origem> <porta destino>"
+    exit 1
+fi
+
+if ! [[ $sport =~ ^[0-9]+$ && $dport =~ ^[0-9]+$ ]]; then
+    echo "Erro: portas de origem e destino devem ser números" >&2
+    exit 1
+fi
+
+# Executa o servidor
+run-server() {
+    echo "Servidor escutando na porta $sport"
+    while read -r line; do
+        echo "$line"
+    done < <(nc -l -p "$sport")
+    exit 0
+}
+
+# Executa o cliente
+run-client() {
+    echo "Digite as mensagens a serem enviadas para o servidor. Digite 'exit' para sair."
+    while true; do
+        read -r msg
+        if [ "$msg" == "exit" ]; then
+            echo "Encerrando o cliente..."
+            kill -s TERM "$server_pid"
+            exit 0
+        fi
+        [[ -n $msg ]] && echo "$msg" > /dev/tcp/localhost/$dport
+    done
+}
+
+# Inicia o servidor em segundo plano
+run-server &
+server_pid=$!
+
+# Inicia o cliente
+run-client
+

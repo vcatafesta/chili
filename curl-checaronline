@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+URL=$1
+RESULT=$(curl -Is $URL | head -n 1)
+
+# cores
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NOCOLOR='\033[0m'
+
+if [ "$RESULT" ] ; then
+  printf "${GREEN}Online${NOCOLOR}"
+else
+  printf "${RED}Offline${NOCOLOR}"
+fi
+

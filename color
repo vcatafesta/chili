@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+for((Cor=0; Cor <= 7; Cor++))
+{
+	for Modo in sgr0 bold
+	{
+		tput $Modo
+		tput setaf $Cor
+		echo $Cor=Normal, Bold
+	}
+}

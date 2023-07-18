@@ -1,0 +1,67 @@
+#Pessoal é o seguinte,eu quero comprimir um diretorio, usando o tar, e depois que acaba a compressão, criar um arquivo
+#de log de tudo que foi comprimido. Tipo, quando se usa o -verbose na compressão (tar -cvzf) aparecer todos arquivos que esta 
+#sendo comprimido num é? então, é esse registro que quero que seja jogado em um arquivo de texto depois da compressão.
+tar -czvf arquivo.tar.gz diretorio/ > log.txt 2>&1
+
+#Se quiser também ver a saída use:
+tar -czvf arquivo.tar.gz diretorio/ | tee log.txt
+
+#!/bin/sh
+
+#for i in 10 20 30; do echo $i; sleep 1; done \
+#| dialog --title "My Gauge" --gauge "Hi, this is a gauge widget" 20 70
+
+#for i in 10 20 30; do echo $i; sleep 1; done | sed 's/\([0-9]*\).*/\1/' \
+#| dialog --title "My Gauge" --gauge "Hi, this is a gauge widget" 20 70
+
+#for i in 10 20 30; do echo $i; sleep 1; done | awk '{print $0}' | sed -u 's/\([0-9]*\).*/\1/' \
+#| dialog --title "My Gauge" --gauge "Hi, this is a gauge widget" 20 70
+
+#rsync -avz --progress -e "ssh" root@10.0.0.66:/packages/ /home/vcatafesta/packages/ \
+# | awk -f /home/vcatafesta/rsync.awk \
+# | sed --unbuffered 's/([0-9]*).*/\1/' \
+# | dialog --title "My Gauge" --gauge "Hi, this is a gauge widget" 20 70
+
+
+#(pv -n mazon_minimal-0.2.tar.xz \
+#| tar xJpvf - -C /tmp ) 2>&1 \
+#| dialog --backtitle "teste" --gauge "Extracting files..." 6 50
+
+wget -c http://mazonos.com/releases/mazon_beta-1.2.tar.xz -o wget.log 2>/dev/null| tail -f wget.log > out &
+dialog                                         \
+   --title 'Monitorando Mensagens do Sistema'  \
+   --tailbox out                               \
+   0 0
+
+#>wget.log
+#wget -c http://mazonos.com/releases/mazon_beta-1.2.tar.xz -o wget.log 2>/dev/null \
+#|tail -f wget.log > out \
+#|dialog                                       \
+#   --title 'Monitorando Download'			  \
+#   --tailbox out                              \
+#   0 0
+
+
+# this dialog will locate the tail box on the top of the screen
+#dialog --begin 15 10  --tailbox   /var/log/proccess1.log  13 125 
+
+
+# this dialog will locate the tail box down in the screen
+#( dialog --begin 37 10  --tailbox   /var/log/proccess2.log    13 125 ) &
+
+#You can display multiple dialogs with --and-widget.
+#Try something like:
+#dialog --begin 1 1 --tailboxbg wget.log 10 100 --and-widget --begin 20 1 --tailbox wget.log 10 100
+
+#You need two backgrounded tailboxes and a static component. Msgbox will do.
+#dialog --begin 1 2 --tailboxbg wget.log 10 70 --and-widget --begin 13 2 \
+#  --tailboxbg wget.log 10 70 --and-widget --keep-window --msgbox "Exit" 5 10
+
+#Another way to follow multiple files is to use multitail.
+#multitail /var/log/proccess1.log /var/log/proccess2.log
+
+#The latest version of the Unix tail command supports multiple -f as shown below.
+#tail -f /var/log/proccess1.log -f /var/log/proccess2.log
+
+
+

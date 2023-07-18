@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+exec 5> >(yad --text-info \
+		--width=600 --heigth=300 \
+		--tail \
+		--no-buttons)
+
+#e quando quero escrever algo na janela
+echo "xuxu" >&5

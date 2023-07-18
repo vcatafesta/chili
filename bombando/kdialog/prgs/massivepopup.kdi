@@ -1,0 +1,17 @@
+#! /bin/bash
+#  Exemplos do diálogo --massivepopup
+
+while true 
+do
+    Carga=$(acpi | awk '{split($4,valor,"%");
+        print valor[1]}')
+    if ((Carga > 15))
+    then 
+        sleep 300 
+        continue
+    fi
+    kdialog --passivepopup \
+    "Atenção, a bateria só tem $Carga% de carga" 5
+    sleep 180 
+done
+

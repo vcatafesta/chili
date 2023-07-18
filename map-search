@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+
+
+search(){
+	local i=0;
+	for str in "${array[@]}"; do
+		if [ "$str" =  "$1" ]; then
+			echo $i
+			return
+		else
+			((++i))
+		fi
+	done
+	echo "-1"
+}
+
+arr=(	[1,os]="Linux"			[1,type]="Show"
+		[2,os]="Windows"		[2,type]="OS Bichado"
+		[3,os]="OS2"			[3,type]="Work Station" )
+
+echo "Number $1 is a ${arr[$1,os]} ${arr[$1,type]}"
+
+array=({a..z})
+declare -p array
+search c
+
+printf '%s\0' "${array[@]}" | grep -z "c d"
+
+value="c"
+if [[ " ${array[@]} " =~ " ${value} " ]]; then
+   echo 1 ${BASH_REMATCH[@]}
+   echo 2 ${BASH_REMATCH[0]}
+   echo found $value
+fi
+
+echo ${array[-1]} ## ultimo elemento
+echo -n 'echo ${!array[*]}'; echo ${!array[*]}
+
+for index in ${!array[@]}; do
+    echo "Valor: ${array[$index]}"
+done
+
+words=("bash" "array" "bash" "command" "bash" "shell" "associative")
+unique_words=($(echo ${words[@]} | tr ' ' '\n' | sort -u ))
+for word in ${unique_words[@]}; do echo $word; done
+
+echo -n 'echo ${unique_words[0]}   : ' ; echo ${unique_words[@]}
+echo -n 'echo ${unique_words[*]}   : ' ; echo ${unique_words[*]}
+echo -n 'echo "${unique_words[0]}" : ' ; echo "${unique_words[@]}"
+echo -n 'echo "${unique_words[*]}" : ' ; echo "${unique_words[*]}"
+echo -n 'echo $unique_words        : ' ; echo $unique_words
+echo -n 'echo ${unique_words[0]}   : ' ; echo ${unique_words[0]}
+echo -n 'echo $unique_words[0]     : ' ;echo $unique_words[0]
+echo -n 'echo ${#unique_words[@]}  : ' ; echo ${#unique_words[@]}
+echo -n 'echo ${unique_words[${#unique_words[@]}-1]} : '; echo ${unique_words[${#unique_words[@]}-1]}
+echo -n 'echo ${unique_words[-1]}                    : '; echo ${unique_words[-1]}
+echo -n 'echo ${!unique_words[@]}                    : '; echo ${!unique_words[@]}
+
+commands1=("cd" "cat" "echo" "grep")
+commands2=("sort" "rm" "top" "awk")
+all_commands=("${commands1[@]}" "${commands2[@]}")
+echo ${all_commands[@]}
+echo ${#all_commands[@]}
+
+
+unset words
+words=("array" "bash" "command line" "shell") 
+echo ${words[@]}
+words+=("filesystem")
+echo ${words[@]}
+last_element=${words[-1]}
+echo $last_element
+unset words[-1]
+echo ${words[@]}

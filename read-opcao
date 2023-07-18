@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+read -p "
+  Menu do Sistema
+
+Opcao		Programa
+-1-		Inclusao
+-2-		Alteracao
+
+Digite uma opção:" opc

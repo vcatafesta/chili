@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# Função para dividir uma string em um array com o delimitador especificado
+# Argumentos:
+#   $1 - A string a ser dividida
+#   $2 - A posição do elemento a ser extraído (opcional, padrão é $1)
+#   $3 - O delimitador a ser usado (opcional, padrão é "|")
+# Retorno:
+#   Se apenas $1 for fornecido, a função retorna um array com todos os elementos
+#   Se $2 for fornecido, a função retorna o elemento na posição especificada
+#   Se $1 e $3 forem fornecidos, a função usa o delimitador especificado
+#   A saída pode ser armazenada em um array, se a opção -a for fornecida
+
+sh_splitarrayawk() {
+   local str="$1"
+   local pos="$2"
+   local delim="$3"
+   local output=()
+
+   # Verificar se a string de entrada e a posição de saída estão definidas
+   if [[ -z "$str" ]]; then
+      echo "Erro: uma string de entrada é necessária" >&2
+      return 1
+   fi
+   if [[ -n "$pos" && ! "$pos" =~ ^[0-9]+$ ]]; then
+      echo "Erro: a posição de saída deve ser um número inteiro" >&2
+      return 1
+   fi
+
+   # Definir o delimitador padrão, se não estiver definido
+   if [[ -z "$delim" ]]; then
+      delim="|"
+   fi
+
+   # Dividir a string em um array usando awk
+   if [[ -n "$pos" ]]; then
+      output="$(awk -F"$delim" '{print $'"$pos"'}' <<<"$str")"
+   else
+      output=($(awk -F"$delim" '{ for (i=1; i<=NF; i++) print $i }' <<<"$str"))
+   fi
+
+   # Verificar se a saída deve ser armazenada em um array
+   if [[ "$1" == "-a" ]]; then
+      if [[ -n "$pos" ]]; then
+         readarray -t output <<<"$output"
+      else
+         readarray -t output < <(awk -F"$delim" '{ for (i=1; i<=NF; i++) print $i }' <<<"$str")
+      fi
+   fi
+
+   # Retornar o array ou o elemento na posição especificada
+   if [[ -n "$pos" ]]; then
+      echo "$output"
+   else
+      printf '%s\n' "${output[@]}"
+   fi
+}
+
+# Exemplo de uso:
+# my_array=$(sh_splitarrayawk "foo|bar|baz" -a)
+# echo "${my_array[1]}"
+# Output: "bar"
+
+# my_element=$(sh_splitarrayawk "foo|bar|baz"

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+regex_email='([[:print:]]+@[a-z]+[.][[:alnum:]]+[.]?[[:alnum:]]+).*'
+email='vcatafesta@chilios.com.br'
+[[ "$email" =~ $regex_email ]]
+echo $?
+echo ALL: ${BASH_REMATCH[@]}
+echo 0: ${BASH_REMATCH[0]}
+echo 1: ${BASH_REMATCH[1]}
+echo 2: ${BASH_REMATCH[2]}
+echo 3: ${BASH_REMATCH[3]}
+echo 4: ${BASH_REMATCH[4]}
+
+ip=192.168.1.15
+#regex='([0-9]{1,3}\.)(?1)(?1)[0-9]{1,3}'
+regex='(([0-9]+\.)([0-9]+\.)[0-9]+\.[0-9]+)'
+regex='([0-9]+\.)([0-9]+\.)([0-9]+\.)([0-9]+)'
+echo $ip
+echo $regex
+[[ "$ip" =~ $regex ]]
+echo $?
+echo ALL: ${BASH_REMATCH[@]}
+echo 0: ${BASH_REMATCH[0]}
+echo 1: ${BASH_REMATCH[1]}
+echo 2: ${BASH_REMATCH[2]}
+echo 3: ${BASH_REMATCH[3]}
+echo 4: ${BASH_REMATCH[4]}
+

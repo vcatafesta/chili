@@ -1,0 +1,22 @@
+# depslib dependency file v1.0
+1472454999 source:c:\sci\cpp\borland\main.cpp
+	<iostream>
+	<conio.h>
+	<stdio.h>
+	<stdlib.h>
+	<\sci\all.cpp>
+
+1472512616 source:c:\sci\all.cpp
+	"short.h"
+
+1472104530 c:\sci\short.h
+	<stdio.h>
+	<stdlib.h>
+	<string>
+	<string.h>
+	<iostream>
+	<fstream>
+	<istream>
+	<windows.h>
+	<conio.h>
+

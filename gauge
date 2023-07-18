@@ -1,0 +1,19 @@
+#!/bin/bash
+
+Perc=0
+Pont='|/—\'	# Ponteiros de um hélice do lado direito
+m=m     		# Somente para alterar o verbo falta/faltam
+
+while ((Perc <= 100))
+do
+	cat <<- FIM
+		XXX
+		$Perc
+			Falta$m \Zb\Z1$[100-Perc]%\ZB\Zn para\
+		completar a tarefa \Zb\Z1${Pont:((Perc%4)):1}\ZB\Zn
+	XXX
+	FIM
+	((Perc++))
+	((Perc > 98)) && { m=; unset Pont; }
+#	sleep 0.10
+done | dialog --clear --colors --title "Teste Gauge no dialog" --gauge "" 7 46 0

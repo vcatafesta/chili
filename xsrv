@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+host="localhost"
+port="3333"
+
+# lê a mensagem digitada pelo usuário
+read -p "Digite sua mensagem: " msg
+
+# envia a mensagem para o servidor utilizando o comando "nc"
+echo "$msg" | nc "$host" "$port"
+
+# exibe a mensagem na tela do X utilizando o programa "xmessage"
+xmessage "Mensagem enviada para a porta $port: $msg"
+

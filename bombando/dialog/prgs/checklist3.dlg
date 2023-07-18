@@ -1,0 +1,25 @@
+#!/bin/bash
+## Devolve os arquivos de todos os usuários
+#+ escolhidos com o uso do diálogo --checklist
+
+Usus=$(dialog --stdout --separate-output \
+    --separator " -o -user " --checklist \
+    "Escolha os usuários dos quais\n\
+	listaremos os arquivos" 18 33 15\
+	$(cut -f1 -d: /etc/passwd | sort | 
+	    xargs -i echo {} "" OFF)) || {
+			dialog --infobox "Você abandonou" 0 0
+			exit 1
+		}
+## O diálogo a seguir apresenta a cadeia
+#+ gerada somente para efeito didático
+dialog --ok-label Beleza --colors --msgbox \
+	" Linha gerada:\n$Usus\n\
+	Viu que ficou um \Z1-o user\Zn a mais?" 0 0
+## Agora vamos tirar o último -o -user
+#+ que ficou a mais no fim de $Usus
+Usus=$(sed 's/ -o -user $//' <<< "$Usus")
+## Vamos exibi-los. afinal o script é para isso!
+dialog --title "Arquivos dos usuários escolhidos"\
+	--msgbox "$(find . -type f -user $Usus |
+		xargs -n1 basename)" 15 0

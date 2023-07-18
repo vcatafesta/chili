@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+# Função para iniciar o servidor
+function init_server() {
+   while true; do
+      # Inicia o servidor
+      while read -r line; do
+         echo "$line"
+      done < <(nc -l -p "$server_port")
+      # Trata erros de conexão
+      if [ $? -ne 0 ]; then
+         echo "Erro: conexão perdida"
+         exit 1
+      fi
+   done
+}
+
+# Função para iniciar o cliente
+function init_client() {
+   while true; do
+      read -r msg
+      # Envia mensagem para o servidor
+      if [[ -n $msg ]]; then
+         echo "$msg" > /dev/tcp/localhost/"$client_port"
+         # Trata erros de conexão
+         if [ $? -ne 0 ]; then
+            echo "Erro: conexão perdida"
+            exit 1
+         fi
+      fi
+   done
+}
+
+# Verifica argumentos
+if [ $# -lt 2 ]; then
+   echo "Erro: argumentos insuficientes"
+   echo "Use: $0 [PORTA_DO_SERVIDOR] [PORTA_DO_CLIENTE]"
+   exit 1
+fi
+
+# Define as portas do servidor e do cliente
+server_port=$1
+client_port=$2
+
+# Inicia o servidor em segundo plano
+echo "Escutando na porta $server_port"
+init_server &
+server_pid=$!
+
+# Inicia o cliente
+init_client
+
+# Encerra o servidor se o cliente terminar
+kill "$server_pid"

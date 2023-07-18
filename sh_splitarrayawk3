@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+sh_splitarrayawk() {
+    local str="$1"
+    local pos="$2"
+    local sep='|'
+
+    # Validação de parâmetros
+    if [[ -z "$str" || -z "$pos" ]]; then
+        echo "Erro: string e posição são obrigatórios"
+        return 1
+    fi
+
+    if [[ ! "$pos" =~ ^[0-9]+$ ]]; then
+        echo "Erro: posição deve ser um número inteiro"
+        return 1
+    fi
+
+    # Define o separador padrão como '|'
+    if [[ $# -eq 3 ]]; then
+        sep="$3"
+    fi
+
+    # Usa a opção -v do awk para passar o valor da posição do array
+    awk -F"$sep" -v pos="$pos" '{ print $pos }' <(printf "%s" "$str")
+}
+
+

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+function sh_seekstrarray() {
+	local str=($1)
+	local search="$2"
+	local result=
+
+	for i in "${!str[@]}"; do
+		if [[ "${str[$i]}" == "$search" ]]; then
+#			echo "$search[$i]"
+			result="$i"
+			break
+		fi
+	done
+	echo $result
+}
+
+array=('/dev/sda' '/dev/sdb' '/dev/sdc')
+sh_seekstrarray "${array[*]}" '/dev/sdb'
+sh_seekstrarray "${array[*]}" '/dev/sdc'
+sh_seekstrarray "${array[*]}" '/dev/sda'
+sh_seekstrarray "${array[*]}" '/dev/sda'

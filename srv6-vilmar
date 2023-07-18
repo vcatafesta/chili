@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+display_notification() {
+   yad --notification --text="$1" --image=dialog-information &
+}
+
+init-server() {
+   while :; do
+      while read -r line; do
+         display_notification "$line"
+      done < <(nc -l -p "$sport")
+   done
+}
+
+init-client() {
+   while :; do
+      read -p "Digite a mensagem a ser enviada para o servidor: " msg
+      [[ -n $msg ]] && echo "$msg" > /dev/tcp/localhost/$dport || display_notification "Mensagem vazia"
+   done
+}
+
+if [[ $# -ne 2 ]]; then
+   echo "Uso: $0 <porta-local> <porta-remota>"
+   exit 1
+fi
+
+sport=$1
+dport=$2
+
+echo "Escutando na porta $sport"
+init-server &
+init-client

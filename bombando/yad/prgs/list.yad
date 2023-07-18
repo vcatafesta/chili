@@ -1,0 +1,50 @@
+#!/bin/bash
+#  Demo do diálogo --list usando
+#+ um campo :CHK
+#
+Girias="abobrinha algum arame bagarote bago baranga barão bolada bufunfa cacau capim caroço chapa cobre conto couro-de-rato dindim gaita grana grilo jiripoca joão-da-cruz luz mangos merreca merréis milha música níquel nota ouro pacote painço pataca paus pilas pororó prata saco siris sonante tacho tostão trocado tutú ventarola verdinha vintém"
+Sai=$(yad --list --multiple --height 300 \
+	--title "Girias para dinheiro" \
+	--text "Escolha as gírias que você conhece,
+mas marque somentes as que usa" \
+	--column Gíria --column "Essa eu uso:CHK" \
+	$(echo $Girias | xargs -i echo {} FALSE)) &&
+yad --text "Você conhece e usa:\n
+$(sed -n 's/^/\t» /;s/|TRUE|//p' <<< "$Sai")\n" \
+--button gtk-ok
+
+#  Demo do diálogo --list usando
+#+ um campo :IMG
+
+Sai=$(yad --list --column ":IMG" --column "Programa" --print-column 2 utilities-terminal Terminal preferences-desktop-accessibility Acessibilidade); echo ${Sai%?}
+
+#  Demo do diálogo --list usando
+#+ a opção --checklist
+
+eval yad --list --checklist                            \
+    --text \"Marque as capitais que você conhece\"     \
+	--image ../icones/Brasil.png --image-on-top        \
+	--height 300 --width 330                           \
+	--column Marque --column Capitais --column Estados \
+	$(sort capitais)
+
+#  Demo do diálogo --list usando
+#+ as colunas especiais @fore@ e @back@
+
+yad --list --column Nomes --column Telefones        \
+    --column @fore@ --column @back@ $(cat telefones |
+        while read N1 N2 Tel
+        do
+            let ++i
+            Cor=$(((i%2)) && echo black white ||
+                echo white black)
+            echo $N1 $Tel $Cor
+        done)
+
+#  Demo do diálogo --list usando as opções
+#+ --dclick-action, --ellipsize e --search-colunm
+yad --list --column "Arquivos" *.txt         \
+    --dclick-action gedit --ellipsize MIDDLE \
+    --search-column 1
+
+

@@ -1,0 +1,18 @@
+#!/bin/bash
+#  Scripts de exemplo do diálogo --calendar
+
+#  Só sai do loop do until após escolher uma data
+until data=$(zenity --calendar                  \
+    --title "Datas dos voos"                    \
+    --text "Escolha uma data para o voo de ida" \
+    --day $(date +%_d)                          \
+    --month $(date +%_m)                        \
+    --year $(date +%Y))
+do
+    :
+done
+
+#  Formatando a data da saída com parâmetros
+#+ idênticos aos do comando date
+zenity --calendar \
+    --date-format="%Y/%m/%d"

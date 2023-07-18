@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Cores do GTK
+Comment=Mostra todas as cores
+Icon=stock_color
+Exec=./testa.cor
+Terminal=FALSE

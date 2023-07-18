@@ -1,0 +1,45 @@
+#!/bin/bash
+#  Calculadora usando Bash, bc e yad
+  
+  > ~/.mem   # Será usado como memória
+  trap 'rm ~/.mem; exit' 0 2 3 15
+  yad --form --columns 8 --width 500 --no-buttons \
+      --title "Calculadora YAD + Bash + bc"       \
+      --field='' ''  --field :LBL ''              \
+      --field :RO 'Casas decimais'                \
+      --field 'Decimais!Ajusta a precisão         \
+  do cálculo':BTN "@calc.s h '' PR"               \
+      --field=7:BTN "@echo 1:%1\7"                \
+      --field=4:BTN "@echo 1:%1\4"                \
+      --field=1:BTN "@echo 1:%1\1"                \
+      --field=,:BTN "@echo 1:%1\,"                \
+      --field=8:BTN "@echo 1:%1\8"                \
+      --field=5:BTN "@echo 1:%1\5"                \
+      --field=2:BTN "@echo 1:%1\2"                \
+      --field=0:BTN "@echo 1:%1\0"                \
+      --field=9:BTN "@echo 1:%1\9"                \
+      --field=6:BTN "@echo 1:%1\6"                \
+      --field=3:BTN "@echo 1:%1\3"                \
+      --field '!Enche linguiça':BTN ''            \
+      --field=+:BTN "@echo 1:%1\+"                \
+      --field=:BTN "@echo 1:%1\x"                 \
+      --field='??!Raiz Quadrada':BTN              \
+          '@./calc.sh '%1' RQ %3'                 \
+      --field='±!Troca sinal':BTN                 \
+          "@./calc.sh '%1' +-"                    \
+      --field=-:BTN "@echo 1:%1\-"                \
+      --field=÷:BTN "@echo 1:%1\/"                \
+      --field='x?!Potenciação':BTN "@echo 1:%1\^" \
+      --field='1/x!Inverte':BTN                   \
+          '@./calc.sh '%1' 1X %3'                 \
+      --field==:BTN '@./calc.sh '%1' = %3'        \
+      --field=\(:BTN "@echo 1:%1\("               \
+      --field='CL!Limpa':BTN "@echo 1:"           \
+      --field='MC!Limpa memória':BTN              \
+          "@./calc.sh '' MC"                      \
+      --field=\?:BTN "@./calc.sh %1 AP"           \
+      --field=\):BTN "@echo 1:%1\)"               \
+      --field='M+!Adiciona à memória':BTN "       \
+          @./calc.sh '%1' M+ %3"                  \
+      --field='MR!Trás conteúdo da memória':BTN   \
+          "@./calc.sh '%1' MR"

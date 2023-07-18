@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+#
+# Requirements:
+# - qemu
+# - edk2-ovmf (when UEFI booting)
+set -eu
+
+cleanup_working_dir() {
+	if [[ -d "${working_dir}" ]]; then
+		rm -rf -- "${working_dir}"
+	fi
+}
+
+copy_ovmf_vars() {
+	if [[ ! -f '/usr/share/edk2-ovmf/x64/OVMF_VARS.fd' ]]; then
+		printf 'ERROR: %s\n' "OVMF_VARS.fd not found. Install edk2-ovmf."
+		exit 1
+	fi
+	cp -av -- '/usr/share/edk2-ovmf/x64/OVMF_VARS.fd' "${working_dir}/"
+}
+
+check_image() {
+	if [[ -z "$image" ]]; then
+		printf 'ERROR: %s\n' "Image name can not be empty."
+		exit 1
+	fi
+	if [[ ! -r "$image" ]]; then
+		printf 'ERROR: %s\n' "Image file (${image}) does not exist."
+		exit 1
+	fi
+}
+
+run_image() {
+	if [[ "$boot_type" == 'uefi' ]]; then
+		copy_ovmf_vars
+		if [[ "${secure_boot}" == 'on' ]]; then
+			printf '%s\n' 'Using Secure Boot'
+			local ovmf_code='/usr/share/edk2-ovmf/x64/OVMF_CODE.secboot.fd'
+		else
+			local ovmf_code='/usr/share/edk2-ovmf/x64/OVMF_CODE.fd'
+		fi
+		qemu_options+=(
+#			'-drive' "if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=on"
+			'-drive' "if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=off"
+			'-drive' "if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd"
+#			'-global' "driver=cfi.pflash01,property=secure,value=${secure_boot}"
+		)
+	fi
+
+	if [[ "${accessibility}" == 'on' ]]; then
+		qemu_options+=(
+			'-chardev' 'braille,id=brltty'
+			'-device' 'usb-braille,id=usbbrl,chardev=brltty'
+		)
+	fi
+
+	if [[ -n "${oddimage}" ]]; then
+		qemu_options+=(
+			'-device' 'scsi-cd,bus=scsi0.0,drive=cdrom1'
+			'-drive' "id=cdrom1,if=none,format=raw,media=cdrom,read-only=on,file=${oddimage}"
+		)
+	fi
+}
+
+do_qemu1() {
+	sudo qemu-system-x86_64 \
+        -drive file=$image,if=none,id=disk1 \
+        -device ide-hd,drive=disk1,bootindex=1 \
+        -hda /archlive/qemu/hda.img \
+        -hdb /archlive/qemu/hdb.img \
+        -hdc /archlive/qemu/hdc.img \
+        -hdd /archlive/qemu/hdd.img \
+        -m "size=8128,slots=0,maxmem=$((8128*1024*1024))" \
+        -name archiso,process=archiso_0 \
+        -device virtio-scsi-pci,id=scsi0 \
+        -audiodev pa,id=snd0,server=localhost \
+        -device ich9-intel-hda \
+        -device hda-output,audiodev=snd0 \
+        -device virtio-net-pci,romfile=,netdev=net0 -netdev user,id=net0,hostfwd=tcp::60022-:22 \
+        -global ICH9-LPC.disable_s3=1 \
+        -machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0 \
+        "${qemu_options[@]}" \
+         -smp 36 \
+         -enable-kvm \
+        -serial stdio
+}
+#        -display "${display}" \
+#	     -vga std \
+#	     -vga virtio \
+
+do_qemu() {
+	local ovmf_code='/usr/share/edk2-ovmf/x64/OVMF_CODE.fd'
+	local working_dir="$(mktemp -dt frufi.XXXXXXXXXX)"
+
+	copy_ovmf_vars
+	sudo qemu-system-x86_64 \
+	  -cpu host \
+	  -m 8192 \
+	  -drive file=${image},if=virtio,format=raw \
+	  -device virtio-net-pci,netdev=net0 -netdev user,id=net0 \
+	  -vga virtio \
+	  -display gtk \
+	  -device intel-hda \
+  	  -audiodev pa,id=snd0,server=localhost \
+	  -device hda-output,audiodev=snd0 \
+	  -net nic,model=virtio \
+	  -net user \
+	  -drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=off \
+	  -drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd \
+     -enable-kvm \
+	  -smp 36 \
+     -serial stdio
+}
+
+image=$1
+#oddimage=''
+#accessibility=''
+#boot_type='bios'
+#boot_type='uefi'
+#mediatype='cdrom'
+#mediatype='hd'
+#secure_boot='off'
+#display='sdl'
+#qemu_options=()
+#working_dir="$(mktemp -dt run_archiso.XXXXXXXXXX)"
+#trap cleanup_working_dir EXIT
+#check_image
+#run_image
+
+do_qemu "$@"

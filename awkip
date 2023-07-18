@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+echo '# List all unique IP addresses and number of times it was requested'
+awk '
+{
+	Ip[$3]++;
+}
+
+END{
+	for (var in Ip)
+		print var, "access", Ip[var]," times"
+}' iplogs.txt
+
+######################################################################################
+
+echo
+echo '# List all the IP address and calculate how many sites it accessed'
+awk 'BEGIN {
+	print "IP Address\tAccess Count\tNumber of sites";
+}
+
+{
+	Ip[$3]++;
+	count[$3]+=$NF;
+}
+
+END{
+	for (var in Ip)
+	print var,"\t",Ip[var],"\t\t",count[var];
+}' iplogs.txt
+
+######################################################################################
+
+echo
+echo '# Identify maximum access day'
+awk '
+	{ date[$1]++; }
+
+	END{
+		for (count in date){
+			if ( max < date[count] ){
+				max = date[count];
+				maxdate = count;
+			}
+		}
+	print "Maximum access is on", maxdate;
+}' iplogs.txt
+
+######################################################################################
+
+echo
+echo '# Reverse the order of lines in a file'
+awk '{ a[i++] = $0 } END { for (j=i-1; j>=0;) print a[j--] }' iplogs.txt
+
+######################################################################################
+
+echo
+echo '# Remove duplicate and nonconsecutive lines using awk'
+awk '!($0 in array) { array[$0]; print }' iplogs.txt
+
+echo "${Ip[@]}"

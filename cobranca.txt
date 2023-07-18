@@ -1,0 +1,15 @@
+Prezado(a) [NOME DO CLIENTE],
+
+Verificamos que existem mensalidades em atraso referentes ao serviço de internet fornecido pela nossa empresa. Informamos que é imprescindível que o pagamento seja realizado imediatamente para evitar a interrupção dos serviços e a inclusão do seu nome em órgãos de proteção ao crédito.
+
+Segue abaixo a relação das faturas em atraso:
+
+[LISTA DAS FATURAS EM ATRASO COM SEUS RESPECTIVOS VALORES E DATAS DE VENCIMENTO]
+
+Solicitamos que efetue o pagamento das faturas em atraso o quanto antes para evitar maiores transtornos e custos adicionais. Caso já tenha efetuado o pagamento, por gentileza, desconsidere esta mensagem.
+
+Caso haja alguma dificuldade em regularizar a sua situação financeira, entre em contato conosco para que possamos avaliar alternativas de negociação.
+
+Atenciosamente,
+
+[NOME DA EMPRESA]

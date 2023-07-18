@@ -1,0 +1,7 @@
+#!/bin/bash
+#  Exemplo de uso do diálogo warning
+
+[ $UID -eq 0 ] || 
+    zenity --warning              \
+        --title="Você não é root" \
+        --text="Você não terá acesso a todas as opções"

@@ -1,0 +1,5 @@
+#!/bin/bash
+cobc -x -O $1.cbl
+[[ $? -eq 0 ]] && ./$1
+
+

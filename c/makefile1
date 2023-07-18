@@ -1,0 +1,18 @@
+# My first makefile
+
+# Compiler
+CC=clang
+
+all: printy
+
+printy: main.o helloWorld.o
+	$(CC) -o printy main.o helloWorld.o
+
+main.o: main.c helloWorld.h
+	$(CC) -o main.o main.c -c -W -Wall -ansi -pedantic
+
+helloWorld.o: helloWorld.c helloWorld.h
+	$(CC) -o helloWorld.o helloWorld.c -c -W -Wall -ansi -pedantic
+
+clean:
+	rm -rf *.o *~ printy

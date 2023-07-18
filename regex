@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+RE_CPF='(\d{3}[-.]?\d{3}[.]?\d{3}[-.]?\d{2})'
+RE_HORA='^([01][0-9]|[2][0-3]):[0-5][0-9]$'
+
+h=(23:59 00:00 19:20 5:37 220:54)
+for i in ${h[*]}
+do
+	[[ $i =~ $RE_HORA ]] && echo $i : 'hora ok' || echo $i : 'hora furada'
+done
+

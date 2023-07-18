@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+host="localhost"
+port="3333"
+
+while true; do
+    # escuta a porta utilizando o comando "nc" e salva a mensagem recebida em uma variável
+    msg=$(nc -l "$host" "$port")
+
+    # exibe a mensagem em uma janela do X utilizando o comando "xmessage"
+    xmessage "$msg" &
+done

@@ -1,0 +1,20 @@
+#! /bin/bash
+#  Monta um relogio analógico na tela para
+#+ exemplificar o uso do diálogo --form
+
+#  Vamos tirar as 6 linha de cabeçalho de cores.txt,
+#+ depois vamos deixar somente as cores e em
+#+ seguida, vamos separar as cores com um ponto
+#+ de exclamação para ser entrada das ComboBoxes
+Cores=$(tail -n +6 cores.txt | cut -f1 -d' ' | tr '\n' '!')
+
+#  YAD com separador em branco alimenta as 3
+#+ variáveis responsáveis pela estética do relógio
+read Fg Bg Bd <<< $(yad --form --separator ' ' \
+	--text "Relógio YAD"  \
+	--field "Cor de frente:CB" --field "Cor de fundo:CB" \
+	--field "Cor da borda:CB"  \
+	$(echo $Cores) $(echo $Cores) $(echo $Cores))
+
+#  Dispara o relógio em background
+oclock -bg $Bg -fg $Fg -bd $Bd &

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+seq 10 | xargs -n2 | cut -f1 -d' ' >impar
+seq 10 | xargs -n2 | cut -f2 -d' ' >par
+seq 10 | paste - - -
+ls * | paste - -
+paste impar
+paste -s impar
+paste -s paste-ex

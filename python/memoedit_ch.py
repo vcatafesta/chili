@@ -1,0 +1,13 @@
+ME_IDLE = 0  # /* Idle, all keys processed        */
+ME_UNKEY = 1  # /* Unknown key, memo unaltered     */
+ME_UNKEYX = 2  # /* Unknown key, memo altered       */
+ME_INIT = 3  # /* Initialization mode             */
+ME_REQUEST = 4  # /* Memoedit requests an input from */
+ME_DEFAULT = 0  # /* Perform default action          */
+ME_IGNORE = 32  # /* Ignore unknown key              */
+ME_DATA = 33  # /* Treat unknown key as data       */
+ME_TOGGLEWRAP = 34  # /* Toggle word-wrap mode           */
+ME_TOGGLESCROLL = 35  # /* Toggle scrolling mode           */
+ME_WORDRIGHT = 100  # /* Perform word-right operation    */
+ME_BOTTOMRIGHT = 101  # /* Perform bottom-right operation  */
+ME_PASTE = 110  # /* Paste string into buffer        */ /* Xbase++ extension */

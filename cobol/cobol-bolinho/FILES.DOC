@@ -1,0 +1,73 @@
+Microsoft COBOL Tools 1.1
+
+FILES.DOC
+
+    Following is a list of files contained on the Microsoft COBOL 
+    Utilities distribution  5.25" diskettes.	 On 3.5" media, Disk 1
+    contains the files found on both Disk 1 and Disk 2 of the 
+    5.25" media.
+
+Disk 1: Viewcob and Cobref.
+
+     FILES.DOC ................ This Document
+
+     COBREF.EXE	............... The MS-COBOL Cross Reference Utility   
+
+     VIEWCOB.EXE .............. The Visual Debug Facility
+     VIEWCOB.HLP .............. Viewcob's file for the HELP command
+
+     DEMO\
+	LATES.COB ............. Demo program for Viewcob   
+	LATES.WKS ............. COPY file used in LATES.COB
+	LATES.INT ............. COBOL compiler output for LATES.COB 
+	LATES.DBG 
+	LATES.DBO 
+	TRANS.DAT ............. Data file read by LATES
+     
+     INSTALL.COM .............. Runtime INSTALL Utilty
+     INSTALL.DAT .............. INSTALL support files
+     INSTALL.MSG
+     INSTALL.OVL
+     INSTALL.SPC
+
+Disk 2:  Menu and Mouse.
+
+     MENU\
+	MENU.INT .............. The MS-COBOL Menu Facility
+	MENU.COB .............. The MS-COBOL Menu Facility (source)
+
+	DEMO\
+	   MENU.INT ........... The MS-COBOL Menu Facility
+	   MENU.DAT ........... Data file used by Menu
+	   MENUSAMP.COB	....... Demo programs called by Menu
+	   MENUSAMP.INT
+	   INIT.COB
+	   INIT.INT
+
+     MOUSE\
+	CBMOUSE.OBJ ........... The MS-COBOL Mouse Interface Routine
+	MRUNCOB.EXE ........... Version of RUNCOB.EXE linked with CBMOUSE.OBJ
+	MAKERUN.BAT ........... Custom Runtime Batch File (Hard Disk)
+	ASM.ASM	............... Subroutine name table module
+	PSEG.MAC .............. Assembly Language Include File for ASM.ASM
+	USERPROG.MAC .......... Program name table file for ASM.ASM
+
+	DEMO\
+	   MOUSE.COB .......... Mouse demo program
+	   MOUSE.INT .......... Use MRUNCOB.EXE to run this program
+
+Disk 3: Assembly language support
+
+     VIEW1.LIB ................ Custom Viewcob Library #1
+     VIEW2.LIB ................ Custom Viewcob Library #2
+     COBOL.OBJ ................ Custom Viewcob Object Module 
+
+     MAKERUN.BAT .............. Custom Runtime Batch File (Hard Disk)
+     MAKERUN2.BAT ............. Custom Runtime Batch File (Floppies)
+
+     ASM.ASM .................. Subroutine name table module
+     PSEG.MAC ................. Assembly Language Include File for ASM.ASM
+     USERPROG.MAC ............. Program name table file for ASM.ASM
+     USERSEG.MAC .............. Assembly Language Segmentation Macro File
+
+

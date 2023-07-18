@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+#!/usr/bin/env bash
+
+print_usage() {
+   echo "Uso: $0 -s PORTA -d PORTA_DESTINO [OPÇÕES]"
+   echo "  -s, --source PORTA     Define a porta em que o servidor ficará escutando."
+   echo "  -d, --destination PORTA_DESTINO"
+   echo "                         Define a porta de destino para enviar as mensagens."
+   echo "  -t, --timeout TIMEOUT  Define o tempo limite em segundos para conexões (padrão: 60s)."
+   echo "  -h, --help             Exibe esta mensagem de ajuda."
+}
+
+init-server() {
+   while :; do
+      while read -r line; do
+         echo "$line"
+      done < <(nc -l -p "$sport")
+   done
+}
+
+init-client() {
+   while :; do
+      read -r msg
+      [[ -n $msg ]] && echo "$msg" > /dev/tcp/localhost/$dport
+   done
+}
+
+cleanup() {
+   echo "Encerrando conexões..."
+   kill $(jobs -p) >/dev/null 2>&1
+}
+
+sport=""
+dport=""
+timeout=60
+
+# Trata os argumentos da linha de comando
+while [[ $# -gt 0 ]]; do
+   case "$1" in
+      -s|--source)
+         sport="$2"
+         shift 2
+         ;;
+      -d|--destination)
+         dport="$2"
+         shift 2
+         ;;
+      -t|--timeout)
+         timeout="$2"
+         shift 2
+         ;;
+      -h|--help)
+         print_usage
+         exit 0
+         ;;
+      *)
+         echo "Argumento inválido: $1"
+         print_usage
+         exit 1
+         ;;
+   esac
+done
+
+# Verifica se as portas foram fornecidas corretamente
+if [[ -z $sport ]] || [[ -z $dport ]]; then
+   echo "As portas de origem e destino são obrigatórias."
+   print_usage
+   exit
+fi
+
+

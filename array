@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+source /chili/core.sh
+
+a=('a' 'b' 'c' 'd' 'e')
+for i in ${a[*]}; do echo -n "${i} "; done ; echo
+a[2]='k'
+echo "${a[*]}"
+
+a[5]='f'
+echo "${a[*]}"
+echo "Tam de a:  ${#a[@]}"
+
+unset a[2]
+echo "${a[*]}"
+
+for ((i=0;i<5;i++)); do echo "${i} -> $( test ${a[${i}]} && echo "Existe" )"; done
+
+echo "Tam de a:  ${#a[@]}"
+echo "Indices de a:  ${!a[@]}"
+echo
+echo 'reoganizar/reindexar'
+echo ${a[@]}; echo ${!a[@]}
+a=( ${a[@]} )
+echo ${a[@]}; echo ${!a[@]}
+echo
+echo 'fatiar'
+echo 'echo ${a[@]:2}'
+echo "${a[@]:2}"
+echo
+echo 'Para indicar o número de elementos a recuperar basta complementar com outro sinal de dois pontos:'
+echo 'echo ${a[@]:1:2}'
+echo "${a[@]:1:2}"
+echo
+echo 'É possível usar valores relativos e assim recuperar o último elemento do array:'
+echo 'echo ${a[@]: -1}'
+echo "${a[@]: -1}"
+echo
+echo 'Indice o ultimo elemento'
+echo 'echo $#{a[@]: -1}'
+#echo ${#a[@]: -1}
+echo
+echo 'O que permite se retornar ao exemplo de inclusão de elementos e definir uma forma automática de acrescentar elementos:'
+a[((${#a[@]: -1}+1))]="Z"
+echo ${a[@]}
+
+#info "${a[*]}"
+

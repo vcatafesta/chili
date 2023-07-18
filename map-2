@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+for a in bas ver bui nam dir bsv siz sit; do
+	eval ppkg_${a}=\(${ent[@]/,*}\)
+   ent=(${ent[@]#*,})
+   echo $ent
+done
+

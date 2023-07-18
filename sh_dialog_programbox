@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+DIALOG() {
+    rm -f $ANSWER
+    dialog --colors --keep-tite --no-shadow --no-mouse \
+        --backtitle "${BOLD}${WHITE}Void Linux installation -- https://www.voidlinux.org (0.23 44089e4)${RESET}" \
+        --cancel-label "Back" --aspect 20 "$@" 2>ANSWER
+    return $?
+}
+
+TARGETDIR="/mnt/target"
+_syspkg="base-system"
+mkdir -p $TARGETDIR/var/db/xbps/keys $TARGETDIR/usr/share
+cp -a /usr/share/xbps.d $TARGETDIR/usr/share/
+cp /var/db/xbps/keys/*.plist $TARGETDIR/var/db/xbps/keys
+mkdir -p $TARGETDIR/boot/grub
+
+_arch=$(xbps-uhelper arch)
+#stdbuf -oL env XBPS_ARCH=${_arch} xbps-install  -r $TARGETDIR -SyU ${_syspkg} 2>&1 | \
+#        DIALOG --title "Installing base system packages..." --programbox 24 8
+pacman -Su 2>&1 | DIALOG --title "Installing base system packages..." --programbox 39 158

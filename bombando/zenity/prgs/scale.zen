@@ -1,0 +1,19 @@
+#!/bin/bash
+#  Exemplos de uso do diálogo --scale
+
+Aluno=Zezinho
+Nota=$(zenity --scale                 \
+    --title "Nota dos Alunos"         \
+    --text "Informe a nota de $Aluno" \
+    --min-value 0                     \
+    --max-value 5                     \
+    --value 2)
+echo $Nota
+
+#  Uso da opção --print-partial
+zenity --scale                           \
+    --title "Cores do Fundo de Tela"     \
+    --text "Escolha a cor desejada"      \
+    --print-partial                      \
+    --max-value 9 |
+        xargs -i bash -c "tput setab {}; clear"

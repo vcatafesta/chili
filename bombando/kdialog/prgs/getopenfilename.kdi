@@ -1,0 +1,14 @@
+#! /bin/bash
+#  Exemplos de uso do diálogo --getopenfilename
+
+#  Usando mime types
+kdialog --getopenfilename ~julio \
+    "image/png text/html text/plain"
+
+#  Usando coringas
+kdialog --getopenfilename . "*.sh *.csh *.zsh *.bash |Scripts de Shell"
+
+#  Com a opção --multiple
+Arqs=$(kdialog --multiple --getopenfilename \
+    /usr/share/gnome-games/sounds/ "          \
+    *.ogg *.avi *.mpg *.wmv | Arquivos de vídeo")

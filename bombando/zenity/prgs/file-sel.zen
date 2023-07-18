@@ -1,0 +1,26 @@
+#!/bin/bash
+#  Exemplos de uso do diálogo --file-selection
+
+Arquivo=$(zenity --file-selection \
+    --title "Selecão de arquivo")
+echo $Arquivo
+
+#  Exemplo de uso das opções
+#+ --multiple e --separator
+Arquivos=$(zenity --file-selection \
+    --title "Seleção de arquivo"   \
+    --multiple                     \
+    --separator "^") || {
+         zenity --error            \
+             --text "Nenhum arquivo foi selecionado"
+         exit 1
+         }
+echo $Arquivos
+
+#  Exemplo de uso das opções
+#+ --save --confirm-overwrite
+Arquivo=$(zenity --file-selection \
+    --title "Selecão de arquivo"  \
+    --save                        \
+    --confirm-overwrite)
+echo $Arquivo

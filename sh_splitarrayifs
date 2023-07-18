@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+sh_splitarray() {
+	local str="$1"
+	local pos="$2"
+	local sep="${3:-'|'}"
+	local array
+
+	[[ $# -eq 3 && "$pos" = "|" && "$sep" =~ ^[0-9]+$ ]] && { sep="$2"; pos="$3";}
+	[[ $# -eq 2 && "$pos" = "$sep"                    ]] && { sep="$pos"; pos=1;}
+	[[ $# -eq 1 || ! "$pos" =~ ^[0-9]+$               ]] && { pos=1; }
+
+	IFS="$sep" read -r -a array <<< "$str"
+	echo "${array[pos-1]}"
+}
+
+declare -A Adisco
+Adisco+=(["/dev/nvme0n1"]="Netac|2TB|gpt|nvme|Netac NVMe SSD 2TB")
+Adisco+=(["/dev/nvme1n1"]="Samsung|1GB|gpt|nvme|Samsung SSD 970 EVO Plus 1TB")
+Adisco+=(["/dev/sda"]="WDC|500G|gpt|sata|WDC WDS480G2G0A-00JH30")
+Adisco+=(["/dev/sdb"]="Seagate|640GB|gpt|sata|")
+Adisco+=(["/dev/sdb"]="Samsung|500GB|gpt|sata|")
+
+for i in "${!Adisco[@]}"
+do
+	echo "Marca  : $(sh_splitarray "${Adisco[$i]}")"
+	echo "Marca  : $(sh_splitarray "${Adisco[$i]}" '1')"
+	echo "Marca  : $(sh_splitarray "${Adisco[$i]}" ':')"
+	echo "Marca  : $(sh_splitarray "${Adisco[$i]}" '1' '|')"
+	echo "Tam    : $(sh_splitarray "${Adisco[$i]}" '2')"
+	echo "Tabela : $(sh_splitarray "${Adisco[$i]}" '3')"
+	echo "Tabela : $(sh_splitarray "${Adisco[$i]}" '|' 3)"
+	echo "Tran   : $(sh_splitarray "${Adisco[$i]}" '4')"
+	echo "Modelo : $(sh_splitarray "${Adisco[$i]}" '5')"
+	echo
+done

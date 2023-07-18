@@ -1,0 +1,15 @@
+#!/bin/bash
+#  Demo do uso do diálogo --list com diversos
+#+ campos :CHK e usando a opção --print-all
+#
+Saida=$(yad --list --title "Inventário familiar" \
+		--width 240 --height 280                 \
+		--column Pessoa --column Casado?:CHK     \
+		--column "Tem filhos?:CHK" --print-all   \
+		$(cat nomes | xargs -i echo {} FALSE FALSE))
+Miolo=$(grep 'TRUE|$' <<< "$Saida" | cut -f1 -d'|')
+[ -z "$Miolo" ] && exit 1
+Miolo=$(echo "$Miolo" | xargs -i echo --field {}:NUM)
+yad --form --title "Inventário familiar" \
+	--text "\tInforme a quantidade de 
+	filhos de cada um" $Miolo

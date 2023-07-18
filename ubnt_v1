@@ -1,0 +1,60 @@
+bridge.1.port.3.devname=ath1
+bridge.1.port.3.prio=20
+bridge.1.port.3.status=enabled
+
+bridge.2.comment=Management
+bridge.2.devname=br1
+bridge.2.port.1.devname=eth0.10
+bridge.2.port.1.status=enabled
+bridge.2.port.2.devname=ath1
+bridge.2.port.2.status=enabled
+bridge.2.status=enabled
+bridge.2.stp.status=disabled
+
+ebtables.sys.eap.2.status=enabled
+ebtables.sys.eap.2.devname=ath1
+ebtables.sys.arpnat.2.status=enabled
+ebtables.sys.arpnat.2.devname=ath1
+
+netconf.4.up=enabled
+netconf.4.status=enabled
+netconf.4.role=bridge_port
+netconf.4.promisc=enabled
+netconf.4.netmask=255.255.255.0
+netconf.4.mtu=1500
+netconf.4.ip=0.0.0.0
+netconf.4.hwaddr.status=disabled
+netconf.4.hwaddr.mac=
+netconf.4.devname=ath1
+netconf.4.autoip.status=disabled
+netconf.4.allmulti=enabled
+
+radio.1.virtual.1.status=enabled
+radio.1.virtual.1.devname=ath1
+radio.1.virtual.1.mode=master
+
+wireless.2.wmm=enabled
+wireless.2.wds.status=disabled
+wireless.2.status=enabled
+wireless.2.ssid=NEWSSID             <= CHANGE TO ACTUAL SSID OF VIRTUAL AP
+wireless.2.l2_isolation=disabled    <= CHANGE TO 'disabled' IF NO ISOLATION IS REQUIRED
+wireless.2.hide_ssid=disabled
+wireless.2.autowds=disabled
+wireless.2.authmode=1
+wireless.2.ap=
+wireless.2.addmtikie=enabled
+wireless.2.devname=ath1
+
+# If you want to enable security,
+aaa.2.devname=ath1     <= CHANGE TO ACTUAL DEVICE OF VIRTUAL AP
+aaa.2.driver=madwifi
+aaa.2.radius.auth.1.status=disabled
+aaa.2.ssid=NEWSSID     <= CHANGE TO ACTUAL SSID OF VIRTUAL AP
+aaa.2.status=enabled
+aaa.2.wpa.1.pairwise=TKIP CCMP
+aaa.2.wpa.key.1.mgmt=WPA-PSK
+aaa.2.wpa.psk=PASSWORD     <= CHANGE TO REQUIRED PASSWORD OF VIRTUAL AP
+aaa.2.wpa.mode=2
+
+
+

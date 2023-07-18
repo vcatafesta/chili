@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+
+declare -A AsUser
+AsUser[cfullname]=""
+AsUser[cuser]="live"
+AsUser[cpass]="live"
+AsUser[cpassroot]=""
+AsUser[chostname]="chili"
+AsUser[cgroups]="wheel,audio,video"
+ccreatenewuser="Cria usuario"
+
+sh_confadduser()
+{
+	while :
+	do
+      exec 3>&1
+         usertext=$(dialog                             \
+         --backtitle       "$cmsgusermanager"         \
+         --insecure        "$@"                       \
+         --mixedform       "$ccreatenewuser"          \
+         12 50 0                                      \
+	      "Nome Completo : " 1 1 "${AsUser[cfullname]}"    1 17 40 0 0 \
+         "Username      : " 2 1 "${AsUser[cuser]}"        2 17 20 0 0 \
+         "Password user : " 3 1 "${AsUser[cpass]}"        3 17 20 0 1 \
+         "Password root : " 4 1 "${AsUser[cpassroot]}"    4 17 20 0 1 \
+         "Hostname      : " 5 1 "${AsUser[chostname]}"    5 17 20 0 0 \
+         2>&1 1>&3)
+         exit_status=$?
+
+        case $exit_status in
+            "$D_ESC"|"$D_CANCEL")
+               return 1
+               ;;
+            "$D_OK")
+:<<'method1'
+              aUser=()
+              while read -r line; do
+                 aUser+=("$line")
+              done <<< "$(printf '%s\n' "${usertext[@]}")"
+method1
+
+:<<'method2'
+              while read line; do
+                 aUser+=("$line")
+              done <<< "${usertext// /\n}"
+method2
+
+#method3
+               mapfile -t <<< "$usertext" aUser
+               AsUser[cfullname]="${aUser[0]}"
+               AsUser[cuser]="${aUser[1]}"
+               AsUser[cpass]="${aUser[2]}"
+               AsUser[cpassroot]="${aUser[3]}"
+               AsUser[chostname]="${aUser[4]}"
+
+               if [[ "${AsUser[cuser]}" == "root" ]]; then
+                  if ! conf "*** USER ***" "\nUsuario não pode ser root! Novamente?"; then
+                     alerta "*** USER *** " "Cadastro de usuario cancelado"
+                     return 1
+                  fi
+                  sh_confadduser
+               fi
+
+               if [[ -z "${AsUser[cpass]}" ]]; then
+                  if ! conf "*** USER ***" "\nSenha do usuario não pode ser vazia! Novamente?"; then
+                     alerta "*** USER *** " "Cadastro de usuario cancelado"
+                     return 1
+                  fi
+                  sh_confadduser
+               fi
+
+               if [[ -z "${AsUser[cpassroot]}" ]]; then
+                  if ! conf "*** USER ***" "\nSenha root não pode ser vazia! Novamente?"; then
+                     alerta "*** USER *** " "Cadastro de usuario cancelado"
+                     return 1
+                  fi
+                  sh_confadduser
+               fi
+
+               #echo "${AsUser[cfullname]}" > /tmp/root-cfullname
+               #echo "${AsUser[cuser]}"     > /tmp/root-cuser
+               #echo "${AsUser[cpass]}"     > /tmp/root-cpass
+               #echo "${AsUser[cpassroot]}" > /tmp/root-cpassroot
+               #echo "${AsUser[chostname]}" > /tmp/root-chostname
+               #sh_adduser
+               msg "INFO" "$(log_info_msg 'Cadastro efetuado com sucesso')"
+               inkey 5
+               ;;
+         esac
+      exec 3>&-
+      return
+   done
+}
+
+sh_confadduser
+sh_confadduser ""  # dá merda
+

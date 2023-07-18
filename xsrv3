@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+host="localhost"
+port="3333"
+
+echo "escutando na porta $port"
+
+# escuta a porta 3333 e lê as mensagens recebidas
+while true; do
+    if read -r msg < <(nc -l -p "$port"); then
+        # exibe a mensagem na tela do X Window System
+		  echo "mensagem recebida : " "$msg"
+        notify-send -u critical "Mensagem recebida" "<b>$msg</b>"
+    fi
+done
+
+# Esperando pelo processo filho
+wait "$!"

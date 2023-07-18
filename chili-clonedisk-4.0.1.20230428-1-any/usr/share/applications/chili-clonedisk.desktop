@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Chili clonedisk
+GenericName=Chili Clonedisk Util
+Comment=utility to clone disks
+#Exec=sudo chili-clonedisk %F
+Exec=pkexec chili-clonedisk %F
+Terminal=true
+MimeType=text/plain;
+Icon=drive-multidisk
+Categories=Utility;Accessories;
+StartupNotify=true
+Actions=Window;Document;

@@ -1,0 +1,40 @@
+#[Unit]
+#Description=Mount loop device image
+#After=local-fs.target
+
+#[Service]
+#Type=oneshot
+#ExecStart=/usr/bin/losetup --find -P -f /vg/iso/chili.img
+#ExecStop=/bin/bash -c 'losetup -j /vg/iso/chili.img | awk -F: '\''{print $1}'\'' | while read -r loopdev; do [ -n "$loopdev" ] && losetup -d "$loopdev"; done'
+#ExecStop=/bin/bash -c 'losetup -j /vg/iso/chili.img | awk -F: '\''{print $1}'\'' | xargs -r losetup -d'
+#ExecStop=/chili/umount_chili.sh
+#ExecStop=/bin/bash -c "systemd-escape -p -- /chili/umount_chili.sh"
+#ExecStop=/bin/bash -c 'LOOP_DEVICES=$(losetup -j /vg/iso/chili.img | awk -F: '\''{print $1}'\''); if [ -n "$LOOP_DEVICES" ]; then for loopdev in $LOOP_DEVICES; do losetup -d "$loopdev"; done; fi'
+#RemainAfterExit=yes
+#ExecStop=/usr/bin/losetup -d $(/usr/bin/losetup -j /vg/iso/chili.img | /usr/bin/awk -F: '{print $1}')
+
+#[Service]
+#ExecStart=losetup --show -P --find -f vg/iso/chili.img
+#ExecStopPost=/bin/bash -c 'sleep 5 && /usr/bin/losetup -d $(/usr/bin/losetup -j /vg/iso/chili.img | /usr/bin/awk -F: '\''{print $1}'\'')'
+#ExecStop=/bin/bash -c 'losetup -j /vg/iso/chili.img | awk -F: '''{print $1}''' | xargs -r losetup -d'
+#ExecStop=/bin/bash -c 'losetup -j /vg/iso/chili.img | awk -F: '\''{print $1}'\'' | xargs -r -I {} losetup -d {}'
+#RemainAfterExit=yes
+
+#[Install]
+#WantedBy=multi-user.target
+
+[Unit]
+Description=Mount loop device image
+After=local-fs.target
+
+[Service]
+ExecStart=losetup -Pf /vg/iso/chili.img
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=simple
+ExecStop=losetup -d /dev/loop1
+RemainAfterExit=yes

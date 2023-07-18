@@ -1,0 +1,12 @@
+# depslib dependency file v1.0
+1472437764 source:c:\sci\cpp\gnu\struct.cpp
+	<stdio.h>
+	<stdlib.h>
+	<iostream>
+
+1472513929 source:c:\sci\cpp\gnu\classe.cpp
+	<stdio.h>
+	<stdlib.h>
+	<conio.h>
+	<iostream>
+

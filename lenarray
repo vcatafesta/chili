@@ -1,0 +1,25 @@
+#!/usr/bin/bash
+
+# echo $(lenarray "${Var[@]}")
+# echo $(lenarray "$Var")
+
+lenarray()
+{
+	local new=($1)
+	echo "${#new[@]}"
+}
+
+lenarraystr()
+{
+	local new=$1
+	local count=0
+
+	read -ra ADDR <<< "$new"
+	echo "${#ADDR[@]}"
+}
+
+Var="um dois tres"
+echo $(lenarray "${Var[@]}")
+echo $(lenarray "$Var")
+echo $(lenarraystr "${Var[@]}")
+echo $(lenarraystr "$Var")

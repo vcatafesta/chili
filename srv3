@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+#!/bin/bash
+
+# Definir a porta a ser usada.
+port="3333"
+
+# Verificar se o nc está instalado
+if ! command -v nc &> /dev/null
+then
+    echo "O comando 'nc' não foi encontrado"
+    exit
+fi
+
+# Verificar se a porta está disponível
+if ! lsof -i :$port &> /dev/null
+then
+    echo "A porta $port já está em uso"
+    exit
+fi
+
+# Configurar o tratamento de sinal para encerrar o processo nc quando o script é interrompido.
+trap "kill $NC_PID" EXIT
+
+# Definir o arquivo de log
+log_file="chat.log"
+
+# Inicializar o contador de conexões
+connections=0
+
+# Loop infinito para aceitar conexões.
+while true
+do
+    # Verificar se o número máximo de conexões foi alcançado.
+    if [ "$connections" -eq 10 ]
+    then
+        echo "Número máximo de conexões simultâneas alcançado"
+        sleep 10
+        continue
+    fi
+
+    # Aceitar uma nova conexão.
+    coproc nc -l -p "$port"
+
+    # Incrementar o contador de conexões.
+    ((connections++))
+
+    # Loop infinito para enviar e receber mensagens.
+    while true
+    do
+        # Ler uma mensagem do cliente.
+        if read -r line <&${COPROC[0]}
+        then
+            # Adicionar a mensagem ao log.
+            echo "RECEBIDO: $line" >> "$log_file"
+
+            # Exibir a mensagem no console.
+            echo "$line"
+        fi
+
+        # Ler uma mensagem do usuário.
+        read -p "" msg
+
+        # Verificar se a mensagem não está vazia.
+        if [ -n "$msg" ]
+        then
+            # Enviar a mensagem para o cliente.
+            echo "$msg" >&${COPROC[1]}
+
+            # Adicionar a mensagem ao log.
+            echo "ENVIADO: $msg" >> "$log_file"
+        fi
+    done
+
+    # Decrementar o contador de conexões.
+    ((connections--))
+
+    # Aguardar o término do processo nc.
+    wait $NC_PID
+done
+

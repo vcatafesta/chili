@@ -1,0 +1,81 @@
+
+#!/bin/bash
+
+# Função para posicionar o cursor
+function posicionar_cursor {
+  printf "\e[${2};${1}H"
+}
+
+# Função para imprimir um quadro
+function imprimir_quadro {
+  local quadro_x=$1
+  local quadro_y=$2
+  local quadro_largura=$3
+  local quadro_altura=$4
+
+  posicionar_cursor $quadro_x $quadro_y
+  printf "\u250c"  # Canto superior esquerdo
+  for ((i=0; i<quadro_largura-2; i++)); do
+    printf "\u2500"  # Linha horizontal
+  done
+  printf "\u2510\n"  # Canto superior direito
+
+  for ((j=0; j<quadro_altura-2; j++)); do
+    posicionar_cursor $quadro_x $((quadro_y+j+1))
+    printf "\u2502"  # Linha vertical
+    posicionar_cursor $((quadro_x+quadro_largura-1)) $((quadro_y+j+1))
+    printf "\u2502"  # Linha vertical
+  done
+
+  posicionar_cursor $quadro_x $((quadro_y+quadro_altura-1))
+  printf "\u2514"  # Canto inferior esquerdo
+  for ((i=0; i<quadro_largura-2; i++)); do
+    printf "\u2500"  # Linha horizontal
+  done
+  printf "\u2518\n"  # Canto inferior direito
+}
+
+# Função para dividir o quadro em linhas horizontais e verticais
+function dividir_quadro {
+  local quadro_x=$1
+  local quadro_y=$2
+  local quadro_largura=$3
+  local quadro_altura=$4
+
+  local linha_horizontal1=$((quadro_y + quadro_altura/3))
+  local linha_horizontal2=$((quadro_y + 2*quadro_altura/3))
+  local linha_vertical1=$((quadro_x + quadro_largura/3))
+  local linha_vertical2=$((quadro_x + 2*quadro_largura/3))
+
+  # Imprime linhas horizontais
+  posicionar_cursor $quadro_x $linha_horizontal1
+  for ((i=0; i<quadro_largura-1; i++)); do
+    printf "\u2500"  # Linha horizontal
+  done
+
+  posicionar_cursor $quadro_x $linha_horizontal2
+  for ((i=0; i<quadro_largura-1; i++)); do
+    printf "\u2500"  # Linha horizontal
+  done
+
+  # Imprime linhas verticais
+  for ((j=quadro_y+1; j<quadro_y+quadro_altura-1; j++)); do
+    posicionar_cursor $linha_vertical1 $j
+    printf "\u2502"  # Linha vertical
+
+    posicionar_cursor $linha_vertical2 $j
+    printf "\u2502"  # Linha vertical
+  done
+}
+
+# Define a posição inicial e tamanho do quadro
+pos_x=10  # Posição horizontal
+pos_y=5   # Posição vertical
+largura=30
+altura=15
+
+# Imprime o quadro na posição definida
+imprimir_quadro $pos_x $pos_y $largura $altura
+
+# Divide o quadro em linhas horizontais e verticais
+dividir_quadro $pos_x $pos_y $largura $altura

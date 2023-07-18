@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+#awk 	'BEGIN{FS=",";OFS=","}
+#	  		{if (FNR==NR) {codes[$1]=$2;}
+#	  		else{next}}
+#	  	END{for (key in codes){print key,codes[key],length(codes)}}'   /var/cache/fetch/search/packages-split.csv
+
+#awk	'BEGIN {	FS=",";OFS=","	}
+#		{ seq[++n]=$2; codes[$2]=$1 }
+#	   END{ 	for (i=1;i<=n;i++)
+#	   		printf "%s\t%s\t%d\n", codes[seq[i]], seq[i], i
+#	   }' /var/cache/fetch/search/packages-split.csv
+
+#awk	'BEGIN {	FS=",";OFS=","	}
+#		{
+#			n++
+#			base[n]=$1
+#			version[n]=$2
+#		}
+#	   END{ 	for (i=1;i<=n;i++)
+#	   		printf "%s,%s\n", base[i], version[i]
+#	   }' /var/cache/fetch/search/packages-split.csv
+
+#awk -F',' '{print $1, $2}' /var/cache/fetch/search/packages-split.csv
+#arr[0]='1,2,3,4,5'
+
+echo Begin
+mapfile -t arr < temp.csv
+nlen=${#arr[*]}
+
+for((i=0; i<nlen; i++))
+{
+	resto=${arr[i]}
+#	campo7="${resto##*,}" ; echo $campo7 ; resto="${resto%,*}"; #echo $resto
+#	campo6="${resto##*,}" ; echo $campo6 ; resto="${resto%,*}"; #echo $resto
+#	campo5="${resto##*,}" ; echo $campo5 ; resto="${resto%,*}"; #echo $resto
+#	campo4="${resto##*,}" ; echo $campo4 ; resto="${resto%,*}"; #echo $resto
+#	campo3="${resto##*,}" ; echo $campo3 ; resto="${resto%,*}"; #echo $resto
+#	campo2="${resto##*,}" ; echo $campo2 ; resto="${resto%,*}"; #echo $resto
+#	campo1="${resto##*,}" ; echo $campo1 ; resto="${resto%,*}"; #echo $resto
+	for((x=7; x>=1; x--))
+	{
+		campo="${resto##*,}" ; resto="${resto%,*}"
+	}
+}
+echo End
+#awk -F',' '{print $1}' <<< "${arr[0]}"
+#awk -F',' '{print $2}' <<< "${arr[0]}"
+#awk -F',' '{print $3}' <<< "${arr[0]}"
+#awk -F',' '{print $4}' <<< "${arr[0]}"
+#awk -F',' '{print $5}' <<< "${arr[0]}"
+#awk -F',' '{print $6}' <<< "${arr[0]}"
+#awk -F',' '{print $7}' <<< "${arr[0]}"
+#awk -F',' '{print $8}' <<< "${arr[0]}"

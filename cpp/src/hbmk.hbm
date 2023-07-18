@@ -1,0 +1,35 @@
+{linux}-workdir=/tmp/.hbmk/
+{win}-workdir=c:\lixo\.hbmk
+-w0
+-es2
+-run
+-info
+#-inc
+
+#additional path to search for libraries
+#-L./ 
+
+{mingw|mingw64}-ldflag=-Wl,--allow-multiple-definition 
+{linux}-prgflag= -i../include;
+{linux}-i../include
+#{linux}-ldflag=-Wl,--allow-multiple-definition -Wno-unused-local-typedefs -Wno-unused-result
+#{linux}-cflag=-cpp
+#{linux}-cflag=-C
+{linux}-cflag=-w
+#{linux}-cflag=-Wall
+{linux}-cflag=-Wno-unused-result
+{linux}-cflag=-Wno-unused-value
+{linux}-cflag=-Wno-unused-variable
+{linux}-cflag=-Wno-unused-function
+{linux}-cflag=-Wno-unused-label
+{linux}-cflag=-Wno-deprecated
+{linux}-cflag=-Wlogical-op 
+{linux}-cflag=-Wduplicated-cond
+{linux}-cflag=-Wshift-negative-value
+{linux}-cflag=-Wnull-dereference 
+{cc1plus}-cflag=-Wimplicit-function-declaration
+{cc1plus}-cflag=-Wold-style-cast
+#{linux}-cflag=-Wno-return-local-addr
+#{linux}/home/vcatafesta/github/hwgui/hwgui.hbc
+-lncurses
+-lcurl

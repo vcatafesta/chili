@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+split_array_awk() {
+   local str="$1"
+   local pos="$2"
+   local sep="${3:-|}"
+
+   if [[ $# -lt 2 ]]; then
+      echo "Uso: split_array_awk string posição [separador=|]"
+      return 1
+   fi
+
+   if ! [[ "$pos" =~ ^[0-9]+$ ]]; then
+      echo "A posição deve ser um número inteiro."
+      return 1
+   fi
+
+   awk -F"$sep" "{ print \$$pos }" <<< "$str"
+}

@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -e
+trap 'deu_merda' ERR
+
+deu_merda(){
+	echo $?
+}
+
+nconta=0
+for i in {a..z}; do
+	((nconta++))
+	echo $((nconta++))
+ 	echo $((++nconta))
+done
+

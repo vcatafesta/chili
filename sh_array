@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+arr=(first banana orange 'pitaya da horta' novo seis)
+new=(um dois tres)
+
+echo 1 $arr
+echo 2 ${arr[*]}
+echo 3 "${arr[*]}"
+echo 4 "${arr[@]}"
+echo 5 "${#arr}"
+echo 6 "${#arr[5]}"
+echo 7 "${#arr[*]}"
+echo 8 "${#arr[@]}"
+
+arr+=(vilmar)
+
+echo 1 $arr
+echo 2 ${arr[*]}
+echo 3 "${arr[*]}"
+echo 4 "${arr[@]}"
+echo 5 "${#arr}"
+echo 6 "${#arr[6]}"
+echo 7 "${#arr[*]}"
+echo 8 "${#arr[@]}"
+
+arr+=("${new[@]}")
+
+echo 1 $arr
+echo 2 ${arr[*]}
+echo 3 "${arr[*]}"
+echo 4 "${arr[@]}"
+echo 5 "${#arr}"
+echo 6 "${#arr[6]}"
+echo 7 "${#arr[*]}"
+echo 8 "${#arr[@]}"
+
+for i in "${!arr[@]}"; do
+	echo $i
+done
+
+for i in "${arr[@]}"; do
+	echo $i
+done

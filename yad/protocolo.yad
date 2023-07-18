@@ -1,0 +1,179 @@
+#!/bin/bash
+# Script para captar informações sobre atendimentos telefônicos em centrais de atendimento
+# e direcionar para um arquivo .csv
+
+#touch prot_reg.csv
+if [ -s prot_reg.csv ]
+   then touch prot_reg.csv
+   else echo "CENTRAL|DATA|ATENDENTE|PROTOCOLO|DESCRIÇÃO|" >> prot_reg.csv
+fi
+
+VERSAO="2.1"
+app="Protocolo $VERSAO"
+HOJE=`date +%d/%m/%Y`
+
+msg_erro()
+{
+	yad --center --button=OK --title="Ops!" --text="Algo deu errado. Tente novamente." --text-align=center --width=200 --height=120 --window-icon=error --image=dialog-error
+}
+
+organizando_procura()
+{
+	GREP_VAR=$(grep "$SEARCH" -i prot_reg.csv)
+	TITULOS=(CENTRAL DATA ATENDENTE PROTOCOLO DESCRIÇÃO)
+	OLDIFS="$IFS"
+	echo -e "$app - Organize seus direitos" >> result.inf
+	echo >> result.inf
+	echo "====================================" >> result.inf
+	echo >> result.inf
+
+	while IFS=$'\n' read -r LINE; do
+		IFS="|"
+		read -a CAMPOS <<< "$LINE"
+		IFS="$OLDIFS"
+		for ((x=0;x<5;x++)); do
+			echo -e "${TITULOS[$x]}: ${CAMPOS[$x]}" >> result.inf
+		done
+		echo >> result.inf
+	done <<< "$GREP_VAR"
+	echo "------------------------------------" >> result.inf
+	echo "Pesquisado em $HOJE" >> result.inf
+}
+
+inserindo_dados()
+{
+	yad --form \
+		--center \
+		--width=450 \
+		--height=340 \
+		--title="Cadastrar" \
+		--image=gtk-add --text="<b>Insira os dados pedidos</b>\n"\
+	   	--field="Central":CBE ^NET!Oi!TIM!Vivo	\
+	   	--field="Data":DT	\
+	   	--field="Atendente"	\
+   		--field="Protocolo"	\
+   		--field="Descrição do atendimento":TXT >> prot_reg.csv
+
+	unset DE_NOVO
+	DE_NOVO=$(yad --title="Prosseguir?" \
+					--center \
+					--button="Sim"!yad-ok \
+					--button="Não"!gtk-cancel \
+					--text="Deseja <b>adicionar</b> outra entrada?" \
+					--image=gtk-execute)
+
+	if [ "$?" = 0 ]; then
+		inserindo_dados
+   	elif [ "$?" = 1 ]; then
+		tela_inicio
+	else
+		msg_erro
+	fi
+}
+
+procurando_dados()
+{
+	SEARCH=$(yad --form \
+				--center \
+				--width=350 \
+				--title="Procurar" \
+				--window-icon=gtk-search \
+				--image=gtk-find \
+				--text="Você pode procurar por qualquer campo que quiser. É só digitar o <b>termo de pesquisa</b> no formulário abaixo.\n \n <i> * Central\n * Data [dd/mm/aaaa]\n * Atendente\n * Protocolo\n * Palavra-chave</i> \n" \
+				--field="Digite o termo"
+	)
+
+	if [ "$?" = 0 ]; then
+		organizando_procura
+		#cat result.inf |
+   		yad --text-info \
+			--center \
+			--title="Resultado da Pesquisa" \
+			--image=gtk-info \
+   			--text="Abaixo seguem os resultados encontrados" \
+			--width=500 \
+			--height=650 \
+   			--button=yad-ok:0 \
+			--button=gtk-print:300 \
+			--filename=result.inf
+
+		# IF dentro de IF para testar se quer imprimir ou não
+   		if [ "$?" = 300 ]; then
+			yad --center --print --type=text --filename=result.inf
+   		fi
+   		rm -f result.inf # Remover o arquivo de resultados
+		elif [ "$?" = 1 ]; then
+   			tela_inicio
+		else
+			msg_erro
+		fi
+
+		unset DE_NOVO
+		DE_NOVO=`yad --center --title="Prosseguir?" --button="Sim"!yad-ok --button="Não"!gtk-cancel --text="Deseja <b>procurar</b> outra entrada?" --image=gtk-execute`
+		if [ "$?" = 0 ]; then
+			procurando_dados
+		elif [ "$?" = 1 ]; then
+			tela_inicio
+		else
+			msg_erro
+		fi
+}
+
+tela_inicio()
+{
+	ESCOLHA=$(yad \
+		--list \
+		--center \
+		--width=700 \
+		--height=220 \
+		--button=yad-ok:1 	\
+		--button=yad-close:0 \
+		--no-headers \
+		--dialo-sep \
+		--image=gtk-dialog-question \
+		--text="Escolha a operação que você deseja fazer" \
+		--title="$app" \
+		--separator='' \
+		--column="unica" "Cadastrar" "Procurar" "Sobre" "Sair")
+
+	nchoice=$?
+	case $nchoice in
+		0) exit;;
+	esac
+
+	case $ESCOLHA in
+		Cadastrar) inserindo_dados;;
+		Procurar) procurando_dados;;
+		Sobre) sobre_about;;
+		Sair) exit;;
+	esac
+
+
+}
+
+sobre_about()
+{
+	yad --width=450 \
+		--center \
+		--height=400 \
+		--title="Sobre $app" \
+		--text-align=center \
+		--image=gtk-about \
+		--text="<b>$app</b>\n \n Este é um script desenvolvido em linguagem de <b> Shell Script</b> por <b><i>Daniel Carvalho</i></b> para fins de estudo e hobbie. É gratuito e <i>open source</i>. Pode e deve ser mexido e remexido por qualquer pessoa que queria contribuir com sua melhoria.\n \n Por favor, visite 'http://https://github.com/dacarpe/' para mais informações sobre como contribuir com o código." \
+		--button=yad-ok:0 \
+		--buttons-layout=center
+	tela_inicio
+}
+
+yad --undecorated 		\
+	--center 			\
+	--title=$app 		\
+	--image-on-top 		\
+	--image=logo60.png 	\
+	--text-align=center \
+	--text="<b>Iniciando $app</b>\n \n<b><big><big>$app</big></big></b>" \
+	--timeout=1 		\
+	--no-buttons 		\
+	--on-top
+
+tela_inicio

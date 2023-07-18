@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+time find -type f -exec grep -n date {} \; | wc -l
+time find -type f -exec grep -n date {} \;
+
+time find -type f -exec grep -n date {} \+ | wc -l
+time find -type f -exec grep -n date {} \+
+
+time find -type f -exec grep -n date {} + | wc -l
+time find -type f -exec grep -n date {} +
+
+time find -type f | xargs grep -n --color=auto ' date' | wc -l
+time find -type f | xargs grep -n --color=auto ' date'
+
+touch arq{1..5}.{ok,err}
+mkdir dir
+ls arq*.ok | xargs -i bash -c "mv {} dir; echo movi {}"
+ls arq*.ok | xargs -tI{} bash -c "mv {} dir; echo movi {}"	# mostra linha
+ls arq*.ok | xargs -pI{} bash -c "mv {} dir; echo movi {}" 	# prompt
+
+ls [0-9][0-9][0-9][0-9]* | cut -c-4 | uniq | xargs -i bash -c "[[ -d {} ]] || mkdir {}; mv {}*.txt {}"
+find -iname "*.mp3" -print0 | xargs -0 -I ArqMP3 mplayer ArqMP3

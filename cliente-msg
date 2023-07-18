@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+host="localhost"
+port="3333"
+
+# loop infinito para ler mensagens do usuário e enviá-las para o servidor
+while true; do
+    read -p "Digite sua mensagem: " msg
+    # envia a mensagem para o servidor utilizando o comando "nc"
+    echo "$msg" | nc "$host" "$port" &
+done

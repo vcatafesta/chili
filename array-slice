@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# @brief: slice a bash array
+# @arg1:  output-name
+# @arg2:  input-name
+# @args:  seq args
+# ----------------------------------------------
+function slice() {
+   local output=$1
+   local input=$2
+   shift 2
+   local indexes=$(seq $*)
+
+   local -i i
+   local tmp=$(for i in $indexes
+                 do echo "$(eval echo \"\${$input[$i]}\")"
+               done)
+
+   local IFS=$'\n'
+   eval $output="( \$tmp )"
+}
+
+A=( foo bar "a  b c" 42 )
+slice B A 1 2
+echo "${B[0]}"  # bar
+echo "${B[1]}"  # a  b c

@@ -1,0 +1,15 @@
+#!/usr/bin/bash
+
+   # [[ $1 && $# -le 3 ]] || { echo "Número incorreto de argumentos!"; exit 1; }
+
+   argv=($*)
+   s=${!#}
+   exp=1
+   base=60
+
+   while [[ $(( ${#argv[*]} -1 )) -ge 1 ]]; do
+      unset argv[-1]
+      s=$(( s + ${argv[${#argv[*]} -1]} * base**exp ))
+      ((exp++))
+   done
+   echo $s

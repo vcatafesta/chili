@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+source /chili/core.sh
+setvarcolors
+export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
+#set -x
+
+echo '3 - Resolução dos monitores conectados'
+#my_res=$(echo $(xrandr --nograb --current | sed -nE 's/(.*)[^dis]connected.*primary\s(.*)\+0\+0.*/\1: \2/p')) 	# BLAU
+my_res=$(xrandr | sed -nE 's/^(.*)[^dis]connected.*primary\s(.*)\+.*\+.*/\1: \2/p')
+echo $my_res
+
+echo
+echo '4 - Tema GTK e de ícones'
+gtk_settings=$HOME/.config/gtk-3.0/settings.ini
+my_theme=$(grep -Po '^gtk-theme.*=\K(.*)' $gtk_settings)
+my_icons=$(grep -Po '^gtk-icon-.*=\K(.*)' $gtk_settings)
+my_icons_and_theme=$(grep -Po 'gtk(-icon)?-theme-name=(.*)' $gtk_settings)
+echo $my_theme
+echo $my_icons
+
+echo
+echo '5 - Nome da distribuição'
+PRETTY_NAME="Debian GNU/Linux-libre (sid)"
+sed -nE 's/^P.*="(.*)\s\((.*)\).*/\1\/\2/p' /etc/os-release
+#Debian GNU/Linux-libre/sid
+
+PRETTY_NAME="Debian GNU/Linux bookworm/sid"
+sed -nE 's/^#.*="(.*)\/(.*)"/\1\/\2/p' /etc/os-release
+#Debian GNU/Linux bookworm/sid
+
+sed -nE 's/^#.*="(.*)\/(.*)"/\1 (\2)/p' /etc/os-release
+#Debian GNU/Linux bookworm (sid)
+
+sed -nE 's/^#.*="(.*ux)\s(.*)\/(.*)"/\1-\2 (\3)/p' /etc/os-release		#VC
+#Debian GNU/Linux-bookworm (sid)
+

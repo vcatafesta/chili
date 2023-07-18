@@ -1,0 +1,30 @@
+#! /bin/bash
+#  Exemplo do diálogo --menu
+
+Oper=$(kdialog --caption "Trabalhando com imagens" \
+    --geometry 225x170                             \
+    --menu "O que você gostaria de fazer?"         \
+        a "Redimensionar a imagem"                 \
+        b "Girar a imagem"                         \
+        c "Deletar a imagem"                       \
+        d "Converter para outro formato")
+
+case $Oper in
+   a) mv $imagem $imagem-OLD
+      tamanho=$(kdialog --inputbox           \
+          "Redimensionar para qual tamanho?" \
+          "640x480")
+      convert -size $tamanho "$imagem"-OLD $imagem
+      ;;
+   b) jpegorient +90 $imagem
+      ;;
+   c) rm -f $imagem
+      ;;
+   d) formato=`kdialog --inputbox \
+          "Converter a imagem para qual formato?" \
+          ".jpg"`
+      convert $imagem "$(echo ${imagem%.*})$formato"
+      ;;
+   *) kdialog -- msgbox "Cancelado"
+esac
+

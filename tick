@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+COL_NC='\e[0m' # No Color
+COL_LIGHT_GREEN='\e[1;32m'
+COL_LIGHT_RED='\e[1;31m'
+TICK="[${COL_LIGHT_GREEN}✓${COL_NC}]"
+CROSS="[${COL_LIGHT_RED}✗${COL_NC}]"
+INFO="[i]"
+# shellcheck disable=SC2034
+DONE="${COL_LIGHT_GREEN} done!${COL_NC}"
+OVER="\\r\\033[K"
+
+printf "  %b %s\\n" "${CROSS}" "${str}"
+printf "  %b Backed up current configuration to %s\\n" "${TICK}" "${APT_SOURCES}.backup"

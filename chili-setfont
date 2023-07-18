@@ -1,0 +1,149 @@
+#!/usr/bin/env bash
+#shellcheck disable=SC2154,SC2086,SC2059,SC2034
+#
+#  chili-setfont - utilitario para exibibir e setar fontes do console
+#
+#  Created: 2022/02/15
+#  Altered: 2023/05/01
+#
+#  Copyright (c) 2022-2022, Vilmar Catafesta <vcatafesta@gmail.com>
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#  chili-setfont uses quite a few external programs during its execution. You
+#  need to have at least the following installed for makepkg to function:
+#     awk, bsdtar (libarchive), bzip2, coreutils, fakeroot, file, find (findutils),
+#     gettext, gpg, grep, gzip, sed, tput (ncurses), xz, etc
+#########################################################################
+#debug
+export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
+#set -x
+#set -e
+#shopt -s extglob
+
+#system
+_VERSION_='3.00.20230501'
+DEPENDENCIES=(dialog setfont tput)
+
+function sh_setfont() {
+	local arrdir=('/usr/share/consolefonts' '/usr/share/kbd/consolefonts')
+   local array
+	local fonts
+   local font
+   local xglob="$*"
+   local x
+   local i
+
+	[[ $# -lt 1 ]] &&	xglob="*.gz"
+	for i in "${arrdir[@]}"; do
+		if test -d "$i"; then
+			pushd "$i" &>/dev/null || die "ERRO: no access $i"
+			mapfile -t fonts <<< "$(printf "%s\n" $xglob)"
+			popd &>/dev/null || return 1
+		fi
+	done
+
+	if [[ ${#fonts[*]} -eq 0 ]] ; then
+		die "no fonts found in:" "\n${arrdir[0]}\n${arrdir[1]}"
+	fi
+
+	for i in "${fonts[@]}"; do
+		x="$i"; x="${i%%.gz*}"; x="${x%%.psf*}"; x="${x%%.psfu*}"
+		array+=("$x")
+		array+=("$i")
+	done
+
+   while :; do
+		font=$(dialog 														\
+				--backtitle "Chili Linux setfont v$_VERSION_"	\
+				--title "Chili Linux setfont v$_VERSION_"			\
+            --menu "Escolha uma fonte:"							\
+            0 0 14 														\
+            "${array[@]}" 2>&1 >/dev/tty)
+
+		if [[ $? -eq 1 ]]; then
+			exit
+		fi
+		echo -e "Fonte escolhida: $font"
+		setfont "$font"
+	done
+}
+
+function sh_setvarcolors() {
+	if tput setaf 1 &> /dev/null; then
+		#tput setaf 127 | cat -v  #capturar saida
+		tput sgr0 # reset colors
+	   bold=$(tput bold)
+	   reset=$(tput sgr0)
+	   white="${bold}$(tput setaf 7)"
+	   black="${bold}$(tput setaf 0)"
+	   red=$(tput bold)$(tput setaf 196)
+	   green=$(tput setaf 2)
+	   yellow=$(tput bold)$(tput setaf 3)
+	   blue=$(tput setaf 4)
+	   pink=$(tput setaf 5)
+	   cyan=$(tput setaf 6)
+	   orange=$(tput setaf 3)
+	   purple=$(tput setaf 125);
+	   violet=$(tput setaf 61);
+   else
+		bold=''
+		reset="\e[0m"
+		green="\e[1;32m"
+		red="\e[1;31m"
+		yellow="\e[1;33m"
+		orange="\e[1;33m"
+   fi
+}
+
+function die() {
+	local msg=$1; shift
+	printf "${pink}=> ${red}$msg${reset} ${*}"
+	exit 1
+}
+
+function msg() {
+	local msg=$1; shift
+	printf '%s\n' "${black}$msg${reset}"
+	return 0
+}
+
+function erro() {
+	local msg=$1; shift
+	printf '%s\n' "${yellow}=> ${bold}${yellow}$msg${reset}"
+	return 1
+}
+
+function check_deps() {
+	local errorFound=0
+	declare -a missing
+
+   for d in "${DEPENDENCIES[@]}" ; {
+      [[ -z $(command -v "$d") ]] && missing+=("$d") && errorFound=1 && printf '%s\n' "${red}ERRO${reset}: não encontrei o comando ${orange}'$d'${reset}"
+   }
+   if (( errorFound )); then
+      erro "============ IMPOSSÍVEL CONTINUAR ============"
+      msg "Esse script precisa dos comandos listados acima"
+      msg "Instale-os e/ou verifique se estão no seu \$PATH"
+      erro "============ IMPOSSÍVEL CONTINUAR ============"
+      die "Abortado..."
+   fi
+}
+
+sh_setvarcolors
+# debug
+#export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
+#set -x
+check_deps
+sh_setfont "$@"

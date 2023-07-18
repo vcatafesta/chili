@@ -1,0 +1,24 @@
+######################################################################
+# Generated with fetch    - https://chililinux.com
+# Generated with alienpkg - https://chililinux.com
+######################################################################
+maintainer='Vilmar Catafesta <vcatafesta@gmail.com>'
+pkgname='chili-caja-admin'
+version='1.0.0.20230616-1'
+build='1'
+pkgver='1.0.0.20230616'
+pkgrel='1'
+license='GPL2'
+lfs_version='11.2'
+lfs_init='SYSTEMD'
+arch='x86_64'
+distro='chili'
+desc='chili-caja-admin-1.0.0.20230616-1'
+pkgdesc='chili-caja-admin-1.0.0.20230616-1'
+size='46762'
+url='https://www.linuxfromscratch.org/lfs/view/stable/'
+source=('')
+dep=('')
+depend='gettext'
+depend='caja-python'
+

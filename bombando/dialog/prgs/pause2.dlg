@@ -1,0 +1,23 @@
+#!/bin/bash
+## Demo do diálogo --pause
+
+dialog --nook  \
+    --nocancel \
+    --colors   \
+    --trim     \
+    --pause "\Z1\Zb\
+        Atenção Agente 007,\n
+        ======= ====== ===\ZB\Zn\n\
+	Vc tem 10 segundos para ler esta\
+	mensagem e se mandar correndo, pois ela se\
+	auto-destruirá e logo após este tempo o\
+	computador irá explodir no seu nariz." 12 0 10\
+    &&  for ((i=1; i<10; i++))
+        {
+            dialog --begin              \
+                $[RANDOM%$(tput lines)] \
+                $[RANDOM%$(tput cols)]  \
+                --infobox 'BUUUUUMMMMM!!!!' 3 0
+            tput flash
+            sleep .1
+        }

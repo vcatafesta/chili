@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
+#set -x
+
+human_to_bytes()
+{
+   local size="$1"
+   local lastletter=${size:0-1}
+   local count=0
+	local upper=${lastletter^^}
+
+	size=${size/$lastletter/$upper}
+   LC_ALL=C numfmt --from=iec "$size"
+   return $?
+
+   case $upper in
+      B) count=0;;
+      K) count=1;;
+      M) count=2;;
+      G) count=3;;
+      T) count=4;;
+   esac
+
+   awk -v count=$count -v size=$size '
+   BEGIN {
+     while (count >= 1) {
+         size *= 1024
+         count--
+      }
+      sizestr = sprintf("%d", size)
+      sub(/\.?0+$/, "", sizestr)
+      printf("%s\n", sizestr)
+   }'
+}
+
+human_to_bytes "1k"
+human_to_bytes "1m"
+human_to_bytes "1g"
+human_to_bytes "1.5m"
+human_to_bytes "1.5k"

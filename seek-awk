@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+#awk '{if ($1 == tree ) { print $1} }' /var/cache/fetch/search/packages-split.csv
+
+search=tree
+#awk -F"," '$1 ~ /^tree$/ { print $1, NR }' /var/cache/fetch/search/packages-split.csv
+#awk -v search=$search 'BEGIN {
+#								FS=","
+#								var=search
+#								}
+#							 	$1 ~ /^tree$/ { print $1, NR }
+#							 	' /var/cache/fetch/search/packages-split.csv
+
+search=tree
+search=^tree$  # exact
+echo 0
+awk -F"," -v var="$search"    '$1 ~ var { print $1, NR}' /var/cache/fetch/search/packages-split.csv
+echo
+
+search=tree
+echo 1
+awk -F"," -v var=$search '$1 ~ /var/      { print $1, NR}' /var/cache/fetch/search/packages-split.csv
+echo
+
+echo 2
+search=^tree$
+search=tree
+awk -F"," -v var=$search '{if (match($1, var)) { print $1, NR}}' /var/cache/fetch/search/packages-split.csv
+echo
+
+search=tree
+echo 3
+awk -F"," -v var=$search '{if ($1 == var) { print $1, NR}}' /var/cache/fetch/search/packages-split.csv

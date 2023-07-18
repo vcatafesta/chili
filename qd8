@@ -1,0 +1,64 @@
+#!/bin/bash
+
+x=10  # Posição horizontal
+y=5   # Posição vertical
+largura=60
+altura=20
+
+# Função para posicionar o cursor
+function posicionar_cursor {
+  printf "\e[${2};${1}H"
+}
+
+# Função para imprimir um quadro
+function imprimir_quadro {
+  local quadro_x=$1
+  local quadro_y=$2
+  local quadro_largura=$3
+  local quadro_altura=$4
+
+  posicionar_cursor $quadro_x $quadro_y
+  printf "\u250c"  # Canto superior esquerdo
+  for ((i=0; i<quadro_largura; i++)); do
+    printf "\u2500"  # Linha horizontal
+  done
+  printf "\u2510\n"  # Canto superior direito
+
+  for ((j=0; j<quadro_altura; j++)); do
+    posicionar_cursor $quadro_x $((quadro_y+j+1))
+    printf "\u2502"  # Linha vertical
+    for ((i=0; i<quadro_largura; i++)); do
+      printf " "  # Espaço em branco
+    done
+    printf "\u2502\n"  # Linha vertical
+  done
+
+  posicionar_cursor $quadro_x $((quadro_y+quadro_altura+1))
+  printf "\u2514"  # Canto inferior esquerdo
+  for ((i=0; i<quadro_largura; i++)); do
+    printf "\u2500"  # Linha horizontal
+  done
+  printf "\u2518\n"  # Canto inferior direito
+}
+
+# Imprime quadro principal
+imprimir_quadro $x $y $largura $altura
+
+# Calcula as dimensões dos quadros internos
+quadro_interno_largura=$((largura/3 - 4))
+quadro_interno_altura=$((altura/3 - 2))
+
+# Calcula as posições dos quadros internos
+pos_x1=$((x + largura/6 - quadro_interno_largura/2 - 1))
+pos_x2=$((x + largura/2 - quadro_interno_largura/2))
+pos_x3=$((x + largura/6*5 - quadro_interno_largura/2 + 1))
+pos_y1=$((y + altura/6 - quadro_interno_altura/2 - 1))
+pos_y2=$((y + altura/2 - quadro_interno_altura/2))
+pos_y3=$((y + altura/6*5 - quadro_interno_altura/2 - quadro_interno_altura - 1))
+
+# Imprime os quadros internos
+imprimir_quadro $pos_x1 $pos_y1 $quadro_interno_largura $quadro_interno_altura
+imprimir_quadro $pos_x2 $pos_y1 $quadro_interno_largura $quadro_interno_altura
+imprimir_quadro $pos_x3 $pos_y1 $quadro_interno_largura $quadro_interno_altura
+imprimir_quadro $pos_x1 $pos_y2 $quadro_interno_largura $quadro_interno
+

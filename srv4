@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Definir porta
+port="3333"
+
+# Mensagem de início
+echo "Servidor iniciado na porta $port"
+
+# Manipulador de sinal para encerramento
+trap 'echo "Servidor encerrado"; exit 1' INT
+
+# Loop principal
+while true; do
+    # Aceitar conexões na porta definida
+    coproc nc -l -p "$port" -e /path/to/startup/script
+
+    # Loop para lidar com mensagens de entrada/saída
+    while true; do
+        # Ler mensagem do cliente
+        if read -r line <&${COPROC[0]}; then
+            echo "$line"
+        fi
+
+        # Ler mensagem do usuário e enviá-la para o cliente
+        read -p "" msg
+        [[ -n $msg ]] && echo "$msg" >&${COPROC[1]}
+    done
+
+    # Esperar pela conclusão do processo nc
+    wait $!
+done
+

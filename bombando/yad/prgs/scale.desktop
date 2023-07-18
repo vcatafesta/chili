@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Redimensiona imagens com uso do diálogo --scale
+Comment=Uso de scale
+Icon=insert-image
+Exec=./scale1.yad
+Terminal=FALSE

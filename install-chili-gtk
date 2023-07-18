@@ -1,0 +1,829 @@
+#!/bin/bash
+
+<< COMMENT
+	<item stock="gtk-dialog-authentication">gtk-dialog-authentication</item>
+	<item stock="gtk-dialog-info">gtk-dialog-info</item>
+	<item stock="gtk-dialog-warning">gtk-dialog-warning</item>
+	<item stock="gtk-dialog-error">gtk-dialog-error</item>
+	<item stock="gtk-dialog-question">gtk-dialog-question</item>
+	<item stock="gtk-dnd">gtk-dnd</item>
+	<item stock="gtk-dnd-multiple">gtk-dnd-multiple</item>
+	<item stock="gtk-about">gtk-about</item>
+	<item stock="gtk-add">gtk-add</item>
+	<item stock="gtk-apply">gtk-apply</item>
+	<item stock="gtk-bold">gtk-bold</item>
+	<item stock="gtk-cancel">gtk-cancel</item>
+	<item stock="gtk-cdrom">gtk-cdrom</item>
+	<item stock="gtk-clear">gtk-clear</item>
+	<item stock="gtk-close">gtk-close</item>
+	<item stock="gtk-color-picker">gtk-color-picker</item>
+	<item stock="gtk-convert">gtk-convert</item>
+	<item stock="gtk-connect">gtk-connect</item>
+	<item stock="gtk-copy">gtk-copy</item>
+	<item stock="gtk-cut">gtk-cut</item>
+	<item stock="gtk-delete">gtk-delete</item>
+	<item stock="gtk-directory">gtk-directory</item>
+	<item stock="gtk-disconnect">gtk-disconnect</item>
+	<item stock="gtk-edit">gtk-edit</item>
+	<item stock="gtk-execute">gtk-execute</item>
+	<item stock="gtk-file">gtk-file</item>
+	<item stock="gtk-find">gtk-find</item>
+	<item stock="gtk-find-and-replace">gtk-find-and-replace</item>
+	<item stock="gtk-floppy">gtk-floppy</item>
+	<item stock="gtk-fullscreen">gtk-fullscreen</item>
+	<item stock="gtk-goto-bottom">gtk-goto-bottom</item>
+	<item stock="gtk-goto-first">gtk-goto-first</item>
+	<item stock="gtk-goto-last">gtk-goto-last</item>
+	<item stock="gtk-goto-top">gtk-goto-top</item>
+	<item stock="gtk-go-back">gtk-go-back</item>
+	<item stock="gtk-go-down">gtk-go-down</item>
+	<item stock="gtk-go-forward">gtk-go-forward</item>
+	<item stock="gtk-go-up">gtk-go-up</item>
+	<item stock="gtk-harddisk">gtk-harddisk</item>
+	<item stock="gtk-help">gtk-help</item>
+	<item stock="gtk-home">gtk-home</item>
+	<item stock="gtk-index">gtk-index</item>
+	<item stock="gtk-indent">gtk-indent</item>
+	<item stock="gtk-info">gtk-info</item>
+	<item stock="gtk-unindent">gtk-unindent</item>
+	<item stock="gtk-italic">gtk-italic</item>
+	<item stock="gtk-jump-to">gtk-jump-to</item>
+	<item stock="gtk-justify-center">gtk-justify-center</item>
+	<item stock="gtk-justify-fill">gtk-justify-fill</item>
+	<item stock="gtk-justify-left">gtk-justify-left</item>
+	<item stock="gtk-justify-right">gtk-justify-right</item>
+	<item stock="gtk-leave-fullscreen">gtk-leave-fullscreen</item>
+	<item stock="gtk-missing-image">gtk-missing-image</item>
+	<item stock="gtk-media-forward">gtk-media-forward</item>
+	<item stock="gtk-media-next">gtk-media-next</item>
+	<item stock="gtk-media-pause">gtk-media-pause</item>
+	<item stock="gtk-media-play">gtk-media-play</item>
+	<item stock="gtk-media-previous">gtk-media-previous</item>
+	<item stock="gtk-media-record">gtk-media-record</item>
+	<item stock="gtk-media-rewind">gtk-media-rewind</item>
+	<item stock="gtk-media-stop">gtk-media-stop</item>
+	<item stock="gtk-network">gtk-network</item>
+	<item stock="gtk-new">gtk-new</item>
+	<item stock="gtk-no">gtk-no</item>
+	<item stock="gtk-ok">gtk-ok</item>
+	<item stock="gtk-open">gtk-open</item>
+	<item stock="gtk-paste">gtk-paste</item>
+	<item stock="gtk-preferences">gtk-preferences</item>
+	<item stock="gtk-print">gtk-print</item>
+	<item stock="gtk-print-preview">gtk-print-preview</item>
+	<item stock="gtk-properties">gtk-properties</item>
+	<item stock="gtk-quit">gtk-quit</item>
+	<item stock="gtk-redo">gtk-redo</item>
+	<item stock="gtk-refresh">gtk-refresh</item>
+	<item stock="gtk-remove">gtk-remove</item>
+	<item stock="gtk-revert-to-saved">gtk-revert-to-saved</item>
+	<item stock="gtk-save">gtk-save</item>
+	<item stock="gtk-save-as">gtk-save-as</item>
+	<item stock="gtk-select-color">gtk-select-color</item>
+	<item stock="gtk-select-font">gtk-select-font</item>
+	<item stock="gtk-sort-ascending">gtk-sort-ascending</item>
+	<item stock="gtk-sort-descending">gtk-sort-descending</item>
+	<item stock="gtk-spell-check">gtk-spell-check</item>
+	<item stock="gtk-stop">gtk-stop</item>
+	<item stock="gtk-strikethrough">gtk-strikethrough</item>
+	<item stock="gtk-undelete">gtk-undelete</item>
+	<item stock="gtk-underline">gtk-underline</item>
+	<item stock="gtk-undo">gtk-undo</item>
+	<item stock="gtk-yes">gtk-yes</item>
+	<item stock="gtk-zoom-100">gtk-zoom-100</item>
+	<item stock="gtk-zoom-fit">gtk-zoom-fit</item>
+	<item stock="gtk-zoom-in">gtk-zoom-in</item>
+	<item stock="gtk-zoom-out">gtk-zoom-out</item>
+COMMENT
+
+
+title="Install Chili GNU/Linux"
+btnOk="yad-ok:0"
+btnClose="yad-close:1"
+btnNext="_Continuar:2"
+btnPrevious="_Voltar:3"
+btnCancel="yad-cancel:4"
+btnExpert="_Experiente:5"
+btnNewbie="_Novato:6"
+ClickOk=0
+ClickClose=1
+ClickNext=2
+ClickPrevious=3
+ClickCancel=4
+ClickExpert=5
+ClickNewbie=6
+width="700"
+height="50"
+dir_install=/mnt/lfs
+
+# choosedisk
+: ${devices=()}
+: ${disks=()}
+: ${size=()}
+: ${model=()}
+
+function sh_disk()
+{
+#	disks=($(awk -e '$4 ~ /nvme[0-9][a-z][0-9]$/ {print $4}' /proc/partitions)
+#	 		 $(awk -e '$4 ~ /sd[a-z]$/ {print $4}' /proc/partitions))
+	disks=($(lsblk -P -o TYPE,NAME,PATH,NAME,SIZE,MODEL | awk '$0~/disk/{print $2}' | sed 's/[NAME=*\"]//g'))
+}
+
+function sh_disk_device()
+{
+#	devices=($(awk -e '$4 ~ /nvme[0-9][a-z][0-9]$/ {print "/dev/"$4}' /proc/partitions)
+#	 		 $(awk -e '$4 ~ /sd[a-z]$/ {print "/dev/"$4}' /proc/partitions))
+	devices=($(lsblk -P -o TYPE,NAME,PATH,NAME,SIZE,MODEL | awk '$0~/disk/{print $3}' | sed 's/[PATH=*\"]//g'))
+}
+
+function sh_disk_size()
+{
+#	size=($(awk -e '$4 ~ /nvme[0-9][a-z][0-9]$/ {$x=sprintf("%10.2fGiB", $3/1024/1024); print $x}' /proc/partitions)
+#	   	$(awk -e '$4 ~ /sd[a-z]$/             {$x=sprintf("%10.2fGiB", $3/1024/1024); print $x}' /proc/partitions))
+	size=($(lsblk -P -o TYPE,NAME,PATH,NAME,SIZE,MODEL | awk '$0~/disk/{print $5}' | sed 's/[SIZE=*\"]//g'))
+}
+
+function sh_disk_model()
+{
+#	model=($(fdisk -l | grep -E "(Modelo|Model)"|sed 's/^[:\t]*//'|cut -d':' -f2 | sed 's/^[ \t]*//;s/[ \t]*$//'|sed 's/[[:space:]]\+/_/g'))
+	model=($(lsblk -P -o TYPE,MODEL | egrep "disk" | cut -d'"' -f4- | sed 's/"//g'| sed 's/[[:space:]]\+/_/g'))
+}
+
+
+replicate(){
+    for counter in $(seq 1 $2);
+    do
+        printf "%s" $1
+    done
+}
+
+
+function toupper()
+{
+    declare -u TOUPPER=${@}
+    echo ${TOUPPER}
+}
+
+function tolower()
+{
+    declare -l TOLOWER=${@}
+    echo ${TOLOWER}
+}
+
+
+function evaluate_retval()
+{
+    local error_value="${?}"
+    return ${error_value}
+}
+
+
+function chili_chroot()
+{
+    chili-chroot $dir_install/ /bin/bash -c "${1}"
+}
+
+function sh_init()
+{
+    # execution
+    # System Detection
+    if [[ -d "/sys/firmware/efi/" ]]; then
+        SYSTEM="UEFI"
+    else
+        SYSTEM="BIOS"
+    fi
+
+    # Setting variables
+    title="Chili Installer Framework 1.0.0 $SYSTEM"
+}
+
+yad_message_info()
+{
+    msg="$1"
+    titulo="$2"
+    txt="\n<b><big>${msg}</big></b>"
+    yad "${comargs[@]}" --image=gtk-dialog-info --title="${titulo}" --text="$txt" --button="Done":1
+}
+
+
+function info()
+{
+    msg="$1"
+    titulo="$2"
+    txt="\n<b><big>${msg}</big></b>"
+    yad "${comargs[@]}" --image=gtk-dialog-info --title="${titulo}" --text="$txt" --button="Done":1
+}
+
+function mensagem()
+{
+	msg="$1"
+	titulo="$2"
+	txt="\n<b><big>${msg}</big></b>\n"
+	zenity --text="${txt}" --timeout=1 --progress --title="$title" --width=$width --pulsate --auto-close --no-cancel
+}
+
+function display_result()
+{
+    info "$@"
+}
+
+
+function sh_initvars()
+{
+	comargs=(
+		--title="$app"
+		--center
+		--width=$width
+		--height=$height
+		--text-align=center
+		--buttons-layout=center
+		--borders=10
+		--image="chili.png"
+    )
+
+    declare -x COMARGS=$( printf "%q " "${comargs[@]}" )
+    gcomargs=( $( printf "%s " "${COMARGS}" ) )
+    # echo "${#gcomargs[@]} elements in gcomargs"
+
+
+	default_lang=$(localectl status | grep LANG=|cut -d= -f2|cut -d. -f1)
+	default_keymap=$(localectl status | grep "VC Keymap" | cut -d: -f2|sed 's/^ \+//')
+	localectl_list_locales=$(localectl list-locales | sed 's|'$default_lang'|^'$default_lang'|g')
+	localectl_list_keymaps=$(localectl list-keymaps | sed 's|'$default_keymap'|^'$default_keymap'|g')
+	#localechange=$(cat /etc/locale.gen | grep -v "#")
+
+	#comboserver=`grep -hve ^# -e ^"[0-9]" /etc/ssh/ssh_known_hosts* | cut -f1 -d" " | tr ',' '\012'| grep -v ^"[0-9]" | cut -f1 -d'.'| sort -u | grep -v ^$ | tr '\012' '!'`
+	#comboserver=`awk '/^[^#]/ {printf $2"!"}' /etc/hosts|sort`
+	# all: user=`getent passwd|cut -f1 -d:|sort|tr '\012' '!'`
+	#combouser=`getent passwd|cut -f1,3 -d:|grep '[0-9][0-9][0-9][0-9]$'|cut -f1 -d:|sort|tr '\012' '!'`
+	# all: group=`getent group|cut -f1 -d:|sort|tr '\012' '!'`
+	#combogroup=`getent group|grep '[0-9][0-9][0-9][0-9]:$'|cut -f1 -d:|sort|tr '\012' '!'`
+	#combolocale=`locale -a|sort|tr '\012' '!'`
+	#combounit='K!M!G!T'
+
+	#paises=$(awk '/^[^#]/ {printf "%10s %40s", $1, $2 $3 $4 $5}' /usr/share/zoneinfo/iso3166.tab)
+	#paises=$(awk '/^[^#]/ {print $1 $2 $3 $4 $5"!"}' /usr/share/zoneinfo/iso3166.tab)
+
+	local cod nat codnatdefault
+#	cat /usr/share/zoneinfo/iso3166.tab | grep -v "#" > /tmp/iso3166.tab
+	codnatdefault=$(localectl status | grep LANG| cut -d= -f2)
+	paises=()
+	paises+=( True "BR" "Brasil" )
+	while read line; do
+		cod=`echo $line | awk '{print $1}'`
+		nat=`echo $line | awk '{print $2, $3, $4, $5}'`
+		if [ "$cod" = "$codnatdefault" ]; then
+			paises+=(False "^$cod" "$nat")
+		else
+			paises+=(False "$cod" "$nat")
+		fi
+	done < <(grep -v "#" /usr/share/zoneinfo/iso3166.tab)
+}
+
+function sh_choosedisk()
+{
+	sh_disk
+	sh_disk_device
+	sh_disk_size
+	sh_disk_model
+
+	local n=0
+	local i
+	sd=()
+	array=()
+	for i in ${devices[@]}
+	do
+		#array[((n++))]=$i
+		#array[((n++))]="$i [${size[((x++))]}]  ${modelo[((y++))]}#"
+		array+=("$i [${size[$n]}] ${model[$n]}#")
+		sd+=("$i" "${size[$n]}" "${model[$n]}")
+		((n++))
+	done
+	export sd
+	export SD=("${array[*]}")
+	export HDS=("${devices[*]}")
+}
+
+function sh_choosedisk_old()
+{
+	devices=($(fdisk -l | egrep -o '/dev/sd[a-z]'|uniq))
+	size=($(fdisk -l|sed -n '/sd[a-z]:/p'|awk '{print $3$4}'|sed 's/://p'|sed 's/[,\t]*$//'|awk '{printf "%10s\n", $1}'))
+	modelo=($(fdisk -l | grep -E "(Modelo|Model)"|sed 's/^[:\t]*//'|cut -d':' -f2 | sed 's/^[ \t]*//;s/[ \t]*$//'|sed 's/ /_/'))
+
+	local n=0
+	local i
+	sd=()
+	array=()
+	for i in ${devices[@]}
+	do
+		#array[((n++))]=$i
+		#array[((n++))]="$i [${size[((x++))]}]  ${modelo[((y++))]}#"
+		array+=("$i [${size[$n]}] ${modelo[$n]}#")
+		sd+=("$i" "${size[$n]}" "${modelo[$n]}")
+		((n++))
+	done
+	export sd
+	export SD=("${array[*]}")
+	export HDS=("${devices[*]}")
+}
+
+
+function resume()
+{
+	form_resumo=$(yad 			\
+		--form 					\
+		--title="$title" 		\
+		--width=$width			\
+		--height=$height		\
+		--center 				\
+		--image="resume.png" 	\
+		--text="\n\n
+Resumo...\n\n
+Linguagem: $LANGUAGE\nKeyboard: $KEYBOARD\n
+Ponto de montagem /     $MOUNTROOT\n
+Ponto de montagem /home $MOUNTHOME\n
+Ponto de montagem swap  $MOUNTSWAP\nUser: $MUSER" \
+		--field="Deseja instalar?":LBL 	\
+		--button="yad-close:1" 			\
+		--button="yad-ok:0"
+	) || exit 1
+}
+
+
+function sh_doinstall()
+{
+	resume
+	rsync -cravp --info=progress2 /lib/initramfs/system/ $dir_install/ | \
+	grep -o "[0-9]*%" | 														\
+	tr -d '%' | 																\
+	yad --progress 															\
+		--title="$title" 														\
+		--width=$width															\
+		--height=$height														\
+		--center 																\
+		--text="\nAguarde a enquanto a instalação finaliza.\n" 	\
+		--progress-text="installing... wait 3-10 minutes..."		\
+		--pulsate 																\
+		--percentage=0 														\
+		--auto-close 															\
+		--auto-kill
+}
+
+
+function sh_newbie()
+{
+	result=$( fdisk -l $SD )
+	novato=$(yad \
+		--form 					\
+		--title="$title"		\
+		--center 				\
+		--width=$width      	\
+		--height=500	    	\
+		--image="hd.png" 		\
+		--text="\n
+<b>Particionar discos</b>\n\n
+Esta é uma visão geral de suas partições e ponto de montagem atualmente configurados.\n
+<b><i>$form_part</i></b>" \
+		--field="":TXT 				\
+		--button=$btnCancel 		\
+		--button=$btnPrevious 		\
+		--button=$btnNext				\
+		"$result"
+    )
+
+        local nchoice=$?
+        case $nchoice in
+            $ClickCancel)
+                exit 0
+                ;;
+            $ClickPrevious)
+                sh_mainform
+                ;;
+            $ClickNext)
+                conf "Todos os dados serão perdidos. Deseja continuar?" && sh_doparted
+                ;;
+        esac
+}
+
+
+function sh_doparted()
+{
+	# Umount all partitions
+	umount -Rl $dir_install >/dev/null 2>&1
+	swapoff "$SD"3 >/dev/null 2>&1
+
+    mkdir -p $dir_install 2> /dev/null
+    parted --script $SD                         \
+            mklabel gpt                         \
+            mkpart EFI 0% 420M                 	\
+            mkpart BIOS 420M 422M				\
+            mkpart SWAP linux-swap 422M 2600M	\
+            mkpart CHILI ext4 2600M 100%		\
+            set 1 esp on						\
+            set 2 bios_grub > /dev/null 2>&1
+    udevadm settle >/dev/null 2>&1
+    evaluate_retval
+	local result=$( fdisk -l $SD )
+	display_result "$result" "$csmg013"
+
+	# Format partition /dev/sda2
+	mkfs.ext4 -F "$SD"4 > /dev/null 2>&1
+
+	# Create swap
+	mkswap "$SD"3 > /dev/null 2>&1
+	swapon "$SD"3 > /dev/null 2>&1
+
+	# Mount partition
+	mount "$SD"4 $dir_install > /dev/null 2>&1
+
+	export MOUNTROOT="$SD"4
+	export MOUNTSWAP="$SD"3
+}
+
+
+function conf()
+{
+	yad 						\
+	--title="$title" 			\
+	--width=300   		   		\
+	--height=200	    		\
+	--center 					\
+	--image="interrogacao.jpg" 	\
+	--text="\n\n$1"				\
+	--button="yad-yes:0" 		\
+	--button="yad-no:1"
+	return $?
+}
+
+
+function partitions()
+{
+	partitions=$(fdisk -l | grep $SD | egrep -o '/dev/sd[a-z][0-9]' | uniq | sed 's/\n/!/g' | sed ':a;N;s/\n/\!/g;ta')
+
+	form_part=$(yad 			\
+		--form 					\
+		--center 				\
+		--title="$title" 		\
+		--width=$width      	\
+		--height=$height    	\
+		--image="hd.png" 										\
+		--text="\nDefina os principais pontos de montagem:\n" 	\
+		--field="(root*) /   ":CB "not mounted"!$partitions 		\
+		--field="(home) /home":CB "not mounted"!$partitions 		\
+		--field="(swap)      ":CB "not mounted"!$partitions 		\
+		--button=$btnCancel 									\
+		--button=$btnPrevious 									\
+		--button=$btnNext 										\
+		)
+
+		local nchoice=$?
+        case $nchoice in
+			$ClickCancel)
+				exit 0
+				;;
+			$ClickPrevious)
+				sh_chooseparttype
+				;;
+			$ClickNext)
+				MOUNTROOT=$(echo "$form_part" | cut -d"|" -f1)
+				MOUNTHOME=$(echo "$form_part" | cut -d"|" -f2)
+				MOUNTSWAP=$(echo "$form_part" | cut -d"|" -f3)
+
+				if [[ $MOUNTROOT == "not mounted" ]] ; then
+					yad --title="Error" \
+						--text "Sem partição / não podemos instalar!" \
+						--button="yad-close:1"
+						exit 0
+				else
+					mkdir -p dir_install
+					mount $MOUNTROOT $dir_install
+				fi
+
+				if [[ $MOUNTSWAP != "not mounted" ]] ; then
+					swapon $MOUNTSWAP
+				fi
+                sh_doinstall
+                sh_installcompleteform
+		esac
+}
+
+
+function sh_chooselinguagemform()
+{
+	form_lang=$(yad 			\
+		--list 					\
+		--radiolist				\
+		--title="$title" 		\
+		--width=$width	  		\
+		--height=$height 		\
+		--center 				\
+		--separator=" "			\
+		--image "teclado.jpeg" 	\
+		--text="\n
+Escolha o idioma a ser usado no processo de instalação.
+O idioma selecionado também será utilizado para o sistema instalado" \
+		--column="Chooose"		\
+		--column="Linguagem"	\
+		--column="País"			\
+		--button=$btnCancel		\
+		--button=$btnPrevious 	\
+		--button=$btnNext		\
+		"${paises[@]}")
+
+  		local nchoice=$?
+        case $nchoice in
+			$ClickCancel)
+				exit 0
+				;;
+			$ClickPrevious)
+				sh_mainform
+				;;
+			$ClickNext)
+				IFS=\| read lresult lang pais <<< $form_lang
+				LANGUAGE=$(echo "$form_lang" | cut -d"|" -f1)
+				KEYBOARD=$(echo "$form_lang" | cut -d"|" -f2)
+				lang=$(echo $LANGUAGE | cut -d. -f1,2)
+				sh_usuarioform;;
+		esac
+}
+
+
+function sh_splash()
+{
+	yad --undecorated       \
+	    --center            \
+	    --title=$app        \
+	    --image-on-top      \
+	    --image=chili.png  	\
+	    --text-align=center \
+	    --text="<b><big>Aguarde, inicializando...</big></b>" \
+	    --timeout=1      	\
+	    --no-buttons        \
+	    --on-top
+}
+
+
+function sh_mainform()
+{
+	main=$(yad \
+		--title="$title" 	\
+		--width=$width		\
+		--height=$height	\
+		--center 			\
+		--image="chili.png" \
+		--align="center" \
+		--text="\n\n<span foreground='blue'><b><big><big>Bem-vindo ao instalador do Chili GNU/Linux</big></big></b></span>" \
+		--button=$btnCancel \
+		--button=$btnNext )
+
+  		local nchoice=$?
+        case $nchoice in
+			252	            ) exit 0;;
+			$ClickCancel	) exit 0;;
+			$ClickNext		) sh_chooselinguagemform;;
+		esac
+}
+
+
+function sh_usuarioform()
+{
+	form_user=$(yad 				\
+		--form 						\
+		--center 					\
+		--width=$width				\
+		--height=$height			\
+		--title="$title" 			\
+		--image="usuario.png"	\
+		--image-on-top				\
+		--text="\n
+<b>Configurar usuario, computador e rede</b>\n\n\
+Por favor, introduza o nome completo do usuario e computador para este sistema. \
+O nome do computador é uma palavra única que identifica o seu sistema na rede. Se não sabe qual \
+deverá ser o nome do computador, consulte o administrador da rede. Caso esteja a configurar a sua \
+própria rede doméstica, pode utilizar qualquer nome.\n\n
+<i>Nome do computador:</i>" \
+		--field="Nome Completo :"			\
+		--field="Nome Computador :"		\
+		--field="Usuário :"					\
+		--field="Senha :":H					\
+		--field="Confirme sua Senha :":H	\
+		--columns=3 							\
+		--button=$btnCancel					\
+		--button=$btnPrevious 				\
+		--button=$btnNext						\
+		"" `hostname`)
+
+  		local nchoice=$?
+        case $nchoice in
+			$ClickCancel)
+				exit 0
+				;;
+			$ClickPrevious)
+				sh_chooselinguagemform
+				;;
+			$ClickNext)
+				IFS=\| read FullName HostName UserName PassWord <<< $formuser
+				MUSER=$(echo "$form_user" | cut -d"|" -f1)
+				MPASSWD=$(echo "$form_user" | cut -d"|" -f2)
+				sh_choosediskform
+				;;
+		esac
+}
+
+
+function sh_choosediskform()
+{
+	sh_choosedisk
+	form_part=$(yad 		\
+		--list 				\
+		--center 			\
+		--item-separator="#" \
+		--title="$title" 	\
+		--width=$width      \
+		--height=$height    \
+		--image="hd.png" 	\
+		--text="\n<b>Particionar discos</b>\n\nNote que serão apagados todos os dados no disco que escolher, mas não antes de você confirmar que quer realmente fazer as alterações.\n\n<i>Escolha o disco a particionar:</i>" \
+		--button=$btnCancel \
+		--button=$btnPrevious \
+		--button=$btnNext 	\
+		--column="device" 	\
+		--column="size"		\
+		--column="model" 	\
+		"${sd[@]}")
+
+		local nchoice=$?
+        case $nchoice in
+			$ClickCancel)
+				exit 0
+				;;
+			$ClickPrevious)
+				sh_usuarioform
+				;;
+			$ClickNext)
+				export SD=$(echo "$form_part" | cut -d"|" -f 1)
+				sh_chooseparttype;;
+		esac
+}
+
+
+function sh_chooseparttype()
+{
+	while true; do
+		formattype=$(yad            \
+		--list 					\
+		--item-separator="#" 	\
+		--center 				\
+		--title="$title" 		\
+		--width=$width      	\
+		--height=$height    	\
+		--image="hd.png" 		\
+		--text="\n<b>Particionar discos</b>\n\nSelecionado para particionamento:\n\n<b><i>$form_part</i></b>\n\nO disco pode ser particionado usando um dentre diversos esquemas diferentes. Se você não tiver certeza, escolha o primeiro esquema.\n<i>Esquema de particionamento:</i>" \
+		--button=$btnCancel 	\
+		--button=$btnPrevious 	\
+		--button=$btnNext 		\
+		--column="Tipo" 		\
+		--column="Descrição" 	\
+		"Novato" "Particionamento Automatico"\
+		"Experiente" "Particionamento manual usando gparted" )
+
+		local nchoice=$?
+        case $nchoice in
+			$ClickCancel)
+				exit 0
+				;;
+			$ClickPrevious)
+				sh_choosediskform
+				;;
+			$ClickNext)
+				nopcao=$(echo "$formattype" | cut -d"|" -f1)
+				export SD=$(echo "$form_part" | cut -d"|" -f 1)
+				case $nopcao in
+						Novato)
+						sh_newbie
+                        partitions
+						;;
+					Experiente)
+						gparted "$SD" > /dev/null 2>&1
+						wait
+						partitions
+						;;
+				esac
+				;;
+		esac
+	done
+}
+
+
+function installok()
+{
+	install=$(yad               \
+		--title="$title"        \
+		--width=$width          \
+		--height=$height        \
+		--center                \
+		--image="sucess.png"    \
+		--align="center"        \
+		--text="\n\nSua instalação está completa! Obrigado por utilizar a Chili OS - dúvidas? visite nosso fórum em: \nhttp://chilios.com/forum\n" \
+		--button="yad-close:0"  \
+        --button="Reboot!:1")
+
+		local nchoice=$?
+        case $nchoice in
+			0|252)
+				exit 0
+				;;
+			2)
+				reboot
+				;;
+		esac
+}
+
+
+function sh_installcompleteform()
+{
+	bl=$(blkid -s UUID -o value $MOUNTROOT)
+	echo "UUID=$bl / ext4 defaults 1 1" >> $dir_install/etc/fstab
+
+	if [[ $MOUNTSWAP != "not mounted" ]] && [[ -n $MOUNTSWAP ]] ; then
+		blswap=$(blkid -s UUID -o value $MOUNTSWAP)
+		echo "UUID=$blswap swap swap pri=1 0 0" >> $dir_install/etc/fstab
+	fi
+
+	if [[ $MOUNTHOME != "not mounted" ]] && [[ -n $MOUNTHOME ]]; then
+		mount $MOUNTHOME $dir_install/home
+		blhome=$(blkid -s UUID -o value $MOUNTHOME)
+		echo "UUID=$blhome /home ext4 defaults 0 0" >> $dir_install/etc/fstab
+	fi
+
+ 	#adding user
+    echo "# Making new user..."
+    chili_chroot "useradd -m -c $FullName -G adm,lp,wheel,power,audio,video -s /bin/bash $UserName" | mensagem "Aguarde, criando usuario"
+	chili_chroot "(echo $UserName:$PassWord) | chpasswd -m > /dev/null 2>&1" | mensagem "Aguarde, ajustando senha"
+
+	### SETING LOCALE
+	chroot $dir_install/ /bin/bash -c "sed 's/LANG=.*/LANG=$lang/g' /etc/profile.d/i18n.sh > /etc/profile.d/i18n.sh.change ; mv /etc/profile.d/i18n.sh.change /etc/profile.d/i18n.sh ; sed 's/$localechange/#$localechange/g' /etc/locale.gen > /etc/locale.gen.change ; sed 's/#$lang/$lang/g' /etc/locale.gen.change > /etc/locale.gen ; locale-gen" | \
+	yad --progress                              \
+		--title="$title"                        \
+		--width=$width                          \
+		--height=$height                        \
+		--center                                \
+		--text="\nAjustando linguagens...\n"    \
+		--progress-text="ajusting..."           \
+		--pulsate                               \
+		--auto-close                            \
+		--auto-kill
+
+	### SETING KEYBOARD
+	chroot $dir_install/ /bin/bash -c "sed 's/KEYMAP=\".*\"/KEYMAP=\"$KEYBOARD\"/g' /etc/sysconfig/console > /etc/sysconfig/console.change ; mv /etc/sysconfig/console.change /etc/sysconfig/console " | \
+	yad --progress                          \
+		--title="$title"                    \
+		--width=$width                      \
+		--height=$height                    \
+		--center                            \
+		--text="\nAjustando keyboard...\n"  \
+		--progress-text="ajusting..."       \
+		--pulsate                           \
+		--auto-close                        \
+		--auto-kill
+
+	### GRUB FORM
+	form_grub=$(yad                         \
+		--title="$title"                    \
+		--width=$width                      \
+		--height=$height                    \
+		--center                            \
+		--image="question.png"              \
+		--text="\nGostaria de instalar o GRUB? Se sim, qual HD gostaria de instalar?\n" \
+		--form                              \
+		--field="/dev/sd(x)":CB $HDS        \
+		--field="O GRUB é um multi-carregador para boot do sistema operacional.\nSe caso seu computador não possui um carredor já instalado é altamente recomendado instalá-lo.":LBL \
+		--button="yad-close:1" --button="yad-ok:0"
+		)
+
+	ret=$?
+	[[ $ret -eq 1 ]] && installok
+
+	GRUBHD=$(echo "$form_grub" | cut -d"|" -f 1)
+
+	### GRUB INSTALL
+	cd $dir_install/
+	mount --rbind /dev dev/
+	mount --rbind /sys sys/
+	mount --rbind /run run/
+	mount --type proc /proc proc/
+	cd -
+
+	chili_chroot "grub-install $GRUBHD > /dev/null 2>&1" | mensagem "Aguarde, instalando grub on $GRUBHD"
+	chili_chroot "grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1" | mensagem "Aguarde, gerando grub.cfg"
+	umount -Rl $dir_install
+	installok
+}
+
+#mensagem "Aguarde, inicializando"
+clear
+sh_splash
+sh_initvars
+sh_init
+sh_mainform
+sh_choosediskform
+sh_usuarioform

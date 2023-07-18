@@ -1,0 +1,24 @@
+#!/bin/bash
+#  Exemplos diversos de uso do diálogo --scale
+
+#  Como usar números reais no diálogo --scale
+Temp=$(echo "scale=1; $(yad --title "Toma temperatura" \
+    --scale --text "Informe valor da temperatura x 10" \
+	--min-value 350 --max-value 410 --value 364) / 10" |
+	bc | tr . ,) &&
+	    yad --text "A temperatura foi $Temp" \
+		    --button gtk-ok
+
+#  Trocando a cor de fundo do terminal com o uso
+#+ diálogo --scale
+yad --scale                              \
+    --title "Cores do Fundo de Tela"     \
+	--text "Escolha a cor desejada"      \
+	--print-partial                      \
+	--max-value 9 |
+	    xargs -i bash -c "tput setab {}; clear"
+
+#  Usando a opção genérica --geometry
+yad --scale --step 2 --print-partial \
+    --geometry +200+200 |
+	    yad --progress --geometry +200+105

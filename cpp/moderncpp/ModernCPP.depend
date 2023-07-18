@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1475167373 source:c:\sci\cpp\moderncpp\main.cpp
+	<iostream>
+	<stdio.h>
+	<vector>
+	<map>
+	<algorithm>
+	<functional>
+

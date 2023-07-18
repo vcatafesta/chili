@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+pcount() {
+   local param="$@"
+   local -i nargs="$#"
+   echo $nargs
+  	[[ nargs > 0 ]] && return 0 || return 1
+}
+
+sh_splitarray() {
+	if (( nargs=$(pcount "$@") > 0 )); then
+		echo -n "parametros($nargs) $@" " "
+	else
+		echo -n "Erro: forneça uma string de entrada"
+		return 1
+	fi
+
+   local str="$1"
+   local pos="$2"
+   local sep='|'
+   local array
+
+   [[ $# -eq 1 ]] && pos='1'
+   [[ $# -eq 3 ]] && sep="$3"
+   array=(${str//"$sep"/ })
+   echo "${array[$pos-1]}"
+}
+
+sh_splitarrayawk() {
+   #IFS=" " read -r -a array <<< "$var"
+   #mapfile -t array <<< "$var"
+   local str="$1"
+   local pos="\$$2"
+   local sep='|'
+
+   [[ $# -eq 1 ]] && pos='$1'
+   [[ $# -eq 3 ]] && sep="$3"
+   awk -F"$sep" '{ print '"$pos"' }' <(printf "%s" "$str")
+}
+
+declare -A aDisco=(['/dev/sda']='Samsung|1TB|sata|gpt')
+echo -n 'sh_splitarray ${aDisco['/dev/sda']}   : '; sh_splitarray ${aDisco['/dev/sda']}
+echo -n 'sh_splitarray ${aDisco['/dev/sda']} 1 : '; sh_splitarray ${aDisco['/dev/sda']} 1
+echo -n 'sh_splitarray ${aDisco['/dev/sda']} 2 : '; sh_splitarray ${aDisco['/dev/sda']} 3
+echo -n 'sh_splitarray ${aDisco['/dev/sda']} 3 : '; sh_splitarray ${aDisco['/dev/sda']} 3
+echo -n 'sh_splitarray ${aDisco['/dev/sda']} 4 : '; sh_splitarray ${aDisco['/dev/sda']} 4
+
+echo -n 'sh_splitarrayawk ${aDisco['/dev/sda']}   : '; sh_splitarrayawk ${aDisco['/dev/sda']}
+echo -n 'sh_splitarrayawk ${aDisco['/dev/sda']} 1 : '; sh_splitarrayawk ${aDisco['/dev/sda']} 1
+echo -n 'sh_splitarrayawk ${aDisco['/dev/sda']} 2 : '; sh_splitarrayawk ${aDisco['/dev/sda']} 2
+echo -n 'sh_splitarrayawk ${aDisco['/dev/sda']} 3 : '; sh_splitarrayawk ${aDisco['/dev/sda']} 3
+echo -n 'sh_splitarrayawk ${aDisco['/dev/sda']} 4 : '; sh_splitarrayawk ${aDisco['/dev/sda']} 4
+
+vetor=( A B C )
+vet1=()
+while IFS=' ' read -r line
+do
+	vet1+=($line)
+done < <(echo "${vetor[*]}")
+echo "vet1: ${vet1[*]}"
+
+vet2=("${vetor[*]}")
+echo "vet2: ${vet2[*]}"
+
+read -a vet3 -d '' < <(echo "${vetor[*]}")
+echo "vet3: ${vet3[*]}"
+
+read -a vet4 -d '' <<< "${vetor[*]}"
+echo "vet4: ${vet4[*]}"
+
+vetor=(A B C D E F G H I J)
+mapfile -t aresult <<< "${vetor[@]}"
+echo "aresult: ${aresult[*]}"
+
+vet=()
+vetor=(A B C D E F G H I J)
+#a cada iteração o read reinicia o vet
+#nova implementação:
+for ((i=0;i<5;i++))
+do
+	#read -a vet -d ' ' < <(echo ${vetor[i]})
+	#read -a vet -d ' ' <<< "${vetor[i]}"
+	#echo "${vet[1]}"
+   vet+=("${vetor[i]}")
+	echo "Rizzo $i: ${vet[i]}"
+done
+echo "vet: ${vet[@]}"

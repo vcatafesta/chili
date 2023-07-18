@@ -1,0 +1,185 @@
+#!/usr/bin/env bash
+
+reset=$(tput sgr0);
+green=$(tput setaf 2);
+red=$(tput setaf 124);
+pink=$(tput setaf 129);
+
+#debug
+export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
+#set -x
+
+#source_url="rsync://mirrors.servercentral.com/voidlinux"
+source_url="rsync://100.97.0.13/voidlinux"
+
+# Directory where the repo is stored locally. Example: /srv/repo
+target="/vg/mirror-data/voidlinux"
+
+# Lockfile path
+lock="/var/lock/voidrepo.lck"
+
+# If you want to limit the bandwidth used by rsync set this.
+# Use 0 to disable the limit.
+# The default unit is KiB (see man rsync /--bwlimit for more)
+bwlimit=0
+
+# An HTTP(S) URL pointing to the 'lastupdate' file on your chosen mirror.
+# If you are a tier 1 mirror use: https://rsync.archlinux.org/lastupdate
+# Otherwise use the HTTP(S) URL from your chosen mirror.
+lastupdate_url=''
+
+#### END CONFIG
+
+main_alan()
+{
+	sudo -u http rsync -avHP --delete --exclude="debug" $source_url $target
+}
+
+main_last_work()
+{
+	time rsync					\
+		--chown=root:http		\
+		--human-readable	\
+		--archive			\
+		--delete				\
+	  	--delete-delay		\
+	  	--delay-updates 	\
+		--verbose			\
+		--recursive			\
+		--links				\
+		--perms				\
+		--times				\
+		--compress			\
+		--progress			\
+		--partial			\
+		--hard-links		\
+		--exclude 'debug' \
+		$source_url			\
+		$target
+}
+#		--dry-run \
+#		--copy-as=root:http	\
+#		--exclude 'aarch64' \
+#		--exclude '*armv7l*' \
+#		--exclude '*armv6l*' \
+#		--exclude '*musl*' \
+#		--exclude '*i686*' \
+#		--exclude '*noarch*' \
+
+main_partial()
+{
+	local i
+	local -a adir=(
+			currrent
+			distfiles
+			docs
+			live
+			logos
+			man
+			static
+			void-updates
+			xlocate
+		)
+
+	for i in "${adir[@]}"
+	do
+		printf "%s\n" "Syncing from server : $source_url/$i"
+		rsync \
+			--archive				\
+			--human-readable		\
+			--verbose				\
+			--partial				\
+			--progress				\
+			--hard-links			\
+			--exclude 'debug'		\
+		  	--compress				\
+		  	--progress				\
+			$source_url/$i			\
+			$target
+	done
+}
+#			--exclude 'aarch64'	\
+#			--exclude '*armv7l*'	\
+#			--exclude '*armv6l*'	\
+
+rsync_extras()
+{
+	rsync -avHP --delete /vg/mirror-data/extras/ /vg/mirror-data/voidlinux/extras/
+	rsync -avHP --delete /vg/mirror-data/extras/ /vg/mirror-data/voidlinux/current/extras/
+}
+
+rsync_cmd()
+{
+	local -a cmd=(rsync
+		--archive
+		--delete
+		--recursive
+		--links
+		--perms
+		--times
+		--compress
+		--progress
+		--partial
+		--hard-links
+     	"--timeout=600"
+	  	"--contimeout=60"
+	  	--no-motd
+	  	--delete-delay
+	  	--delay-updates
+ 		--safe-links
+		)
+
+	if stty &>/dev/null; then
+		cmd+=(--human-readable --verbose --progress)
+	else
+		cmd+=(--quiet)
+	fi
+
+	if ((bwlimit>0)); then
+		cmd+=("--bwlimit=$bwlimit")
+	fi
+
+	"${cmd[@]}" "$@"
+}
+
+prepare()
+{
+	printf "%s\n" "${reset}Creating target dir : ${pink}$target${reset}"
+	[[ ! -d "${target}" ]] && mkdir -p "${target}"
+
+	#exec 9>"${lock}"
+	#flock -n 9 || exit
+
+	# Cleanup any temporary files from old run that might remain.
+	# find "${target}" -name '.~tmp~' -exec rm -r {} +
+
+	printf "%s\n" "${reset}Syncing from server : ${pink}$source_url${reset}"
+	printf "%s\n" "${reset}Destdir             : ${pink}$target${reset}"
+}
+
+main()
+{
+	# if we are called without a tty (cronjob) only run when there are changes
+	if ! tty -s && [[ -f "$target/lastupdate" ]] && diff -b <(curl -Ls "$lastupdate_url") "$target/lastupdate" >/dev/null; then
+		# keep lastsync file in sync for statistics generated
+		rsync_cmd "$source_url/lastsync" "$target/lastsync"
+		exit 0
+	fi
+
+	rsync_cmd 				\
+		--exclude 'debug'	\
+		"${source_url}"	\
+		"${target}"
+
+	echo "Last sync was " "$(date -d @"$(cat ${target}/lastsync)")"
+}
+
+prepare
+#main_alan
+main_last_work
+#main_partial
+#main
+rsync_extras
+
+# vim:set ts=3 sw=3 et:
+# shellcheck OK

@@ -1,0 +1,19 @@
+Section "Monitor"
+    Identifier    "Monitor0"
+    Modeline "1280x1024_60.00"  109.00  1280 1368 1496 1712  1024 1027 1034 1063 -hsync +vsync
+    Modeline "1024x768_60.00"   63.50  1024 1072 1176 1328  768 771 775 798 -hsync +vsync
+EndSection
+
+Section "Screen"
+    Identifier     "Screen0"
+    Device         "Card0"
+    Monitor        "Monitor0"
+    SubSection "Display"
+        Modes       "1280x1024_60.00" "1024x768_60.00"
+    EndSubSection
+EndSection
+
+Section "Device"
+    Identifier    "Card0"
+    Driver        "nvidia"
+EndSection

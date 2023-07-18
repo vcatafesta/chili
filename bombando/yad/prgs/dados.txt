@@ -1,0 +1,13 @@
+Zafira
+Preço   20.000,00
+Ano     2000/2001
+Modelo  Coupe
+Citroen C3
+Preço   22.000,00
+Ano     2003
+Modelo  Hatch
+Sentra
+Preço   30.000,00
+Ano     2008
+Modelo  Sedan
+

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+padzero()
+{
+    local num=$1
+    local zeroos=00
+    echo ${zeroos:${#num}:${#zeroos}}${num}
+}
+
+#var=' 1'
+#echo "${var/ /0}"
+
+#zeroos="000"
+#echo
+#for num in {99..105};do
+#echo ${zeroos:${#num}:${#zeroos}}${num}
+#done
+
+#pad=100000      ;# 5 digit fixed
+#for i in {0..99999}; do ((j=pad+i))
+    #echo ${j#?}
+#done
+
+var1=1
+echo -n $var1
+echo -n "->"$(padzero $var1)
+
+echo
+var2=2
+echo -n $var2
+zeroos=00
+echo -n "->"${zeroos:${#var2}:${#zeroos}}${var2}
+
+
+
+

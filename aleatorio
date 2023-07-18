@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+declare -i Num QtdAposta=6 Cont=0
+declare -A Jogo
+while : 
+do
+    Num=$((RANDOM%60+1))
+    [[ -n ${Jogo[$Num]} ]] && continue
+    Jogo[$Num]=$((++Cont))
+    ((Cont == QtdAposta)) && break
+done

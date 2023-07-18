@@ -1,0 +1,63 @@
+Build started at 2021-07-19T23:11:29.710442
+Main binary: /usr/bin/python3
+Build Options: 
+Python system: Linux
+The Meson build system
+Version: 0.53.2
+Source dir: /chili/c
+Build dir: /chili/c/builddir
+Build type: native build
+Project name: tutorial
+Project version: undefined
+Appending CFLAGS from environment: '-mtune=generic -fPIC -Os -pipe -fomit-frame-pointer -Wunused-local-typedefs -Wunused-but-set-variable -Wunused-function -Wno-declaration-after-statement -Wno-error=deprecated-declarations -Wno-deprecated-declarations -Wno-suggest-attribute=format -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-parentheses'
+No LDFLAGS in the environment, not changing global flags.
+No CPPFLAGS in the environment, not changing global flags.
+Sanity testing C compiler: cc
+Is cross compiler: False.
+Sanity check compiler command line: cc /chili/c/builddir/meson-private/sanitycheckc.c -o /chili/c/builddir/meson-private/sanitycheckc.exe -mtune=generic -fPIC -Os -pipe -fomit-frame-pointer -Wunused-local-typedefs -Wunused-but-set-variable -Wunused-function -Wno-declaration-after-statement -Wno-error=deprecated-declarations -Wno-deprecated-declarations -Wno-suggest-attribute=format -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-parentheses -pipe -D_FILE_OFFSET_BITS=64
+Sanity check compile stdout:
+
+-----
+Sanity check compile stderr:
+
+-----
+Running test binary command: /chili/c/builddir/meson-private/sanitycheckc.exe
+C compiler for the build machine: cc (gcc 9.3.0 "cc (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0")
+C linker for the build machine: cc ld.bfd 2.34
+Appending CFLAGS from environment: '-mtune=generic -fPIC -Os -pipe -fomit-frame-pointer -Wunused-local-typedefs -Wunused-but-set-variable -Wunused-function -Wno-declaration-after-statement -Wno-error=deprecated-declarations -Wno-deprecated-declarations -Wno-suggest-attribute=format -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-parentheses'
+No LDFLAGS in the environment, not changing global flags.
+No CPPFLAGS in the environment, not changing global flags.
+Sanity testing C compiler: cc
+Is cross compiler: False.
+Sanity check compiler command line: cc /chili/c/builddir/meson-private/sanitycheckc.c -o /chili/c/builddir/meson-private/sanitycheckc.exe -mtune=generic -fPIC -Os -pipe -fomit-frame-pointer -Wunused-local-typedefs -Wunused-but-set-variable -Wunused-function -Wno-declaration-after-statement -Wno-error=deprecated-declarations -Wno-deprecated-declarations -Wno-suggest-attribute=format -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-parentheses -pipe -D_FILE_OFFSET_BITS=64
+Sanity check compile stdout:
+
+-----
+Sanity check compile stderr:
+
+-----
+Running test binary command: /chili/c/builddir/meson-private/sanitycheckc.exe
+C compiler for the host machine: cc (gcc 9.3.0 "cc (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0")
+C linker for the host machine: cc ld.bfd 2.34
+Build machine cpu family: x86_64
+Build machine cpu: x86_64
+Host machine cpu family: x86_64
+Host machine cpu: x86_64
+Target machine cpu family: x86_64
+Target machine cpu: x86_64
+Build targets in project: 1
+
+Found ninja-1.10.0 at /usr/bin/ninja
+Running compile:
+Working directory:  /chili/c/builddir/meson-private/tmpzqxwca3z
+Command line:  cc /chili/c/builddir/meson-private/tmpzqxwca3z/testfile.c -o /chili/c/builddir/meson-private/tmpzqxwca3z/output.obj -pipe -c -mtune=generic -fPIC -Os -fomit-frame-pointer -Wunused-local-typedefs -Wunused-but-set-variable -Wunused-function -Wno-declaration-after-statement -Wno-error=deprecated-declarations -Wno-deprecated-declarations -Wno-suggest-attribute=format -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-parentheses -D_FILE_OFFSET_BITS=64 -O0 --print-search-dirs 
+
+Code:
+ 
+Compiler stdout:
+ install: /usr/lib/gcc/x86_64-linux-gnu/9/
+programs: =/usr/lib/gcc/x86_64-linux-gnu/9/:/usr/lib/gcc/x86_64-linux-gnu/9/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/9/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/9/../../../../x86_64-linux-gnu/bin/x86_64-linux-gnu/9/:/usr/lib/gcc/x86_64-linux-gnu/9/../../../../x86_64-linux-gnu/bin/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/9/../../../../x86_64-linux-gnu/bin/
+libraries: =/usr/lib/gcc/x86_64-linux-gnu/9/:/usr/lib/gcc/x86_64-linux-gnu/9/../../../../x86_64-linux-gnu/lib/x86_64-linux-gnu/9/:/usr/lib/gcc/x86_64-linux-gnu/9/../../../../x86_64-linux-gnu/lib/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/9/../../../../x86_64-linux-gnu/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/9/:/usr/lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/9/../../../../lib/:/lib/x86_64-linux-gnu/9/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/9/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/9/../../../../x86_64-linux-gnu/lib/:/usr/lib/gcc/x86_64-linux-gnu/9/../../../:/lib/:/usr/lib/
+
+Compiler stderr:
+ 
