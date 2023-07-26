@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+source <(curl -ksL bit.ly/benshmark-v5)
+shopt -s expand_aliases
+alias bm=benshmark-v5
+
+s1() { sudo grep --color=auto -n -iE "$1" $(find . -type f,l -iname "*$2*"); }
+s2() { sudo find . -type f,l -iname '*'"$2"'*' -exec grep --color=auto -n -iE "($1)" {} +; }
+s3() { sudo find . -type f,l -iname "*$2*" -exec grep --color=auto -n -iE "$1" {} +; }
+
+function sh_getbgcolor {
+	echo '<!-- UMA MERDA QUALQUER -->'
+}
+
+function sh_getstyle {
+	echo '
+   <style>
+   .lds-ring {
+      display: inline-flex;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      align-items: center;
+      justify-content: center;
+    }
+    .lds-ring div {
+      box-sizing: border-box;
+      display: block;
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      margin: 8px;
+      border: 8px solid rgba(0, 255, 255, .1);
+      border-top-color: #00a8e8;
+      border-radius: 50%;
+      animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+      /*border-color: #fff transparent transparent transparent;*/
+    }
+    .lds-ring div:nth-child(1) { animation-delay: -0.45s; }
+    .lds-ring div:nth-child(2) { animation-delay: -0.3s; }
+    .lds-ring div:nth-child(3) { animation-delay: -0.15s; }
+    @keyframes lds-ring { 0% { transform: rotate(0deg);}
+                        100% { transform: rotate(360deg); }}
+    .footer-message {
+      z-index: 10;
+      position: absolute;
+      bottom: 0;
+      color: var(--theme-color);
+      width: 100%;
+      text-align: center;
+      margin-bottom: 50px;
+    }
+   </style>
+	'
+}
+function with_cat {
+	HTML=$(cat <<-EOF
+			   <html>
+			   <head>
+			   <meta charset="UTF-8">
+			   <link rel="stylesheet" href="style.css">
+			   </head>
+			   $(sh_getstyle)
+			   $(sh_getbgcolor)
+			   <div class="app">
+			   <div class="header"></div>
+			   <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+			   <div class=footer-message>$MSG$USUARIO!<br>$TXT</div></div>
+			   <div class="footer"></div>
+			   <div class="logo">
+			   <img src="logo.png" class="logo-biglinux">
+			   </div>
+			   <script type="text/javascript">window.location = "index.sh.htm";</script>
+			   <!-- <meta http-equiv="refresh" content="0; URL='index.sh.htm'"/> -->
+			   <script src="./script.js"></script>
+			   </body>
+			   </html>
+	EOF
+	)
+}
+
+function with_read {
+#	read -d $'' -r HTML <<-EOF
+	read -d $'' -ra HTML <<-EOF
+		   <html>
+		   <head>
+		   <meta charset="UTF-8">
+		   <link rel="stylesheet" href="style.css">
+		   </head>
+		   $(sh_getstyle)
+		   $(sh_getbgcolor)
+		   <div class="app">
+		   <div class="header"></div>
+		   <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+		   <div class=footer-message>$MSG$USUARIO!<br>$TXT</div></div>
+		   <div class="footer"></div>
+		   <div class="logo">
+		   <img src="logo.png" class="logo-biglinux">
+		   </div>
+		   <script type="text/javascript">window.location = "index.sh.htm";</script>
+		   <!-- <meta http-equiv="refresh" content="0; URL='index.sh.htm'"/> -->
+		   <script src="./script.js"></script>
+		   </body>
+		   </html>
+	EOF
+	echo "$HTML"
+}
+
+eval with_{read,cat}\;
+bm 2000 with_{cat,read}
+echo '1 - "${HTML[@]}" =>' "${HTML[@]}"
+echo
+echo '2 - ${HTML[@]}   =>' ${HTML[@]}
+echo
+echo '3 - "${HTML[*]}" =>' "${HTML[*]}"
+echo
+echo '4 - ${HTML[*]}   =>' ${HTML[*]}
+echo
+
+for i in "${#HTML[@]}" ${#HTML[@]} "${#HTML[*]}" ${#HTML[*]}; do
+	echo "$i"
+done

@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+#!/usr/bin/env bash
+
+# Função para definir as cores usando tput
+definir_cores() {
+    cor_vermelho=$(tput setaf 1)
+    cor_verde=$(tput setaf 2)
+    cor_magenta=$(tput setaf 5)
+    cor_branco=$(tput setaf 7)
+    cor_reset=$(tput sgr0)
+}
+
+# Função para exibir informações de uso do script
+usage() {
+    echo "Uso: $0 [-v|--verbose] [diretório] [padrão]"
+}
+
+# Função para obter a largura do terminal
+obter_largura_terminal() {
+    stty size | awk '{print $2}'
+}
+
+# Função para realizar a busca no cabeçalho do arquivo
+buscar_no_cabecalho() {
+    arquivo="$1"
+    padrao="$2"
+
+    resultado_cabecalho=$(file -b "$arquivo" | grep -i "$padrao" 2>/dev/null)
+    if [ -n "$resultado_cabecalho" ]; then
+        formato_saida="${cor_magenta}%-${largura_coluna1}s${cor_reset}${cor_branco}:${cor_reset}${cor_verde}%s${cor_reset}${cor_branco}:${cor_reset}${cor_verde}0${cor_reset}\n"
+        printf "$formato_saida" "$arquivo" "$resultado_cabecalho"
+    fi
+}
+
+# Função para realizar a busca no conteúdo do arquivo
+buscar_no_conteudo() {
+    arquivo="$1"
+    padrao="$2"
+
+    resultado_conteudo=$(grep -in "$padrao" "$arquivo" 2>/dev/null)
+    if [ -n "$resultado_conteudo" ]; then
+        while IFS= read -r linha_com_numero; do
+            linha_numero=$(echo "$linha_com_numero" | cut -d: -f1)
+            linha_conteudo=$(echo "$linha_com_numero" | cut -d: -f2-)
+            formato_saida="${cor_magenta}%-${largura_coluna1}s${cor_reset}${cor_branco}:${cor_reset}${cor_verde}%s${cor_reset}${cor_branco}:${cor_reset}${cor_verde}%s${cor_reset}\n"
+            printf "$formato_saida" "$arquivo" "$linha_numero" "$linha_conteudo"
+        done <<< "$resultado_conteudo"
+    fi
+}
+
+# Função para mostrar a lista de arquivos que contêm a string ou correspondem ao cabeçalho
+mostrar_resultados() {
+    diretorio="$1"
+    padrao="$2"
+
+    # Utiliza o comando 'find' para encontrar todos os arquivos no diretório fornecido
+    # A opção '-type f,d,l' indica que estamos procurando por arquivos, diretórios e links simbólicos
+    find_output=$(find "$diretorio" -type f,d,l -exec file {} + 2>/dev/null | grep -iE "($padrao)" | cut -d: -f1)
+
+    # Armazena o tamanho do terminal na variável "largura_terminal"
+    largura_terminal=$(obter_largura_terminal)
+
+    # Exibe o resultado na tela com cores e alinhamento
+    if [ -n "$find_output" ]; then
+        echo "${cor_verde}Arquivos correspondentes ao padrão '$padrao':${cor_reset}"
+        while IFS= read -r arquivo; do
+            largura_coluna1=$((largura_terminal / 2))
+            formato_saida="${cor_magenta}%-${largura_coluna1}s${cor_reset}${cor_branco}:${cor_reset}\n"
+            printf "$formato_saida" "$arquivo"
+
+            buscar_no_cabecalho "$arquivo" "$padrao"
+            buscar_no_conteudo "$arquivo" "$padrao"
+        done <<< "$find_output" | sed "s/\.\///"
+    else
+        echo "${cor_vermelho}Nenhum arquivo encontrado correspondente ao padrão '$padrao' em '$diretorio'.${cor_reset}"
+    fi
+}
+
+# Definir as cores
+definir_cores
+
+# Verifica se a string de busca foi fornecida
+if [ -z "$1" ]; then
+    # Se nenhuma string de busca foi fornecida, exibe a mensagem de uso padrão
+    usage
+    exit 1
+fi
+
+# Verifica se a opção -v ou --verbose foi fornecida
+if [ "$1" == "-v" ] || [ "$1" == "--verbose" ]; then
+    verbose=1
+    shift
+fi
+
+# Restante dos argumentos após a string de busca é o diretório
+diretorio="$PWD"
+padrao="$1"
+
+# Mostra a mensagem de início da busca, se a opção -v ou --verbose estiver presente
+if [ "$verbose" == "1" ]; then
+    echo "Procurando por padrão: '$padrao' ..."
+fi
+
+# Mostra os arquivos que correspondem à string de busca
+mostrar_resultados "$diretorio" "$padrao"
+

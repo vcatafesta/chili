@@ -425,11 +425,11 @@ function main() {
 				--exclude '*armv6l*' 		\
 				--exclude '*i686*' 			\
 				--exclude '*noarch*' 		\
-				--exclude '*musl*' 			\
 				--exclude 'aarch64' 			\
 				"$source_url"					\
 				"$target"
 #				--delete          	     	\
+#				--exclude '*musl*' 			\
 
 			rsync_extras "$@"
 			rsync_rootfs "$@"

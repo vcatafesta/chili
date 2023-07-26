@@ -1,0 +1,70 @@
+MSG="Bom dia"
+USUARIO="$USER"
+TXT="TEXTO"
+
+function sh_getstyle {
+  # Função fictícia para obter estilos
+  echo '<style>.header { color: blue; }</style>'
+}
+
+function sh_html {
+	local texto_html='
+         <html>
+         <head>
+         <meta charset="UTF-8">
+         <link rel="stylesheet" href="style.css">
+         </head>
+         '"$(sh_getstyle)"'
+         <div class="app">
+         <div class="header"></div>
+         <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+         <div class="footer-message">$MSG $USUARIO!<br>$TXT</div></div>
+         <div class="footer-message">'"$MSG $USUARIO!"'<br>'"$TXT"'</div></div>
+         <div class="footer"></div>
+         <div class="logo">
+         <img src="logo.png" class="logo-biglinux">
+         </div>
+         <script src="./script.js"></script>
+         </body>
+         </html>
+	'
+	echo "$texto_html"
+}
+
+##################################################################################################
+
+function replace_variables {
+	local text="$1"
+	while [[ $text =~ \$([A-Za-z_][A-Za-z_0-9]*) ]]; do
+		local variable_name="${BASH_REMATCH[1]}"
+		local variable_value="${!variable_name}"
+		text="${text/\$$variable_name/$variable_value}"
+	done
+	echo "$text"
+}
+
+function with_echo {
+	local HTML_CONTENT="$1"
+	local evaluated_text=$(replace_variables "$HTML_CONTENT")
+	echo "$evaluated_text"
+}
+
+function with_read {
+	local HTML_CONTENT
+	read -d $'' -r HTML_CONTENT <<-EOF
+		$1
+	EOF
+	local evaluated_text=$(replace_variables "$HTML_CONTENT")
+	echo "$evaluated_text"
+}
+
+function with_cat {
+#	echo "$(eval "cat <<<\"$1\"")"
+	cat <<-EOF
+		$(replace_variables "$1")
+	EOF
+}
+
+with_echo "$(sh_html)"
+with_read "$(sh_html)"
+with_cat  "$(sh_html)"
