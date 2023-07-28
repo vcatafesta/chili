@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+function xcopyr {
+   local args=("$@")           # Coloca todos os argumentos em um array
+
+   if [ "${#args[@]}" -lt 2 ]; then
+      echo "Descrição: Esta função copia arquivos e diretórios da origem para o destino preservando a estrutura de diretórios."
+      echo -e "\e[1;31mErro: Esta função requer exatamente dois parâmetros: origem e destino.\e[0m"
+      echo "   Uso: xcopyr <origem> <destino>"
+      echo "        xcopyr *.log   /lixo/archived"
+      echo "        xcopyr .       /lixo/archived"
+      echo "        xcopyr $HOME/files/.  /lixo/archived"
+      return 1
+   fi
+   local destino="${@: -1}"    # Último parâmetro é o destino
+   local origem="${@:1:$#-1}"  # Todos os parâmetros exceto o último são a origem
+   set -f                      #Desabilita temporariamente a expansão de caminhos
+   eval "rsync -av --progress --remove-source-files --relative $origem \"$destino\""
+   set +f                      # Habilita a expansão de caminhos novamente
+}
+
+xcopyr "$@"
