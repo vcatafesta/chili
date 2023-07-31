@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+
+: <<'comment'
+		Instale as ferramentas Gettext:
+		Antes de começar, verifique se você tem as ferramentas Gettext instaladas em seu sistema. No Ubuntu ou sistemas baseados em Debian, você pode instalá-las com o seguinte comando:
+		sudo apt-get install gettext
+
+		Identifique as mensagens a serem traduzidas:
+		Revise seu script e identifique as mensagens que precisam ser traduzidas. Essas mensagens geralmente são strings que serão exibidas ao usuário ou qualquer texto que precise ser localizado.
+
+		Adicione a notação para tradução:
+		Em seu script, envolva as mensagens a serem traduzidas com a função gettext. Por exemplo:
+		echo $(gettext "Bom dia!")
+
+		Extraia as mensagens para um arquivo .pot:
+		Use a ferramenta xgettext para extrair as mensagens marcadas com gettext e criar um arquivo .pot (Portable Object Template). Esse arquivo contém todas as mensagens a serem traduzidas.
+		xgettext --keyword=gettext --output=arquivo.pot seu_script.sh
+
+		Crie um arquivo .po para o idioma desejado:
+		Crie um arquivo .po (Portable Object) para o idioma que você deseja traduzir. Por exemplo, para criar um arquivo .po para o idioma português brasileiro (pt_BR), você pode copiar o arquivo .pot e renomeá-lo para o nome do idioma e o código de país adequado:
+		cp arquivo.pot pt_BR.po
+
+		Edite o arquivo .po com as traduções:
+		Abra o arquivo .po com um editor de texto ou uma ferramenta de tradução compatível. Neste arquivo, você encontrará as mensagens originais (no formato msgid) e poderá fornecer as traduções correspondentes (no formato msgstr). Insira as traduções após o msgstr em cada entrada. Por exemplo:
+		msgid "Bom dia!"
+		msgstr "Good morning!"
+
+		Compile o arquivo .po:
+		Use a ferramenta msgfmt para compilar o arquivo .po e gerar o arquivo .mo (Portable Object Binary). O arquivo .mo contém as traduções no formato binário e é o que o programa usa para exibir as mensagens traduzidas.
+		msgfmt pt_BR.po -o pt_BR.mo
+
+		Coloque o arquivo .mo no diretório de traduções:
+		Crie o diretório de traduções em seu projeto e coloque o arquivo .mo nele. Por exemplo, você pode criar um diretório locale e colocar o arquivo pt_BR.mo nele:
+		mkdir -p locale/pt_BR/LC_MESSAGES
+		mv pt_BR.mo locale/pt_BR/LC_MESSAGES/seu_script.mo
+
+		Configure o ambiente para o idioma desejado:
+		Antes de executar seu script ou programa com as traduções, defina a variável de ambiente LANGUAGE com o idioma desejado para que o programa carregue as traduções apropriadas:
+		export LANGUAGE=pt_BR
+
+		Execute seu script com as traduções:
+		Finalmente, execute seu script ou programa com as traduções ativadas. As mensagens marcadas com gettext serão exibidas em seu idioma traduzido.
+	Lembre-se de que, para utilizar Gettext e traduzir suas mensagens, você precisará seguir as etapas acima sempre que adicionar ou modificar textos no script que precisem de tradução. Além disso, o suporte a Gettext pode variar em diferentes linguagens de programação, então certifique-se de consultar a documentação relevante para a linguagem específica que você está usando.
+comment
+
+#xgettext t.sh -o t.pot
+#trans -b :en "Impressoras" "Bom dia" "Obrigado"
+#trans -b :en "error: you cannot perform this operation unless you are root."
+
+#trans -R #Para conhecer os códigos de idioma que podemos usar, basta executar o seguinte comando:
+#trans -T #Para conhecer os códigos de idioma que podemos usar, basta executar o seguinte comando:
+
+declare -a idioma=(bg cs da de el en es et fi fr he hr hu is it ja ko nl no pl pt pt-BR ro ru sk sv tr uk zh)
+#xgettext --from-code=UTF-8 --language=shell $1 --output $1.pot
+
+#traduzir com o trans
+#msggrep -vvv --msgid --msgstr --output-file=temp.po $1.pot
+
+if ! test -e $1.pot ; then
+	echo "Error: Cannot open $1.pot"
+	exit 1
+fi
+
+for i in "${idioma[@]}"; do
+	msginit -i $1.pot -l "$i" -o "$i".po --no-translator
+	echo "$i"
+	cp $i.po temp.po
+	rm $i.po
+	while read -r line; do
+		if grep -qi '^msgid ' <<<"$line" || grep -qi '^msgstr' <<<$line; then
+			msgid=$(echo "$line" | grep '^msgid ' | sed 's/^msgid //')
+			msgstr=$(echo "$line" | grep '^msgstr ' | sed 's/^msgstr //')
+			if [[ "$msgid" && "$msgstr" != '""' ]]; then
+				translation=$(trans -b :"$i" "$msgid")
+				echo "msgid $msgid"        >>"$i.po"
+				echo "msgstr $translation" >>"$i.po"
+			fi
+		else
+			echo "$line" >>"$i.po"
+		fi
+	done <<< "$(<"temp.po")"
+	rm temp.po
+	mkdir -p $i/LC_MESSAGES/
+	if msgfmt $i.po -o $i/LC_MESSAGES/$1.mo ; then
+		rm $i.po
+	fi
+done
+exit
+
+## Substitua a chave da API do Google Translate abaixo (https://console.cloud.google.com/)
+#GOOGLE_TRANSLATE_API_KEY="SUA_CHAVE_DA_API_AQUI"
+## Idioma de origem (deve ser o mesmo idioma das mensagens originais no .po)
+#SOURCE_LANGUAGE="en"
+## Idioma para o qual você deseja traduzir (exemplo: francês)
+#TARGET_LANGUAGE="fr"
+## Nome do arquivo .po de entrada
+#INPUT_PO_FILE="seu_arquivo.po"
+## Nome do arquivo .po de saída (com as traduções)
+#OUTPUT_PO_FILE="traduzido.po"
+## Extrai as mensagens originais do arquivo .po e salva em um novo arquivo temporário
+#msggrep --msgid --msgstr --output-file=temp.po "$INPUT_PO_FILE"
+## Obtém as traduções automáticas usando o Google Translate API
+#cat temp.po | while read -r line; do
+#    msgid=$(echo "$line" | grep '^msgid ' | sed 's/^msgid //')
+#    msgstr=$(echo "$line" | grep '^msgstr ' | sed 's/^msgstr //')
+#    if [[ "$msgid" && "$msgstr" == '""' ]]; then
+#        translation=$(curl -s -G --data-urlencode "key=$GOOGLE_TRANSLATE_API_KEY" --data-urlencode "source=$SOURCE_LANGUAGE" --data-urlencode "target=$TARGET_LANGUAGE" --data-urlencode "q=$msgid" https://translation.googleapis.com/language/translate/v2 | jq -r '.data.translations[0].translatedText')
+#        echo "msgid $msgid" >> "$OUTPUT_PO_FILE"
+#        echo "msgstr \"$translation\"" >> "$OUTPUT_PO_FILE"
+#        echo >> "$OUTPUT_PO_FILE"
+#    fi
+#done
+## Remove o arquivo temporário
+## rm temp.po
+#
+##chmod +x translate_po.sh
+##./translate_po.sh
+
+#pacman -Sq --noconfirm  git gettext npm translate-shell
+#sudo npm install --location=global attranslate
+
+#set -o extglob
+#git clone https://github.com/biglinux/big-auto-translator.git
+#mv big-auto-translator/gettext_po_generator_github.sh .
+#gitfolder=$(echo ${{ github.repository }} | rev | cut -d "/" -f1 | rev)
+#bash gettext_po_generator_github.sh $gitfolder
+#
+#git config --local user.email "github-actions[bot]@users.noreply.github.com"
+#git config --local user.name "github-actions[bot]"
+#if [ -n "$(git commit -m "translate $(date +%y-%m-%d_%H:%M)" -a | grep "nothing to commit")" ];then exit 0; fi
+#	curl -X POST -H "Accept: application/json" -H "Authorization: token ${{ secrets.WEBHOOK_TOKEN }}" --data '{"event_type": "${{ github.repository }}", "client_payload": { "branch": "${{ github.ref_name }}", "url": "https://github.com/${{ github.repository }}"}}' https://api.github.com/repos/BigLinux-Package-Build/build-package/dispatches
+#fi
