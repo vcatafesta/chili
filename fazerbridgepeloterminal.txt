@@ -1,0 +1,89 @@
+#FAZER UMA BRIDGE PELO TERMINAL
+##############################################
+
+#Pedir para fazer um "brigde" pelo terminal pode não ser uma solicitação específica, pois "brigde"
+#não é um termo comum em contexto de terminal ou comandos. Talvez você queira dizer "bridge" (ponte),
+#que é um conceito usado em redes de computadores.
+
+#Se você quiser configurar uma interface de rede em modo bridge no Linux pelo terminal, você pode fazer
+#isso usando a ferramenta brctl (bridge control). Antes de continuar, verifique se você tem privilégios de superusuário ou utilize o comando com sudo.
+
+#Supondo que você deseje criar uma ponte chamada "br0" que inclua as interfaces "eth0" e "eth1", siga os passos abaixo:
+
+#Verifique as interfaces de rede disponíveis:
+	ip link
+
+#Isso irá listar todas as interfaces de rede disponíveis, como "eth0", "eth1", "wlan0", etc.
+#Desative as interfaces de rede que você deseja adicionar à ponte:
+	sudo ip link set eth0 down
+	sudo ip link set eth1 down
+
+#Crie a ponte e adicione as interfaces a ela:
+	sudo brctl addbr br0
+	sudo brctl addif br0 eth0
+	sudo brctl addif br0 eth1
+
+#Ative a ponte e as interfaces:
+	sudo ip link set br0 up
+	sudo ip link set eth0 up
+	sudo ip link set eth1 up
+
+#Agora você configurou uma ponte chamada "br0" que inclui as interfaces "eth0" e "eth1".
+#Isso permite que o tráfego de rede entre as duas interfaces seja encaminhado através da ponte.
+#
+#Lembre-se de que as configurações de rede podem variar dependendo da distribuição Linux que você está usando.
+#Além disso, se você deseja que as configurações sejam persistentes entre reinicializações, pode ser necessário
+#ajustar as configurações em arquivos de configuração específicos da sua distribuição, como /etc/network/interfaces no Debian ou Ubuntu.
+
+
+#COMO ADICIONAR UMA PLACA DE WLAN A UMA BRIDGE
+##############################################
+#Adicionar uma placa de WLAN (placa Wi-Fi) a uma ponte no Linux pode ser um pouco diferente do procedimento
+#para interfaces de rede com fio (placas Ethernet). A maioria das placas Wi-Fi não suporta o modo promíscuo, que é
+#necessário para funcionar em uma ponte. Em vez disso, a solução mais comum é usar a tecnologia "macvlan" para criar
+#uma interface virtual (macvlan) que está conectada à ponte. Dessa forma, a placa Wi-Fi original ainda pode ser usada normalmente para conexões sem fio.
+
+#Aqui está um exemplo de como adicionar uma placa de WLAN a uma ponte usando macvlan:
+#Verifique as interfaces de rede disponíveis:
+	ip link
+
+#Encontre o nome da sua interface Wi-Fi, que geralmente é algo como "wlan0".
+#Crie a ponte:
+	sudo brctl addbr br0
+	sudo ip link set br0 up
+
+#Crie a interface macvlan conectada à ponte:
+	sudo ip link add link wlan0 dev macvlan0 type macvlan mode bridge
+	sudo ip link set macvlan0 up
+
+#Substitua "wlan0" pelo nome da sua interface Wi-Fi, caso seja diferente.
+#Adicione a interface macvlan à ponte:
+	sudo brctl addif br0 macvlan0
+
+#Agora a placa de WLAN (wlan0) está conectada à ponte (br0) usando a interface macvlan0. Isso permite que a placa Wi-Fi funcione
+#normalmente para conexões sem fio, enquanto a interface macvlan0 estará na mesma ponte que outras interfaces cabeadas (se houver).
+
+#Lembre-se de que o suporte ao macvlan pode variar dependendo do driver da placa Wi-Fi e do kernel em uso. Certifique-se de verificar
+#a documentação e as especificações do seu hardware para garantir que o macvlan seja suportado e funcionará corretamente com a sua configuração específica.
+
+#REMOVER MACVLAN
+################################################################
+#Para remover a interface macvlan e desconectar a placa de WLAN (placa Wi-Fi) da ponte, siga os passos abaixo:
+#Primeiro, verifique o nome da interface macvlan que você deseja remover. Isso pode ser feito usando o comando ip link ou ifconfig. Por exemplo:
+	ip link
+#ou
+	ifconfig
+
+#Localize a interface macvlan que você criou anteriormente. Ela pode ser algo como "macvlan0" ou outro nome que você tenha escolhido.
+#Desligue a interface macvlan:
+	sudo ip link set macvlan0 down
+
+#Substitua "macvlan0" pelo nome da interface macvlan que você deseja remover.
+#Remova a interface macvlan:
+	sudo ip link delete macvlan0
+
+#Novamente, substitua "macvlan0" pelo nome da interface macvlan que você deseja remover.
+#Agora a interface macvlan foi removida, e a placa de WLAN (placa Wi-Fi) está desconectada da ponte.
+#A placa Wi-Fi voltará a funcionar normalmente como uma interface Wi-Fi independente.
+
+#Verifique novamente as interfaces de rede usando ip link ou ifconfig para garantir que a interface macvlan foi removida com sucesso.
