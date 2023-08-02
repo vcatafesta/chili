@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+# This script can be used to create simple chroot environment
+# Written by LinuxCareer.com <http://linuxcareer.com/>
+# (c) 2013 LinuxCareer under GNU GPL v3.0+
+
+
+#CHROOT='/var/chroot'
+CHROOT='/home/chrootjail'
+
+set /usr/bin/{bash,id,cat,clear,cp,du,grep,less,ls,mv,mkdir,rmdir,rm,sh,echo,date,awk,uptime,whoami,who,sed,logname,tput,tree,dircolors} /usr/bin/vi /etc/hosts
+
+mkdir -p $CHROOT/proc/loadavg
+mkdir -p $CHROOT/dev
+mkdir -p $CHROOT/sys
+mkdir -p $CHROOT/run
+mkdir -p $CHROOT/tmp
+chmod 1777 $CHROOT/tmp
+mkdir -p $CHROOT/usr/bin
+ln -sf usr/bin $CHROOT/bin
+ln -sf /dev/null $CHROOT/dev/
+
+for i in $(ldd $* | grep -v dynamic | cut -d " " -f 3 | sed 's/://' | sort | uniq); do
+	cp -f --parents $i $CHROOT
+done
+
+cp -r --parents /usr/share/terminfo $CHROOT
+
+# ARCH amd64
+if [ -f /lib64/ld-linux-x86-64.so.2 ]; then
+	cp --parents /lib64/ld-linux-x86-64.so.2 /$CHROOT
+fi
+
+# ARCH i386
+if [ -f /lib/ld-linux.so.2 ]; then
+	cp --parents /lib/ld-linux.so.2 /$CHROOT
+fi
+
+echo "root:x:0:root"    > $CHROOT/etc/group
+echo "bigbruno:x:1004" >> $CHROOT/etc/group
+
+echo "root:x:0:0:root:/root:/bin/bash"                 > $CHROOT/etc/passwd
+echo "bigbruno:x:1003:1004::/home/bigbruno:/bin/bash" >> $CHROOT/etc/passwd
+
+echo "Chroot jail is ready. To access it execute: chroot $CHROOT"
+
+#sudo groupadd chrootjail
+#sudo usermod -a -G chrootjail bigbruno
+
+#/etc/ssh/sshd_config
+# Subsistema SFTP
+Subsystem sftp internal-sftp
+
+# Configurações para acesso SSH e SFTP do usuário "bigbruno"
+#Match User bigbruno
+#    ChrootDirectory /home/chrootjail
+##	 ChrootDirectory /home/chrootjail/%u
+#    AllowTcpForwarding yes
+#    X11Forwarding yes
+#    # Aqui você pode configurar outras opções específicas para o acesso SSH e SFTP do usuário "bigbruno"
+
+#Match group chrootjail
+#   ChrootDirectory /home/chrootjail
+
+#somente sftp
+#Match user bigbruno
+#   ChrootDirectory /home/chrootjail/
+#	X11Forwarding no
+#	AllowTcpForwarding no
+#	ForceCommand internal-sftp
+
