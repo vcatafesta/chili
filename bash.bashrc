@@ -1,52 +1,46 @@
-# Begin /etc/profile
-# Written for Beyond Linux From Scratch
-# by James Robertson <jameswrobertson@earthlink.net>
-# modifications by Dagmar d'Surreal <rivyqntzne@pbzpnfg.arg>
+# /etc/bash.bashrc
 
-# System wide environment variables and startup programs.
-
-# System wide aliases and functions should go in /etc/bashrc.  Personal
-# environment variables and startup programs should go into
-# ~/.bash_profile.  Personal aliases and functions should go into
-# ~/.bashrc.
-
-# Functions to help us manage paths.  Second argument is the name of the
-# path variable to be modified (default: PATH)
-
-# Append "$1" to $PATH when not already in.
-# This function API is accessible to scripts in /etc/profile.d
-append_path () {
-    case ":$PATH:" in
-        *:"$1":*)
-            ;;
-        *)
-            PATH="${PATH:+$PATH:}$1"
-    esac
+append_path() {
+	case ":$PATH:" in
+	*:"$1":*) ;;
+	*)
+		PATH="${PATH:+$PATH:}$1"
+		;;
+	esac
 }
 
-pathremove () {
-        local IFS=':'
-        local NEWPATH
-        local DIR
-        local PATHVARIABLE=${2:-PATH}
-        for DIR in ${!PATHVARIABLE} ; do
-                if [ "$DIR" != "$1" ] ; then
-                  NEWPATH=${NEWPATH:+$NEWPATH:}$DIR
-                fi
-        done
-        export $PATHVARIABLE="$NEWPATH"
+appendpath() {
+	case ":$PATH:" in
+	*:"$1":*) ;;
+	*)
+		PATH="${PATH:+$PATH:}$1"
+		;;
+	esac
 }
 
-pathprepend () {
-        pathremove $1 $2
-        local PATHVARIABLE=${2:-PATH}
-        export $PATHVARIABLE="$1${!PATHVARIABLE:+:${!PATHVARIABLE}}"
+pathremove() {
+	local IFS=':'
+	local NEWPATH
+	local DIR
+	local PATHVARIABLE=${2:-PATH}
+	for DIR in ${!PATHVARIABLE}; do
+		if [ "$DIR" != "$1" ]; then
+			NEWPATH=${NEWPATH:+$NEWPATH:}$DIR
+		fi
+	done
+	export $PATHVARIABLE="$NEWPATH"
 }
 
-pathappend () {
-        pathremove $1 $2
-        local PATHVARIABLE=${2:-PATH}
-        export $PATHVARIABLE="${!PATHVARIABLE:+${!PATHVARIABLE}:}$1"
+pathprepend() {
+	pathremove $1 $2
+	local PATHVARIABLE=${2:-PATH}
+	export $PATHVARIABLE="$1${!PATHVARIABLE:+:${!PATHVARIABLE}}"
+}
+
+pathappend() {
+	pathremove $1 $2
+	local PATHVARIABLE=${2:-PATH}
+	export $PATHVARIABLE="${!PATHVARIABLE:+${!PATHVARIABLE}:}$1"
 }
 
 export -f pathremove pathprepend pathappend
@@ -56,15 +50,15 @@ export PATH=/usr/bin
 
 # Attempt to provide backward compatibility with LFS earlier than 11
 if [ ! -L /bin ]; then
-        pathappend /bin
+	pathappend /bin
 fi
 
-if [ $EUID -eq 0 ] ; then
-        pathappend /usr/sbin
-        if [ ! -L /sbin ]; then
-                pathappend /sbin
-        fi
-        unset HISTFILE
+if [ $EUID -eq 0 ]; then
+	pathappend /usr/sbin
+	if [ ! -L /sbin ]; then
+		pathappend /sbin
+	fi
+	unset HISTFILE
 fi
 
 # Setup some environment variables.
@@ -80,16 +74,16 @@ export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/tmp/xdg-$USER}
 NORMAL="\[\e[0m\]"
 RED="\[\e[1;31m\]"
 GREEN="\[\e[1;32m\]"
-if [[ $EUID == 0 ]] ; then
-  PS1="$RED\u [ $NORMAL\w$RED ]# $NORMAL"
+if [[ $EUID == 0 ]]; then
+	PS1="$RED\u [ $NORMAL\w$RED ]# $NORMAL"
 else
-  PS1="$GREEN\u [ $NORMAL\w$GREEN ]\$ $NORMAL"
+	PS1="$GREEN\u [ $NORMAL\w$GREEN ]\$ $NORMAL"
 fi
 
-for script in /etc/profile.d/*.sh ; do
-        if [ -r $script ] ; then
-                . $script
-        fi
+for script in /etc/profile.d/*.sh; do
+	if [ -r $script ]; then
+		. $script
+	fi
 done
 
 unset script RED GREEN NORMAL
@@ -99,23 +93,6 @@ umask 022
 
 # Append "$1" to $PATH when not already in.
 # This function API is accessible to scripts in /etc/profile.d
-appendpath () {
-    case ":$PATH:" in
-        *:"$1":*)
-            ;;
-        *)
-            PATH="${PATH:+$PATH:}$1"
-    esac
-}
-
-append_path () {
-    case ":$PATH:" in
-        *:"$1":*)
-            ;;
-        *)
-            PATH="${PATH:+$PATH:}$1"
-    esac
-}
 
 # Append our default paths
 append_path '/usr/local/sbin'
@@ -133,18 +110,9 @@ if test -d /etc/profile.d/; then
 	unset profile
 fi
 
-# Unload our profile API functions
-unset -f append_path
-
-# Termcap is outdated, old, and crusty, kill it.
-unset TERMCAP
-
-# Man is much better than us at figuring this out
-unset MANPATH
-
-# End /etc/profile
-
-# .bashrc
+unset -f append_path	# Unload our profile API functions
+unset TERMCAP			# Termcap is outdated, old, and crusty, kill it.
+unset MANPATH			# Man is much better than us at figuring this out
 
 # Cores ANSI - Substitua pelos códigos ANSI do seu terminal, se necessário
 GREEN="\033[1;32m"   # Verde
@@ -191,9 +159,9 @@ alias ll='ls -l --color=auto'
 alias dir='ls -la --color=auto'
 alias grep='grep --color=auto'
 
-function path() { echo -e "${PATH//:/\\n}"; }
-function lsd()  { printf "${orange}\n"; ls -ld */ ; printf "${reset}"; }
-function lsa()  { echo -n ${orange} ; ls -l | awk '/^-/ {print $9}' ; }
+path() { echo -e "${PATH//:/\\n}"; }
+lsd()  { printf "${orange}\n"; ls -ld */; printf "${reset}"; }
+lsa()  { echo -n ${orange}; ls -l | awk '/^-/ {print $9}'; }
 
 # Função para obter o status do último comando
 function get_exit_status() {
