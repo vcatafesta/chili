@@ -1,0 +1,237 @@
+#!/usr/bin/env bash
+#shellcheck disable=SC2155,SC2034
+#shellcheck source=/dev/null
+#
+#  chili-jailchroot
+#  Descrição: cria uma chroot jail para acesso SSH
+#
+#  Criado   : 2023/08/03
+#  Alterado : 2023/08/04
+#
+#  Direitos autorais (c) 2023-2023, Vilmar Catafesta <vcatafesta@gmail.com>
+#  Todos os direitos reservados.
+#
+#  Redistribuição e uso em formas de código fonte e binário, com ou sem
+#  modificação, são permitidos, desde que as seguintes condições sejam atendidas:
+#  1. Redistribuições do código fonte devem manter o aviso de direitos autorais acima,
+#     esta lista de condições e o seguinte aviso de não responsabilidade.
+#  2. Redistribuições na forma binária devem reproduzir o aviso de direitos autorais acima,
+#     esta lista de condições e o seguinte aviso de não responsabilidade na documentação
+#     e/ou outros materiais fornecidos com a distribuição.
+#
+#  ESTE SOFTWARE É FORNECIDO PELO AUTOR "NO ESTADO EM QUE SE ENCONTRA" E QUALQUER
+#  GARANTIA EXPRESSA OU IMPLÍCITA, INCLUINDO, MAS NÃO SE LIMITANDO ÀS GARANTIAS IMPLÍCITAS
+#  DE COMERCIALIZAÇÃO E APTIDÃO PARA UM PROPÓSITO ESPECÍFICO, SÃO REJEITADAS. EM NENHUMA
+#  CIRCUNSTÂNCIA O AUTOR SERÁ RESPONSÁVEL POR QUAISQUER DANOS DIRETOS, INDIRETOS,
+#  INCIDENTAIS, ESPECIAIS, EXEMPLARES OU CONSEQUENTES (INCLUINDO, MAS NÃO SE LIMITANDO A,
+#  AQUISIÇÃO DE BENS OU SERVIÇOS SUBSTITUTOS, PERDA DE USO, DADOS OU LUCROS, OU INTERRUPÇÃO
+#  DOS NEGÓCIOS) CAUSADOS E EM QUALQUER TEORIA DE RESPONSABILIDADE, QUER EM CONTRATO, RESPONSABILIDADE
+#  ESTRITA OU DELITO (INCLUINDO NEGLIGÊNCIA OU OUTROS) DECORRENTE DE QUALQUER FORMA DE USO DESSE
+#  SOFTWARE, MESMO SE AVISADO DA POSSIBILIDADE DE TAIS DANOS.
+
+APP="${0##*/}"
+_VERSION_="1.0.0-20230804"
+
+CHROOT="/tmp/chrootjail"
+user='galego'
+
+# Definir a variável de controle para restaurar a formatação original
+reset=$(tput sgr0)
+nc=$(tput sgr0)
+
+# Definir os estilos de texto como variáveis
+bold=$(tput bold)
+underline=$(tput smul)   # Início do sublinhado
+nounderline=$(tput rmul) # Fim do sublinhado
+reverse=$(tput rev)      # Inverte as cores de fundo e texto
+
+# Definir as cores ANSI como variáveis
+black=$(tput bold)$(tput setaf 0)
+red=$(tput bold)$(tput setaf 196)
+green=$(tput bold)$(tput setaf 2)
+yellow=$(tput bold)$(tput setaf 3)
+blue=$(tput setaf 4)
+pink=$(tput setaf 5)
+magenta=$(tput setaf 5)
+cyan=$(tput setaf 6)
+white=$(tput setaf 7)
+gray=$(tput setaf 8)
+orange=$(tput setaf 202)
+purple=$(tput setaf 125)
+violet=$(tput setaf 61)
+light_red=$(tput setaf 9)
+light_green=$(tput setaf 10)
+light_yellow=$(tput setaf 11)
+light_blue=$(tput setaf 12)
+light_magenta=$(tput setaf 13)
+light_cyan=$(tput setaf 14)
+bright_white=$(tput setaf 15)
+
+function print_cyan   { printf "${cyan}=> %s${reset}\n" "$1"; }
+function print_red    { printf "${red}=> %s${reset}\n" "$1"; }
+function print_yellow { printf "${yellow}=> %s${reset}\n" "$1"; }
+function print_green  {	printf "${green}=> %s${reset}\n" "$1"; }
+function print_black  { printf "${black}=> %s${reset}\n" "$1"; }
+function print_blue   { printf "${light_blue}=> %s${reset}\n" "$1"; }
+
+# Função para criar diretórios da chroot jail
+function create_chroot_directories {
+	local adir=('proc' 'proc/loadavg' 'dev' 'sys' 'run' 'tmp' 'var' 'usr/bin' 'usr/sbin' 'usr/share' 'usr/lib' 'home')
+	for dir in "${adir[@]}"; do
+		print_blue "Criando o diretório: $CHROOT/$dir"
+		mkdir -p "$CHROOT/$dir" || return 1
+	done
+
+	pushd "$CHROOT" >/dev/null
+		print_red "Definindo permissões para a pasta tmp"
+		chmod 1777 tmp || return 1
+		print_cyan "Criando links simbólicos"
+		ln -sf usr/bin bin || return 1
+		ln -sf usr/sbin sbin || return 1
+		ln -sf usr/lib lib || return 1
+		ln -sf usr/lib64 lib64 || return 1
+		ln -sf /dev/null dev/null || return 1
+	popd >/dev/null
+
+	print_red "Retirando a permissão de escrita do diretório $CHROOT"
+	chmod u-w "$CHROOT" || return 1
+}
+
+# Função para copiar binários e dependências para a chroot jail
+function copy_binaries_to_chroot {
+	local afilestxt=("/etc/hosts" "/etc/hostname")
+	set /usr/bin/{bash,sh,id,touch,cat,clear,cp,du,grep,less,ls,mv,mkdir,rmdir,rm,echo,printf,date,awk,uptime,whoami,sed,logname,tput,tree,dircolors,vi,nano,uname,file}
+
+	print_cyan "Copiando binários e suas dependências para a chroot jail"
+	for i in $(ldd "$@" | grep -v dynamic | cut -d " " -f 3 | sed 's/://' | sort | uniq); do
+		print_black "Copiando: $i"
+		cp -f --parents "$i" "$CHROOT" || return 1
+	done
+
+	for i in "${afilestxt[@]}"; do
+		print_black "Copiando: $i"
+		cp -f --parents "$i" "$CHROOT" || return 1
+	done
+
+	print_black "Copiando terminfo para uso com less"
+	cp -r --parents /usr/share/terminfo "$CHROOT" || return 1
+
+	print_black "Copiando .dircolors para uso com ls"
+	cp -f /root/.dircolors "$CHROOT/etc/.dircolors" || return 1
+
+	# ARCH amd64
+	if [ -f /lib64/ld-linux-x86-64.so.2 ]; then
+		print_black "Copiando /lib64/ld-linux-x86-64.so.2 para a chroot jail"
+		cp --parents /lib64/ld-linux-x86-64.so.2 "/$CHROOT" || return 1
+	fi
+
+	# ARCH i386
+	if [ -f /lib/ld-linux.so.2 ]; then
+		print_black "Copiando /lib/ld-linux.so.2 para a chroot jail"
+		cp --parents /lib/ld-linux.so.2 "/$CHROOT" || return 1
+	fi
+}
+
+# Função para criar o arquivo chroot-shell
+function create_chroot_shell {
+	cat >"$CHROOT/bin/chroot-shell" <<-EOF
+		#!/bin/bash
+		#
+		# file: /bin/chroot-shell
+		#
+		/usr/bin/sudo /usr/bin/chroot /home/$USER /bin/su - $USER
+	EOF
+	chmod ugo+x "$CHROOT/bin/chroot-shell" || return 1
+}
+
+# Função para criar arquivos /etc/group e /etc/passwd
+function create_group_and_passwd_files {
+	grep root: /etc/group >"$CHROOT/etc/group" || return 1
+	grep "$user": /etc/group >>"$CHROOT/etc/group" || return 1
+	grep root: /etc/passwd >"$CHROOT/etc/passwd" || return 1
+	grep "$user": /etc/passwd >>"$CHROOT/etc/passwd" || return 1
+}
+
+# Função para configurar permissões e proprietário da pasta do usuário
+function configure_user_directory {
+	sudo groupadd chrootjail
+	sudo usermod -a -G chrootjail "$user" || return 1
+
+	mkdir -p "$CHROOT/home/$user" || return 1
+	chown "$user:$user" "$CHROOT/home/$user" -R || return 1
+}
+
+# Função para criar arquivos /etc/hostname e /etc/hosts
+function create_hostname_and_hosts_files {
+	cat >"$CHROOT/etc/hostname" <<-EOF
+		$(hostname)
+	EOF
+
+	cat >"$CHROOT/etc/hosts" <<-EOF
+		# Static table lookup for hostnames.
+		# See hosts(5) for details.
+		127.0.0.1      localhost.localdomain   localhost
+		::1            localhost.localdomain   localhost
+		127.0.1.1      chili.localdomain       chili
+	EOF
+}
+
+# Função para criar arquivo /etc/profile
+function create_etc_profile {
+	cat >"$CHROOT/etc/profile" <<-EOF
+		# /etc/profile
+
+		# Carregar o arquivo /etc/bashrc se existir
+		if [ -f /etc/bashrc ]]; then
+		    . /etc/bashrc
+		fi
+	EOF
+}
+
+# Função principal do script
+function sh_main {
+	print_red "Criando a chroot jail em: $CHROOT"
+	create_chroot_directories || return 1
+	copy_binaries_to_chroot || return 1
+	create_chroot_shell || return 1
+	create_group_and_passwd_files || return 1
+	configure_user_directory || return 1
+	create_hostname_and_hosts_files || return 1
+	create_etc_profile || return 1
+
+	print_green "Chroot jail está pronto."
+	print_green "Para acessá-la, execute: chroot $CHROOT"
+}
+
+if [ "$EUID" -ne 0 ]; then
+	print_red "erro: você não pode realizar esta operação a menos que seja root."
+	exit 1
+fi
+
+# Chamar a função principal do script
+sh_main
+
+: <<'comment'
+#/etc/ssh/sshd_config
+#Subsistema SFTP
+#  Subsystem sftp internal-sftp
+
+# Configurações para acesso SSH e SFTP do usuário "bigbruno"
+#Match User bigbruno
+#  ChrootDirectory /home/chrootjail
+#  AllowTcpForwarding yes
+#  X11Forwarding yes
+## ForceCommand /bin/bash -c "source /etc/bash.bashrc; exec bash"
+## ForceCommand /bin/bash -c "exec bash"
+#	#Aqui você pode configurar outras opções específicas para o acesso SSH e SFTP do usuário "bigbruno"
+
+#Match group chrootjail
+#	ChrootDirectory /home/chrootjail
+
+#somente sftp
+#Match user bigbruno
+#  ChrootDirectory /home/chrootjail/
+#  X11Forwarding no
+#  AllowTcpForwarding no
+#  ForceCommand internal-sftp
+comment
