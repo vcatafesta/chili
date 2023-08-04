@@ -33,6 +33,7 @@ APP="${0##*/}"
 _VERSION_="1.0.0-20230804"
 
 CHROOT="/home/chrootjail"
+user='galego'
 user='bigbruno'
 
 # Definir a variável de controle para restaurar a formatação original
@@ -76,7 +77,7 @@ function print_blue   { printf "${light_blue}=> %s${reset}\n" "$1"; }
 
 # Função para criar diretórios da chroot jail
 function create_chroot_directories {
-	local adir=('proc' 'proc/loadavg' 'dev' 'sys' 'run' 'tmp' 'var' 'usr/bin' 'usr/sbin' 'usr/share' 'usr/lib' 'home')
+	local adir=('proc' 'proc/loadavg' 'dev' 'sys' 'run' 'tmp' 'var' 'root' 'usr/bin' 'usr/sbin' 'usr/share' 'usr/lib' 'home')
 	for dir in "${adir[@]}"; do
 		print_blue "Criando o diretório: $CHROOT/$dir"
 		mkdir -p "$CHROOT/$dir" || return 1
@@ -95,6 +96,9 @@ function create_chroot_directories {
 
 	print_red "Retirando a permissão de escrita do diretório $CHROOT"
 	chmod u-w "$CHROOT" || return 1
+
+	print_red "Ajustando permissões do diretório root"
+	chmod 750 "$CHROOT/root" || return 1
 }
 
 # Função para copiar binários e dependências para a chroot jail
@@ -146,10 +150,18 @@ function create_chroot_shell {
 
 # Função para criar arquivos /etc/group e /etc/passwd
 function create_group_and_passwd_files {
-	grep root: /etc/group >"$CHROOT/etc/group" || return 1
-	grep "$user": /etc/group >>"$CHROOT/etc/group" || return 1
-	grep root: /etc/passwd >"$CHROOT/etc/passwd" || return 1
-	grep "$user": /etc/passwd >>"$CHROOT/etc/passwd" || return 1
+	if ! grep -q root: "$CHROOT/etc/group"; then
+		grep root: /etc/group     >>"$CHROOT/etc/group"  || return 1
+	fi
+	if ! grep -q "$user": "$CHROOT/etc/group"; then
+		grep "$user": /etc/group  >>"$CHROOT/etc/group"  || return 1
+	fi
+	if ! grep -q root: "$CHROOT/etc/passwd" ; then
+		grep root: /etc/passwd    >>"$CHROOT/etc/passwd" || return 1
+	fi
+	if ! grep -q "$user": "$CHROOT/etc/passwd" ; then
+		grep "$user": /etc/passwd >>"$CHROOT/etc/passwd" || return 1
+	fi
 }
 
 # Função para configurar permissões e proprietário da pasta do usuário
@@ -188,6 +200,12 @@ function create_etc_profile {
 	EOF
 
 	cat >"$CHROOT/home/$user/.bash_profile" <<-EOF
+		if [ -f ~/.bashrc ]; then
+		  source ~/.bashrc
+		fi
+	EOF
+
+	cat >"$CHROOT/root/.bash_profile" <<-EOF
 		if [ -f ~/.bashrc ]; then
 		  source ~/.bashrc
 		fi
@@ -342,6 +360,7 @@ bright_white=$(tput setaf 15)
 # Alias (atalhos para comandos)
 alias ll="ls -l --color=auto"
 alias dir="ls -la --color=auto"
+alias ls="ls --color=auto"
 alias grep="grep --color=auto"
 
 path() { echo -e "${PATH//:/\\n}"; }
@@ -373,7 +392,9 @@ fi
 
 # Outras configurações e comandos personalizados podem ser adicionados
 eval $(dircolors -b /etc/.dircolors)
-' >"$CHROOT/etc/bash.bashrc" > "$CHROOT/home/$user/.bashrc"
+' >"$CHROOT/etc/bash.bashrc" || return 1
+cp -f "$CHROOT/etc/bash.bashrc" "$CHROOT/home/$user/.bashrc" || return 1
+cp -f "$CHROOT/etc/bash.bashrc" "$CHROOT/root/.bashrc" || return 1
 }
 
 # Função principal do script
