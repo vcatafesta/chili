@@ -1,0 +1,4 @@
+Application Internal Error - /github/chili/c/util
+Terminated at: 2023-08-06 01:57:17
+Unrecoverable error 9012: Can't locate the starting procedure: 'MAIN'
+------------------------------------------------------------------------

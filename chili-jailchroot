@@ -35,6 +35,7 @@ _VERSION_="1.0.0-20230804"
 CHROOT="/home/chrootjail"
 user='galego'
 user='bigbruno'
+user='evili'
 
 # Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
