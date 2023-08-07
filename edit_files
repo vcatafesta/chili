@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+# Verifica se o argumento (nome do arquivo) foi fornecido
+if [ $# -lt 1 ]; then
+	echo "Usage: $0 <input_file>"
+	exit 1
+fi
+
+input_file="$1"
+
+awk '{ print $4 }' "$input_file" | while IFS= read -r filename; do
+	s1="2023/08/05"
+	t1="2023/08/07"
+	s2="1.0.0-20230805"
+	t2="1.0.0-20230807"
+	sed -i "s|$s1|$t1|g;s|$s2|$t2|g" "$filename" # Realiza a edição no arquivo
+done

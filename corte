@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+reset=$(tput sgr0)
+black=$(tput bold)$(tput setaf 0)
+red=$(tput bold)$(tput setaf 196)
+green=$(tput bold)$(tput setaf 2)
+count=0
+timestamp=$(date "+%d/%m/%Y %H:%M:%S") # Captura a data e hora no formato desejado
+data=$(date "+%d%m%Y")                 # Captura a data no formato desejado
+filetemp=/tmp/cortes-$data.log
+
+function sh_process_line {
+	local line="$1"
+	local cmd="$2"
+
+	((count++))
+	echo "$line"
+	origem=$(cut -d':' -f1 <<<"$line")
+	destino=$(awk -F'/usr' '{print "/usr"$2}' <<<"$line" | cut -d':' -f1)
+
+	fcount=$(printf "%06d" "$count")
+	count_formatted=$green$$fcount$reset
+	origem_colored=$black${origem}$reset
+	destino_colored=$red${destino}$reset
+	printf "%s %-115s -> %s\n" "$count_formatted" "$origem_colored" "$destino_colored"
+	echo "$timestamp $fcount $origem $destino" >>$filetemp
+
+	sh_edit_file "$origem"
+	if ! cp $origem $destino; then
+		printf "$redERRO ao copiar $origem para $destino"
+		exit 1
+	fi
+}
+
+function sh_edit_file {
+	local filename="$1"
+	local data_de_hoje="$(date "+%Y/%m/%d")"
+	local new_version="1.0.0-$(date "+%Y%m%d")"
+	sed -i "s|Altered:.*|Altered: $data_de_hoje|g" "$filename"
+	sed -i "/_VERSION_=/c\_VERSION_=\"$new_version\"" "$filename"
+}
+
+if [ -p /dev/stdin ]; then
+	#for FILE in "$@" /dev/stdin
+	for FILE in /dev/stdin; do
+		while IFS= read -r LINE; do
+			#echo "$LINE"
+			sh_process_line "$LINE" "$@"
+		done <"$FILE"
+	done
+	echo "" >>$filetemp
+fi
+
+# Resto do seu script
