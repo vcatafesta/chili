@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+
+Sexo=2
+Nome=Vilmar
+Valor=10.000,00
+
+echo 'exemplo with cat'
+cat <<  FimMail
+	$( ((Sexo=1)) && echo -n Caro Senhor || echo -n Cara Senhora) $Nome
+	Hoje em $(date +%d/%m/%Y) acusamos o recebimento de sua fatura no
+	total de $Valor
+FimMail
+
+echo
+echo 'exemplo 1 with python'
+python << JaEra
+print("$Nome pagou $Valor em $(date +%d/%m/%Y)")
+JaEra
+
+echo
+echo 'exemplo 2 with python'
+python << JaEra
+print("$Nome pagou"
+		"$Valor em $(date +%d/%m/%Y)")
+JaEra
+
+echo
+echo 'exemplo 3 with python'
+xstr="$Nome pagou $Valor em $(date +%d/%m/%Y)"
+python <<EOF
+print("$xstr")
+EOF
+
+echo
+echo 'exemplo 4 with python'
+linha1="Primeira linha"
+linha2="Segunda linha"
+mensagem="$linha1\n$linha2"
+python <<-EOF
+print("$mensagem")
+EOF
+
+echo
+Sexo=2
+Nome=Evili
+Valor="10.000,00"
+
+if (( Sexo == 1 )); then
+   Saudacao="Caro Senhor"
+else
+   Saudacao="Cara Senhora"
+fi
+
+DataAtual=$(date +%d/%m/%Y)
+
+cat << FimMail
+   $Saudacao $Nome,
+   Hoje em $DataAtual, acusamos o recebimento de sua fatura no
+   total de $Valor.
+FimMail
+
+echo
+python << JaEra
+print("$Nome pagou $Valor em $DataAtual")
+print("hoje não tem\n"
+      "mais nada a comentar")
+JaEra
+
+#sintaxe do comando print em python
+#print(valor1, valor2, ..., sep=' ', end='\n', file=sys.stdout, flush=False)
+#
+#Aqui estão os parâmetros principais do comando print:
+#    valor1, valor2, ...: São os valores que você deseja imprimir. Eles podem ser variáveis, strings, números ou qualquer outro tipo de dado.
+#    sep=' ': Define o separador entre os valores. O valor padrão é um espaço em branco. Você pode alterá-lo para qualquer caractere ou string.
+#    end='\n': Define o caractere ou string que é adicionado ao final da saída. O valor padrão é uma quebra de linha (\n), o que significa que cada chamada de print termina com uma nova linha. Você pode alterá-lo para qualquer caractere ou string.
+#    file=sys.stdout: Especifica o fluxo de saída onde os dados serão escritos. O padrão é sys.stdout, que é a saída padrão. Você pode redirecioná-lo para outro arquivo ou fluxo, se necessário.
+#    flush=False: Controla se o buffer de saída é esvaziado imediatamente após a impressão. O valor padrão é False.
+#
+#Aqui estão alguns exemplos de uso do comando print:
+#print("Olá, mundo!")
+#print("Python", "é", "divertido")
+#print("Valor:", 42, "é a resposta")
+#print("Primeira linha", end=' | ')
+#print("Segunda linha")
+
+#nome = "Bob"
+#idade = 25
+#mensagem = f"Olá, meu nome é {nome} e tenho {idade} anos."
+#print(mensagem)
+#
+#nome = "Bob"
+#idade = 25
+#mensagem = f"Olá, meu nome é {nome} e tenho {idade} anos."
+#print(mensagem)
+
