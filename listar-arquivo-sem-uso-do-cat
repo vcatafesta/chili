@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+#forma antiga
+cat listar-arquivo-sem-uso-do-cat
+
+#nova forma
+echo "$(<listar-arquivo-sem-uso-do-cat)"
+
