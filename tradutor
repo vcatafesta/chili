@@ -43,18 +43,22 @@
 	Lembre-se de que, para utilizar Gettext e traduzir suas mensagens, você precisará seguir as etapas acima sempre que adicionar ou modificar textos no script que precisem de tradução. Além disso, o suporte a Gettext pode variar em diferentes linguagens de programação, então certifique-se de consultar a documentação relevante para a linguagem específica que você está usando.
 comment
 
-#xgettext t.sh -o t.pot
+#xgettext --language=Shell --keyword=gettext --output=$1.pot $1
+
 #trans -b :en "Impressoras" "Bom dia" "Obrigado"
 #trans -b :en "error: you cannot perform this operation unless you are root."
 
 #trans -R #Para conhecer os códigos de idioma que podemos usar, basta executar o seguinte comando:
 #trans -T #Para conhecer os códigos de idioma que podemos usar, basta executar o seguinte comando:
 
-declare -a idioma=(bg cs da de el en es et fi fr he hr hu is it ja ko nl no pl pt pt-BR ro ru sk sv tr uk zh)
-#xgettext --from-code=UTF-8 --language=shell $1 --output $1.pot
+#declare -a idioma=(bg cs da de el en es et fi fr he hr hu is it ja ko nl no pl pt pt-BR ro ru sk sv tr uk zh)
+declare -a idioma=(en es fr it pt pt-BR)
+xgettext --verbose --from-code=UTF-8 --language=shell --keyword=gettext --output $1.pot $1
+sed -i 's/"Content-Type: text\/plain; charset=CHARSET\\n"/"Content-Type: text\/plain; charset=UTF-8\\n"/' $1.pot
+sed -i 's/"Language: \\n"/"Language: pt_BR\\n"/' $1.pot
 
 #traduzir com o trans
-#msggrep -vvv --msgid --msgstr --output-file=temp.po $1.pot
+msggrep -vvv --msgid --msgstr --output-file=temp.po $1.pot
 
 if ! test -e $1.pot ; then
 	echo "Error: Cannot open $1.pot"
@@ -62,7 +66,7 @@ if ! test -e $1.pot ; then
 fi
 
 for i in "${idioma[@]}"; do
-	msginit -i $1.pot -l "$i" -o "$i".po --no-translator
+	msginit --color --locale="$i" --input $1.pot --output "$i".po --no-translator
 	echo "$i"
 	cp $i.po temp.po
 	rm $i.po
@@ -80,8 +84,8 @@ for i in "${idioma[@]}"; do
 		fi
 	done <<< "$(<"temp.po")"
 	rm temp.po
-	mkdir -p $i/LC_MESSAGES/
-	if msgfmt $i.po -o $i/LC_MESSAGES/$1.mo ; then
+	mkdir -p usr/share/locale/$i/LC_MESSAGES/
+	if msgfmt $i.po -o usr/share/locale/$i/LC_MESSAGES/$1.mo ; then
 		rm $i.po
 	fi
 done

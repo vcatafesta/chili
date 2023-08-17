@@ -186,7 +186,7 @@ function filerun_uefi {
 	if test $# -ge 1; then
 		if test -r $1; then
 		   local ovmf_code='/usr/share/edk2-ovmf/x64/OVMF_CODE.fd'
-			local working_dir="$(mktemp -dt frv.XXXXXXXXXX)"
+			local working_dir="$(mktemp -dt chili-runimage-$USER.XXX)"
 
 			if [[ ! -f '/usr/share/edk2-ovmf/x64/OVMF_VARS.fd' ]]; then
 				printf 'ERROR: %s\n' "OVMF_VARS.fd not found. Install edk2-ovmf."

@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+# Definindo cores ANSI
+GREEN="\033[1;32m"  # Verde
+RED="\033[1;31m"    # Vermelho
+YELLOW="\033[1;33m" # Amarelo
+CYAN="\033[1;36m"   # Ciano
+RESET="\033[0m"     # Resetar as cores
+
+valor_passagem=440 # Valor em centavos (4.40 * 100)
+
+while true; do
+	echo -e -n "${CYAN}Digite a idade do passageiro (ou digite ${RED}'sair'${CYAN} para encerrar):${RESET} "
+	read idade
+
+	case "$idade" in
+	sair)
+		echo -e "${GREEN}Encerrando o programa.${RESET}"
+		break
+		;;
+	[0-9]*)
+		if [ "$idade" -eq 0 ]; then
+			echo -e "${RED}Idade inválida. Digite uma idade diferente de 0.${RESET}"
+		else
+			if [ "$idade" -ge 65 ]; then
+				echo -e "${YELLOW}Idade sênior, tem passe livre!${RESET}"
+				continue # Pular para a próxima iteração do loop
+			fi
+
+			echo -e -n "${CYAN}Você é estudante? (${YELLOW}s${CYAN}/${RED}n${CYAN}):${RESET} "
+			read estudante
+
+			case "${estudante^^}" in
+			S) valor_com_desconto=$((valor_passagem / 2))
+				printf "${GREEN}Passagem de estudante - preço com desconto: R$%d,%02d${RESET}\n" $((valor_com_desconto / 100)) $((valor_com_desconto % 100))
+				;;
+			N)	printf "${YELLOW}Passagem normal - preço: R$%d,%02d${RESET}\n" $((valor_passagem / 100)) $((valor_passagem % 100))
+				;;
+			*)	echo -e "${RED}Opção inválida. Digite 's' para sim ou 'n' para não.${RESET}"
+				;;
+			esac
+		fi
+		;;
+	*)
+		echo -e "${RED}Entrada inválida.${RESET}"
+		;;
+	esac
+done

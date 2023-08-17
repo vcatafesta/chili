@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+xgettext t.sh -o t.pot
+msginit -i t.pot -l en -o t.po
+
+sudo apt-get install git
+sudo apt-get install gettext
+sudo apt-get install npm
+sudo npm install --location=global attranslate
+
+set -o extglob
+git clone https://github.com/biglinux/big-auto-translator.git
+mv big-auto-translator/gettext_po_generator_github.sh .
+gitfolder=$(echo ${{ github.repository }} | rev | cut -d "/" -f1 | rev)
+bash gettext_po_generator_github.sh $gitfolder
+
+      - name: Update github
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          if [ -n "$(git commit -m "translate $(date +%y-%m-%d_%H:%M)" -a | grep "nothing to commit")" ];then exit 0; fi
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+
+      - name: Send Hooks BigLinux Build Package
+        shell: bash
+        run: |
+          curl -X POST -H "Accept: application/json" -H "Authorization: token ${{ secrets.WEBHOOK_TOKEN }}" --data '{"event_type": "${{ github.repository }}", "client_payload": { "branch": "${{ github.ref_name }}", "url": "https://github.com/${{ github.repository }}"}}' https://api.github.com/repos/BigLinux-Package-Build/build-package/dispatches
+
+
+
