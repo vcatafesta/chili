@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-17 05:45-0400\n"
-"PO-Revision-Date: 2023-08-17 05:45-0400\n"
+"POT-Creation-Date: 2023-08-20 14:01-0400\n"
+"PO-Revision-Date: 2023-08-20 14:01-0400\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: es\n"
@@ -22,8 +22,8 @@ msgid "Bem vindo ao "
 msgstr "Bienvenido al "
 
 #: chili-clonedisk:481
-msgid "O disco de destino é menor que o disco de origem."
-msgstr "El disco de destino es más pequeño que el disco de origen".
+msgid "O disco de destino é menor que o disco de origem"
+msgstr "El disco de destino es más pequeño que el disco de origen"
 
 #: chili-clonedisk:482
 msgid "Continue de qualquer maneira?"
@@ -59,7 +59,7 @@ msgstr "Disco de destino"
 
 #: chili-clonedisk:539
 msgid "Escolha o disco de ORIGEM"
-msgstr "Elija el disco FUENTE"
+msgstr "Elegir disco FUENTE"
 
 #: chili-clonedisk:540
 msgid "Escolha o disco de DESTINO"
@@ -90,8 +90,8 @@ msgid "PARA BAIXO"
 msgstr "PARA ABAJO"
 
 #: chili-clonedisk:548
-msgid "para navegar."
-msgstr "para navegar."
+msgid "para navegar"
+msgstr "para navegar"
 
 #: chili-clonedisk:549
 msgid "Use"
@@ -102,8 +102,8 @@ msgid "para alternar entre os botões"
 msgstr "para cambiar entre botones"
 
 #: chili-clonedisk:551
-msgid "para selecionar."
-msgstr "para seleccionar."
+msgid "para selecionar"
+msgstr "para seleccionar"
 
 #: chili-clonedisk:554
 msgid "Disco ORIGEM e DESTINO não podem ser o mesmo"

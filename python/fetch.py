@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 # License: MIT                                                              #
 
+#python3 -m venv tutorial_env
+#source tutorial_env/bin/activate
+
 #url      = 'http://mazonos.com/packages/'        # Official Repository
 url      = 'http://localhost/packages/'          # Official Repository
 #url      = 'http://vcatafesta.online/packages/'  # Official Repository

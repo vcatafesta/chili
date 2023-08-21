@@ -1,0 +1,166 @@
+# Hebrew translations for PACKAGE package.
+# Copyright (C) 2023 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-08-20 14:13-0400\n"
+"PO-Revision-Date: 2023-08-20 14:13-0400\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: he\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: chili-clonedisk:96
+msgid "Bem vindo ao "
+msgstr                                                                  " ל אבה ךורב"
+
+#: chili-clonedisk:481
+msgid "O disco de destino é menor que o disco de origem"
+msgstr                                               "רוקמה קסידמ רתוי ןטק דעיה קסיד"
+
+#: chili-clonedisk:482
+msgid "Continue de qualquer maneira?"
+msgstr                                                                "?תאז לכב ךשמה"
+
+#: chili-clonedisk:515
+msgid "Clonagem concluída!"
+msgstr                                                                "!םלשוה טובישה"
+
+#: chili-clonedisk:533
+msgid "É necessário desmontar a partição antes de reparticioná-la"
+msgstr                                   "שדחמ התקולח ינפל הציחמה תניעט תא לטבל ךילע"
+
+#: chili-clonedisk:534
+msgid "** AVISO **"
+msgstr                                                                  "** העדוה **"
+
+#: chili-clonedisk:535
+msgid "ERRO"
+msgstr                                                                        "האָיגִשְׁ"
+
+#: chili-clonedisk:536
+msgid "Info disco"
+msgstr                                                                 "קסיד לע עדימ"
+
+#: chili-clonedisk:537
+msgid "Ok"
+msgstr                                                                         "רדסב"
+
+#: chili-clonedisk:538
+msgid "DISCO DE DESTINO"
+msgstr "DESTINATION DISK"
+
+#: chili-clonedisk:539
+msgid "Escolha o disco de ORIGEM"
+msgstr                                                              "SOURCE קסיד רחב"
+
+#: chili-clonedisk:540
+msgid "Escolha o disco de DESTINO"
+msgstr                                                      "DESTINATION קסיד תא רחב"
+
+#: chili-clonedisk:541
+msgid "Sim"
+msgstr                                                                           "ןכ"
+
+#: chili-clonedisk:542
+msgid "Não"
+msgstr                                                                           "אל"
+
+#: chili-clonedisk:544
+msgid "Use as teclas"
+msgstr                                                                "תוחתפמב שמתשה"
+
+#: chili-clonedisk:545
+msgid "PARA CIMA"
+msgstr                                                                        "הלָעמַלְ"
+
+#: chili-clonedisk:546
+msgid "e"
+msgstr                                                                           "הז"
+
+#: chili-clonedisk:547
+msgid "PARA BAIXO"
+msgstr                                                                          "הטמ"
+
+#: chili-clonedisk:548
+msgid "para navegar"
+msgstr                                                                        "טוונל"
+
+#: chili-clonedisk:549
+msgid "Use"
+msgstr                                                                       "שמתשהל"
+
+#: chili-clonedisk:550
+msgid "para alternar entre os botões"
+msgstr                                                        "םירותפכ ןיב רובעל ידכ"
+
+#: chili-clonedisk:551
+msgid "para selecionar"
+msgstr                                                                        "רוחבל"
+
+#: chili-clonedisk:554
+msgid "Disco ORIGEM e DESTINO não podem ser o mesmo"
+msgstr                               "םיהז תויהל םילוכי אל DESTINATION-ו SOURCE קסיד"
+
+#: chili-clonedisk:555
+msgid "Formatando partição"
+msgstr                                                                  "הציחמ בוציע"
+
+#: chili-clonedisk:556
+msgid "Executando clonagem de disco"
+msgstr                                                            "םיקסיד טוביש עצבמ"
+
+#: chili-clonedisk:557
+msgid "Selecionar"
+msgstr                                                                          "רחב"
+
+#: chili-clonedisk:558
+msgid "Sair"
+msgstr                                                                         "תאצל"
+
+#: chili-clonedisk:559
+msgid "Voltar"
+msgstr                                                                        "רוזחל"
+
+#: chili-clonedisk:560
+msgid "DISCO DE ORIGEM"
+msgstr                                                                    "רוקמ קסיד"
+
+#: chili-clonedisk:561
+msgid "AVISO!"
+msgstr                                                                       "!העדוה"
+
+#: chili-clonedisk:561
+msgid "Todos os dados disco de DESTINO abaixo serão perdidos!"
+msgstr                                    "!ודבאי הטמל DESTINATION לש קסידה ינותנ לכ"
+
+#: chili-clonedisk:562
+msgid "Continuar com a clonagem"
+msgstr                                                                  "טובישב ךשמה"
+
+#: chili-clonedisk:574
+msgid "Escolha o idioma:"
+msgstr                                                                     ":הפש רחב"
+
+#: chili-clonedisk:576
+msgid "Português"
+msgstr                                                                    "תיזגוטרופ"
+
+#: chili-clonedisk:577
+msgid "Inglês"
+msgstr                                                                       "תילגנא"
+
+#: chili-clonedisk:578
+msgid "Alemão"
+msgstr                                                                       "תיָנִמָרגֶ"
+
+#: chili-clonedisk:579
+msgid "Francês"
+msgstr                                                                       "תיתִפָרְצָ"

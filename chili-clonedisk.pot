@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-17 05:45-0400\n"
+"POT-Creation-Date: 2023-08-20 14:13-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,7 +22,7 @@ msgid "Bem vindo ao "
 msgstr ""
 
 #: chili-clonedisk:481
-msgid "O disco de destino é menor que o disco de origem."
+msgid "O disco de destino é menor que o disco de origem"
 msgstr ""
 
 #: chili-clonedisk:482
@@ -90,7 +90,7 @@ msgid "PARA BAIXO"
 msgstr ""
 
 #: chili-clonedisk:548
-msgid "para navegar."
+msgid "para navegar"
 msgstr ""
 
 #: chili-clonedisk:549
@@ -102,7 +102,7 @@ msgid "para alternar entre os botões"
 msgstr ""
 
 #: chili-clonedisk:551
-msgid "para selecionar."
+msgid "para selecionar"
 msgstr ""
 
 #: chili-clonedisk:554

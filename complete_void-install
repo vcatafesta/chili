@@ -1,0 +1,15 @@
+_void-install_complete(){
+	local cur
+	COMPREPLY=()
+	cur=${COMP_WORDS[COMP_CWORD]}
+
+	case "$cur" in
+#		--*) COMPREPLY=( $( compgen -W 'PARAMETROS' -- $cur ) );;
+		--*) COMPREPLY=( $( compgen -W '--install --chroot --file --grafico --quiet --version --nocolor --help' -- $cur ) );;
+		-*) COMPREPLY=( $( compgen -W '-i\n -c -f -g -q -v -n -h' -- $cur ) );;
+	esac
+
+	return 0
+}
+
+complete -F _void-install_complete -o filenames void-install

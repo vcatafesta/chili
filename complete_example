@@ -1,0 +1,14 @@
+_wallset_complete(){
+	local cur
+	COMPREPLY=()
+	cur=${COMP_WORDS[COMP_CWORD]}
+
+	case "$cur" in
+#		--*) COMPREPLY=( $( compgen -W 'PARAMETROS' -- $cur ) );;
+		--*) COMPREPLY=( $( compgen -W '--install --chroot --file --grafico --quiet --version --nocolor --help --install --chroot --file --grafico --quiet --version --nocolor --help' -- $cur ) );;
+	esac
+
+	return 0
+}
+
+complete -F _wallset_complete -o filenames wallset

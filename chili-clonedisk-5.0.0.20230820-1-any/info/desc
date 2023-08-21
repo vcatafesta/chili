@@ -1,0 +1,21 @@
+######################################################################
+# Generated with fetch    - https://chililinux.com
+# Generated with alienpkg - https://chililinux.com
+######################################################################
+maintainer='Vilmar Catafesta <vcatafesta@gmail.com>'
+pkgname='chili-clonedisk'
+version='5.0.0.20230820-1'
+build='1'
+pkgver='5.0.0.20230820'
+pkgrel='1'
+license='GPL2'
+lfs_version='11.3'
+lfs_init='SYSTEMD'
+arch='x86_64'
+distro='chili'
+desc='chili-clonedisk-5.0.0.20230820-1'
+pkgdesc='chili-clonedisk-5.0.0.20230820-1'
+size='43083'
+url='https://www.linuxfromscratch.org/lfs/view/stable/'
+source=('')
+dep=('')

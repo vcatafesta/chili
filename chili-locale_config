@@ -6,7 +6,7 @@
 #  Description: Ajusta a configuração regional e de idioma de um sistema Linux utilizando a ferramenta localectl
 #
 #  Created: 2022/02/28
-#  Altered: 2023/08/18
+#  Altered: 2023/08/20
 #
 #  Copyright (c) 2023-2023, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -32,7 +32,7 @@
 #  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 APP="${0##*/}"
-_VERSION_="1.0.0-20230818"
+_VERSION_="1.0.0-20230820"
 LIBRARY=${LIBRARY:-'/usr/share/bigbashview/bcc/shell'}
 
 # Cores - Substitua pelos códigos ANSI do seu terminal, se necessário
@@ -44,18 +44,39 @@ MAGENTA="\033[1;35m" # Magenta
 CYAN="\033[1;36m"    # Ciano
 RESET="\033[0m"      # Resetar as cores
 
+declare -a alang=(
+	'LANG'
+	'LANGUAGE'
+	'LC_TYPE'
+	'LC_NUMERIC'
+	'LC_TIME'
+	'LC_COLLATE'
+	'LC_MONETARY'
+	'LC_MESSAGES'
+	'LC_PAPER'
+	'LC_NAME'
+	'LC_ADDRESS'
+	'LC_TELEPHONE'
+	'LC_MEASUREMENT'
+	'LC_IDENTIFICATION'
+	'LC_ALL'
+)
+
 function sh_main() {
 	# Função para configurar uma variável no arquivo /etc/locale.conf
 	# Se a variável já existir, substitui o valor. Senão, acrescenta ao arquivo.
-	# Parâmetros: $1 = nome da variável, $2 = valor do idioma, $3 = descrição da variável
+	# Parâmetros: $1 = valor do idioma
 	function configure_locale_var() {
-		if grep -q "^$1=" /etc/locale.conf; then
-			printf "${CYAN}=> Variável %s já existe. Substituindo o seu valor.${RESET}\n" "$3"
-			sudo sed -i "s/^$1=.*/$1=$2/" /etc/locale.conf
-		else
-			printf "${CYAN}=> Variável %s não existe. Acrescentando ao arquivo.${RESET}\n" "$3"
-			echo "$1=$2" | sudo tee -a /etc/locale.conf
-		fi
+		for lc in "${alang[@]}"; do
+			if grep -q "^$lc=" /etc/locale.conf; then
+				printf "${CYAN}=> Variável %s já existe. Substituindo o seu valor.${RESET}\n" "$lc"
+				sudo sed -i "s/^$lc=.*/$lc=$1/" /etc/locale.conf
+			else
+				printf "${CYAN}=> Variável %s não existe. Acrescentando ao arquivo.${RESET}\n" "$lc"
+				#				echo "$lc=$1" | sudo tee -a /etc/locale.conf
+				sudo echo "$lc=$1" >>/etc/locale.conf
+			fi
+		done
 	}
 
 	lang=$1
@@ -63,30 +84,38 @@ function sh_main() {
 
 	# Verifica se o arquivo /etc/locale.conf existe
 	if [[ -e /etc/locale.conf ]]; then
-		# Obtém os valores atuais de LANG e LANGUAGE do arquivo /etc/locale.conf
-		current_lang=$(grep '^LANG=' /etc/locale.conf | cut -d'=' -f2)
-		current_language=$(grep '^LANGUAGE=' /etc/locale.conf | cut -d'=' -f2)
+		for lc in "${alang[@]}"; do
+			# Obtém os valores atuais de LANG e LANGUAGE do arquivo /etc/locale.conf
+#			current_lang=$(grep '^LANG=' /etc/locale.conf | cut -d'=' -f2)
+#			current_language=$(grep '^LANGUAGE=' /etc/locale.conf | cut -d'=' -f2)
+			current_lang=$(grep "^$lc=" /etc/locale.conf | cut -d'=' -f2)
 
-		# Verifica se os valores atuais são diferentes dos valores que seriam configurados
-		if [[ "$current_lang" != "$lang_utf8" || "$current_language" != "$lang_utf8" ]]; then
-			printf "${CYAN}=> Configurando localectl com LANG=${YELLOW}%s.UTF-8${RESET}\n" "$lang"
+			# Verifica se os valores atuais são diferentes dos valores que seriam configurados
+			if [[ "$current_lang" != "$lang_utf8" ]]; then
+				printf "${CYAN}=> Configurando localectl com LANG=${YELLOW}%s.UTF-8${RESET}\n" "$lang"
 
-			if localectl set-locale LANG="$lang_utf8"; then
-				export LC_ALL=$lang_utf8
-				configure_locale_var "LANG" "$lang_utf8" "LANG"
-				configure_locale_var "LANGUAGE" "$lang_utf8" "LANGUAGE"
+				if localectl set-locale LANG="$lang_utf8"; then
+					export LC_ALL=$lang_utf8
+					configure_locale_var "$lang_utf8"
+					break
+				else
+					printf "${RED}AVISO:${RESET} Falha ao configurar localectl. Verifique se o idioma fornecido é válido.\n"
+					return 1
+				fi
 			else
-				printf "${RED}AVISO:${RESET} Falha ao configurar localectl. Verifique se o idioma fornecido é válido.\n"
-				return 1
+				export LC_ALL=$lang_utf8
+				printf "${GREEN}=> Nenhuma alteração necessária. As variáveis de idioma já estão configuradas corretamente.${RESET}\n"
+				break
 			fi
-		else
-			printf "${GREEN}=> Nenhuma alteração necessária. As variáveis de idioma já estão configuradas corretamente.${RESET}\n"
-		fi
+		done
 	else
 		# Cria o arquivo /etc/locale.conf
 		printf "${RED}AVISO:${RESET} O arquivo /etc/locale.conf não foi encontrado. Criando o arquivo...\n"
-		echo "LANG=$lang_utf8" | sudo tee /etc/locale.conf
-		echo "LANGUAGE=$lang_utf8" | sudo tee -a /etc/locale.conf
+		for i in "${alang[@]}"; do
+			{
+				echo "$i=$lang_utf8"
+			} | sudo tee -a /etc/locale.conf
+		done
 	fi
 
 	# Carrega as variáveis de ambiente redefinidas

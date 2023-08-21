@@ -1,3 +1,4 @@
+
 #!/usr/bin/env bash
 
 : <<'comment'
@@ -52,7 +53,12 @@ comment
 #trans -T #Para conhecer os códigos de idioma que podemos usar, basta executar o seguinte comando:
 
 #declare -a idioma=(bg cs da de el en es et fi fr he hr hu is it ja ko nl no pl pt pt-BR ro ru sk sv tr uk zh)
-declare -a idioma=(en es fr it pt pt-BR)
+if [[ $# -ge 2 ]]; then
+	declare -a idioma=($2)
+else
+	declare -a idioma=(en pt-br es de it fr ru he)
+fi
+
 xgettext --verbose --from-code=UTF-8 --language=shell --keyword=gettext --output $1.pot $1
 sed -i 's/"Content-Type: text\/plain; charset=CHARSET\\n"/"Content-Type: text\/plain; charset=UTF-8\\n"/' $1.pot
 sed -i 's/"Language: \\n"/"Language: pt_BR\\n"/' $1.pot
@@ -66,30 +72,52 @@ if ! test -e $1.pot ; then
 fi
 
 for i in "${idioma[@]}"; do
-	msginit --color --locale="$i" --input $1.pot --output "$i".po --no-translator
-	echo "$i"
+	msginit --no-translator --locale="$i" --input $1.pot --output "$i".po
+	sed -i 's|Content-Type: text/plain; charset=ASCII|Content-Type: text/plain; charset=utf-8|g' "$i.po"
 	cp $i.po temp.po
 	rm $i.po
+#	msgfmt -v "$i.po" -o "$i.mo"
+#	sudo install -v "$i.mo" "/usr/share/locale/$i/LC_MESSAGES/$1.mo"
+
 	while read -r line; do
 		if grep -qi '^msgid ' <<<"$line" || grep -qi '^msgstr' <<<$line; then
 			msgid=$(echo "$line" | grep '^msgid ' | sed 's/^msgid //')
 			msgstr=$(echo "$line" | grep '^msgstr ' | sed 's/^msgstr //')
 			if [[ "$msgid" && "$msgstr" != '""' ]]; then
 				translation=$(trans -b :"$i" "$msgid")
-				echo "msgid $msgid"        >>"$i.po"
-				echo "msgstr $translation" >>"$i.po"
+				{
+					echo "msgid $msgid"
+					echo "msgstr $translation"
+				} | tee -a "$i.po"
 			fi
 		else
 			echo "$line" >>"$i.po"
 		fi
 	done <<< "$(<"temp.po")"
-	rm temp.po
+	sed -i 's/»/"/g' $i.po
+	sed -i 's/«/"/g' $i.po
+	sed -i 's/„/"/g' $i.po
+	sed -i 's/“/"/g' $i.po
+	sed -i 's/\„\“/\"\"/g' $i.po
+#	sed -i 's/\."\([^"]*\)"\./"\1."/g' "$i.po"
+#	sed -i 's|^\."|\"\.|; s|$\"\.|\.\"|' "$i.po"
+	sed -i 's/^\.\"/\"/g' $i.po
+	sed -i 's/"\."$/\."/' $i.po
+	cp $i.po temp.po
 	mkdir -p usr/share/locale/$i/LC_MESSAGES/
-	if msgfmt $i.po -o usr/share/locale/$i/LC_MESSAGES/$1.mo ; then
-		rm $i.po
+	if msgfmt -v $i.po -o usr/share/locale/$i/LC_MESSAGES/$1.mo ; then
+		:
+#		rm $i.po
 	fi
 done
 exit
+
+for i in *.po; do
+	echo $i
+	file_name="$i"
+	lang="${file_name%.po}"
+	msgfmt -v $i -o usr/share/locale/$lang/LC_MESSAGES/chili-clonedisk.mo
+done
 
 ## Substitua a chave da API do Google Translate abaixo (https://console.cloud.google.com/)
 #GOOGLE_TRANSLATE_API_KEY="SUA_CHAVE_DA_API_AQUI"

@@ -1,0 +1,166 @@
+# Italian translations for PACKAGE package.
+# Copyright (C) 2023 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-08-20 14:12-0400\n"
+"PO-Revision-Date: 2023-08-20 14:12-0400\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: chili-clonedisk:96
+msgid "Bem vindo ao "
+msgstr "Benvenuto a "
+
+#: chili-clonedisk:481
+msgid "O disco de destino é menor que o disco de origem"
+msgstr "Il disco di destinazione è più piccolo del disco di origine"
+
+#: chili-clonedisk:482
+msgid "Continue de qualquer maneira?"
+msgstr "Continua comunque?"
+
+#: chili-clonedisk:515
+msgid "Clonagem concluída!"
+msgstr "Clonazione completata!"
+
+#: chili-clonedisk:533
+msgid "É necessário desmontar a partição antes de reparticioná-la"
+msgstr "Devi smontare la partizione prima di ripartizionarla"
+
+#: chili-clonedisk:534
+msgid "** AVISO **"
+msgstr "** AVVISO **"
+
+#: chili-clonedisk:535
+msgid "ERRO"
+msgstr "ERRORE"
+
+#: chili-clonedisk:536
+msgid "Info disco"
+msgstr "Informazioni disco"
+
+#: chili-clonedisk:537
+msgid "Ok"
+msgstr "OK"
+
+#: chili-clonedisk:538
+msgid "DISCO DE DESTINO"
+msgstr "DISCO DI DESTINAZIONE"
+
+#: chili-clonedisk:539
+msgid "Escolha o disco de ORIGEM"
+msgstr "Scegli disco SORGENTE"
+
+#: chili-clonedisk:540
+msgid "Escolha o disco de DESTINO"
+msgstr "Scegli il disco di DESTINAZIONE"
+
+#: chili-clonedisk:541
+msgid "Sim"
+msgstr "SÌ"
+
+#: chili-clonedisk:542
+msgid "Não"
+msgstr "NO"
+
+#: chili-clonedisk:544
+msgid "Use as teclas"
+msgstr "Usa le chiavi"
+
+#: chili-clonedisk:545
+msgid "PARA CIMA"
+msgstr "SU"
+
+#: chili-clonedisk:546
+msgid "e"
+msgstr "È"
+
+#: chili-clonedisk:547
+msgid "PARA BAIXO"
+msgstr "GIÙ"
+
+#: chili-clonedisk:548
+msgid "para navegar"
+msgstr "navigare"
+
+#: chili-clonedisk:549
+msgid "Use"
+msgstr "Utilizzo"
+
+#: chili-clonedisk:550
+msgid "para alternar entre os botões"
+msgstr "per passare da un pulsante all'altro"
+
+#: chili-clonedisk:551
+msgid "para selecionar"
+msgstr "selezionare"
+
+#: chili-clonedisk:554
+msgid "Disco ORIGEM e DESTINO não podem ser o mesmo"
+msgstr "Il disco SORGENTE e DESTINAZIONE non possono essere uguali"
+
+#: chili-clonedisk:555
+msgid "Formatando partição"
+msgstr "Formattazione partizione"
+
+#: chili-clonedisk:556
+msgid "Executando clonagem de disco"
+msgstr "Esecuzione della clonazione del disco"
+
+#: chili-clonedisk:557
+msgid "Selecionar"
+msgstr "Selezionare"
+
+#: chili-clonedisk:558
+msgid "Sair"
+msgstr "Uscire"
+
+#: chili-clonedisk:559
+msgid "Voltar"
+msgstr "Tornare indietro"
+
+#: chili-clonedisk:560
+msgid "DISCO DE ORIGEM"
+msgstr "DISCO SORGENTE"
+
+#: chili-clonedisk:561
+msgid "AVISO!"
+msgstr "AVVISO!"
+
+#: chili-clonedisk:561
+msgid "Todos os dados disco de DESTINO abaixo serão perdidos!"
+msgstr "Tutti i dati del disco DESTINATION sottostanti andranno persi!"
+
+#: chili-clonedisk:562
+msgid "Continuar com a clonagem"
+msgstr "Continua con la clonazione"
+
+#: chili-clonedisk:574
+msgid "Escolha o idioma:"
+msgstr "Scegli la lingua:"
+
+#: chili-clonedisk:576
+msgid "Português"
+msgstr "Portoghese"
+
+#: chili-clonedisk:577
+msgid "Inglês"
+msgstr "Inglese"
+
+#: chili-clonedisk:578
+msgid "Alemão"
+msgstr "Tedesco"
+
+#: chili-clonedisk:579
+msgid "Francês"
+msgstr "Francese"
