@@ -618,7 +618,7 @@ fi
 sh_checkroot() {
 	[[ $1 = "-Qq" ]] && return
 	if [ "$(id -u)" != "0" ]; then
-		printf "${red} $(gettext "erro: Você não pode executar esta operação a menos que seja root!")\n"
+		printf "${red}%s\n" $"erro: Você não pode executar esta operação a menos que seja root!"
 		exit 1
 	fi
 }

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-20 14:01-0400\n"
-"PO-Revision-Date: 2023-08-20 14:01-0400\n"
+"POT-Creation-Date: 2023-08-21 10:12-0400\n"
+"PO-Revision-Date: 2023-08-21 10:12-0400\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: es\n"
@@ -164,3 +164,7 @@ msgstr "Alemán"
 #: chili-clonedisk:579
 msgid "Francês"
 msgstr "Francés"
+
+#: chili-clonedisk:621
+msgid "erro: Você não pode executar esta operação a menos que seja root!"
+msgstr "error: ¡No puede realizar esta operación a menos que sea root!"

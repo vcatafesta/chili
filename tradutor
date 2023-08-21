@@ -60,6 +60,7 @@ else
 fi
 
 xgettext --verbose --from-code=UTF-8 --language=shell --keyword=gettext --output $1.pot $1
+bash --dump-po-strings $1 >> $1.pot
 sed -i 's/"Content-Type: text\/plain; charset=CHARSET\\n"/"Content-Type: text\/plain; charset=UTF-8\\n"/' $1.pot
 sed -i 's/"Language: \\n"/"Language: pt_BR\\n"/' $1.pot
 
