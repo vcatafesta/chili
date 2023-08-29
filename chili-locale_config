@@ -6,7 +6,7 @@
 #  Description: Ajusta a configuração regional e de idioma de um sistema Linux utilizando a ferramenta localectl
 #
 #  Created: 2022/02/28
-#  Altered: 2023/08/20
+#  Altered: 2023/08/23
 #
 #  Copyright (c) 2023-2023, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -32,7 +32,7 @@
 #  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 APP="${0##*/}"
-_VERSION_="1.0.0-20230820"
+_VERSION_="1.0.0-20230823"
 LIBRARY=${LIBRARY:-'/usr/share/bigbashview/bcc/shell'}
 
 # Cores - Substitua pelos códigos ANSI do seu terminal, se necessário
@@ -74,7 +74,7 @@ function sh_main() {
 			else
 				printf "${CYAN}=> Variável %s não existe. Acrescentando ao arquivo.${RESET}\n" "$lc"
 				#				echo "$lc=$1" | sudo tee -a /etc/locale.conf
-				sudo echo "$lc=$1" >>/etc/locale.conf
+				sudo sh -c "echo '$lc=$1' >> /etc/locale.conf"
 			fi
 		done
 	}
@@ -125,6 +125,7 @@ function sh_main() {
 	sh_status
 	return 0
 }
+export -f sh_main
 
 function sh_usage() {
 	sh_status
@@ -165,3 +166,4 @@ else
 fi
 sh_usage
 printf "${RED}ERROR:${RESET} Forneça o parâmetro da linguagem desejada.\n"
+
