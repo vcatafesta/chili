@@ -9,7 +9,7 @@
 # 	MazonOS GNU/Linux - http://mazonos.com
 #
 # 	Created: 2019/04/05
-# 	Altered: 2023/08/29
+# 	Altered: 2023/08/30
 #
 # 	Copyright (c) 2019-2022, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -40,7 +40,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob
 
 # Import lib
-readonly _VERSION_="3.42.20230829"
+readonly _VERSION_="3.43.20230830"
 #LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 #[[ -f "${LIBRARY}/core.sh" ]] && source "${LIBRARY}/core.sh"
 SYSCONFDIR=${SYSCONFDIR:-'/etc/fetch'}
@@ -56,7 +56,7 @@ sh_setEnvironment() {
 	sh_setvarcolors
 	export LC_ALL=C
 	export LANG=C
-	readonly DEPENDENCIES=(which find tar zstd curl sed sort grep cat awk tput stat tee lynx numfmt)
+	readonly DEPENDENCIES=(which find tar zstd curl sed sort grep cat awk tput stat tee lynx numfmt gettext parallel)
 	readonly BOOTLOG="/tmp/fetch-$(sh_diahora).log"
 	readonly LOGGER='/dev/tty8'
 	unset CDPATH
@@ -66,58 +66,72 @@ sh_setEnvironment() {
 	[[ -s "$SYSCONFDIR/fetch.conf" ]] && source "$SYSCONFDIR/fetch.conf" || return 1
 
 	# files
-	FOLDERS_METAPACKAGES='folders_metapackages.csv'
-	METAPACKAGES='metapackages.csv'
-	PACKAGES_SPLIT='packages-split.csv'
-	PACKAGES_INSTALLED_SPLIT='packages-installed-split.csv'
-	PACKAGES_IN_CACHE='packages-in-cache.csv'
+	export FOLDERS_METAPACKAGES='folders_metapackages.csv'
+	export METAPACKAGES='metapackages.csv'
+	export PACKAGES_SPLIT='packages-split.csv'
+	export PACKAGES_INSTALLED_SPLIT='packages-installed-split.csv'
+	export PACKAGES_IN_CACHE='packages-in-cache.csv'
 
 	#var public
-	declare -a public_pkg_not_found=()
-	declare -a public_pkg=()
-	declare -a public_pkg_deps=()
-	declare -a public_ListSearch=()
-	declare -i public_ntotal_pkg_installed=0
-	declare -i public_ntotal_pkg_listed=0
-	declare -i public_len_count_pkg=0
+	declare -ga public_pkg_not_found=()
+	declare -ga public_pkg=()
+	declare -ga public_pkg_deps=()
+	declare -ga public_ListSearch=()
+	declare -gi public_ntotal_pkg_installed=0
+	declare -gi public_ntotal_pkg_listed=0
+	declare -gi public_len_count_pkg=0
 
 	# default
-	export PKG_EXT SEP SITE GITSITE RAW APP
-	export CACHEDIR CACHEDIR_ARCHIVES CACHEDIR_SEARCH
-	export CACHEDIR_LIST CACHEDIR_DESC CACHEDIR_REMO
+	export PKG_EXT
+	export SEP
+	export SITE
+	export GITSITE
+	export RAW
+	export APP
+	export CACHEDIR
+	export CACHEDIR_ARCHIVES
+	export CACHEDIR_SEARCH
+	export CACHEDIR_LIST
+	export CACHEDIR_DESC
+	export CACHEDIR_REMO
 	export VARLIB_FETCH
 	export DESCME
 	export ALIEN_CACHE_DIR="${ALIEN_CACHE_DIR:=/var/cache/pacman/pkg}"
 	export ALIEN_VARLIB="/var/lib/pacman/local"
 
-	verbose=0
-	SEP=','
+	# Número máximo de processos paralelos
+	#	export MAX_PARALLEL=36
+	export MAX_PARALLEL=80%
+
+	export verbose=0
+	export SEP=','
 	: "${PKG_EXT:='chi.zst'}" # se PKG_EXT não estiver definida, recebe 'chi.zst'
 	: "${GITSITE:=0}"         # se GITSITE não estiver definida, recebe 0
-	SITE="${PKG_SITE:=https://chililinux.com}"
-	RAW="${PKG_RAW:=https://raw.githubusercontent.com/vcatafesta/ChiliOS/master}"
-	APP="fetch"
-	APP="${0##*/}"
-	CACHEDIR="${CACHEDIR:=/var/cache/$APP}"
-	CACHEDIR_ARCHIVES="$CACHEDIR/archives"
-	CACHEDIR_SEARCH="$CACHEDIR/search"
-	CACHEDIR_LIST="$CACHEDIR/list"
-	CACHEDIR_DESC="$CACHEDIR/desc"
-	CACHEDIR_REMO="$CACHEDIR/remove"
-	DESCME='info/desc'
-	VARLIB_FETCH="/var/lib/$APP"
-	CHILI_OS=$true
+	export SITE="${PKG_SITE:=https://chililinux.com}"
+	export RAW="${PKG_RAW:=https://raw.githubusercontent.com/vcatafesta/ChiliOS/master}"
+	export APP="fetch"
+	export APP="${0##*/}"
+	export CACHEDIR="${CACHEDIR:=/var/cache/$APP}"
+	export CACHEDIR_ARCHIVES="$CACHEDIR/archives"
+	export CACHEDIR_SEARCH="$CACHEDIR/search"
+	export CACHEDIR_LIST="$CACHEDIR/list"
+	export CACHEDIR_DESC="$CACHEDIR/desc"
+	export CACHEDIR_REMO="$CACHEDIR/remove"
+	export DESCME='info/desc'
+	export VARLIB_FETCH="/var/lib/$APP"
+	export CHILI_OS=$true
 
 	# flag's para split package
-	: "${aPKGSPLIT=()}"
-	: "${aPKGLIST=}"
-	: "${PKG_FOLDER_DIR=0}"
-	: "${PKG_FULLNAME=1}"
-	: "${PKG_ARCH=2}"
-	: "${PKG_BASE=3}"
-	: "${PKG_BASE_VERSION=4}"
-	: "${PKG_VERSION=5}"
-	: "${PKG_BUILD=6}"
+	declare -ga aPKGARRAY=()
+	declare -ga aPKGSPLIT=()
+	export aPKGLIST
+	export PKG_FOLDER_DIR=0
+	export PKG_FULLNAME=1
+	export PKG_ARCH=2
+	export PKG_BASE=3
+	export PKG_BASE_VERSION=4
+	export PKG_VERSION=5
+	export PKG_BUILD=6
 
 	if [[ -z "${COLUMNS}" ]]; then
 		COLUMNS=$(stty size)
@@ -129,50 +143,50 @@ sh_setEnvironment() {
 	COL=$((COLUMNS - 8))
 	SET_COL="\\033[${COL}G" # at the $COL char
 	CURS_ZERO="\\033[0G"
-#	CURS_ZERO="$(tput sc;tput cr)"
+	#	CURS_ZERO="$(tput sc;tput cr)"
 
 	#temporary
-	TMP_DIR_ROOT="$(mktemp -d -u)"
-	TMP_DIR_BACKUP="$TMP_DIR_ROOT/$APP/$CACHEDIR_SEARCH"
-	TMP_DIR_FOLDERS="$TMP_DIR_ROOT/$APP/$CACHEDIR/folders"
+	export TMP_DIR_ROOT="$(mktemp -d -u)"
+	export TMP_DIR_BACKUP="$TMP_DIR_ROOT/$APP/$CACHEDIR_SEARCH"
+	export TMP_DIR_FOLDERS="$TMP_DIR_ROOT/$APP/$CACHEDIR/folders"
 
 	# regex's
 	#DATE_RE='(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})'	#2022-03-16 14:22
 	#RE_ALIEN='.+\.zst$|.+\.xz$' 						#VC
 	#RE_ALIEN='.+\.[zst|xz]+$'  						#VC
-	RE_ALIEN='.+\.(zst|xz)$' #Bagatini/Blau
+	export RE_ALIEN='.+\.(zst|xz)$' #Bagatini/Blau
 
 	if [[ "$PKG_EXT" = "chi.zst" ]]; then
-		CHILI_OS=$true
+		export CHILI_OS=$true
 		#PKG_RE='^([a-z-]+)(-)([0-9\\.]+)(-)([0-9])(-)(.*)(.chi.zst)$'
 		#PKG_RE='([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)-(([0-9]+(\.[0-9]+)*)(-([0-9]+))?)-([^.]+).*'
 		#PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 				#SOEN
 		#		PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst'    			#VC
-		PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)(\.chi\.zst)$' #VC
+		export PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)(\.chi\.zst)$' #VC
 		#		PKG_RE_LYNX='(?!.*\/)(.*)-(([^-]+)-([0-9]+))-([^.]+)(\.chi\.zst)$'
 		#		PKG_RE_FULL1='(?:")(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst(?="><a)'
 		#		PKG_RE_FULL2='(?:e">)(.+)-(([^-]+)-([0-9]+))-([^.]+)(\.chi)(\.zst)(?=<\/a)'
 		GREP_RE='.chi\.zst\"'
 		#SED_RE='^.+>(.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).*[ ]([0-9]+k?)(.*)'
 		#SED_RE='^.+="(.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)".+<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).+[ ]([0-9]+k?)(.*)'
-		SED_RE='^.*["|\/](.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)".+<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).+[ ]([0-9]+k?).*'
+		export SED_RE='^.*["|\/](.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)".+<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).+[ ]([0-9]+k?).*'
 		#		FETCH_RE='-[^a-z]+?[^-]+-[0-9].*-'
 		#		FETCH_RE='-[^-]+-[0-9]-'
 		#		FETCH_RE='-[^-]+[0-9]+-[^.]+.chi.*'
 		#		FETCH_RE='-[^-]+[0-9]+[^.]*\.chi[^.]*\.zst'
-		FETCH_RE='-[^-]+[0-9]+[^.]*.chi[^.]*.zst'
+		export FETCH_RE='-[^-]+[0-9]+[^.]*.chi[^.]*.zst'
 	else
-		CHILI_OS=$false
+		export CHILI_OS=$false
 		#PKG_RE='(.+)-(([^-]+)-([0-9]+))\.mz' 						#SOEN
-		PKG_RE='(.+)-(([^-]+)-([0-9]))\.mz' #VC
+		export PKG_RE='(.+)-(([^-]+)-([0-9]))\.mz' #VC
 		#		PKG_RE_LYNX='(?!.*\/)(.+)-(([^-]+)-([0-9]))\.mz$'		#VC
-		GREP_RE='.mz\"'
+		export GREP_RE='.mz\"'
 		#		SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9]+[.]?[0-9]+.?).+'
-		SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9]?[.]?[0-9]?.?).+'
+		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9]?[.]?[0-9]?.?).+'
 		#		SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9.])+([BKMGT]?)\b'
 		#		SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9.]+)+([BKMGT])?'
-		SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+(([0-9]+)([BKMGT]?)).+'
-		FETCH_RE='-[^-]+-[0-9]+[.]'
+		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+(([0-9]+)([BKMGT]?)).+'
+		export FETCH_RE='-[^-]+-[0-9]+[.]'
 	fi
 }
 
@@ -189,15 +203,15 @@ function toupperA() { tr '[:lower:]' '[:upper:]' <<<"$1"; }
 function tolowerA() { tr '[:upper:]' '[:lower:]' <<<"$1"; }
 function sh_linecount() { awk 'END {print NR}' "$1"; }
 function strzero() { printf "%0*d" "$2" "$1"; }
+export -f strzero
+function DOT() { printf "%s" "${blue}:: ${reset}"; }
+function info_msg() { printf "%s" "\033[1m$*\n\033[m"; }
+function sizeof_du() { du -bs $1 | cut -f1; }
+function lenarray() { sh_linecount <<<"$(printf "%s\n" "$*")"; }
 function arraylen() {
 	local new=("$@")
 	echo "${#new[*]}"
 }
-
-function DOT()        { printf "%s" "${blue}:: ${reset}"; }
-function info_msg()   { printf "%s" "\033[1m$*\n\033[m"; }
-function sizeof_du()  { du -bs $1 | cut -f1; }
-function lenarray()   { sh_linecount <<<"$(printf "%s\n" "$*")"; }
 
 function sh_diahora() {
 	DIAHORA=$(date +"%d%m%Y-%T" | sed 's/://g')
@@ -261,7 +275,7 @@ function die() {
 
 	((pcount >= 2)) && {
 		retval=$2
-#		shift
+		#		shift
 	}
 	if [[ $retval -eq 0 ]]; then
 		printf " %b %s\\n" "${TICK}" "${msg}"
@@ -399,14 +413,13 @@ log_success_msg() {
 #}
 
 function log_success_msg2() {
-    #echo -n -e "${BMPREFIX}${@}"
-    #echo -e "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${SUCCESS_SUFFIX}"
-    printf "${BMPREFIX}${@}"
-    printf "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${SUCCESS_SUFFIX}\n"
-    #echo " OK" >> ${BOOTLOG}
-    return 0
+	#echo -n -e "${BMPREFIX}${@}"
+	#echo -e "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${SUCCESS_SUFFIX}"
+	printf "${BMPREFIX}${@}"
+	printf "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${SUCCESS_SUFFIX}\n"
+	#echo " OK" >> ${BOOTLOG}
+	return 0
 }
-
 
 function sh_adel() {
 	local arr=("$@")
@@ -435,6 +448,7 @@ function debug() {
 	fi
 	return $result
 }
+export -f debug
 
 function info() {
 	dialog \
@@ -448,6 +462,7 @@ function info() {
 	fi
 	return $result
 }
+export -f info
 
 function sh_checkroot() {
 	local str="root user check"
@@ -488,11 +503,13 @@ function human_to_bytes() {
 	LC_ALL=C numfmt --from=iec "$size"
 	return "$?"
 }
+export -f human_to_bytes
 
 function human_to_size() {
 	human_to_bytes "$1"
 	return "$?"
 }
+export human_to_size
 
 function size_to_human() {
 	local size="$1"
@@ -500,6 +517,22 @@ function size_to_human() {
 	LC_ALL=C numfmt --to=si "$size"
 	return "$?"
 }
+export -f size_to_human
+
+function log_err() {
+	local msg=$1
+	local retval="${PIPESTATUS[0]}"
+	local pcount=$#
+
+	((pcount >= 2)) && {
+		retval=$2
+		shift
+	}
+	if ((verbose)); then
+		[[ $retval -eq 0 ]] && printf " %b %s\\n" "${TICK}" "${msg}" || printf " %b %s\\n" "${CROSS}" "${msg}"
+	fi
+}
+export -f log_err
 
 function log_msg() {
 	local retval="${PIPESTATUS[0]}"
@@ -509,48 +542,46 @@ function log_msg() {
 		retval=$1
 		shift
 	}
-	if [[ $retval -eq 0 ]]; then
-		printf " %b %s\\n" "${TICK}" "${*}"
-	else
-		printf " %b %s\\n" "${CROSS}" "${*}"
-	fi
+	#	if ((verbose)); then
+	[[ $retval -eq 0 ]] && printf " %b %s\\n" "${TICK}" "${*}" || printf " %b %s\\n" "${CROSS}" "${*}"
+	#	fi
 }
+export -f log_msg
 
 sh_setvarcolors() {
 	if tput setaf 1 &>/dev/null; then
-		tput sgr0 # reset colors
-		bold=$(tput bold)
-		reset=$(tput sgr0)
-		rst=$(tput sgr0)
-		rs=$(tput sgr0)
-	    black=$(tput bold)$(tput setaf 0)
-        red=$(tput bold)$(tput setaf 196)
-        green=$(tput bold)$(tput setaf 2)
-        yellow=$(tput bold)$(tput setaf 3)
-		blue=$(tput setaf 33)
-		cyan=$(tput setaf 37)
-		orange=$(tput setaf 166)
-		purple=$(tput setaf 125)
-		violet=$(tput setaf 61)
-		pink=$(tput setaf 129)
-		white=$(tput bold)$(tput setaf 7)
+		export bold=$(tput bold)
+		export reset=$(tput sgr0)
+		export rst=$(tput sgr0)
+		export rs=$(tput sgr0)
+		export black=$(tput bold)$(tput setaf 0)
+		export red=$(tput bold)$(tput setaf 196)
+		export green=$(tput bold)$(tput setaf 2)
+		export yellow=$(tput bold)$(tput setaf 3)
+		export blue=$(tput setaf 33)
+		export cyan=$(tput setaf 37)
+		export orange=$(tput setaf 166)
+		export purple=$(tput setaf 125)
+		export violet=$(tput setaf 61)
+		export pink=$(tput setaf 129)
+		export white=$(tput bold)$(tput setaf 7)
 	else
-		bold=''
-		reset="\e[0m"
-		rst="\e[0m"
-		rs="\e[0m"
-		reset="\e[0m"
-		blue="\e[1;34m"
-		cyan="\e[1;36m"
-		green="\e[1;32m"
-		orange="\e[1;33m"
-		purple="\e[1;35m"
-		red="\e[1;31m"
-		violet="\e[1;35m"
-		white="\e[1;37m"
-		yellow="\e[1;33m"
-		pink="\033[35;1m"
-		black="\e[1;30m"
+		export bold=''
+		export reset="\e[0m"
+		export rst="\e[0m"
+		export rs="\e[0m"
+		export reset="\e[0m"
+		export blue="\e[1;34m"
+		export cyan="\e[1;36m"
+		export green="\e[1;32m"
+		export orange="\e[1;33m"
+		export purple="\e[1;35m"
+		export red="\e[1;31m"
+		export violet="\e[1;35m"
+		export white="\e[1;37m"
+		export yellow="\e[1;33m"
+		export pink="\033[35;1m"
+		export black="\e[1;30m"
 	fi
 }
 
@@ -617,14 +648,17 @@ function clinesplit() {
 		"${aPKGSPLIT[$PKG_SIZE]}$SEP" \
 		"${aPKGSPLIT[$PKG_FOLDER_DIR]}"
 }
+export -f clinesplit
 
 function clineascan() {
 	printf "%s\n" "${aPKGARRAY[0]}$SEP${aPKGARRAY[1]}$SEP${aPKGARRAY[2]}$SEP${aPKGARRAY[3]}$SEP${aPKGARRAY[4]}$SEP${aPKGARRAY[5]}$SEP${aPKGARRAY[6]}"
 }
+export -f clineascan
 
 function clineinstallascan() {
 	printf "%s" "${aPKGARRAY[5]}  $(size_to_human "${aPKGARRAY[6]}")"
 }
+export -f clineinstallascan
 
 function sh_arraypkgfullVET() {
 	OLDIFS=$IFS
@@ -633,14 +667,14 @@ function sh_arraypkgfullVET() {
 
 	public_len_count_pkg=0
 
-	declare -a public_pkg_base
-	declare -a public_pkg_version
-	declare -a public_pkg_build
-	declare -a public_pkg_fullname
-	declare -a public_pkg_dirfullname
-	declare -a public_pkg_base_version
-	declare -a public_pkg_size
-	declare -a public_pkg_site
+	declare -ga public_pkg_base
+	declare -ga public_pkg_version
+	declare -ga public_pkg_build
+	declare -ga public_pkg_fullname
+	declare -ga public_pkg_dirfullname
+	declare -ga public_pkg_base_version
+	declare -ga public_pkg_size
+	declare -ga public_pkg_site
 	local ind=0
 
 	((verbose >= 2)) && log_msg "Checking packages"
@@ -665,14 +699,14 @@ function sh_arraypkgfullIFS() {
 	[[ $# -eq 0 ]] && file_list_packages="$CACHEDIR_SEARCH/$PACKAGES_SPLIT"
 
 	public_len_count_pkg=0
-	export public_pkg_base
-	export public_pkg_version
-	export public_pkg_build
-	export public_pkg_fullname
-	export public_pkg_dirfullname
-	export public_pkg_base_version
-	export public_pkg_size
-	export public_pkg_site
+	export -ga public_pkg_base
+	export -ga public_pkg_version
+	export -ga public_pkg_build
+	export -ga public_pkg_fullname
+	export -ga public_pkg_dirfullname
+	export -ga public_pkg_base_version
+	export -ga public_pkg_size
+	export -ga public_pkg_site
 
 	((verbose >= 2)) && log_msg "Checking packages"
 
@@ -715,14 +749,25 @@ function sh_arraypkgfull() {
 	mapfile -t public_pkg_size <<<"$(awk -F"$SEP" '{ print $7 }' "$file_list_packages")"
 	mapfile -t public_pkg_site <<<"$(awk -F"$SEP" '{ print $8 }' "$file_list_packages")"
 
+	export public_pkg_base
+	export public_pkg_version
+	export public_pkg_build
+	export public_pkg_fullname
+	export public_pkg_dirfullname
+	export public_pkg_base_version
+	export public_pkg_size
+	export public_pkg_site
+
 	public_len_count_pkg="${#public_pkg_base[*]}"
 	return 0
 }
+export sh_arraypkgfull
 
 function callback() {
 	local IFS=,
 	eval linha"$1="\("$2"\)
 }
+export -f callback
 
 function sh_arraypkgfullMapfile() {
 	local acampo=()
@@ -768,6 +813,7 @@ function sh_arraypkgfullMapfile() {
 	public_len_count_pkg=${#public_pkg_base[*]}
 	return 0
 }
+export -f sh_arraypkgfullMapfile
 
 function sh_ascanpkg() {
 	#	local pkgsearch="^$1$"
@@ -814,6 +860,7 @@ function sh_ascanpkg() {
 	fi
 	return 0
 }
+export -f sh_ascanpkg
 
 function sh_ascanpkgGrep() {
 	local pkgsearch="$1"
@@ -848,6 +895,7 @@ function sh_ascanpkgGrep() {
 	)
 	return 0
 }
+export -f sh_ascanpkgGrep
 
 function sh_ascanpkgGrep2() {
 	local pkgsearch="$1"
@@ -882,10 +930,12 @@ function sh_ascanpkgGrep2() {
 	)
 	return 0
 }
+export -f sh_ascanpkgGrep2
 
 function sh_cabec() {
 	printf "(${pink}%04d)${green} sts package%47sversion%8s%11ssize fullbasename\n" "$1"
 }
+export -f sh_cabec
 
 function sh_write() {
 	local pkgsearch="$1"
@@ -930,11 +980,13 @@ function sh_write() {
 	fi
 	return 0
 }
+export -f sh_write
 
 function sh_footer() {
 	local pkgCheckNumber=$1
 	log_msg "${green}($pkgCheckNumber)${reset} package(s) found."
 }
+export -f sh_footer
 
 # -La
 function sh_list() {
@@ -983,6 +1035,7 @@ function sh_list() {
 	sh_writetable "${pkg[*]}" '0' "$nfiles"
 	return $?
 }
+export -f sh_list
 
 # -Li
 function sh_listinstalled() {
@@ -996,6 +1049,7 @@ function sh_listinstalled() {
 	[[ -z "${param}" ]] && LALL=$true || LALL=$false
 	sh_listpkgdisp "$CACHEDIR_SEARCH/$PACKAGES_INSTALLED_SPLIT" "$param"
 }
+export -f sh_listinstalled
 
 # -Li
 function sh_listpkgdisp() {
@@ -1101,6 +1155,7 @@ function sh_listpkgdisp() {
 	fi
 	return 1
 }
+export -f sh_listpkgdisp
 
 function sh_writetable() {
 	#	local arr=($1)
@@ -1156,6 +1211,7 @@ function sh_writetable() {
 	fi
 	return 0
 }
+export -f sh_writetable
 
 function sh_checknet() {
 	# have internet?
@@ -1166,10 +1222,12 @@ function sh_checknet() {
 	((verbose >= 2)) && log_msg $ERR_ERROR "Testing internet from ${SITE} - No route to server ($SITE) - ABORTED."
 	return 1
 }
+export -f sh_checknet
 
 function sh_cdroot() {
 	cd - >/dev/null 2>&-
 }
+export -f sh_cdroot
 
 function sh_selfupdate() {
 	local param="$*"
@@ -1325,6 +1383,45 @@ function sh_updaterepo() {
 	popd >/dev/null 2>&- || return 1
 }
 
+# Função para processar uma pasta
+process_folder_update() {
+	Folders="$1"
+	FOLDER_TEMP="$TMP_DIR_FOLDERS/$Folders"
+	if response=$(curl --compressed -k -s -w "%{http_code}\n" --url "$SITE/packages/$Folders/" --output "$FOLDER_TEMP") && [[ "$response" = "404" ]]; then
+		log_msg $ERR_ERROR "${red}error${reset}: $response Not Found ${orange}==> $SITE/packages/$Folders/"
+		exit 1
+	fi
+	mapfile -t SizePkgInFolders < <(sed -nE "s/$SED_RE/\9/p" "$FOLDER_TEMP")
+
+	if [[ "$Folders" != "meta" ]]; then
+		if ((CHILI_OS)); then
+			mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2-\5\6/p" "$FOLDER_TEMP")
+		else
+			mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2\6/p" "$FOLDER_TEMP")
+		fi
+		count=0
+		for pkgInFolder in "${PackagesInFolders[@]}"; do
+			if [[ -n "$pkgInFolder" ]]; then
+				sh_splitpkg "$pkgInFolder"
+				pkg_size=$(human_to_bytes "${SizePkgInFolders[$count]}")
+				echo "${aPKGSPLIT[$PKG_BASE]}$SEP${aPKGSPLIT[$PKG_VERSION]}$SEP${aPKGSPLIT[$PKG_BUILD]}$SEP${aPKGSPLIT[$PKG_FULLNAME]}$SEP${Folders}/${pkgInFolder}$SEP${aPKGSPLIT[$PKG_BASE_VERSION]}$SEP${pkg_size}" >>"$CACHEDIR_SEARCH/$PACKAGES_SPLIT"
+				((++count))
+			fi
+		done
+	else
+		mapfile -t MetaPkgInFolders <<<"$(lynx -listonly -nonumbers -dump "$SITE/packages/$Folders/" | grep -Po '.*\/\K.*')"
+		count=0
+		for MetaInFolder in "${MetaPkgInFolders[@]}"; do
+			echo "$Folders/$MetaInFolder" >>"$FOLDERS_METAPACKAGES"
+			echo "$MetaInFolder" >>"$METAPACKAGES"
+			((++count))
+		done
+	fi
+	log_msg "Updating... ${red}$(strzero "$count" 5)${blue} packages in ${yellow}$Folders"
+}
+# Exporta a função para uso com o parallel
+export -f process_folder_update
+
 # -Syy
 function sh_update() {
 	local response
@@ -1373,6 +1470,7 @@ function sh_update() {
 	log_msg "${pink}Synchronizing package databases from $SITE/packages/"
 	#	spinner & SPINNERPID=$!
 
+	: <<'comment'
 	for Folders in "${FoldersInRepo[@]}"; do
 		FOLDER_TEMP="$TMP_DIR_FOLDERS/$Folders"
 		if response=$(curl --compressed -k -s -w "%{http_code}\n" --url "$SITE/packages/$Folders/" --output "$FOLDER_TEMP") && [[ "$response" = "404" ]]; then
@@ -1407,9 +1505,22 @@ function sh_update() {
 		fi
 		log_msg "Updating... ${red}$(strzero "$count" 5)${blue} packages in ${yellow}$Folders"
 	done
+comment
+
+	# Lista de pastas a serem processadas (substitua pela sua própria lista)
+	#	dw=("folder1" "folder2" "folder3")
+
+	# Processa as pastas em paralelo
+
+	parallel --gnu --jobs $MAX_PARALLEL process_folder_update ::: "${FoldersInRepo[@]}" &
+#	for Folders in "${FoldersInRepo[@]}"; do
+#		parallel --gnu --jobs $MAX_PARALLEL process_folder_update ::: "$Folders" &
+#	done
+	wait
+
 	#	{ kill $SPINNERPID; wait $SPINNERPID 2>/dev/null; echo ;}
 
-	#	LLIST=$true ; sh_recreatefilepackagesinstalled
+#	LLIST=$true ; sh_recreatefilepackagesinstalled
 	verbose=$oldverbose
 	sh_pkgincache
 	sh_cleaning
@@ -1466,6 +1577,7 @@ function sh_updateMazon() {
 	log_msg "${pink}Synchronizing package databases from ${SITE}${reset}"
 	#spinner & SPINNERPID=$!
 
+	: <<'comment'
 	for Folders in ${FoldersInRepo[@]}; do
 		FOLDER_TEMP="$TMP_DIR_FOLDERS/$Folders"
 		response=$(curl --compressed --insecure -s -w "%{http_code}\n" -k --url "$SITE/packages/$Folders/" --output "$FOLDER_TEMP")
@@ -1484,7 +1596,7 @@ function sh_updateMazon() {
 			else
 				mafile -t MetaPkgInFolders <<<"$(sed 's/^.*href="//' "$FOLDER_TEMP" | sed 's/".*$//' | sed 's/\// /g' | grep -E ".meta$" | awk '{print $NF}')"
 			fi
-			mapfile -t SizePkgInFolders < <(grep -E "$GREP_RE $FOLDER_TEMP" | awk '{print $9}' | cut -d'"' -f2)
+#			mapfile -t SizePkgInFolders < <(grep -E "$GREP_RE $FOLDER_TEMP" | awk '{print $9}' | cut -d'"' -f2)
 			;;
 		esac
 
@@ -1506,9 +1618,63 @@ function sh_updateMazon() {
 		cstrvalue=$(strzero "$count" 5)
 		log_success_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
 	done
+comment
+
+	# Função para processar uma pasta
+	process_folder() {
+		Folders="$1"
+		FOLDER_TEMP="$TMP_DIR_FOLDERS/$Folders"
+		response=$(curl --compressed --insecure -s -w "%{http_code}\n" -k --url "$SITE/packages/$Folders/" --output "$FOLDER_TEMP")
+
+		case ${HTTP_SERVER} in
+		Apache | nginx)
+			if [[ $Folders != "meta" ]]; then
+				mapfile -t PackagesInFolders < <(grep -Eo '>'"$PKG_RE"'<' "$FOLDER_TEMP" | sed 's/>//g; s/<//g')
+			else
+				mapfile -t MetaPkgInFolders < <(grep -E '.meta\"' "$FOLDER_TEMP" | cut -d'"' -f2)
+			fi
+			mapfile -t SizePkgInFolders < <(grep -E "$GREP_RE" "$FOLDER_TEMP" | awk '{print $5}')
+			;;
+		LiteSpeed | GitHub.com | cloudflare)
+			if [[ $Folders != "meta" ]]; then
+				mapfile -t PackagesInFolders <<<"$(sed 's/^.*href="//' "$FOLDER_TEMP" | sed 's/".*$//' | sed 's/\// /g' | grep -E ".${PKG_EXT}$" | awk '{print $NF}')"
+			else
+				mapfile -t MetaPkgInFolders <<<"$(sed 's/^.*href="//' "$FOLDER_TEMP" | sed 's/".*$//' | sed 's/\// /g' | grep -E ".meta$" | awk '{print $NF}')"
+			fi
+			mapfile -t SizePkgInFolders < <(grep -E "$GREP_RE $FOLDER_TEMP" | awk '{print $9}' | cut -d'"' -f2)
+			;;
+		esac
+
+		count=0
+		if [[ $Folders != "meta" ]]; then
+			for pkgInFolder in "${PackagesInFolders[@]}"; do
+				sh_splitpkg "$pkgInFolder"
+				pkg_size="${SizePkgInFolders[$count]}"
+				echo "${aPKGSPLIT[$PKG_BASE]}$SEP${aPKGSPLIT[$PKG_VERSION]}$SEP${aPKGSPLIT[$PKG_BUILD]}$SEP${aPKGSPLIT[$PKG_FULLNAME]}$SEP${Folders}/${pkgInFolder}$SEP${aPKGSPLIT[$PKG_BASE_VERSION]}$SEP${pkg_size}"
+				((count++))
+			done
+		else
+			for MetaInFolder in "${MetaPkgInFolders[@]}"; do
+				echo "${Folders}/${MetaInFolder}" >>"$FOLDERS_METAPACKAGES"
+				echo "${MetaInFolder}" >>"$METAPACKAGES"
+				((count++))
+			done
+		fi
+		cstrvalue=$(strzero "$count" 5)
+		log_success_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
+	}
+
+	# Obtém a lista de pastas a serem processadas (substitua por sua própria lista)
+	#	FoldersInRepo=("folder1" "folder2" "folder3")
+
+	# Processa as pastas em paralelo
+	export -f process_folder
+	parallel --gnu --jobs $MAX_PARALLEL process_folder ::: "${FoldersInRepo[@]}" &
+	wait
+
 	#	{ kill $SPINNERPID; wait $SPINNERPID 2>/dev/null; echo ;}
 
-	#sh_recreatefilepackagesinstalled
+#	LLIST=$true ; sh_recreatefilepackagesinstalled
 	sh_pkgincache
 	sh_cleaning
 	unset FOLDER_TEMP
@@ -1979,7 +2145,7 @@ sh_getdeps() {
 		pkgdep=$(grep ^"$i$SEP" "$CACHEDIR_SEARCH/$PACKAGES_SPLIT" | awk -F"$SEP" '{print $5}')
 		if [[ -z "$pkgdep" ]]; then
 			if ((verbose)); then
-				printf "${red}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${i}" "WARNING! Dependency not found in the database. ${reset}Use: # fetch -Syy to update with the repository${reset}"
+				printf "${red}%s(%04d) ${orange}%-40s ${reset}%-40s\n" "     " "$ncontadep" "${i}" "CUIDADO! Dependency not found in the database. ${reset}Use: # fetch -Syy to update with the repository${reset}"
 			fi
 		else
 			GETDEPS+=("$pkgdep")
@@ -2058,6 +2224,7 @@ comment
 	fi
 	return 1
 }
+export -f sh_splitpkg
 
 sh_splitpkgIFS() {
 	local file=$1
@@ -2168,7 +2335,7 @@ function sh_install() {
 	local ntotal_pkg_listed=0
 
 	SPLITPOS='4'
-#	LTABLE=$true
+	#	LTABLE=$true
 	LEXACT=$true
 	sh_listpkgdisp "$CACHEDIR_SEARCH/$PACKAGES_SPLIT" "$param" || return 1
 	ntotal_pkg_listed=$public_ntotal_pkg_listed
@@ -2456,7 +2623,9 @@ sh_recreateFilesFromArch() {
 	fi
 	return 1
 }
+export -f sh_recreateFilesFromArch
 
+: <<'comment'
 # -Sr
 function sh_recreatefilepackagesinstalled() {
 	local re='(.+)-(([^-]+)-([0-9]))+[.](desc)$'
@@ -2489,7 +2658,7 @@ function sh_recreatefilepackagesinstalled() {
 			package=${package%.desc*}
 			status=' I '
 			clisting='N'
-#			LTABLE=$true
+			#			LTABLE=$true
 			((LTABLE)) && verbose=2
 			((verbose > 1)) && clisting=''
 
@@ -2507,15 +2676,78 @@ function sh_recreatefilepackagesinstalled() {
 					fi
 				fi
 			else
-				if (( verbose )); then
-					log_msg "${yellow}WARNING ${cyan}package $package not found"
-				fi
+				log_err "${yellow}CUIDADO ${cyan}pacote $package não encontrado" "$?"
 			fi
 		done
 		lresult=0
 	fi
-	log_msg "${yellow}($nfiles) ${cyan}packages found            - (old packages removed manual?)"
-	log_msg "${yellow}($pkgNumber) ${cyan}packages installed/listed - (use -Sr --verbose or --table for listing)"
+	log_msg "${yellow}($nfiles) ${cyan}pacotes encontrados         - (pacotes antigos removidos manualmente?)"
+	log_msg "${yellow}($pkgNumber) ${cyan}pacotes instalados/listados - (usar -Sr --verbose ou --table para listar)"
+	return $lresult
+}
+comment
+
+# -Sr
+function sh_recreatefilepackagesinstalled() {
+	local re='(.+)-(([^-]+)-([0-9]))+[.](desc)$'
+	local item
+	local package
+	local pkgNumber=0
+	local nfiles
+	local aCache
+	local lresult=1
+	local cbase
+
+	# Função para processar um pacote
+	process_package_recreate() {
+		item="$1"
+		[[ -z "$item" ]] && return
+		package=${item##*/}
+		package=${package%.desc*}
+		status=' I '
+		clisting='N'
+		((LTABLE)) && verbose=2
+		((verbose > 1)) && clisting=''
+
+		if sh_ascanpkg "$package" '5'; then
+			cbase="${aPKGARRAY[0]}"
+			clineascan >>"$CACHEDIR_SEARCH/$PACKAGES_INSTALLED_SPLIT"
+			if ((verbose > 1)); then
+				sh_write "$cbase" '-1' $((pkgNumber)) "$status" "$clisting"
+				printf " %b ${pink}(%d)${reset} %-100s\r" "${TICK}" "$((nfiles - pkgNumber))" "$cbase"
+			else
+				cline="$(sh_write "$cbase" '-1' $((pkgNumber)) "$status" "$clisting")"
+				if [[ -n "$cline" ]]; then
+					printf " %b ${pink}(%d)${reset} %-200s\r" "${TICK}" "$((nfiles - pkgNumber))" "$cline"
+				fi
+			fi
+		else
+			log_err "${yellow}CUIDADO ${cyan}pacote $package não encontrado" "$?"
+		fi
+	}
+	# Exporta a função para uso com o parallel
+	export -f process_package_recreate
+
+	((verbose > 1)) && log_msg "Recreating installed packages list"
+	sh_recreateFilesFromArch
+	((verbose > 1)) && log_msg "Reading lists of installed packages"
+	printf '' >|"$CACHEDIR_SEARCH/$PACKAGES_INSTALLED_SPLIT"
+
+	# Lista de arquivos de descrição de pacotes
+#	aCache=("$CACHEDIR_DESC"/*)
+	mapfile -t aCache < <(printf '%s\n' "$CACHEDIR_DESC"/* | awk -F "$re" 'list[$1]++')
+	nfiles="${#aCache[@]}"
+	pkgNumber=0
+
+	if ((nfiles)); then
+		# Processa os pacotes em paralelo
+		parallel --gnu --jobs $MAX_PARALLEL process_package_recreate ::: "${aCache[@]}" &
+		wait
+
+		log_msg "${yellow}($nfiles) ${cyan}pacotes encontrados         - (pacotes antigos removidos manualmente?)"
+		log_msg "${yellow}($pkgNumber) ${cyan}pacotes instalados/listados - (usar -Sr --verbose ou --table para listar)"
+		lresult=0
+	fi
 	return $lresult
 }
 
@@ -2786,29 +3018,29 @@ sh_generate_desc() {
 	fi
 	[[ -z "$SIZE" ]] && SIZE=$(sizeof_du .)
 
-	cat >"info/desc" <<EOF
-######################################################################
-# Generated with fetch    - https://chililinux.com
-# Generated with alienpkg - https://chililinux.com
-######################################################################
-maintainer='$MAINTAINER'
-pkgname='$DESC_PACKNAME'
-version='$DESC_VERSION'
-build='$DESC_BUILD'
-pkgver='$field_pkgver'
-pkgrel='$field_pkgrel'
-license='$LICENSE'
-lfs_version='$LFS_VERSION'
-lfs_init='$LFS_INIT'
-arch='$ARCH'
-distro='$DISTRO'
-desc='$DESC'
-pkgdesc='$DESC'
-size='$SIZE'
-url='$URL'
-source=('')
-dep=('')
-EOF
+	cat >"info/desc" <<-EOF
+		######################################################################
+		# Generated with fetch    - https://chililinux.com
+		# Generated with alienpkg - https://chililinux.com
+		######################################################################
+		maintainer='$MAINTAINER'
+		pkgname='$DESC_PACKNAME'
+		version='$DESC_VERSION'
+		build='$DESC_BUILD'
+		pkgver='$field_pkgver'
+		pkgrel='$field_pkgrel'
+		license='$LICENSE'
+		lfs_version='$LFS_VERSION'
+		lfs_init='$LFS_INIT'
+		arch='$ARCH'
+		distro='$DISTRO'
+		desc='$DESC'
+		pkgdesc='$DESC'
+		size='$SIZE'
+		url='$URL'
+		source=('')
+		dep=('')
+	EOF
 
 	for i in ${deps[@]}; do
 		echo depend="'$i'" >>"$DESCME"
@@ -2875,7 +3107,7 @@ sh_initinstallpkg() {
 	local nfiles
 
 	if ! ((LALL)); then
-#		test $# -lt 1 && die "${red}erro${reset}: nenhum alvo definido (use -h para obter ajuda)" $true
+		#		test $# -lt 1 && die "${red}erro${reset}: nenhum alvo definido (use -h para obter ajuda)" $true
 		test $# -lt 1 && die "${red}erro${reset}: nenhum alvo definido (use -h para obter ajuda)" $true
 	fi
 
@@ -2909,7 +3141,8 @@ sh_initinstallpkg() {
 
 		if ((LAUTO)); then
 			for package in $pkg; do
-				log_wait_msg "Installing local package ${orange}$package"
+				#				log_wait_msg "Installing local package ${orange}$package"
+				log_success_msg2 "Installing local package ${orange}$package"
 				sh_installpkg "$package"
 			done
 		fi
@@ -3253,14 +3486,14 @@ sh_alienpkg_pkgsize() {
 }
 
 sh_alienpkg_logo() {
-	cat <<'EOF'
-       _ _                  _
-  __ _| (_) ___ _ __  _ __ | | ____ _
- / _` | | |/ _ \ '_ \| '_ \| |/ / _` |
-| (_| | | |  __/ | | | |_) |   < (_| |
- \__,_|_|_|\___|_| |_| .__/|_|\_\__, |
-                     |_|        |___/
-EOF
+	cat <<-'EOF'
+		       _ _                  _
+		  __ _| (_) ___ _ __  _ __ | | ____ _
+		 / _` | | |/ _ \ '_ \| '_ \| |/ / _` |
+		| (_| | | |  __/ | | | |_) |   < (_| |
+		 \__,_|_|_|\___|_| |_| .__/|_|\_\__, |
+		                     |_|        |___/
+	EOF
 	sh_version
 }
 
@@ -3403,14 +3636,14 @@ sh_version() {
 
 #figlet
 logo() {
-	cat <<'EOF'
-  __      _       _
- / _| ___| |_ ___| |__     Copyright (c) 2019-2022 Vilmar Catafesta <vcatafesta@gmail.com>
-| |_ / _ \ __/ __| '_ \    Copyright (c) 2019-2022 Chili GNU/Linux Development Team <root@chililinux.com>
-|  _|  __/ || (__| | | |
-|_|  \___|\__\___|_| |_|   Este programa pode ser redistribuído livremente
-                           sob os termos da Licença Pública Geral GNU.
-EOF
+	cat <<-'EOF'
+		  __      _       _
+		 / _| ___| |_ ___| |__     Copyright (c) 2019-2022 Vilmar Catafesta <vcatafesta@gmail.com>
+		| |_ / _ \ __/ __| '_ \    Copyright (c) 2019-2022 Chili GNU/Linux Development Team <root@chililinux.com>
+		|  _|  __/ || (__| | | |
+		|_|  \___|\__\___|_| |_|   Este programa pode ser redistribuído livremente
+		                           sob os termos da Licença Pública Geral GNU.
+	EOF
 	sh_version
 }
 
@@ -3527,26 +3760,26 @@ fetchpack_main() {
 }
 
 fetchpack_usage() {
-	cat <<EOF
-${cyan}Usage: ${yellow}fetch -Sc <operation> [options] [targets...]${reset}
+	cat <<-EOF
+		${cyan}Usage: ${yellow}fetch -Sc <operation> [options] [targets...]${reset}
 
-  Operations:
-${red}     -d, --dryrun          ${reset}perform a dry run, only finding candidate packages.
-${red}     -m, --move <dir>      ${reset}move candidate packages to "dir".
-${red}     -r, --remove          ${reset}remove candidate packages.
+		  Operations:
+		${red}     -d, --dryrun          ${reset}perform a dry run, only finding candidate packages.
+		${red}     -m, --move <dir>      ${reset}move candidate packages to "dir".
+		${red}     -r, --remove          ${reset}remove candidate packages.
 
-  Options:
-${red}     -c, --cachedir <dir>  ${reset}scan "dir" for packages. can be used more than once.
-                           (default: read from /etc/fetch/fetch.conf).
-${red}     -k, --keep <num>      ${reset}keep "num" of each package in the cache (default: 1).
-${red}     -f, --force           ${reset}apply force to mv(1) and rm(1) operations.
-${red}     -h, --help            ${reset}display this help message and exit.
-${red}         --nocolor         ${reset}remove color from output.
-${red}     -q, --quiet           ${reset}quiet output.
-${red}     -v, --verbose         ${reset}increase verbosity. specify up to 3 times ([-v][-vv][-vvv]).
+		  Options:
+		${red}     -c, --cachedir <dir>  ${reset}scan "dir" for packages. can be used more than once.
+		                           (default: read from /etc/fetch/fetch.conf).
+		${red}     -k, --keep <num>      ${reset}keep "num" of each package in the cache (default: 1).
+		${red}     -f, --force           ${reset}apply force to mv(1) and rm(1) operations.
+		${red}     -h, --help            ${reset}display this help message and exit.
+		${red}         --nocolor         ${reset}remove color from output.
+		${red}     -q, --quiet           ${reset}quiet output.
+		${red}     -v, --verbose         ${reset}increase verbosity. specify up to 3 times ([-v][-vv][-vvv]).
 
-${cyan}most common use: ${yellow}fetch -Sc -k1 -r -v${reset}
-EOF
+		${cyan}most common use: ${yellow}fetch -Sc -k1 -r -v${reset}
+	EOF
 }
 
 function parseopts() {
@@ -3817,49 +4050,49 @@ usage() {
 	yellow=$(tput setaf 136)
 	pink=$(tput setaf 129)
 
-	cat <<EOF
-${cyan}Most used commands:
-${red}  -h,  help           ${reset}- display this help and exit
-${red}  -Sy, update         ${reset}- update list packages in the repository online. Need Internet
-${red}  -S,  install        ${reset}- install packages
-${red}  -Ss, search         ${reset}- search for packages
-${red}  -Su, upgrade        ${reset}- upgrade packages
-${red}  -Sw, download       ${reset}- only download the binary package into cache directory
-${red}  -Sr, recreate       ${reset}- recreate database installed packages
-${red}  -Sa, alienpkg       ${reset}- import package from ArchLinux
-${red}  -Sg, generate       ${reset}- generate info package from source
-${red}  -C,  create         ${reset}- build package
-${red}  -Sl, local          ${reset}- install local package
-${red}  -U, local           ${reset}- install local package
-${red}  -Sc, clean          ${reset}- erase downloaded packages files
-${red}  -Sm, meta           ${reset}- install meta packages
-${red}  -R,  remove         ${reset}- remove packages
-${red}  -La, list-avaiable  ${reset}- list avaiable packages based on package names
-${red}  -Lc, list-cache     ${reset}- list downloaded packages in cache
-${red}  -Li, list-installed ${reset}- list installed packages
-${red}  -Po, out-cache      ${reset}- list packages out-cache
-${red}  -Pi, in-cache       ${reset}- list downloaded packages in cache
-${red}  -Qi, show           ${reset}- show package details
-${red}  -Qq, total          ${reset}- total packages installed
-${red}  -V,  version        ${reset}- output version information and exit
-${red}  --nocolor           ${reset}- remove color from output
-${red}  --table             ${reset}- output in columns
-${red}  --verbose           ${reset}- verbose output
-${cyan}ex:
-  ${reset}fetch ${pink}-Sy ${reset} self ${yellow}=> Update self fetch via internet
-  ${reset}fetch ${pink}-Sy ${reset}      ${yellow}=> Update database
-  ${reset}fetch ${pink}-Syy${reset}      ${yellow}=> Force update database
-  ${reset}fetch ${pink}-S  ${reset}<package> [<...>] [--all] [--noconfirm] [--force] [--nodeps]
-  ${reset}fetch ${pink}-R  ${reset}<package> [<...>] [--all] [--noconfirm] [--force]
-  ${reset}fetch ${pink}-Su ${reset}[<package>] [<...>] [--all] [--nonconfirm] [--force]
-  ${reset}fetch ${pink}-Ss ${reset}<package> [<...>] [--noconfirm] [--force] [--exact] [--nodeps]
-  ${reset}fetch ${pink}-Li ${reset}[<package>] [<...>] [--all] [--exact]
-  ${reset}fetch ${pink}-Sw ${reset}[<package>] [<...>] [--all] [--noconfirm] [--force]
-  ${reset}fetch ${pink}-Qi ${reset}[<package> [<...>]]
-  ${reset}fetch ${pink}-C  ${reset}[<packname-version-build>]
-  ${reset}fetch ${pink}-Sm ${reset}<xorg> [--noconfirm] [--force]
-  ${reset}fetch ${pink}-Sa ${reset}<package> [<...>] [--all] [--noconfirm] [--force] [--mtime=<n>] [--keep] [--default]
-EOF
+	cat <<-EOF
+		${cyan}Most used commands:
+		${red}  -h,  help           ${reset}- display this help and exit
+		${red}  -Sy, update         ${reset}- update list packages in the repository online. Need Internet
+		${red}  -S,  install        ${reset}- install packages
+		${red}  -Ss, search         ${reset}- search for packages
+		${red}  -Su, upgrade        ${reset}- upgrade packages
+		${red}  -Sw, download       ${reset}- only download the binary package into cache directory
+		${red}  -Sr, recreate       ${reset}- recreate database installed packages
+		${red}  -Sa, alienpkg       ${reset}- import package from ArchLinux
+		${red}  -Sg, generate       ${reset}- generate info package from source
+		${red}  -C,  create         ${reset}- build package
+		${red}  -Sl, local          ${reset}- install local package
+		${red}  -U, local           ${reset}- install local package
+		${red}  -Sc, clean          ${reset}- erase downloaded packages files
+		${red}  -Sm, meta           ${reset}- install meta packages
+		${red}  -R,  remove         ${reset}- remove packages
+		${red}  -La, list-avaiable  ${reset}- list avaiable packages based on package names
+		${red}  -Lc, list-cache     ${reset}- list downloaded packages in cache
+		${red}  -Li, list-installed ${reset}- list installed packages
+		${red}  -Po, out-cache      ${reset}- list packages out-cache
+		${red}  -Pi, in-cache       ${reset}- list downloaded packages in cache
+		${red}  -Qi, show           ${reset}- show package details
+		${red}  -Qq, total          ${reset}- total packages installed
+		${red}  -V,  version        ${reset}- output version information and exit
+		${red}  --nocolor           ${reset}- remove color from output
+		${red}  --table             ${reset}- output in columns
+		${red}  --verbose           ${reset}- verbose output
+		${cyan}ex:
+		  ${reset}fetch ${pink}-Sy ${reset} self ${yellow}=> Update self fetch via internet
+		  ${reset}fetch ${pink}-Sy ${reset}      ${yellow}=> Update database
+		  ${reset}fetch ${pink}-Syy${reset}      ${yellow}=> Force update database
+		  ${reset}fetch ${pink}-S  ${reset}<package> [<...>] [--all] [--noconfirm] [--force] [--nodeps]
+		  ${reset}fetch ${pink}-R  ${reset}<package> [<...>] [--all] [--noconfirm] [--force]
+		  ${reset}fetch ${pink}-Su ${reset}[<package>] [<...>] [--all] [--nonconfirm] [--force]
+		  ${reset}fetch ${pink}-Ss ${reset}<package> [<...>] [--noconfirm] [--force] [--exact] [--nodeps]
+		  ${reset}fetch ${pink}-Li ${reset}[<package>] [<...>] [--all] [--exact]
+		  ${reset}fetch ${pink}-Sw ${reset}[<package>] [<...>] [--all] [--noconfirm] [--force]
+		  ${reset}fetch ${pink}-Qi ${reset}[<package> [<...>]]
+		  ${reset}fetch ${pink}-C  ${reset}[<packname-version-build>]
+		  ${reset}fetch ${pink}-Sm ${reset}<xorg> [--noconfirm] [--force]
+		  ${reset}fetch ${pink}-Sa ${reset}<package> [<...>] [--all] [--noconfirm] [--force] [--mtime=<n>] [--keep] [--default]
+	EOF
 }
 
 function sh_parseparam() {
@@ -3868,9 +4101,9 @@ function sh_parseparam() {
 	local s
 	local newparam
 
-	LDEPS=$true
-	LAUTO=$false
-	LFORCE=$false
+	export LDEPS=$true
+	export LAUTO=$false
+	export LFORCE=$false
 	verbose=1
 	mtime=0
 	SPLITPOS='4'
