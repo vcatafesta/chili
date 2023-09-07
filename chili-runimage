@@ -232,12 +232,12 @@ function sh_set_qemu_common_options {
 #	qemu_options+=(-device cirrus-vga)		# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (cirrus.ko)
 #	qemu_options+=(-device qxl)
 #	qemu_options+=(-device qxl-vga)
-#	qemu_options+=(-vga virtio)				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (virtio-gpu.ko)
+	qemu_options+=(-vga virtio)				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (virtio-gpu.ko)
 #	qemu_options+=(-device bochs-display)	# ✗ not VGA compatible	✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
 #	qemu_options+=(-vga std)				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
 #	qemu_options+=(-device qxl-vga)
 #	qemu_options+=(-device ati-vga)
-	qemu_options+=(-vga qxl) 				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (qxl.ko) ✓ windows driver
+#	qemu_options+=(-vga qxl) 				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (qxl.ko) ✓ windows driver
 	qemu_options+=(-display gtk)
 	qemu_options+=(-device intel-hda)
 	qemu_options+=(-audiodev pa,id=snd0,server=localhost)
@@ -279,7 +279,8 @@ done
 sh_checkRoot
 if ((bridge)); then
 	random_mac=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
-	qemu_options+=(-netdev bridge,br=$iface_bridge,id=net0)
+#	qemu_options+=(-netdev bridge,id=net0,br=$iface_bridge)
+	qemu_options+=(-netdev bridge,id=net0)
 	qemu_options+=(-device e1000,netdev=net0,mac=$random_mac)
 else
 	qemu_options+=(-netdev user,id=net0)

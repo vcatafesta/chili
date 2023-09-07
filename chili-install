@@ -8,7 +8,7 @@
 #  Chili GNU/Linux - https://chilios.com.br
 #
 #  Created: 2019/04/05
-#  Altered: 2023/06/22
+#  Altered: 2023/09/06
 #
 #  Copyright (c) 2019-2022, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -38,7 +38,7 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="4.0.1.20230622"
+declare -r _VERSION_="4.0.2.20230906"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
@@ -761,20 +761,20 @@ sh_make_user() {
 
 	if [[ -n "${AsUser[cuser]}" ]]; then
 		if [[ -n "${AsUser[cfullname]}" ]]; then
-			sh_chroot_job "${cmsg_CriandoUsuario[$LC_DEFAULT]}: ${AsUser[cuser]} - ${AsUser[cfullname]}" "useradd -m ${AsUser[cuser]} -G ${AsUser[cgroups]} -p ${AsUser[cpass]} -c '${AsUser[cfullname]}'"
+			sh_chroot_job "${cmsg_CriandoUsuario[$LC_DEFAULT]}: ${AsUser[cuser]} - ${AsUser[cfullname]}" "useradd -m ${AsUser[cuser]} -G ${AsUser[cgroups]} -p ${AsUser[cpass]} -c '${AsUser[cfullname]}'" "$err_not_fatal"
 		else
-			sh_chroot_job "${cmsg_CriandoUsuario[$LC_DEFAULT]}: ${AsUser[cuser]} - ${AsUser[cfullname]}" "useradd -m ${AsUser[cuser]} -G ${AsUser[cgroups]} -p ${AsUser[cpass]}"
+			sh_chroot_job "${cmsg_CriandoUsuario[$LC_DEFAULT]}: ${AsUser[cuser]} - ${AsUser[cfullname]}" "useradd -m ${AsUser[cuser]} -G ${AsUser[cgroups]} -p ${AsUser[cpass]}" "$err_not_fatal"
 		fi
-		sh_chroot_job "${cmsg_AjustandoSenhaUsuario[$LC_DEFAULT]}: ${AsUser[cuser]}" "(echo ${AsUser[cuser]}:${AsUser[cpass]}) | chpasswd -m > /dev/null 2>&1"
+		sh_chroot_job "${cmsg_AjustandoSenhaUsuario[$LC_DEFAULT]}: ${AsUser[cuser]}" "(echo ${AsUser[cuser]}:${AsUser[cpass]}) | chpasswd -m > /dev/null 2>&1" "$err_not_fatal"
 	fi
 	if [[ -n "${AsUser[cpassroot]}" ]]; then
-		sh_chroot_job "${cmsg_AjustandoSenhaUsuario[$LC_DEFAULT]}: root" "(echo root:${AsUser[cpassroot]}) | chpasswd -m > /dev/null 2>&1"
-		sh_chroot_job "${cmsg_AtivandoBashUsuario[$LC_DEFAULT]}: root" "chsh -s /bin/bash root"
+		sh_chroot_job "${cmsg_AjustandoSenhaUsuario[$LC_DEFAULT]}: root" "(echo root:${AsUser[cpassroot]}) | chpasswd -m > /dev/null 2>&1" "$err_not_fatal"
+		sh_chroot_job "${cmsg_AtivandoBashUsuario[$LC_DEFAULT]}: root" "chsh -s /bin/bash root" "$err_not_fatal"
 	fi
 	sh_update_sudoers
 	if [[ -d "$dir_install/home/$cliveuser/" ]]; then
-		sh_chroot_job "Adjusting legacy settings pass 2" "cd /home/$cuser; cp -Rpva /home/$cliveuser/. . ; chown $cuser:$cuser /home/$cuser/. -R" "$err_not_fatal"
-		sh_chroot_job "Deleting live user"			"userdel --remove --force $cliveuser" "$err_not_fatal"
+		sh_chroot_job "Adjusting legacy settings pass 2" "cd /home/$cuser; cp -Rpva /home/$cliveuser/. . ; chown $cuser:$cuser /home/$cuser/. -R" "$err_not_fatal" "$err_not_fatal"
+		sh_chroot_job "Deleting live user"			"userdel --remove --force $cliveuser" "$err_not_fatal" "$err_not_fatal"
 	fi
 }
 
