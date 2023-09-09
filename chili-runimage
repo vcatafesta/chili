@@ -38,7 +38,7 @@ readonly APP="${0##*/}"
 readonly _VERSION_='1.1.16-20230831'
 readonly DEPENDENCIES=('tput' 'printf' 'qemu-system-x86_64')
 readonly PACKAGEDEP=([tput]='ncurses' [printf]='coreutils' [qemu-system-x86_64X]='qemu')
-readonly xmem='8G'
+readonly xmem='16G'
 readonly iface_bridge='br0'
 declare -i uefi=0
 declare -i bridge=0

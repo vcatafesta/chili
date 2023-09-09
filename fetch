@@ -2625,7 +2625,6 @@ sh_recreateFilesFromArch() {
 }
 export -f sh_recreateFilesFromArch
 
-: <<'comment'
 # -Sr
 function sh_recreatefilepackagesinstalled() {
 	local re='(.+)-(([^-]+)-([0-9]))+[.](desc)$'
@@ -2685,8 +2684,8 @@ function sh_recreatefilepackagesinstalled() {
 	log_msg "${yellow}($pkgNumber) ${cyan}pacotes instalados/listados - (usar -Sr --verbose ou --table para listar)"
 	return $lresult
 }
-comment
 
+: <<'comment'
 # -Sr
 function sh_recreatefilepackagesinstalled() {
 	local re='(.+)-(([^-]+)-([0-9]))+[.](desc)$'
@@ -2750,6 +2749,7 @@ function sh_recreatefilepackagesinstalled() {
 	fi
 	return $lresult
 }
+comment
 
 # -Qq
 sh_totalpackagesinstalled() {
