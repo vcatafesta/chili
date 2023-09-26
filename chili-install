@@ -302,11 +302,11 @@ sh_getdevicefrompartition() {
 	echo "${_part%%[p0-9]*([0-9])}"
 }
 
-scrend() {
+function scrend() {
 	exit "$1"
 }
 
-sh_setVarColors() {
+function sh_setVarColors() {
 	# does the terminal support true-color?
 	if [[ -n "$(command -v "tput")" ]]; then
 		#tput setaf 127 | cat -v  #capturar saida
@@ -329,7 +329,7 @@ sh_setVarColors() {
 	fi
 }
 
-sh_unsetVarColors() {
+function sh_unsetVarColors() {
 	unset reset green red bold blue cyan
 	unset orange pink white yellow violet purple
 	sh_setLogPrefix

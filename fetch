@@ -9,7 +9,7 @@
 # 	MazonOS GNU/Linux - http://mazonos.com
 #
 # 	Created: 2019/04/05
-# 	Altered: 2023/08/30
+# 	Altered: 2023/09/22
 #
 # 	Copyright (c) 2019-2022, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -40,17 +40,19 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob
 
 # Import lib
-readonly _VERSION_="3.43.20230830"
+readonly _VERSION_="3.44.20230922"
 #LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 #[[ -f "${LIBRARY}/core.sh" ]] && source "${LIBRARY}/core.sh"
 SYSCONFDIR=${SYSCONFDIR:-'/etc/fetch'}
 
 # var bool
-declare -i ERR_OK=0
-declare -i ERR_ERROR=1
-declare -i true=1
-declare -i false=0
-declare -i LINSTALLED=2
+declare -gi ERR_OK=0
+declare -gi ERR_ERROR=1
+declare -gi true=1
+declare -gi false=0
+declare -gi LINSTALLED=2
+declare -gi ncount=0
+declare -gi njobs_alien=5
 
 sh_setEnvironment() {
 	sh_setvarcolors
@@ -224,9 +226,10 @@ function fmtplus() {
 }
 
 function fmt() {
-	printf "%s" "${pink}(${ncount}:5/${ntotalpkg}:${nfullpkg})${reset}"
+	printf "%s" "${pink}($ncount:$njobs_alien/$ntotalpkg:$ntotalfindpkgs)${reset}"
 	return $?
 }
+export -f fmt
 
 function print() {
 	[[ "$printyeah" = '1' ]] && echo -e "$@"
@@ -542,9 +545,7 @@ function log_msg() {
 		retval=$1
 		shift
 	}
-	#	if ((verbose)); then
 	[[ $retval -eq 0 ]] && printf " %b %s\\n" "${TICK}" "${*}" || printf " %b %s\\n" "${CROSS}" "${*}"
-	#	fi
 }
 export -f log_msg
 
@@ -623,7 +624,7 @@ function sh_touchconf() {
 		DESC_BUILD='1'
 		URL='https://www.linuxfromscratch.org/lfs/view/stable/'
 		LICENSE='GPL2'
-		LFS_VERSION='11.3'
+		LFS_VERSION='12.0'
 		LFS_INIT='SYSTEMD'
 		ARCH='x86_64'
 		DISTRO='chili'
@@ -2603,12 +2604,13 @@ sh_installmeta() {
 }
 
 sh_recreateFilesFromArch() {
+	local arch_path="/var/lib/pacman/local"
 	local item
 	local nfiles
 	local aCache
 
 	((verbose >= 2)) && log_msg "Fixing packages installed by pacman"
-	pushd "/var/lib/pacman/local/" >/dev/null 2>&- || return 1
+	pushd "$arch_path" >/dev/null 2>&- || return 1
 	mapfile -t aCache < <(printf '%s\n' *)
 	nfiles=$(lenarray "${aCache[*]}")
 	popd >/dev/null 2>&- || return 1
@@ -2618,6 +2620,7 @@ sh_recreateFilesFromArch() {
 		for item in "${aCache[@]}"; do
 			[[ "$item" == "ALPM_DB_VERSION" || $item == ',,,,' || -z $item ]] && continue
 			[[ -f "$CACHEDIR_DESC/$item.desc" ]] || printf '' >|"$CACHEDIR_DESC/$item.desc"
+			grep -v '^%FILES%' $arch_path/$item/files > $CACHEDIR_LIST/$item.list
 		done
 		return 0
 	fi
@@ -2627,7 +2630,8 @@ export -f sh_recreateFilesFromArch
 
 # -Sr
 function sh_recreatefilepackagesinstalled() {
-	local re='(.+)-(([^-]+)-([0-9]))+[.](desc)$'
+	local ext='list'
+	local re="(.+)-(([^-]+)-([0-9]))+[.]($ext)$"
 	local item
 	local package
 	local pkgNumber=0
@@ -2636,25 +2640,26 @@ function sh_recreatefilepackagesinstalled() {
 	local lresult=1
 	local cbase
 
-	((verbose > 1)) && log_msg "Recreating installed packages list"
+	((verbose > 1)) && log_msg "$(gettext "Recriando lista de pacotes instalados")"
 	sh_recreateFilesFromArch
-	((verbose > 1)) && log_msg "Reading lists of installed packages"
+	((verbose > 1)) && log_msg "$(gettext "Lendo listas de pacotes instalados")"
 
 	printf '' >|"$CACHEDIR_SEARCH/$PACKAGES_INSTALLED_SPLIT"
-	mapfile -t aCache < <(printf '%s\n' "$CACHEDIR_DESC"/* | awk -F "$re" 'list[$1]++')
+#	mapfile -t aCache < <(printf '%s\n' "$CACHEDIR_DESC"/* | awk -F "$re" 'list[$1]++')
+	mapfile -t aCache < <(printf '%s\n' "$CACHEDIR_LIST"/* | awk -F "$re" 'list[$1]++')
 	#2	aCache=$(grep -Po "$re" < <(printf '%s\n' $CACHEDIR_DESC/*) )
 	#1	aCache=$(find $CACHEDIR_DESC/ -regextype posix-egrep -regex "$re" -type f | sort -V)
 	nfiles=$(arraylen "${aCache[@]}")
 	pkgnumber=0
 
 	if ((nfiles)); then
-		((verbose > 1)) && log_msg "Checking installed packages"
+		((verbose > 1)) && log_msg "$(gettext "Verificando pacotes instalados")"
 		((verbose > 1)) && sh_cabec "$nfiles"
 
 		for item in "${aCache[@]}"; do
 			[[ -z "$item" ]] && continue
 			package=${item##*/}
-			package=${package%.desc*}
+			package=${package%.$ext*}
 			status=' I '
 			clisting='N'
 			#			LTABLE=$true
@@ -2675,13 +2680,14 @@ function sh_recreatefilepackagesinstalled() {
 					fi
 				fi
 			else
-				log_err "${yellow}CUIDADO ${cyan}pacote $package não encontrado" "$?"
+				log_err "${yellow}AVISO ${cyan}$(gettext "pacote") $package $(gettext "não encontrado")" "$?"
 			fi
 		done
 		lresult=0
 	fi
-	log_msg "${yellow}($nfiles) ${cyan}pacotes encontrados         - (pacotes antigos removidos manualmente?)"
-	log_msg "${yellow}($pkgNumber) ${cyan}pacotes instalados/listados - (usar -Sr --verbose ou --table para listar)"
+	log_msg "${yellow}($nfiles) ${cyan}$(gettext "pacotes encontrados")"
+	log_msg "${yellow}($((nfiles-pkgNumber))) ${cyan}$(gettext "pacotes antigos removidos manualmente?")"
+	log_msg "${yellow}($pkgNumber) ${cyan}$(gettext "pacotes instalados/listados - (usar -Sr --verbose ou --table para listar)")"
 	return $lresult
 }
 
@@ -2721,15 +2727,16 @@ function sh_recreatefilepackagesinstalled() {
 				fi
 			fi
 		else
-			log_err "${yellow}CUIDADO ${cyan}pacote $package não encontrado" "$?"
+			log_err "${yellow}AVISO ${cyan}pacote $package não encontrado" "$?"
 		fi
 	}
 	# Exporta a função para uso com o parallel
 	export -f process_package_recreate
 
-	((verbose > 1)) && log_msg "Recreating installed packages list"
+	((verbose > 1)) && log_msg "$(gettext "Recriando lista de pacotes instalados")"
 	sh_recreateFilesFromArch
-	((verbose > 1)) && log_msg "Reading lists of installed packages"
+	((verbose > 1)) && log_msg "$(gettext "Lendo listas de pacotes instalados")"
+
 	printf '' >|"$CACHEDIR_SEARCH/$PACKAGES_INSTALLED_SPLIT"
 
 	# Lista de arquivos de descrição de pacotes
@@ -2920,7 +2927,7 @@ sh_manage_scripts_and_archives() {
 		return 1
 	fi
 
-	pushd "/tmp/info/" >/dev/null 2>&- || return 1
+#	pushd "/tmp/info/" >/dev/null 2>&- || return 1
 	if ! mv '/tmp/info/desc' "$CACHEDIR_DESC/${packname}.desc"; then
 		log_msg $ERR_ERROR "ERROR! could not move desc to /${dir_desc}/${packname}.desc"
 		return 1
@@ -2946,7 +2953,7 @@ sh_manage_scripts_and_archives() {
 		fi
 	fi
 
-	popd >/dev/null 2>&- || return 1
+#	popd >/dev/null 2>&- || return 1
 	[[ -d "/info/" ]] && rm -r "/info/"
 	[[ -d '/tmp/info/' ]] && rm -r "/tmp/info/"
 	[[ -e '/.BUILDINFO' ]] && rm "/.BUILDINFO"
@@ -2991,68 +2998,12 @@ sh_name_format_pkg() {
 	return 0
 }
 
-sh_generate_desc() {
-	local i
-	local DESC_PACKNAME=$1
-	local DESC_VERSION=$2
-	local DESC_BUILD=$3
-	local field_pkgver=$4
-	local field_pkgrel=$5
-	#DESC=$(echo "${DESC//\'}") 		# remove apostrofe. ex: let´s => lets
-	DESC=${DESC//\'/} # remove apostrofe. ex: let´s => lets
-
-	[[ ! -d "info" ]] && mkdir info >/dev/null 2>&-
-
-	if [ -e info/desc ]; then
-		((ncount++))
-		if ! ((LFORCE)); then
-			if ((verbose >= 2)); then
-				log_msg "$(fmt)${orange} info/desc ${reset}already exist. Skipping... Use the -f option to force recreate."
-			fi
-			return
-		else
-			if ((verbose >= 2)); then
-				log_msg "$(fmt)${orange} info/desc ${reset}already exist. Rewriting"
-			fi
-		fi
-	fi
-	[[ -z "$SIZE" ]] && SIZE=$(sizeof_du .)
-
-	cat >"info/desc" <<-EOF
-		######################################################################
-		# Generated with fetch    - https://chililinux.com
-		# Generated with alienpkg - https://chililinux.com
-		######################################################################
-		maintainer='$MAINTAINER'
-		pkgname='$DESC_PACKNAME'
-		version='$DESC_VERSION'
-		build='$DESC_BUILD'
-		pkgver='$field_pkgver'
-		pkgrel='$field_pkgrel'
-		license='$LICENSE'
-		lfs_version='$LFS_VERSION'
-		lfs_init='$LFS_INIT'
-		arch='$ARCH'
-		distro='$DISTRO'
-		desc='$DESC'
-		pkgdesc='$DESC'
-		size='$SIZE'
-		url='$URL'
-		source=('')
-		dep=('')
-	EOF
-
-	for i in ${deps[@]}; do
-		echo depend="'$i'" >>"$DESCME"
-	done
-	return 0
-}
-
 sh_doinstallpkg() {
 	(
 		local packname="$1"
 		local name_version_build
 		local PRE_SH='info/pre.sh'
+		local POS_SH='info/pos.sh'
 		local INSTALL_SH='info/.INSTALL'
 
 		tar --dereference \
@@ -3061,7 +3012,7 @@ sh_doinstallpkg() {
 			--extract \
 			--preserve-permissions \
 			--touch \
-			--file "${packname}" -C "/tmp/" "./${DESCME}" "./${PRE_SH}" "./${INSTALL_SH}" >/dev/null 2>&-
+			--file "${packname}" -C "/tmp/" "./${DESCME}" "./${PRE_SH}" "./${POS_SH}" "./${INSTALL_SH}" >/dev/null 2>&-
 
 		if [[ ! -e "/tmp/${DESCME}" ]]; then
 			log_msg $ERR_ERROR "${red}ERROR! ${reset}I could not untar the file: ${orange}${packname}.desc${reset}"
@@ -3141,8 +3092,7 @@ sh_initinstallpkg() {
 
 		if ((LAUTO)); then
 			for package in $pkg; do
-				#				log_wait_msg "Installing local package ${orange}$package"
-				log_success_msg2 "Installing local package ${orange}$package"
+				log_success_msg2 "${blue}Installing local package ${orange}$package"
 				sh_installpkg "$package"
 			done
 		fi
@@ -3275,6 +3225,75 @@ sh_create_pkg() {
 	evaluate_retval
 }
 
+
+sh_generate_desc() {
+	local i
+	local DESC_PACKNAME=$1
+	local DESC_VERSION=$2
+	local DESC_BUILD=$3
+	local field_pkgver=$4
+	local field_pkgrel=$5
+
+	DESC="${DESC//\'/}"							# Remove todas as ocorrências de apóstrofe
+	public_pkgdesc="${public_pkgdesc//\'/}"		# Remove todas as ocorrências de apóstrofe
+	[[ ! -d "info" ]] && mkdir info >/dev/null 2>&-
+
+	if [ -e info/desc ]; then
+		if ! ((LFORCE)); then
+			if ((verbose >= 2)); then
+				((ncount++))
+				log_msg "$(fmt)${orange} info/desc ${reset}already exist. Skipping... Use the -f option to force recreate."
+			fi
+			return
+		else
+			if ((verbose >= 2)); then
+				((ncount++))
+				log_msg "$(fmt)${orange} info/desc ${reset}already exist. Rewriting"
+			fi
+		fi
+	fi
+	[[ -z "$SIZE"    ]] && SIZE=$(sizeof_du .)
+	[[ -z "$public_url" ]] && public_url="$URL"
+	[[ -z "$public_pkgdesc" ]] && public_pkgdesc="$DESC"
+	[[ -z "$public_license" ]] && public_license="$LICENSE"
+	[[ -z "$public_arch"    ]] && public_arch="$ARCH"
+	[[ -z "$public_source"  ]] && public_source=""
+	[[ -z "$public_validpgpkeys"  ]] && public_validpgpkeys=""
+	[[ -z "$public_sha256sums"  ]] && public_sha256sums=""
+
+	cat >"info/desc" <<-EOF
+		######################################################################
+		# Generated with fetch    - https://chililinux.com
+		# Generated with alienpkg - https://chililinux.com
+		######################################################################
+		maintainer='$MAINTAINER'
+		pkgname='$DESC_PACKNAME'
+		version='$DESC_VERSION'
+		build='$DESC_BUILD'
+		pkgver='$field_pkgver'
+		pkgrel='$field_pkgrel'
+		lfs_version='$LFS_VERSION'
+		lfs_init='$LFS_INIT'
+		arch='$public_arch'
+		distro='$DISTRO'
+		desc="$public_pkgdesc"
+		pkgdesc="$public_pkgdesc"
+		size='$SIZE'
+		license=(${public_license[@]})
+		url='$public_url'
+		source=(${public_source[@]})
+		validpgpkeys=(${public_validpgpkeys[@]})
+		sha256sums=(${public_sha256sums[@]})
+		dep=(${public_deps[@]})
+		depends=(${public_depends[@]})
+	EOF
+
+	for i in ${deps[@]}; do
+		echo depend="'$i'" >>"$DESCME"
+	done
+	return 0
+}
+
 sh_generatepkg() {
 	#	local param="$@"
 	local param="$*"
@@ -3290,8 +3309,10 @@ sh_generatepkg() {
 		done
 	fi
 
-	((++ncount))
-	((verbose >= 1)) && log_msg "$(fmt) Generating info for package $pkg"
+	((verbose >= 1)) && {
+		((++ncount))
+		log_msg "$(fmt) Generating info for package $pkg"
+	}
 	[[ ! -e "info/desc" ]] && LFORCE=$true
 
 	if ((LAUTO)) || ((LFORCE)); then
@@ -3317,6 +3338,7 @@ sh_generatepkg() {
 	return $ERR_OK
 }
 
+# -C # -c
 sh_createpkg() {
 	#  local param="$@"
 	local param="$*"
@@ -3325,15 +3347,20 @@ sh_createpkg() {
 
 	for s in "${param[@]}"; do pkg="$s"; done
 	[[ -z "$pkg" ]] && pkg=$(echo "$PWD" | sed 's/\// /g' | awk '{print $NF}')
-	((verbose >= 1)) && log_msg "$(fmt) Building package $pkg"
+	((verbose >= 1)) && {
+	((++ncount))
+		log_msg "$(fmt) Building package $pkg"
+	}
 
 	pkg="$pkg.$PKG_EXT"
 	sh_generatepkg "$pkg"
 	sh_name_format_pkg "$pkg" || exit 1
 	sh_verify_on "$pkg" || exit 1
 	sh_create_pkg "$pkg" || exit 1
+	((verbose >= 1)) && {
 	((++ncount))
-	((verbose >= 1)) && log_msg "$(fmt) Generating package ${yellow}$pkg"
+		log_msg "$(fmt) Generating package ${yellow}$pkg"
+	}
 }
 
 # -Sa
@@ -3356,7 +3383,6 @@ function sh_alienpkg_exec() {
 	local string
 	local ntotalpkg=0
 	local ntotalfindpkgs=0
-	local ncount=0
 	local arraypkg
 	local npackagesprocessed=0
 	local firstletter
@@ -3416,19 +3442,27 @@ function sh_alienpkg_exec() {
 				destpkgCORE="${LOCALDIR}/packages/core/${FilteredPackage}"
 
 				if [[ -e "$destpkgGIT" || -e "$destpkgCORE" ]]; then
-					((verbose >= 2)) && log_msg $ERR_ERROR "$(fmt) ${orange}$FilteredPackage ${reset}Package already exist in ${green}$LOCALDIR/packages/$firstletter/${reset} Use the -f option to force rebuild."
+					((verbose >= 2)) && {
+						((++ncount))
+						log_msg $ERR_ERROR "$(fmt) ${orange}$FilteredPackage ${reset}Package already exist in ${green}$LOCALDIR/packages/$firstletter/${reset} Use the -f option to force rebuild."
+					}
 					((--ntotalpkg))
 					continue
 				fi
 			fi
 
 			destdir="$BUILDDIR/$pkgtar"
-			((++ncount))
-			((verbose >= 1)) && log_msg "$(fmt) Creating directory $destdir"
+			((verbose >= 1)) && {
+				log_msg "$(gettext "Criando pacote") ${red}#$ntotalpkg ${black}de ${red}#$ntotalfindpkgs"
+				((++ncount))
+				log_msg "$(fmt) Creating directory $destdir"
+			}
 			mkdir -p "$destdir" >/dev/null 2>&-
 
-			((++ncount))
-			((verbose >= 1)) && log_msg "$(fmt) Unpacking package $package at $destdir"
+			((verbose >= 1)) && {
+				((++ncount))
+				log_msg "$(fmt) Unpacking package $package at $destdir"
+			}
 			tar --use-compress-program=zstd --force-local --extract --file "$package" -C "$destdir" >/dev/null 2>&-
 
 			case $package in
@@ -3452,11 +3486,13 @@ function sh_alienpkg_exec() {
 
 			if [[ -e "$destdir"/.PKGINFO ]]; then
 				deps=$(grep ^depend "$destdir"/.PKGINFO | awk -F'"' '{print $2}')
+			else
+				deps=(${depends[@]})
 			fi
 			pushd "$destdir" >/dev/null 2>&- || return 1
 			rm -f "$destdir"/.BUILDINFO "$destdir"/.MTREE "$destdir"/.PKGINFO >/dev/null 2>&-
 
-			((++ncount))
+#			((++ncount))
 			sh_createpkg "$pkgtar"
 			((verbose >= 1)) && echo
 			((--ntotalpkg))
@@ -3476,7 +3512,7 @@ function sh_alienpkg_exec() {
 	else
 		log_msg $ERR_ERROR "${red}error: ${orange}$x ${reset}package target ${yellow}${param} ${reset}was ${red}NOT ${reset}found in ${yellow}${ALIEN_CACHE_DIR} ${reset}for import"
 	fi
-	unset size ncount ntotalpkg
+	unset size ntotalpkg
 	popd >/dev/null 2>&- || return 1
 }
 
