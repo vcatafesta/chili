@@ -1,0 +1,60 @@
+echo 'prog='/home/vcatafesta/script.sh''
+prog='/home/vcatafesta/script.sh'
+
+echo =====================================================================
+echo 'basename $prog'
+basename $prog
+echo 'echo ${prog##*/}'
+echo ${prog##*/}
+echo '{ : ${prog##*/}; }; echo $_'
+{ : ${prog##*/}; }; echo $_
+
+echo =====================================================================
+
+echo 'dirname $prog'
+dirname $prog
+echo 'echo ${prog%/*}'
+echo ${prog%/*}
+echo '{ : ${prog%/*}; }; echo $_'
+{ : ${prog%/*}; }; echo $_
+
+echo =====================================================================
+
+echo 'V=abacaxi'
+V=abacaxi
+echo 'tr a-z A-Z <<< $abacaxi'
+tr a-z A-Z <<< $abacaxi
+echo 'echo ${V^} -- ${V^^}'
+echo ${V^} -- ${V^^}
+
+echo =====================================================================
+
+echo 'sed 's/a./s/g' <<< $V'
+sed 's/a./s/g' <<< $V
+echo 'echo ${V/a?/s}-${V//a?/s}'
+echo ${V/a?/s}-${V//a?/s}
+
+echo =====================================================================
+
+echo 'Var=abacaxi'
+Var=abacaxi
+echo 'cut -c2-5 <<< $Var'
+cut -c2-5 <<< $Var
+echo 'echo ${Var:1:4}'
+echo ${Var:1:4}
+echo 'echo ${Var: -6:4}'
+echo ${Var: -6:4}
+
+echo =====================================================================
+
+echo ': ${Usu:=$LOGNAME}'
+: ${Usu:=$LOGNAME}
+echo O nome é $Nom ${SNom=+e o sobrenome é $SNom}
+
+echo =====================================================================
+
+time echo {1..3} | xargs -t sleep
+time echo {1..3} | xargs -tn1 sleep
+time echo {1..3} | xargs -tn1 -P0 sleep
+time seq 3 | xargs -tn1 -P0 sleep
+time echo {1..6} | xargs -n1 -P0 sleep

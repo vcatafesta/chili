@@ -282,10 +282,13 @@ done
 
 sh_checkRoot
 if ((bridge)); then
-	random_mac=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
-	qemu_options+=(-netdev bridge,id=net0,br=$iface_bridge)
+	random_mac_net0=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
+	random_mac_net1=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
 #	qemu_options+=(-netdev bridge,id=net0)
-	qemu_options+=(-device e1000,netdev=net0,mac=$random_mac)
+	qemu_options+=(-netdev bridge,id=net0,br=$iface_bridge)
+	qemu_options+=(-device e1000,netdev=net0,mac=$random_mac_net0)
+	qemu_options+=(-netdev bridge,id=net1,br=$iface_bridge)
+	qemu_options+=(-device e1000,netdev=net1,mac=$random_mac_net1)
 else
 	qemu_options+=(-netdev user,id=net0)
 	qemu_options+=(-device e1000,netdev=net0)
