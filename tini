@@ -1,79 +1,74 @@
-#!/usr/bin/env bash
-# shellcheck shell=bash disable=SC1091,SC2039,SC2166
-
-# Função para atualizar um valor no arquivo INI ou criar o arquivo se não existir
-# Exemplo de uso: atualize o valor da chave "versao" da seção "App" no arquivo "config.ini"
-# tini.write_value "config.ini" "App" "versao" "2.0"
-
 # Função para atualizar um valor no arquivo INI ou criar o arquivo se não existir
 tini.write_value() {
+	local config_file="$1"
+	local section="$2"
+	local key="$3"
+	local new_value="$4"
+
+	declare -A ini_data # Array associativo para armazenar as seções e chaves
+
+	if [[ -f "$config_file" ]]; then
+		# Ler o arquivo INI e armazenar as informações em um array associativo
+		local current_section=""
+		while IFS= read -r line; do
+			if [[ "$line" =~ ^\[(.*)\] ]]; then
+				current_section="${BASH_REMATCH[1]}"
+			elif [[ "$line" =~ ^([^=]+)=(.*) ]]; then
+				local current_key="${BASH_REMATCH[1]}"
+				local current_value="${BASH_REMATCH[2]}"
+				ini_data["$current_section,$current_key"]="$current_value"
+			fi
+		done <"$config_file"
+	fi
+
+	# Atualizar o valor no array associativo
+	ini_data["$section,$key"]="$new_value"
+
+:<<'comment'
+	# Extrair as chaves do array associativo para um array de strings
+	keys=("${!ini_data[@]}")
+
+	# Ordenar o array de chaves pelo section_key
+	IFS=$'\n' sorted_keys=($(sort <<<"${keys[*]}"))
+	unset IFS
+
+	# Iterar sobre as chaves ordenadas e acessar os valores correspondentes no array associativo
+	for sorted_key in "${sorted_keys[@]}"; do
+		local key="${key_pair##*,}"
+		local section_key="${sorted_key%,*}"
+		local value="${ini_data[$sorted_key]}"
+		# Faça o que você precisa com section_key e value aqui
+	done
+comment
+
+	# Reescrever o arquivo INI com as seções e chaves atualizadas
+	>"$config_file"
+	local current_section=""
+	for section_key in "${!ini_data[@]}"; do
+		local section_name="${section_key%,*}"
+		local key_name="${section_key#*,}"
+		local value="${ini_data[$section_key]}"
+
+		# Verifique se a seção já foi gravada
+		if [[ "$current_section" != "$section_name" ]]; then
+			echo "" >>"$config_file"
+			echo "[$section_name]" >>"$config_file"
+			current_section="$section_name"
+		fi
+		echo "$key_name=$value" >>"$config_file"
+	done
+}
+
+# Função para atualizar o valor de uma chave em uma seção no arquivo INI
+tini.update_value() {
     local config_file="$1"
     local section="$2"
     local key="$3"
     local new_value="$4"
 
-    if [[ ! -f "$config_file" ]]; then
-        # Se o arquivo não existir, crie-o com a seção e chave especificadas
-        echo "[$section]" > "$config_file"
-        echo "$key=$new_value" >> "$config_file"
-    else
-        local found_section=false
-        local found_key=false
-
-        # Use grep para verificar se a seção já existe no arquivo
-        if grep -q "^\[$section\]" "$config_file"; then
-            found_section=true
-        fi
-
-        # Use grep para verificar se a chave já existe na seção atual
-        if grep -q "^\[$section\]" "$config_file" && grep -q "$key=" "$config_file"; then
-            found_key=true
-        fi
-
-        # Se a seção não existir, adicione-a
-        if [[ "$found_section" == false ]]; then
-            echo "" >> "$config_file"
-            echo "[$section]" >> "$config_file"
-        fi
-
-        # Se a chave não existir na seção atual, adicione-a
-        if [[ "$found_key" == false ]]; then
-            sed -i "/^\[$section\]/a$key=$new_value" "$config_file"
-        fi
+    if [[ -f "$config_file" ]]; then
+        sed -i "/^\[$section\]/s/^$key=.*/$key=$new_value/" "$config_file"
     fi
-}
-
-# Função para ler um valor do arquivo INI
-tini.read_value() {
-	local config_file="$1"
-	local section="$2"
-	local key="$3"
-	local found_section=false
-
-	# Variável para armazenar o valor encontrado
-	local value=""
-
-	# Use grep para encontrar a chave na seção especificada no arquivo INI
-	while IFS= read -r line; do
-		if [[ "$line" =~ ^\[$section\] ]]; then
-			found_section=true
-		elif [[ "$found_section" == true && "$line" =~ ^$key= ]]; then
-			# Encontramos a chave dentro da seção
-			value=$(echo "$line" | cut -d'=' -f2)
-			break # Saia do loop, pois encontramos o valor
-		elif [[ "$line" =~ ^\[.*\] ]]; then
-			# Se encontrarmos outra seção, saia do loop para evitar procurar em outras seções
-			found_section=false
-		fi
-	done <"$config_file"
-
-	# Verifique se encontramos o valor
-	if [[ -n "$value" ]]; then
-		echo "$value"
-	else
-		:
-		#        echo "Chave não encontrada."
-	fi
 }
 
 # Função para verificar se um valor em uma seção corresponde a um valor de referência em um arquivo INI
@@ -112,19 +107,52 @@ tini.exist_value() {
     return 2  # Seção ou chave não encontrada no arquivo INI
 }
 
+# Função para ler um valor do arquivo INI
+tini.read_value() {
+    local config_file="$1"
+    local section="$2"
+    local key="$3"
+    local found_section=false
+
+    # Variável para armazenar o valor encontrado
+    local value=""
+
+    # Use grep para encontrar a chave na seção especificada no arquivo INI
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^\[$section\] ]]; then
+            found_section=true
+        elif [[ "$found_section" == true && "$line" =~ ^$key= ]]; then
+            # Encontramos a chave dentro da seção
+            value=$(echo "$line" | cut -d'=' -f2)
+            break  # Saia do loop, pois encontramos o valor
+        elif [[ "$line" =~ ^\[.*\] ]]; then
+            # Se encontrarmos outra seção, saia do loop para evitar procurar em outras seções
+            found_section=false
+        fi
+    done < "$config_file"
+
+    # Verifique se encontramos o valor
+    if [[ -n "$value" ]]; then
+        echo "$value"
+    else
+        echo "Chave não encontrada."
+    fi
+}
+
+rm config.ini
 tini.write_value "config.ini" "flatpak" "active" "1"
 tini.write_value "config.ini" "snapd" "active" "0"
-tini.write_value "config.ini" "OutraSecao" "vilmar" "5.7"
-tini.write_value "config.ini" "OutraSecao" "evili" "4.0"
-
-echo 'tini.read_value "config.ini" "flatpak" "active"'
+tini.write_value "config.ini" "Secao" "vilmar" "5.7"
+tini.write_value "config.ini" "Secao" "evili" "4.0"
+echo ===================================================
 tini.read_value "config.ini" "flatpak" "active"
-
-echo 'tini.read_value "config.ini" "snapd" "active"'
 tini.read_value "config.ini" "snapd" "active"
-echo
+echo ===================================================
 tini.exist_value "config.ini" "flatpak" "active" '0'; echo $?
 tini.exist_value "config.ini" "snapd" "active" '1'; echo $?
 tini.exist_value "config.ini" "flatpak" "active" '1'; echo $?
 tini.exist_value "config.ini" "snapd" "active" '0'; echo $?
 tini.exist_value "config.ini" "snapd" "xactive" '0'; echo $?
+
+tini.exist_value "config.ini" "Secao" "vilmar" '5.7'; echo $?
+tini.exist_value "config.ini" "Secao" "evili" '4.0'; echo $?

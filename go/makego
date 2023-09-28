@@ -3,8 +3,10 @@
 
 [[ $# -lt 1 ]] && { echo "Uso: $0 <file.go>"; exit 1; }
 #go build -tags netgo -ldflags '-s -w -extldflags "-static"' "$@"
-if go build -gcflags "-trimpath" -ldflags "-s -w" "$1.go"; then
-	exec $1
+src=$1; shift
+param=$@
+if go build -gcflags "-trimpath" -ldflags "-s -w" "$src.go"; then
+	exec $src $param
 fi
 
 

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"github.com/go-ini/ini"
 	"os"
+	"io/ioutil"
 )
 
 // Cores de Texto (Foreground)
@@ -63,18 +64,34 @@ func (tf *TextFormatter) Formatar() string {
     return tf.Cor + tf.Estilo + tf.Text + Reset
 }
 
+func imprimirConteudoDoArquivo(nomeArquivo string) error {
+	// Lê o conteúdo do arquivo
+	conteudo, err := ioutil.ReadFile(nomeArquivo)
+	if err != nil {
+		return err
+	}
+
+	// Imprime o conteúdo na tela
+	fmt.Println(string(conteudo))
+	return nil
+}
+
 func main() {
     textoFormatado := TextFormatter{
-        Text:   "Uso: tini_pretty [--verbose|-v] [--pretty|-p] <nome_do_arquivo.ini>",
-        Cor:    Red,
-        Estilo: Bold,
+        Text:   "Uso: tini_pretty [opções]",
+        Cor:    White,
+        Estilo: BgBlue,
     }
 
-	verbose := false
+	var helpFlag bool
+	quiet := false
 	pretty := false
 
-	flag.BoolVar(&verbose, "verbose", false, "Modo verbose")
-	flag.BoolVar(&verbose, "v", false, "Modo verbose")
+	//help := flag.Bool("help", false, "Mostra a mensagem de uso")
+	flag.BoolVar(&helpFlag, "help", false, "Mostra a mensagem de uso")
+	flag.BoolVar(&helpFlag, "h", false, "Mostra a mensagem de uso")
+	flag.BoolVar(&quiet, "quiet", false, "Não mostra saída")
+	flag.BoolVar(&quiet, "q", false, "Não mostrar saída")
 
 	flag.BoolVar(&pretty, "pretty", false, "Ativar formatação pretty (padrão é false)")
 	flag.BoolVar(&pretty, "p", false, "Ativar formatação pretty (padrão é false)")
@@ -83,30 +100,28 @@ func main() {
 	flag.Parse()
 
 	// Verifique se todos os argumentos necessários foram fornecidos
-	if len(flag.Args()) != 1 {
+	if helpFlag || len(os.Args) == 1 {
 		fmt.Println(textoFormatado.Formatar())
-		os.Exit(1)
+		fmt.Println()
+		fmt.Println("Opções:")
+		flag.PrintDefaults()
+		return
 	}
 
-	if verbose {
-		fmt.Println("Modo verbose ativado.")
-	}
-	if pretty {
-		fmt.Println("Modo bonito ativado.")
+	// Verifique se há argumentos não processados (que não são flags)
+	if flag.NArg() == 0 {
+		fmt.Println("Erro: é necessário fornecer um nome de arquivo.")
+		return
 	}
 
-	// Obtenha o nome do arquivo .ini a partir dos argumentos da linha de comando
+	// O primeiro argumento não processado é considerado o nome do arquivo
 	filePath := flag.Arg(0)
 
 	// Carregue o arquivo .ini especificado para leitura/escrita
 	cfg, err := ini.Load(filePath)
 	if err != nil {
-		fmt.Printf("Erro ao carregar o arquivo: %v\n", err)
+		fmt.Printf("%v\n", err)
 		os.Exit(1)
-	}
-
-	if verbose {
-		fmt.Printf("%s carregado\n", filePath)
 	}
 
 	/*
@@ -123,14 +138,19 @@ func main() {
 	ini.PrettyFormat = pretty
 
 	// Salve as alterações no arquivo .ini com a formatação desejada
-	err = cfg.SaveTo(filePath)
+	if pretty {
+		err = cfg.SaveTo(filePath)
+	} else {
+		err = cfg.SaveToIndent(filePath,"")
+	}
+
 	if err != nil {
-		fmt.Printf("Erro ao salvar o arquivo: %v\n", err)
+		fmt.Printf("%v\n", err)
 		os.Exit(1)
 	}
 
-	if verbose {
-		fmt.Printf("%s atualizado com sucesso", filePath)
+	if ! quiet {
+		imprimirConteudoDoArquivo(filePath)
 	}
 
 	// Saia com código de retorno 0 para indicar sucesso

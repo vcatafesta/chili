@@ -1,0 +1,368 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+
+function TIni.Get() {
+	local config_file="$1"
+	local section="$2"
+	local key="$3"
+	sed -nr "/^\[$section\]/ { :l /^[[:space:]]*${key}[[:space:]]*=/ { s/[^=]*=[[:space:]]*//; p; q;}; /^;/b; n; b l;}" "$config_file"
+}
+export -f TIni.Get
+
+function TIni.GetAwk() {
+	local config_file="$1"
+	local section="$2"
+	local key="$3"
+
+	awk -F "=" -v section="$section" -v key="$key" '{
+        gsub(/^[ \t]+|[ \t]+$/, "", $1);  # Remova espaços em branco em torno do nome da chave
+        if ($0 ~ "^\\[" section "\\]") {   # Verifique se estamos na seção correta
+            in_section = 1
+        } else if (in_section && $1 == key) {  # Se estivermos na seção correta, procure a chave
+            gsub(/^[ \t]+|[ \t]+$/, "", $2);  # Remova espaços em branco em torno do valor
+            print $2
+            found = 1
+        } else if ($0 ~ "^\\[.*\\]") {  # Se encontrarmos outra seção, saia da seção atual
+            in_section = 0
+        }
+    }
+    END {
+        if (found != 1) {
+            # print "Chave não encontrada"
+        }
+    }' "$config_file"
+}
+export -f TIni.GetAwk
+
+function TIni.GetAwk2() {
+	local config_file="$1"
+	local section="$2"
+	local key="$3"
+	awk -v chave="$key" -F '=' '!/^;/ && $0 ~ chave { gsub(/^[ \t]+|[ \t]+$/, "", $2); print $2 }' "$config_file"
+}
+export -f TIni.GetAwk2
+
+function TIni.GetMaxKeySize() {
+	local config_file="$1"
+
+	awk -F '=' '/^[^#]/ {
+        key = gensub(/^[[:space:]]+|[[:space:]]+$/, "", "g", $1); # Remove espaços em branco no início e no fim da chave
+        current_key_size = length(key);
+        if (current_key_size > max_key_size) {
+            max_key_size = current_key_size;
+        }
+    } END {
+        print max_key_size
+    }' "$config_file"
+}
+export -f TIni.GetMaxKeySize
+
+function TIni.GetSection() {
+	local config_file="$1"
+	local section="$2"
+	local key="$3"
+	sed -nr "/^\[$section\]/ { :l /^\s*[^#].*/ p; n; /^\[/ q; b l; }" "$config_file" | grep -E "^\s*[^#].*\s*=" | column -t
+}
+export -f TIni.GetSection
+
+function TIni.GetAllSections() {
+	local config_file="$1"
+	local key="$2"
+
+	# Obtém todas as seções do arquivo
+	local sections
+	sections=$(sed -n '/^\[.*\]$/s/\[\(.*\)\]/\1/p' "$config_file")
+
+	# Itera sobre cada seção
+	for section in $sections; do
+		echo "[$section]"
+		sed -nr "/^\[$section\]/,/^(\[|\s*$)/p" "$config_file" |
+			grep -E "^\s*[^#].*\s*=" |
+			sed 's/^\s*//;s/\s*$//' |
+			sed 's/=/ = /' |
+			column --table --table-columns chave,=,valor,valor1 --table-hide - |
+			sed 1d
+		echo # Adiciona uma linha em branco entre as seções
+	done
+}
+export -f TIni.GetAllSections
+
+function TIni.ParseToAssoc() {
+	local config_file="$1"
+
+	awk -F ' *= *' '{
+	    if ($1 ~ /^\[/) {
+    	    section=substr($1, 2, length($1)-2);  # Remove os colchetes da seção
+	    } else if ($1 !~ /^$/ && $1 !~ /^;/) {
+    	    print section "[" $1 "]=\"" $2 "\""
+	    }
+	}' "$config_file"
+}
+export -f TIni.ParseToAssoc
+
+function TIni.ParseToVar() {
+	local config_file="$1"
+
+	awk -F ' *= *' '{
+        if ($1 ~ /^\[/) {
+            section=substr($1, 2, length($1)-2);  # Remove os colchetes da seção
+        } else if ($1 !~ /^$/ && $1 !~ /^;/) {
+            print $1 "=" "\"" $2 "\""
+        }
+    }' "$config_file"
+}
+export -f TIni.ParseToVar
+
+function TIni.ParseToDeclareAssoc() {
+    local config_file="$1"
+
+    while IFS='=' read key value; do
+        # Verifique se a chave não começa com ;
+        if [[ ! $key =~ ^\;.* ]]; then
+            if [[ $key == \[*] ]]; then
+	            # Remova os colchetes [ ]
+				key="${key/\[/}"
+				key="${key/\]/}"
+                section=$key
+            elif [[ $value ]]; then
+                echo "$section[$key]=\"$value\""
+                declare "$section[$key]=\"$value\""
+            fi
+        fi
+    done <"$config_file"
+}
+export -f TIni.ParseToDeclareAssoc
+
+function TIni.ParseToDeclareVar() {
+    local config_file="$1"
+
+    while IFS='=' read key value; do
+        # Verifique se a chave não começa com ;
+        if [[ ! $key =~ ^\;.* ]]; then
+            if [[ $key == \[*] ]]; then
+	            # Remova os colchetes [ ]
+				key="${key/\[/}"
+				key="${key/\]/}"
+                section=$key
+            elif [[ $value ]]; then
+                echo "$key=\"$value\""
+                declare "$key=\"$value\""
+            fi
+        fi
+    done <"$config_file"
+}
+export -f TIni.ParseToDeclareVar
+
+function TIni.ParseToDeclareArray() {
+    local config_file="$1"
+
+    while IFS='=' read key value; do
+        # Verifique se a chave não começa com ;
+        if [[ ! $key =~ ^\;.* ]]; then
+            if [[ $key == \[*] ]]; then
+	            # Remova os colchetes [ ]
+				key="${key/\[/}"
+				key="${key/\]/}"
+                section=$key
+            elif [[ $value ]]; then
+                echo "$key=(\"$value\")"
+                declare "$key=(\"$value\")"
+            fi
+        fi
+    done <"$config_file"
+}
+export -f TIni.ParseToDeclareArray
+
+function TIni.ParseToArray() {
+	local config_file="$1"
+
+	awk -F ' *= *' '{
+        if ($1 ~ /^\[/) {
+            section=substr($1, 2, length($1)-2);  # Remove os colchetes da seção
+        } else if ($1 !~ /^$/ && $1 !~ /^;/) {
+            print section "-" $1 "=(" "\"" $2 "\"" ")"
+        }
+    }' "$config_file"
+}
+export -f TIni.ParseToArray
+
+function TIni.AlignAllSections() {
+	local config_file="$1"
+	local chave_identada="$2"
+	local print="$3"
+	local temp_file
+	local max_size
+	local sections
+	local current_section=""
+
+	temp_file=$(mktemp)
+	if [[ -n "$chave_identada" || "$chave_identada" -eq 1 ]]; then
+		chave_identada=1
+		# Obtém o tamanho da string da maior chave (nome da chave) no arquivo INI
+		max_size=$(TIni.GetMaxKeySize $config_file)
+	else
+		chave_identada=0
+	fi
+	# Obtém todas as seções do arquivo
+	sections=$(sed -n '/^\[.*\]$/s/\[\(.*\)\]/\1/p' "$config_file")
+
+	# Itera sobre cada linha do arquivo
+	while IFS= read -r line; do
+		if [[ "$line" =~ ^\[(.*)\]$ ]]; then
+			current_section="${BASH_REMATCH[1]}"
+			echo "$line"
+		elif [[ "$line" =~ ^[^#]*= ]]; then
+			if ((chave_identada)); then
+				# formatar com identação
+				awk -F'=' -v section="$current_section" -v max="$max_size" '{ printf "%-*s= %s\n", max+1, $1, $2}' <<<"$line"
+			else
+				# formatar sem identação
+				echo "$current_section.$line"
+			fi
+		else
+			echo "$line"
+		fi
+	done <"$config_file" >>"$temp_file"
+
+	cp "$temp_file" "$config_file"
+	[[ -n "$print" ]] && echo "$(<$config_file)"
+}
+export -f TIni.AlignAllSections
+
+# Se a chave e o valor forem exatamente iguais, a função retorna 0.
+# Se a chave for encontrada, mas o valor não for igual, a função retorna 2.
+# Se a chave não for encontrada, a função retorna 1.
+# Se a chave for encontrada com um ponto e vírgula no início, a função também retorna 2.
+function TIni.Exist() {
+	local config_file="$1"
+	local section="$2"
+	local key="$3"
+	local value="$4"
+
+	local resultado=1 # Inicializa como 1, indicando que a chave não foi encontrada
+
+	result=$(awk -F "=" -v section="$section" -v key="$key" -v value="$value" '
+        BEGIN {
+            encontrado = 1  # Inicializa como 1, indicando que a chave não foi encontrada
+        }
+        {
+            gsub(/^[ \t]+|[ \t]+$/, "", $1);  # Remova espaços em branco em torno do nome da chave
+            if ($0 ~ "^\\[" section "\\]") {   # Verifique se estamos na seção correta
+                in_section = 1
+            } else if (in_section) {
+                if ($1 == key) {  # Se estivermos na seção correta, procure a chave
+                    if ($0 ~ /^[[:space:]]*;/) {
+                        encontrado = 2  # Chave encontrada com ponto e vírgula no início
+                        exit
+                    }
+                    gsub(/^[ \t]+|[ \t]+$/, "", $2);  # Remova espaços em branco em torno do valor
+                    if ($0 !~ /^[[:space:]]*;/) {  # Verifique se não é um comentário
+                        if (value == "") {
+                            encontrado = 0  # Chave encontrada sem valor especificado
+                            exit
+                        } else if ($2 == value) {
+                            encontrado = 0  # Chave encontrada com o valor correto
+                            exit
+                        } else {
+                            encontrado = 2  # Valor fornecido não é igual ao valor da chave
+                            exit
+                        }
+                    }
+                }
+            } else if ($0 ~ "^\\[.*\\]") {  # Se encontrarmos outra seção, saia da seção atual
+                in_section = 0
+            }
+        }
+        END {
+            print encontrado
+        }
+    ' "$config_file")
+	return $result
+}
+export -f TIni.Exist
+
+# Exemplo de uso:
+# TIni.Set arquivo.ini snap vilmar 5.7
+function TIni.Set() {
+	local config_file="$1"
+	local section="$2"
+	local key="$3"
+	local value="$4"
+	local found_section=0
+
+	if [ ! -f "$config_file" ]; then
+		# Se não existir, crie o arquivo com a seção, chave e valor fornecidos
+		{
+			echo "[$section]"
+			echo "$key=$value"
+		} >>"$config_file"
+		return
+	fi
+
+	while IFS= read -r line; do
+		if [[ "$line" =~ ^\[$section\] ]]; then
+			found_section=1
+		elif [[ "$found_section" -eq 1 && "$line" =~ ^$key[[:space:]]*=[[:space:]]* ]]; then
+			# Se a seção e a chave existem, atualize o valor
+			sed -i "s/^$key[[:space:]]*=[[:space:]]*.*/$key=$value/" "$config_file"
+			return
+		fi
+	done <"$config_file"
+
+	# Se a seção não existir, crie-a e adicione a chave e o valor
+	if [[ "$found_section" -eq 0 ]]; then
+		{
+			echo ""
+			echo "[$section]"
+		} >>"$config_file"
+	fi
+	echo "$key=$value" >>"$config_file"
+}
+export -f TIni.Set
+
+
+config_file='config.ini'
+echo 'TIni.ParseToArray $config_file'
+TIni.ParseToArray $config_file
+echo ===========================================================
+echo 'TIni.ParseToVar $config_file'
+TIni.ParseToVar $config_file
+echo ===========================================================
+echo 'TIni.ParseToDeclareAssoc $config_file'
+TIni.ParseToDeclareAssoc $config_file
+echo ===========================================================
+echo 'TIni.ParseToDeclareArray $config_file'
+TIni.ParseToDeclareArray $config_file
+echo ===========================================================
+echo 'TIni.ParseToDeclareVar $config_file'
+TIni.ParseToDeclareVar $config_file
+echo ===========================================================
+echo 'TIni.ParseToAssoc $config_file'
+TIni.ParseToAssoc $config_file
+echo ===========================================================
+#TIni.AlignAllSections $config_file 0 print
+#TIni.GetAllSections $config_file
+#TIni.AlignAllSections $config_file 1 print
+#TIni.GetAllSections $config_file
+echo ===========================================================
+TIni.Set $config_file 'snap' 'outro' 0
+TIni.Set $config_file 'snap' 'vilmar' 4.0
+TIni.Set $config_file 'familia' 'Evili' 5.7
+TIni.Set $config_file 'familia' 'Evilir' 5.7
+TIni.Set $config_file 'OS' 'Chili' 'Rolling'
+TIni.Set $config_file 'OS' 'Debian' 'Zero'
+TIni.Set $config_file 'OS' ';Teste' 'Focal'
+TIni.Set $config_file 'OS' 'data' 'qua 27 set 2023 22:23:35 -04'
+echo ===========================================================
+TIni.Exist $config_file 'snap' 'snap_active' 1
+echo $?
+TIni.Exist $config_file 'snap' 'snap_active' 0
+echo $?
+TIni.Exist $config_file 'snap' 'flatpak_data_atualizacao' '24/09/23 23:40'
+echo $?
+TIni.Exist $config_file 'snap' 'flatpak_data_atualizacao' '24/09/23 23:4x'
+echo $?
+TIni.Exist $config_file 'snap' 'outro'
+echo $?
+TIni.Exist $config_file 'snap' 'vilmar' 1
+echo $?
