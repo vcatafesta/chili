@@ -16,8 +16,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
+
 	"github.com/go-ini/ini"
 )
 
@@ -66,7 +66,7 @@ func (tf *TextFormatter) Formatar() string {
 
 func imprimirConteudoDoArquivo(nomeArquivo string) error {
 	// Lê o conteúdo do arquivo
-	conteudo, err := ioutil.ReadFile(nomeArquivo)
+	conteudo, err := os.ReadFile(nomeArquivo)
 	if err != nil {
 		return err
 	}
@@ -99,18 +99,25 @@ func main() {
 	// Analise os argumentos da linha de comando
 	flag.Parse()
 
+	sum := 0
+	for sum < 1000 {
+		// sum += sum
+		sum++
+		fmt.Println(sum)
+	}
+
 	// Verifique se todos os argumentos necessários foram fornecidos
 	if helpFlag || len(os.Args) == 1 {
-		println(textoFormatado.Formatar())
+		fmt.Println(textoFormatado.Formatar())
 		println()
-		println("Opções:")
+		fmt.Println(Red + "Opções:" + Reset)
 		flag.PrintDefaults()
 		return
 	}
 
 	// Verifique se há argumentos não processados (que não são flags)
 	if flag.NArg() == 0 {
-		println("Erro: é necessário fornecer um nome de arquivo.")
+		fmt.Println("Erro: é necessário fornecer um nome de arquivo.")
 		return
 	}
 
@@ -150,7 +157,7 @@ func main() {
 	}
 
 	if !quiet {
-	imprimirConteudoDoArquivo(filePath)
+		imprimirConteudoDoArquivo(filePath)
 	}
 
 	// Saia com código de retorno 0 para indicar sucesso

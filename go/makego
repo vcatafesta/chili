@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 
+# go mod init example
+go mod init $1
+go mod tidy
+
 [[ $# -lt 1 ]] && { echo "Uso: $0 <file.go>"; exit 1; }
 #go build -tags netgo -ldflags '-s -w -extldflags "-static"' "$@"
 src=$1; shift
