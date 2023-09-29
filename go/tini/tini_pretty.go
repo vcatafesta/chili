@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-
 	"github.com/go-ini/ini"
 )
 
@@ -102,16 +101,16 @@ func main() {
 
 	// Verifique se todos os argumentos necessários foram fornecidos
 	if helpFlag || len(os.Args) == 1 {
-		fmt.Println(textoFormatado.Formatar())
-		fmt.Println()
-		fmt.Println("Opções:")
+		println(textoFormatado.Formatar())
+		println()
+		println("Opções:")
 		flag.PrintDefaults()
 		return
 	}
 
 	// Verifique se há argumentos não processados (que não são flags)
 	if flag.NArg() == 0 {
-		fmt.Println("Erro: é necessário fornecer um nome de arquivo.")
+		println("Erro: é necessário fornecer um nome de arquivo.")
 		return
 	}
 
@@ -151,7 +150,7 @@ func main() {
 	}
 
 	if !quiet {
-		imprimirConteudoDoArquivo(filePath)
+	imprimirConteudoDoArquivo(filePath)
 	}
 
 	// Saia com código de retorno 0 para indicar sucesso
