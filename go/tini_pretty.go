@@ -16,52 +16,53 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/go-ini/ini"
-	"os"
 	"io/ioutil"
+	"os"
+
+	"github.com/go-ini/ini"
 )
 
 // Cores de Texto (Foreground)
 const (
-    Black   = "\033[30m"
-    Red     = "\033[31m"
-    Green   = "\033[32m"
-    Yellow  = "\033[33m"
-    Blue    = "\033[34m"
-    Magenta = "\033[35m"
-    Cyan    = "\033[36m"
-    White   = "\033[37m"
+	Black   = "\033[30m"
+	Red     = "\033[31m"
+	Green   = "\033[32m"
+	Yellow  = "\033[33m"
+	Blue    = "\033[34m"
+	Magenta = "\033[35m"
+	Cyan    = "\033[36m"
+	White   = "\033[37m"
 )
 
 // Cores de Fundo
 const (
-    BgBlack   = "\033[40m"
-    BgRed     = "\033[41m"
-    BgGreen   = "\033[42m"
-    BgYellow  = "\033[43m"
-    BgBlue    = "\033[44m"
-    BgMagenta = "\033[45m"
-    BgCyan    = "\033[46m"
-    BgWhite   = "\033[47m"
+	BgBlack   = "\033[40m"
+	BgRed     = "\033[41m"
+	BgGreen   = "\033[42m"
+	BgYellow  = "\033[43m"
+	BgBlue    = "\033[44m"
+	BgMagenta = "\033[45m"
+	BgCyan    = "\033[46m"
+	BgWhite   = "\033[47m"
 )
 
 // Estilos de Texto
 const (
-    Bold      = "\033[1m"
-    Underline = "\033[4m"
-    Reset     = "\033[0m"
+	Bold      = "\033[1m"
+	Underline = "\033[4m"
+	Reset     = "\033[0m"
 )
 
 // TextFormatter é uma struct que representa um objeto de formatação de texto
 type TextFormatter struct {
-    Text   string
-    Cor    string
-    Estilo string
+	Text   string
+	Cor    string
+	Estilo string
 }
 
 // Formatar formata o texto com a cor e o estilo especificados
 func (tf *TextFormatter) Formatar() string {
-    return tf.Cor + tf.Estilo + tf.Text + Reset
+	return tf.Cor + tf.Estilo + tf.Text + Reset
 }
 
 func imprimirConteudoDoArquivo(nomeArquivo string) error {
@@ -77,11 +78,11 @@ func imprimirConteudoDoArquivo(nomeArquivo string) error {
 }
 
 func main() {
-    textoFormatado := TextFormatter{
-        Text:   "Uso: tini_pretty [opções]",
-        Cor:    White,
-        Estilo: BgBlue,
-    }
+	textoFormatado := TextFormatter{
+		Text:   "Uso: tini_pretty [opções]",
+		Cor:    White,
+		Estilo: BgBlue,
+	}
 
 	var helpFlag bool
 	quiet := false
@@ -125,13 +126,13 @@ func main() {
 	}
 
 	/*
-	// Itere por todas as seções e chaves e remova espaços entre a chave e o valor
-	for _, section := range cfg.Sections() {
-		for _, key := range section.Keys() {
-	//		key.SetValue(strings.TrimSpace(key.String()))
-			key.SetValue(key.Name() + "=" + key.String())
+		// Itere por todas as seções e chaves e remova espaços entre a chave e o valor
+		for _, section := range cfg.Sections() {
+			for _, key := range section.Keys() {
+		//		key.SetValue(strings.TrimSpace(key.String()))
+				key.SetValue(key.Name() + "=" + key.String())
+			}
 		}
-	}
 	*/
 
 	// Configure a opção PrettyFormat com base na flag pretty
@@ -141,7 +142,7 @@ func main() {
 	if pretty {
 		err = cfg.SaveTo(filePath)
 	} else {
-		err = cfg.SaveToIndent(filePath,"")
+		err = cfg.SaveToIndent(filePath, "")
 	}
 
 	if err != nil {
@@ -149,7 +150,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if ! quiet {
+	if !quiet {
 		imprimirConteudoDoArquivo(filePath)
 	}
 

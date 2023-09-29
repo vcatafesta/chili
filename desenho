@@ -1,0 +1,1 @@
+d=\●;for((N=30,I=30,P=10**8,Q=P/100,X=320*Q/(COLUMNS-1),Y=210*Q/(LINES-2),v=-220*Q,y=-105*Q;y<105*Q;y+=Y));{ for((x=v;x<P;x+=X));{ for((a=b=i=k=c=0;a*a+b*b<2*P*P&&i++<I;a=((c=a)*a-b*b)/P+x,b=2*c*b/P+y));{ :;};(((j=(i<I?i%16:0)+N)>N+7?k=1,j-=8:0));printf "\e[$k;${j}m$d";};};printf \\e[0m

@@ -2,5 +2,12 @@
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 
 (( $1 % 4 == 0 && ( $1 % 100 != 0 || $1 % 400 == 0 ) )) && echo "$1 é um ano bissexto." || echo "$1 não é um ano bissexto."
-awk 'BEGIN{a=ARGV[1]; if(a%4==0 && (a%100!=0 || a%400==0))print a" é um ano bissexto."; else print a" não é um ano bissexto."}' "$1"
+awk '
+	BEGIN {
+		a=ARGV[1];
+		if(a%4==0 && (a%100!=0 || a%400==0))
+			print a" é um ano bissexto.";
+		else
+			print a" não é um ano bissexto."}
+	' "$1"
 
