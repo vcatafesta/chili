@@ -1,0 +1,36 @@
+{
+  "nano": {
+    "name": "nano",
+    "version": "7.5",
+    "status": "[Installed]",
+    "size": "20MB",
+    "description": {
+      "it_IT": "Rolim",
+      "pt_BR": "Jipa",
+      "pv_RO": "Pvh",
+      "rm_RM": "RM"
+    }
+  },
+  "rsync": {
+    "name": "rsync",
+    "version": "1.0.4",
+    "status": "[Installed]",
+    "size": "10MB",
+    "description": {
+      "fr_FR": "Paris",
+      "it_IT": "Roma",
+      "ja_JA": "Jipa",
+      "pt_BR": "Brasil"
+    }
+  },
+  "vim": {
+    "name": "vim",
+    "version": "9.5",
+    "status": "[Installed]",
+    "size": "1MB",
+    "description": {
+      "ev_FR": "Ev",
+      "vi_CA": "Rolim"
+    }
+  }
+}

@@ -1,12 +1,12 @@
 /*
-	tini_pretty - reformat .ini files
+	big-tini-pretty - reformat .ini files
 	go get github.com/go-ini/ini
 	Chili GNU/Linux - https://github.com/vcatafesta/ChiliOS
 	Chili GNU/Linux - https://chililinux.com
 	Chili GNU/Linux - https://chilios.com.br
 
 	Created: 2023/09/26
-	Altered: 2023/09/26
+	Altered: 2023/09/30
 
 	Copyright (c) 2023-2023, Vilmar Catafesta <vcatafesta@gmail.com>
 */
@@ -78,7 +78,7 @@ func imprimirConteudoDoArquivo(nomeArquivo string) error {
 
 func main() {
 	textoFormatado := TextFormatter{
-		Text:   "Uso: tini_pretty [opções]",
+		Text:   "Uso: big-tini-pretty [opções]",
 		Cor:    White,
 		Estilo: BgBlue,
 	}
@@ -98,13 +98,6 @@ func main() {
 
 	// Analise os argumentos da linha de comando
 	flag.Parse()
-
-	sum := 0
-	for sum < 1000 {
-		// sum += sum
-		sum++
-		fmt.Println(sum)
-	}
 
 	// Verifique se todos os argumentos necessários foram fornecidos
 	if helpFlag || len(os.Args) == 1 {

@@ -1,3 +1,16 @@
+/*
+    big-sqlite - search/add into sqlite bigstore
+    go get github.com/go-ini/ini
+    Chili GNU/Linux - https://github.com/vcatafesta/ChiliOS
+    Chili GNU/Linux - https://chililinux.com
+    Chili GNU/Linux - https://chilios.com.br
+
+    Created: 2023/09/26
+    Altered: 2023/09/26
+
+    Copyright (c) 2023-2023, Vilmar Catafesta <vcatafesta@gmail.com>
+*/
+
 package main
 
 import (
@@ -200,7 +213,7 @@ func searchAndPrintAllPackageJSON(db *sql.DB) {
 		foundPackage, err := searchPackage(db, pkg.Name)
 		if err != nil {
 			// Se ocorrer um erro, imprima em vermelho
-			log.Printf("%sErro:%s %v\n", Red, Reset, err)
+			log.Printf("big-sqlite %sErro:'%s' %s%v\n", Red, pkg.Name, Reset, err)
 		} else {
 			// Converte o resultado em JSON e imprime em verde
 			jsonResult, err := json.Marshal(foundPackage)
@@ -219,7 +232,7 @@ func searchAndPrintPackageJSON(db *sql.DB, packageName string) {
 	foundPackage, err := searchPackage(db, packageName)
 	if err != nil {
 		// Se ocorrer um erro, imprima em vermelho
-		log.Printf("%sErro:%s %v\n", Red, Reset, err)
+		log.Printf("big-sqlite %sErro:'%s' %s%v\n", Red, packageName, Reset, err)
 		os.Exit(1)
 	} else {
 		// Converte o resultado em JSON e imprime em verde
@@ -238,7 +251,7 @@ func searchAndPrintPackage(db *sql.DB, packageName string) {
 	pkg, err := searchPackage(db, packageName)
 	if err != nil {
 		// Se ocorrer um erro, imprima em vermelho
-		log.Printf("%sErro:%s %v\n", Red, Reset, err)
+		log.Printf("big-sqlite %sErro:'%s' %s%v\n", Red, pkg.Name, Reset, err)
 		os.Exit(1)
 	} else {
 

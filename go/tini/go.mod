@@ -1,4 +1,4 @@
-module tini_pretty
+module big-tini-pretty
 
 go 1.21.1
 
