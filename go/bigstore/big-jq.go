@@ -1,3 +1,37 @@
+/*
+	big-jq - Command-line JSON processor, similar to jq
+    go get github.com/go-ini/ini
+    Chili GNU/Linux - https://github.com/vcatafesta/chili/go
+    Chili GNU/Linux - https://chililinux.com
+    Chili GNU/Linux - https://chilios.com.br
+
+	Created: 2023/10/01
+	Altered: 2023/10/05
+
+	Copyright (c) 2023-2023, Vilmar Catafesta <vcatafesta@gmail.com>
+	All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions
+	are met:
+	1. Redistributions of source code must retain the above copyright
+		notice, this list of conditions and the following disclaimer.
+	2. Redistributions in binary form must reproduce the above copyright
+		notice, this list of conditions and the following disclaimer in the
+		documentation and/or other materials provided with the distribution.
+
+	THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+	IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+	IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+	DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+	THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 package main
 
 import (
@@ -8,33 +42,35 @@ import (
 	"strings"
 )
 
-type Description struct {
+type Summary struct {
+	Id_Name     string            `json:"id_name"`
 	Name        string            `json:"name"`
 	Version     string            `json:"version"`
 	Status      string            `json:"status"`
 	Size        string            `json:"size"`
-	Description map[string]string `json:"description"`
+	Summary map[string]string `json:"summary"`
 }
 
 func main() {
 	//	command := os.Args[1]
 
 	if len(os.Args) < 2 {
-		fmt.Println("     big-jq -C|--create <arquivo_json> <pacote> <version> <status> <size> <description> <lang>")
-		fmt.Println("     big-jq -S|--search] <arquivo_json> <chave> [--json]")
-		fmt.Println("     big-jq -S|--search] <arquivo_json> <chave.value> [--json]")
-		fmt.Println("     big-jq -S|--search] <arquivo_json> <chave.subchave.value> [--json]")
+		fmt.Println("     big-jq -C|--create <arquivo_json> <pacote_id> <pacote> <version> <status> <size> <summary> <lang>")
+		fmt.Println("     big-jq -S|--search] <arquivo_json> <pacote_id> [--json]")
+		fmt.Println("     big-jq -S|--search] <arquivo_json> <pacote_id.value> [--json]")
+		fmt.Println("     big-jq -S|--search] <arquivo_json> <pacote_id.subchave.value> [--json]")
 		fmt.Println("     big-jq -L|--list <arquivo_json>")
 		return
 	}
 
 	var (
 		jsonFile    string
+		id_name     string
 		name        string
 		version     string
 		status      string
 		size        string
-		description string
+		summary 	string
 		lang        string
 		command     string // Variável para armazenar o comando encontrado
 		updated     bool
@@ -57,21 +93,31 @@ func main() {
 		}
 	}
 
+	jsonFile = os.Args[2]
+	// Verifique se o arquivo JSON existe e, se não, crie-o com um objeto vazio
+	if _, err := os.Stat(jsonFile); os.IsNotExist(err) {
+		emptyObj := map[string]Summary{}
+		jsonStr, _ := json.MarshalIndent(emptyObj, "", "    ")
+		_ = ioutil.WriteFile(jsonFile, jsonStr, 0644)
+	}
+
 	switch command {
 	case "-J", "--json":
 		showJSON = true
 	case "-S", "--search":
 		if len(os.Args) < 4 {
-			fmt.Println("Uso: programa [-S|--search] <arquivo_json> <name> <lang>")
+			fmt.Println("Uso: big-jq -S|--search] <arquivo_json> <pacote_id> [--json]")
+			fmt.Println("     big-jq -S|--search] <arquivo_json> <pacote_id.value> [--json]")
+			fmt.Println("     big-jq -S|--search] <arquivo_json> <pacote_id.subchave.value> [--json]")
 			return
 		}
 		jsonFile := os.Args[2]
-		name := os.Args[3]
-		searchAndPrintDescription(jsonFile, name, showJSON)
+		id_name := os.Args[3]
+		searchAndPrintSummary(jsonFile, id_name, showJSON)
 		return
 	case "-L", "--list":
 		jsonFile := os.Args[2]
-		listDescriptions(jsonFile)
+		listSummarys(jsonFile)
 		return
 	case "-C", "--create":
 	default:
@@ -79,25 +125,19 @@ func main() {
 		return
 	}
 
-	if len(os.Args) < 9 {
-		fmt.Println("Uso: programa <arquivo_json> <name> <version> <status> <size> <description> <lang>")
+	if len(os.Args) < 10 {
+		fmt.Println("Uso: big-jq -C|--create <arquivo_json> <pacote_id> <pacote> <version> <status> <size> <summary> <lang>")
 		return
 	}
 
 	jsonFile = os.Args[2]
-	name = os.Args[3]
-	version = os.Args[4]
-	status = os.Args[5]
-	size = os.Args[6]
-	description = os.Args[7]
-	lang = os.Args[8]
-
-	// Verifique se o arquivo JSON existe e, se não, crie-o com um objeto vazio
-	if _, err := os.Stat(jsonFile); os.IsNotExist(err) {
-		emptyObj := map[string]Description{}
-		jsonStr, _ := json.MarshalIndent(emptyObj, "", "    ")
-		_ = ioutil.WriteFile(jsonFile, jsonStr, 0644)
-	}
+	id_name = os.Args[3]
+	name = os.Args[4]
+	version = os.Args[5]
+	status = os.Args[6]
+	size = os.Args[7]
+	summary = os.Args[8]
+	lang = os.Args[9]
 
 	data, err := ioutil.ReadFile(jsonFile)
 	if err != nil {
@@ -105,22 +145,22 @@ func main() {
 		return
 	}
 
-	var descriptions map[string]Description
-	if err := json.Unmarshal(data, &descriptions); err != nil {
+	var summarys map[string]Summary
+	if err := json.Unmarshal(data, &summarys); err != nil {
 		fmt.Println("Erro ao decodificar o JSON:", err)
 		return
 	}
 
-	key := strings.ToLower(name)
+	key := strings.ToLower(id_name)
 
-	if desc, ok := descriptions[key]; !ok || desc.Description[lang] != description {
-		updated = createOrUpdateDescription(&descriptions, key, name, version, status, size, description, lang)
+	if desc, ok := summarys[key]; !ok || desc.Summary[lang] != summary {
+		updated = createOrUpdateSummary(&summarys, key, id_name, name, version, status, size, summary, lang)
 	}
 
 	// foi atualizada algo ?
 	if updated {
 		// Converte as descrições em JSON e escreve no arquivo
-		data, err = json.MarshalIndent(descriptions, "", "  ")
+		data, err = json.MarshalIndent(summarys, "", "  ")
 		if err != nil {
 			fmt.Println("Erro ao codificar para JSON:", err)
 			return
@@ -153,7 +193,7 @@ func printFieldRecursively(prefix string, data interface{}, showJSON bool) {
 	}
 }
 
-func searchAndPrintDescription(jsonFile, fieldPath string, showJSON bool) {
+func searchAndPrintSummary(jsonFile, fieldPath string, showJSON bool) {
 	// Lê o conteúdo do arquivo JSON
 	data, err := ioutil.ReadFile(jsonFile)
 	if err != nil {
@@ -161,20 +201,20 @@ func searchAndPrintDescription(jsonFile, fieldPath string, showJSON bool) {
 		return
 	}
 
-	var descriptions map[string]interface{}
-	if err := json.Unmarshal(data, &descriptions); err != nil {
+	var summarys map[string]interface{}
+	if err := json.Unmarshal(data, &summarys); err != nil {
 		fmt.Println("Erro ao decodificar o JSON:", err)
 		return
 	}
 
 	if showJSON {
 		// Se o parâmetro "json" estiver definido, imprime o objeto JSON inteiro
-		//		jsonVal, _ := json.Marshal(descriptions)
-		//		fmt.Println(string(jsonVal))
-		//		return
+		//      jsonVal, _ := json.Marshal(summarys)
+		//      fmt.Println(string(jsonVal))
+		//      return
 
 		// Se o parâmetro "json" estiver definido, imprime o objeto JSON completo a partir da chave especificada
-		fieldVal := descriptions[fieldPath]
+		fieldVal := summarys[fieldPath]
 		if fieldVal != nil {
 			fieldMap := map[string]interface{}{fieldPath: fieldVal}
 			jsonVal, _ := json.MarshalIndent(fieldMap, "", "  ")
@@ -205,16 +245,15 @@ func searchAndPrintDescription(jsonFile, fieldPath string, showJSON bool) {
 	}
 
 	// Procura o campo especificado
-	fieldVal := getField(descriptions, fields)
+	fieldVal := getField(summarys, fields)
 	if fieldVal != nil {
 		fmt.Println(fieldVal)
 		return
 	}
-
 	fmt.Println("null")
 }
 
-func searchAndPrintDescriptionOLD(jsonFile, name, field string, showJSON bool) {
+func searchAndPrintSummaryOLD(jsonFile, id_name, field string, showJSON bool) {
 	// Lê o conteúdo do arquivo JSON
 	data, err := ioutil.ReadFile(jsonFile)
 	if err != nil {
@@ -222,16 +261,16 @@ func searchAndPrintDescriptionOLD(jsonFile, name, field string, showJSON bool) {
 		return
 	}
 
-	var descriptions map[string]Description
-	if err := json.Unmarshal(data, &descriptions); err != nil {
+	var summarys map[string]Summary
+	if err := json.Unmarshal(data, &summarys); err != nil {
 		fmt.Println("Erro ao decodificar o JSON:", err)
 		return
 	}
 
-	key := strings.ToLower(name)
+	key := strings.ToLower(id_name)
 
 	// Procura a descrição no idioma especificado
-	if desc, ok := descriptions[key]; ok {
+	if desc, ok := summarys[key]; ok {
 		// Verifica se o campo desejado existe na descrição
 		switch field {
 		case "name":
@@ -243,7 +282,7 @@ func searchAndPrintDescriptionOLD(jsonFile, name, field string, showJSON bool) {
 		case "size":
 			printField(desc.Size, showJSON)
 		default:
-			fmt.Println("Campo não encontrado")
+			fmt.Println("null")
 		}
 		return
 	}
@@ -264,7 +303,7 @@ func printField(value string, showJSON bool) {
 	}
 }
 
-func listDescriptions(jsonFile string) {
+func listSummarys(jsonFile string) {
 	// Lê o conteúdo do arquivo JSON
 	data, err := ioutil.ReadFile(jsonFile)
 	if err != nil {
@@ -272,14 +311,14 @@ func listDescriptions(jsonFile string) {
 		return
 	}
 
-	var descriptions map[string]Description
-	if err := json.Unmarshal(data, &descriptions); err != nil {
+	var summarys map[string]Summary
+	if err := json.Unmarshal(data, &summarys); err != nil {
 		fmt.Println("Erro ao decodificar o JSON:", err)
 		return
 	}
 
 	// Converte para JSON e imprime
-	resultJSON, err := json.MarshalIndent(descriptions, "", "  ")
+	resultJSON, err := json.MarshalIndent(summarys, "", "  ")
 	if err != nil {
 		fmt.Println("Erro ao codificar para JSON:", err)
 		return
@@ -288,36 +327,38 @@ func listDescriptions(jsonFile string) {
 	fmt.Println(string(resultJSON))
 }
 
-func createOrUpdateDescription(descriptions *map[string]Description, key, name, version, status, size, description, lang string) bool {
+func createOrUpdateSummary(summarys *map[string]Summary, key, id_name, name, version, status, size, summary, lang string) bool {
 	// Inicialize a variável updated como false
 	updated := false
 
 	// Verifique se a descrição já existe
-	if desc, ok := (*descriptions)[key]; ok {
+	if desc, ok := (*summarys)[key]; ok {
 		// Verifique se algum campo é diferente e atualize se for o caso
-		if desc.Name != name || desc.Version != version || desc.Status != status || desc.Size != size || desc.Description[lang] != description {
+		if desc.Id_Name != id_name || desc.Name != name || desc.Version != version || desc.Status != status || desc.Size != size || desc.Summary[lang] != summary {
+			desc.Id_Name = id_name
 			desc.Name = name
 			desc.Version = version
 			desc.Status = status
 			desc.Size = size
-			desc.Description[lang] = description
+			desc.Summary[lang] = summary
 			// Atualize o objeto no mapa
-			(*descriptions)[key] = desc
+			(*summarys)[key] = desc
 			// Defina updated como true, indicando que a descrição foi atualizada com sucesso
 			updated = true
 		}
 	} else {
 		// Crie uma nova descrição se ela não existir
-		newDescription := Description{
+		newSummary := Summary{
+			Id_Name: id_name,
 			Name:    name,
 			Version: version,
 			Status:  status,
 			Size:    size,
-			Description: map[string]string{
-				lang: description,
+			Summary: map[string]string{
+				lang: summary,
 			},
 		}
-		(*descriptions)[key] = newDescription
+		(*summarys)[key] = newSummary
 		// Defina updated como true, indicando que a descrição foi criada com sucesso
 		updated = true
 	}
