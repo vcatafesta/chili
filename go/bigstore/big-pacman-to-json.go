@@ -90,8 +90,8 @@ func ProcessOutput(input, xcmd string) {
 	// Variáveis para manter as informações do pacote
 	var packages []PackageInfo
 	var currentPackage PackageInfo
-	isDescription := false
-	isName := false
+	IsDescription := false
+	IsName := false
 
 	// Divide o texto de entrada em linhas
 	lines := strings.Split(input, "\n")
@@ -99,11 +99,11 @@ func ProcessOutput(input, xcmd string) {
 	// Processa cada linha da entrada
 	for _, line := range lines {
 		// Verifica se a linha começa com 2 espaços iniciais (indica descrição)
-		if strings.HasPrefix(line, "  ") {
+		if strings.HasPrefix(line, "  ") && IsName == true {
 			line = strings.TrimSpace(line)
 			currentPackage.Description += line
-			isDescription = true
-		} else {
+			IsDescription = true
+		} else if IsName == false {
 			// Divide a linha em campos e verifica se há pelo menos 2 campos (nome e versão)
 			fields := strings.Fields(line)
 			if len(fields) >= 1 {
@@ -134,20 +134,15 @@ func ProcessOutput(input, xcmd string) {
 						currentPackage.Status = fields[2]
 					}
 				}
-				isName = true
+				IsName = true
 			}
 		}
 		// Se a linha não começar com 2 espaços, isso indica o início de um novo pacote
-		if isDescription == true && isName == true {
+		if IsDescription == true && IsName == true {
 			packages = append(packages, currentPackage)
 			currentPackage = PackageInfo{}
-			isDescription = false
-			isName = false
-		} else if isName == true {
-			packages = append(packages, currentPackage)
-			currentPackage = PackageInfo{}
-			isDescription = false
-			isName = false
+			IsDescription = false
+			IsName = false
 		}
 	}
 

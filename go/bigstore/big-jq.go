@@ -40,6 +40,19 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"log"
+)
+
+// Constantes para cores ANSI
+const (
+    Reset   = "\x1b[0m"
+    Red     = "\x1b[31m"
+    Green   = "\x1b[32m"
+    Yellow  = "\x1b[33m"
+    Blue    = "\x1b[34m"
+    Magenta = "\x1b[35m"
+    Cyan    = "\x1b[36m"
+    White   = "\x1b[37m"
 )
 
 type Summary struct {
@@ -54,13 +67,13 @@ type Summary struct {
 func main() {
 	//	command := os.Args[1]
 
-	if len(os.Args) < 2 {
+	if len(os.Args) < 3 {
 		fmt.Println("     big-jq -C|--create <arquivo_json> <pacote_id> <pacote> <version> <status> <size> <summary> <lang>")
 		fmt.Println("     big-jq -S|--search] <arquivo_json> <pacote_id> [--json]")
 		fmt.Println("     big-jq -S|--search] <arquivo_json> <pacote_id.value> [--json]")
 		fmt.Println("     big-jq -S|--search] <arquivo_json> <pacote_id.subchave.value> [--json]")
 		fmt.Println("     big-jq -L|--list <arquivo_json>")
-		return
+		os.Exit(1)
 	}
 
 	var (
@@ -109,7 +122,7 @@ func main() {
 			fmt.Println("Uso: big-jq -S|--search] <arquivo_json> <pacote_id> [--json]")
 			fmt.Println("     big-jq -S|--search] <arquivo_json> <pacote_id.value> [--json]")
 			fmt.Println("     big-jq -S|--search] <arquivo_json> <pacote_id.subchave.value> [--json]")
-			return
+            os.Exit(1)
 		}
 		jsonFile := os.Args[2]
 		id_name := os.Args[3]
@@ -127,7 +140,7 @@ func main() {
 
 	if len(os.Args) < 10 {
 		fmt.Println("Uso: big-jq -C|--create <arquivo_json> <pacote_id> <pacote> <version> <status> <size> <summary> <lang>")
-		return
+		os.Exit(1)
 	}
 
 	jsonFile = os.Args[2]
@@ -141,14 +154,14 @@ func main() {
 
 	data, err := ioutil.ReadFile(jsonFile)
 	if err != nil {
-		fmt.Println("Erro ao ler o arquivo JSON:", err)
-		return
+		log.Fatalf("Erro ao ler o arquivo JSON: %v\n", err)
+		os.Exit(1)
 	}
 
 	var summarys map[string]Summary
 	if err := json.Unmarshal(data, &summarys); err != nil {
-		fmt.Println("Erro ao decodificar o JSON:", err)
-		return
+		log.Fatalf("Erro ao decodificar o JSON: %v\n", err)
+		os.Exit(1)
 	}
 
 	key := strings.ToLower(id_name)
@@ -162,18 +175,20 @@ func main() {
 		// Converte as descrições em JSON e escreve no arquivo
 		data, err = json.MarshalIndent(summarys, "", "  ")
 		if err != nil {
-			fmt.Println("Erro ao codificar para JSON:", err)
-			return
+			log.Fatalf("Erro ao codificar para o JSON: %v\n", err)
+			os.Exit(1)
 		}
 
-		//		fmt.Println("Escrevendo dados atualizados no arquivo JSON...")
 		err = ioutil.WriteFile(jsonFile, data, os.ModePerm)
 		if err != nil {
-			fmt.Println("Erro ao escrever no arquivo JSON:", err)
-			return
+			log.Fatalf("Erro ao escrever no arquivo JSON: %v\n", err)
+			os.Exit(1)
 		}
-		//		fmt.Println("Dados atualizados escritos no arquivo JSON com sucesso!")
+		log.Printf("big-jq %sAtualizando arquivo JSON:%s %s\n", Yellow, Reset, jsonFile)
+		os.Exit(0)
 	}
+	log.Printf("big-jq %sNada a ser feito no arquivo JSON:%s %s\n", Yellow, Reset, jsonFile)
+	os.Exit(0)
 }
 
 func printFieldRecursively(prefix string, data interface{}, showJSON bool) {
@@ -197,22 +212,17 @@ func searchAndPrintSummary(jsonFile, fieldPath string, showJSON bool) {
 	// Lê o conteúdo do arquivo JSON
 	data, err := ioutil.ReadFile(jsonFile)
 	if err != nil {
-		fmt.Println("Erro ao ler o arquivo JSON:", err)
-		return
+		log.Fatalf("Erro ao ler o arquivo JSON: %v\n", err)
+		os.Exit(1)
 	}
 
 	var summarys map[string]interface{}
 	if err := json.Unmarshal(data, &summarys); err != nil {
-		fmt.Println("Erro ao decodificar o JSON:", err)
-		return
+		log.Fatalf("Erro ao decodificar o JSON: %v\n", err)
+		os.Exit(1)
 	}
 
 	if showJSON {
-		// Se o parâmetro "json" estiver definido, imprime o objeto JSON inteiro
-		//      jsonVal, _ := json.Marshal(summarys)
-		//      fmt.Println(string(jsonVal))
-		//      return
-
 		// Se o parâmetro "json" estiver definido, imprime o objeto JSON completo a partir da chave especificada
 		fieldVal := summarys[fieldPath]
 		if fieldVal != nil {
@@ -221,12 +231,12 @@ func searchAndPrintSummary(jsonFile, fieldPath string, showJSON bool) {
 			fmt.Println(string(jsonVal))
 		} else {
 			fmt.Println("null")
+			os.Exit(1)
 		}
-		return
+		os.Exit(0)
 	}
 
 	fields := strings.Split(fieldPath, ".")
-
 	// Função recursiva para acessar campos aninhados
 	var getField func(map[string]interface{}, []string) interface{}
 	getField = func(m map[string]interface{}, keys []string) interface{} {
@@ -247,10 +257,13 @@ func searchAndPrintSummary(jsonFile, fieldPath string, showJSON bool) {
 	// Procura o campo especificado
 	fieldVal := getField(summarys, fields)
 	if fieldVal != nil {
+		log.Printf("big-jq %sProcurando:%s'%s'%s %s- 200 OK%s\n", Red, Yellow, strings.TrimSpace(fieldPath), Reset, Cyan, Reset)
 		fmt.Println(fieldVal)
-		return
+		os.Exit(0)
 	}
+	log.Printf("big-jq %sProcurando:%s'%s'%s %s- 404 NOK%s\n", Red, Yellow, strings.TrimSpace(fieldPath), Reset, Red, Reset)
 	fmt.Println("null")
+	os.Exit(1)
 }
 
 func searchAndPrintSummaryOLD(jsonFile, id_name, field string, showJSON bool) {
