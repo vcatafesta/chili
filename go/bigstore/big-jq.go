@@ -38,29 +38,35 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
-	"log"
+)
+
+const (
+	_APP_     = "big-jq"
+	_VERSION_ = "0.7.0-20231007"
+	_COPY_    = "Copyright (C) 2023 Vilmar Catafesta, <vcatafesta@gmail.com>"
 )
 
 // Constantes para cores ANSI
 const (
-    Reset   = "\x1b[0m"
-    Red     = "\x1b[31m"
-    Green   = "\x1b[32m"
-    Yellow  = "\x1b[33m"
-    Blue    = "\x1b[34m"
-    Magenta = "\x1b[35m"
-    Cyan    = "\x1b[36m"
-    White   = "\x1b[37m"
+	Reset   = "\x1b[0m"
+	Red     = "\x1b[31m"
+	Green   = "\x1b[32m"
+	Yellow  = "\x1b[33m"
+	Blue    = "\x1b[34m"
+	Magenta = "\x1b[35m"
+	Cyan    = "\x1b[36m"
+	White   = "\x1b[37m"
 )
 
 type Summary struct {
-	Id_Name     string            `json:"id_name"`
-	Name        string            `json:"name"`
-	Version     string            `json:"version"`
-	Status      string            `json:"status"`
-	Size        string            `json:"size"`
+	Id_Name string            `json:"id_name"`
+	Name    string            `json:"name"`
+	Version string            `json:"version"`
+	Status  string            `json:"status"`
+	Size    string            `json:"size"`
 	Summary map[string]string `json:"summary"`
 }
 
@@ -77,16 +83,16 @@ func main() {
 	}
 
 	var (
-		jsonFile    string
-		id_name     string
-		name        string
-		version     string
-		status      string
-		size        string
-		summary 	string
-		lang        string
-		command     string // Variável para armazenar o comando encontrado
-		updated     bool
+		jsonFile string
+		id_name  string
+		name     string
+		version  string
+		status   string
+		size     string
+		summary  string
+		lang     string
+		command  string // Variável para armazenar o comando encontrado
+		updated  bool
 	)
 
 	showJSON := false
@@ -122,7 +128,7 @@ func main() {
 			fmt.Println("Uso: big-jq -S|--search] <arquivo_json> <pacote_id> [--json]")
 			fmt.Println("     big-jq -S|--search] <arquivo_json> <pacote_id.value> [--json]")
 			fmt.Println("     big-jq -S|--search] <arquivo_json> <pacote_id.subchave.value> [--json]")
-            os.Exit(1)
+			os.Exit(1)
 		}
 		jsonFile := os.Args[2]
 		id_name := os.Args[3]
@@ -184,7 +190,8 @@ func main() {
 			log.Fatalf("Erro ao escrever no arquivo JSON: %v\n", err)
 			os.Exit(1)
 		}
-		log.Printf("big-jq %sAtualizando arquivo JSON:%s %s\n", Yellow, Reset, jsonFile)
+		// log.Printf("big-jq %sAtualizando arquivo JSON:%s %s\n", Yellow, Reset, jsonFile)
+		log.Printf("%s %sSET: %s'%s'%s em %s %s- 200 OK%s\n", _APP_, Green, Yellow, key, Reset, jsonFile, Green, Reset)
 		os.Exit(0)
 	}
 	log.Printf("big-jq %sNada a ser feito no arquivo JSON:%s %s\n", Yellow, Reset, jsonFile)
@@ -257,11 +264,13 @@ func searchAndPrintSummary(jsonFile, fieldPath string, showJSON bool) {
 	// Procura o campo especificado
 	fieldVal := getField(summarys, fields)
 	if fieldVal != nil {
-		log.Printf("big-jq %sProcurando:%s'%s'%s %s- 200 OK%s\n", Red, Yellow, strings.TrimSpace(fieldPath), Reset, Cyan, Reset)
+		log.Printf("%s %sGET: %s'%s'%s em %s %s- 200 OK%s\n", _APP_, Green, Yellow, strings.TrimSpace(fieldPath), Reset, jsonFile, Green, Reset)
+		// log.Println(_APP_, "GET:", jsonFile, Yellow, strings.TrimSpace(fieldPath), Green, "- 200 OK", Reset)
 		fmt.Println(fieldVal)
 		os.Exit(0)
 	}
-	log.Printf("big-jq %sProcurando:%s'%s'%s %s- 404 NOK%s\n", Red, Yellow, strings.TrimSpace(fieldPath), Reset, Red, Reset)
+	log.Printf("%s %sGET: %s'%s'%s em %s %s- 404 NOK%s\n", _APP_, Red, Yellow, strings.TrimSpace(fieldPath), Reset, jsonFile, Red, Reset)
+	// log.Println(_APP_, Red, "GET:", Cyan, strings.TrimSpace(fieldPath), Reset, "em", jsonFile, "-", Red, "200 NOK", Reset)
 	fmt.Println("null")
 	os.Exit(1)
 }
