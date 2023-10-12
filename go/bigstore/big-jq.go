@@ -67,6 +67,7 @@ type Summary struct {
 	Version string            `json:"version"`
 	Status  string            `json:"status"`
 	Size    string            `json:"size"`
+	Icon    string            `json:"icon"`
 	Summary map[string]string `json:"summary"`
 }
 
@@ -74,7 +75,7 @@ func main() {
 	//	command := os.Args[1]
 
 	if len(os.Args) < 3 {
-		fmt.Println("     big-jq -C|--create <arquivo_json> <pacote_id> <pacote> <version> <status> <size> <summary> <lang>")
+		fmt.Println("     big-jq -C|--create <arquivo_json> <pacote_id> <pacote> <version> <status> <size> <summary> <lang> <icon>")
 		fmt.Println("     big-jq -S|--search] <arquivo_json> <pacote_id> [--json]")
 		fmt.Println("     big-jq -S|--search] <arquivo_json> <pacote_id.value> [--json]")
 		fmt.Println("     big-jq -S|--search] <arquivo_json> <pacote_id.subchave.value> [--json]")
@@ -89,6 +90,7 @@ func main() {
 		version  string
 		status   string
 		size     string
+		icon     string
 		summary  string
 		lang     string
 		command  string // Variável para armazenar o comando encontrado
@@ -145,7 +147,7 @@ func main() {
 	}
 
 	if len(os.Args) < 10 {
-		fmt.Println("Uso: big-jq -C|--create <arquivo_json> <pacote_id> <pacote> <version> <status> <size> <summary> <lang>")
+		fmt.Println("Uso: big-jq -C|--create <arquivo_json> <pacote_id> <pacote> <version> <status> <size> <summary> <lang> <icon>")
 		os.Exit(1)
 	}
 
@@ -157,6 +159,7 @@ func main() {
 	size = os.Args[7]
 	summary = os.Args[8]
 	lang = os.Args[9]
+	icon = os.Args[10]
 
 	data, err := ioutil.ReadFile(jsonFile)
 	if err != nil {
@@ -172,8 +175,17 @@ func main() {
 
 	key := strings.ToLower(id_name)
 
-	if desc, ok := summarys[key]; !ok || desc.Summary[lang] != summary {
-		updated = createOrUpdateSummary(&summarys, key, id_name, name, version, status, size, summary, lang)
+	//	if desc, ok := summarys[key]; !ok || desc.Summary[lang] != summary {
+	//		updated = createOrUpdateSummary(&summarys, key, id_name, name, version, status, size, summary, lang, icon)
+	//	}
+
+	//	desc, ok := summarys[key]
+	//	if !ok || summaryDoesNotMatch || otherFieldDoesNotMatch || anotherFieldDoesNotMatch {
+	//	    updated = createOrUpdateSummary(&summarys, key, id_name, name, version, status, size, summary, lang, icon)
+	//	}
+
+	if desc, ok := summarys[key]; !ok || desc.Summary[lang] != summary || desc.Id_Name != name || desc.Name != name || desc.Version != version || desc.Status != status || desc.Icon != icon {
+		updated = createOrUpdateSummary(&summarys, key, id_name, name, version, status, size, summary, lang, icon)
 	}
 
 	// foi atualizada algo ?
@@ -303,6 +315,8 @@ func searchAndPrintSummaryOLD(jsonFile, id_name, field string, showJSON bool) {
 			printField(desc.Status, showJSON)
 		case "size":
 			printField(desc.Size, showJSON)
+		case "icon":
+			printField(desc.Icon, showJSON)
 		default:
 			fmt.Println("null")
 		}
@@ -349,19 +363,20 @@ func listSummarys(jsonFile string) {
 	fmt.Println(string(resultJSON))
 }
 
-func createOrUpdateSummary(summarys *map[string]Summary, key, id_name, name, version, status, size, summary, lang string) bool {
+func createOrUpdateSummary(summarys *map[string]Summary, key, id_name, name, version, status, size, summary, lang, icon string) bool {
 	// Inicialize a variável updated como false
 	updated := false
 
 	// Verifique se a descrição já existe
 	if desc, ok := (*summarys)[key]; ok {
 		// Verifique se algum campo é diferente e atualize se for o caso
-		if desc.Id_Name != id_name || desc.Name != name || desc.Version != version || desc.Status != status || desc.Size != size || desc.Summary[lang] != summary {
+		if desc.Id_Name != id_name || desc.Name != name || desc.Version != version || desc.Status != status || desc.Size != size || desc.Summary[lang] != summary || desc.Icon != icon {
 			desc.Id_Name = id_name
 			desc.Name = name
 			desc.Version = version
 			desc.Status = status
 			desc.Size = size
+			desc.Icon = icon
 			desc.Summary[lang] = summary
 			// Atualize o objeto no mapa
 			(*summarys)[key] = desc
@@ -376,6 +391,7 @@ func createOrUpdateSummary(summarys *map[string]Summary, key, id_name, name, ver
 			Version: version,
 			Status:  status,
 			Size:    size,
+			Icon:    icon,
 			Summary: map[string]string{
 				lang: summary,
 			},

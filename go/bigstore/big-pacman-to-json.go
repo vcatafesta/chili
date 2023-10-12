@@ -62,11 +62,23 @@ const (
 	White   = "\x1b[37m"
 )
 
+type PackageInfoFlatpak struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Id_Name     string `json:"id_name"`
+	Version     string `json:"version"`
+	Branch      string `json:"branch"`
+	Remotes     string `json:"remotes"`
+	Icon        string `json:"icon"`
+	Temp        string `json:"temp"`
+}
+
 type PackageInfoSearch struct {
 	Name        string `json:"name"`
 	Version     string `json:"version"`
 	Size        string `json:"size"`
 	Status      string `json:"status"`
+	Repo        string `json:"Repo"`
 	Description string `json:"description"`
 }
 
@@ -92,6 +104,11 @@ type PackageInfo struct {
 	MD5Sum        string   `json:"MD5Sum"`
 	SHA256Sum     string   `json:"SHA256Sum"`
 	Signatures    string   `json:"Signatures"`
+}
+
+type PackageDataFlatpak struct {
+	Name    string             `json:"Name"`
+	Package PackageInfoFlatpak `json:"Package"`
 }
 
 type PackageData struct {
@@ -142,14 +159,17 @@ func main() {
 				log.Printf("%sErro ao executar o comando: %s'%s' - %s%v%s\n", Red, Cyan, os.Args[1:], Yellow, err, Reset)
 				return
 			}
+
 			input = string(output)
-			if Advanced {
-				// Chame a função ProcessOutput com a saída do comando como argumento
+
+			if xcmd == "flatpak" {
+				ProcessOutputFlatpak(input, xcmd)
+			} else if Advanced {
 				ProcessOutput(input)
 			} else {
-				// Chame a função ProcessOutputSearch com a saída do comando como argumento
 				ProcessOutputSearch(input, xcmd)
 			}
+
 		} else {
 			usage(false)
 		}
@@ -303,6 +323,7 @@ func ProcessOutputSearch(input, xcmd string) {
 		} else if IsName == false {
 			// Divide a linha em campos e verifica se há pelo menos 2 campos (nome e versão)
 			fields := strings.Fields(line)
+
 			if len(fields) >= 1 {
 				currentPackage.Name = fields[0]
 				currentPackage.Version = fields[1]
@@ -327,7 +348,14 @@ func ProcessOutputSearch(input, xcmd string) {
 					}
 				case "pamac":
 					if len(fields) >= 3 {
-						currentPackage.Status = fields[2]
+						if strings.EqualFold(fields[2], "[Instalado]") || strings.EqualFold(fields[2], "[Installed]") {
+							currentPackage.Status = fields[2]
+						} else {
+							currentPackage.Repo = fields[2]
+						}
+					}
+					if len(fields) >= 4 {
+						currentPackage.Repo = fields[3]
 					}
 				default:
 					if len(fields) >= 3 {
@@ -361,4 +389,130 @@ func ProcessOutputSearch(input, xcmd string) {
 	// Imprime os dados JSON na saída padrão
 	fmt.Println(string(jsonData))
 	os.Exit(0)
+}
+
+
+
+func transformText(input string) string {
+	// Transforma o texto em minúsculas
+	input = strings.ToLower(input)
+	// Substitui espaços por hifens
+	input = strings.Replace(input, " ", "-", -1)
+	// Substitui pontos por hifens
+	input = strings.Replace(input, ".", "-", -1)
+	// Substitui * por hifens
+	input = strings.Replace(input, "*", "-", -1)
+	// Substitui / por hifens
+	input = strings.Replace(input, "/", "-", -1)
+	return input
+}
+
+
+func ProcessOutputFlatpak(input, xcmd string) {
+	// Variáveis para manter as informações do pacote
+	var packages []PackageInfoFlatpak
+	var currentPackage PackageInfoFlatpak
+	IsName := false
+
+	// Divide o texto de entrada em linhas
+	lines := strings.Split(input, "\n")
+
+	// Remover a primeira linha (título)
+	//	if len(lines) > 0 {
+	//		lines = lines[1:]
+	//	}
+
+	// Processa cada linha da entrada
+	for _, line := range lines {
+		fields := strings.Split(line, "\t")
+
+		if len(fields) >= 6 {
+			currentPackage.Name = fields[0]
+			currentPackage.Temp = transformText(fields[0])
+			currentPackage.Description = fields[1]
+			currentPackage.Id_Name = fields[2]
+			currentPackage.Version = fields[3]
+			currentPackage.Branch = fields[4]
+			currentPackage.Remotes = fields[5]
+			currentPackage.Icon = ""
+			IsName = true
+		}
+		// Se a linha não começar com 2 espaços, isso indica o início de um novo pacote
+		if IsName == true {
+			packages = append(packages, currentPackage)
+			currentPackage = PackageInfoFlatpak{}
+			IsName = false
+		}
+	}
+
+	// Certifique-se de adicionar o último pacote à lista
+	if currentPackage.Name != "" {
+		packages = append(packages, currentPackage)
+	}
+
+	// Criar um mapa com a chave raiz
+	root := make(map[string]interface{})
+
+	for _, packageInfo := range packages {
+//		root[packageInfo.Id_Name] = packageInfo // chave raiz a escolher
+		root[packageInfo.Temp] = packageInfo // chave raiz a escolher
+	}
+
+	// Converte a lista de pacotes em formato JSON raw
+	//	jsonData, err := json.Marshal(packages)
+
+	// Converter a estrutura em JSON formatado
+	jsonData, err := json.MarshalIndent(root, "", "  ")
+	if err != nil {
+		log.Printf("%sErro ao serializar para JSON: %v%s\n", Red, err, Reset)
+		os.Exit(1)
+	}
+
+	// Imprime os dados JSON na saída padrão
+	fmt.Println(string(jsonData))
+	os.Exit(0)
+}
+
+func ProcessOutputFlatpakSimple(input, xcmd string) {
+	// Variável para armazenar a lista de pacotes
+	var packages []PackageInfoFlatpak
+
+	// Divide o texto de entrada em linhas
+	lines := strings.Split(input, "\n")
+
+	// Processa cada linha da entrada
+	for _, line := range lines {
+		fields := strings.Fields(line)
+
+		if len(fields) >= 6 {
+			packageInfo := PackageInfoFlatpak{
+				Name:        fields[0],
+				Description: fields[1],
+				Id_Name:     fields[2],
+				Version:     fields[3],
+				Branch:      fields[4],
+				Remotes:     fields[5],
+				Icon:        "",
+			}
+
+			packages = append(packages, packageInfo)
+		}
+	}
+
+	// Criar um mapa com a chave raiz
+	root := make(map[string]interface{})
+
+	for _, packageInfo := range packages {
+		root[packageInfo.Name] = packageInfo // chave raiz
+	}
+
+	// Converte o mapa em JSON formatado
+	jsonData, err := json.MarshalIndent(root, "", "  ")
+	if err != nil {
+		fmt.Printf("Erro ao serializar para JSON: %v\n", err)
+		return
+	}
+
+	// Imprime os dados JSON na saída padrão
+	fmt.Println(string(jsonData))
 }

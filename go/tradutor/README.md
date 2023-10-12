@@ -1,1 +1,3 @@
-/github/chili-tradutor/README.md
+# chili-tradutor
+
+Tradutor gettext para scripts shell
