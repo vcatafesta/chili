@@ -1,0 +1,6 @@
+2023/10/14 11:55:18 Isso é uma mensagem de log.
+2023/10/14 11:55:18 Esta é uma mensagem de log formatada: algum dado
+2023/10/14 11:56:10 Isso é uma mensagem de log.
+2023/10/14 11:56:10 Esta é uma mensagem de log formatada: algum dado
+2023/10/14 11:56:16 Isso é uma mensagem de log.
+2023/10/14 11:56:16 Esta é uma mensagem de log formatada: algum dado
