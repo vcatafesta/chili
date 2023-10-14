@@ -6,7 +6,7 @@
    Chili GNU/Linux - https://chilios.com.br
 
    Created: 2023/10/01
-   Altered: 2023/10/05
+   Altered: 2023/10/14
 
    Copyright (c) 2023-2023, Vilmar Catafesta <vcatafesta@gmail.com>
    All rights reserved.
@@ -38,8 +38,11 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+
 	"github.com/fatih/color"
-	"github.com/ogier/pflag" // Importe o pacote pflag
+	"github.com/spf13/pflag"
+
+	//	"github.com/ogier/pflag"
 	"log"
 	"os"
 	"os/exec"
@@ -49,7 +52,7 @@ import (
 
 const (
 	_APP_     = "chili-tradutor-go"
-	_VERSION_ = "0.7.0-20231007"
+	_VERSION_ = "1.2.1-20231014"
 	_COPY_    = "Copyright (C) 2023 Vilmar Catafesta, <vcatafesta@gmail.com>"
 )
 
@@ -86,44 +89,29 @@ var supportedLanguages = []string{
 }
 
 var (
-	isForce bool
+	IsForce bool
 )
 
 func main() {
-	flags := pflag.NewFlagSet("chili-tradutor-go", pflag.ContinueOnError)
+	// Use pflag em vez de flag para criar opções curtas e longas
+	pflag.StringVarP(&inputFile, "inputfile", "i", "", "Input file")
+	pflag.BoolVarP(&showVersion, "version", "V", false, "Show version")
+	pflag.BoolVarP(&showHelp, "help", "h", false, "Show help")
+	pflag.BoolVarP(&forceFlag, "force", "f", false, "Force flag")
+	pflag.StringVarP(&languageCode, "language", "l", "", "Language code")
+	//	pflag.Lookup("language").NoOptDefVal = "4321"
 
-	flags.StringVar(&inputFile, "inputfile", "", "Input file")
-	flags.StringVar(&inputFile, "i", "", "Input file")
-	flags.BoolVar(&showVersion, "V", false, "Show version")
-	flags.BoolVar(&showVersion, "version", false, "Show version")
-	flags.BoolVar(&showHelp, "h", false, "Show help")
-	flags.BoolVar(&showHelp, "help", false, "Show help")
-	flags.BoolVar(&forceFlag, "f", false, "Force flag")
-	flags.BoolVar(&forceFlag, "force", false, "Force flag")
-	flags.StringVar(&languageCode, "l", "", "Language code")
-	flags.StringVar(&languageCode, "language", "", "Language code")
-
-	err := flags.Parse(os.Args[1:])
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
-	for index, arg := range flags.Args() {
+	pflag.Parse()
+	for _, arg := range os.Args[1:] {
 		switch arg {
-		case "--i", "--inputfile":
-			fmt.Printf("Input file: %s\n", inputFile, index)
-		case "--V", "--version":
+		case "-V", "--version":
 			fmt.Printf("Version: %s\n", _VERSION_)
-		case "--h", "--help":
+			os.Exit(0)
+		case "-h", "--help":
 			usage()
 			os.Exit(0)
-		case "--f", "--force":
-			isForce = true
-		case "--l", "--language":
-			fmt.Printf("Language code: %s\n", languageCode)
-			languageCode = os.Args[2]
-		default:
-			fmt.Printf("Unknown flag: %s\n", arg)
+		case "-f", "--force":
+			IsForce = true
 		}
 	}
 
@@ -132,15 +120,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	inputFile := os.Args[1]
-	languageCode := ""
-
-	if len(os.Args) > 2 {
-		languageCode = os.Args[2]
+	_, err := os.Stat(inputFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.Fatalf("%s Arquivo informado não existe! %v\n", red("[ERROR]"), err)
+		} else {
+			log.Fatalf("%s Ocorreu um erro ao verificar o arquivo! %v\n", red("[ERROR]"), err)
+		}
 	}
 
 	// Preparar o arquivo .pot uma vez no início
-	fmt.Printf("%s Preparing .pot file...\n", cyan("[INFO]"))
+	fmt.Printf("%s Preparing %s.pot file...\n", cyan("[INFO]"), inputFile)
 	prepare(inputFile)
 
 	var wg sync.WaitGroup
@@ -169,7 +159,6 @@ func usage() {
 }
 
 func init() {
-	return
 }
 
 func translateFile(inputFile, lang string) {
@@ -216,6 +205,8 @@ func translateFile(inputFile, lang string) {
 		} else if isMsgid {
 			// Se já tivermos encontrado "msgid", as linhas seguintes são parte do texto msgid
 			msgidLines = append(msgidLines, line)
+		} else {
+			fmt.Fprintln(outputFile, line)
 		}
 	}
 
@@ -224,6 +215,25 @@ func translateFile(inputFile, lang string) {
 	}
 
 	fmt.Printf("%s Translated to %s: %s\n", green("[SUCCESS]"), lang, translatedFile)
+	writeMsgfmtToMo(translatedFile, inputFile, lang)
+}
+
+func writeMsgfmtToMo(translatedFile, inputFile, lang string) {
+	directoryPath := "usr/share/locale/" + lang + "/LC_MESSAGES"
+	err := os.MkdirAll(directoryPath, os.ModePerm)
+
+	if err != nil {
+		fmt.Printf("Ocorreu um erro ao criar o diretório: %v\n", err)
+	} else {
+		fmt.Printf("%s Diretório criado com sucesso. %s...\n", yellow("[INFO]"), directoryPath)
+	}
+	cmd := exec.Command("msgfmt", translatedFile, "-o", directoryPath+"/"+inputFile+".mo")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Fatalf("%s Error running msgfmt: %v\n", red("[ERROR]"), err)
+	}
+	fmt.Printf("%s Translated to %s: %s\n", green("[SUCCESS]"), lang, inputFile+".mo")
 }
 
 func prepare(inputFile string) {
@@ -234,7 +244,7 @@ func prepare(inputFile string) {
 
 	// Verificar se o arquivo .pot já existe
 	potFile := inputFile + ".pot"
-	if _, err := os.Stat(potFile); os.IsNotExist(err) {
+	if _, err := os.Stat(potFile); os.IsNotExist(err) || forceFlag {
 		// O arquivo .pot não existe, então executamos o xgettext
 		fmt.Printf("%s Running xgettext for language %s...\n", yellow("[INFO]"), "en")
 		cmd := exec.Command("xgettext", "--verbose", "--from-code=UTF-8", "--language=shell", "--keyword=gettext", "--output="+potFile, inputFile)
@@ -278,10 +288,12 @@ func translateMessage(msgid, languageCode string) string {
 		// output, err := cmd.CombinedOutput()
 		output, err := cmd.Output()
 		if err != nil {
-			log.Fatalf("%s Error translating message: %v\n", red("[ERROR]"), err)
+			log.Printf("%s Error translating message: %v\n", red("[ERROR]"), err)
+			msgstr = msgid
+		} else {
+			output = bytes.TrimSpace(output)
+			msgstr = `"` + string(output) + `"`
 		}
-		output = bytes.TrimSpace(output)
-		msgstr = `"` + string(output) + `"`
 	} else {
 		msgstr = msgid
 	}

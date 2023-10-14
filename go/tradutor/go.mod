@@ -1,10 +1,10 @@
-module github.com/chililinux/chili-tradutor
+module github.com/vcatafesta/chili/go/chili-tradutor-go
 
 go 1.21.1
 
 require (
 	github.com/fatih/color v1.15.0
-	github.com/ogier/pflag v0.0.1
+	github.com/spf13/pflag v1.0.5
 )
 
 require (
