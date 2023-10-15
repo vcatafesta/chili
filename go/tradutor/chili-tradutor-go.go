@@ -38,6 +38,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 
 	"github.com/fatih/color"
 	"github.com/spf13/pflag"
@@ -52,7 +53,7 @@ import (
 
 const (
 	_APP_     = "chili-tradutor-go"
-	_VERSION_ = "1.2.1-20231014"
+	_VERSION_ = "1.2.2-20231014"
 	_COPY_    = "Copyright (C) 2023 Vilmar Catafesta, <vcatafesta@gmail.com>"
 )
 
@@ -74,6 +75,9 @@ var (
 	green   = color.New(color.FgGreen).SprintFunc()
 	magenta = color.New(color.FgMagenta).SprintFunc()
 	red     = color.New(color.FgRed).SprintFunc()
+	blue    = color.New(color.FgBlue).SprintFunc()
+	white   = color.New(color.FgWhite).SprintFunc()
+	black   = color.New(color.FgBlack).SprintFunc()
 )
 var (
 	inputFile    string
@@ -81,6 +85,7 @@ var (
 	showHelp     bool
 	forceFlag    bool
 	languageCode string
+	languages    []string
 )
 
 var supportedLanguages = []string{
@@ -89,19 +94,23 @@ var supportedLanguages = []string{
 }
 
 var (
-	IsForce bool
-	logger  *log.Logger
+	IsForce  bool
+	logger   *log.Logger
+	loggerMu sync.Mutex
 )
 
 func init() {
-	// Abrir o arquivo de log para escrita. Se o arquivo não existir, ele será criado.
 	logFile, err := os.OpenFile("/tmp/"+_APP_+".log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
 		log.Fatalf("Erro ao abrir o arquivo de log: %v", err)
 	}
+	// defer logFile.Close()
 
-	// Configurar o logger para escrever no arquivo
-	logger = log.New(logFile, "", log.LstdFlags)
+	//	Configurar o logger para escrever no arquivo
+	//	logger = log.New(logFile, "", log.LstdFlags)
+	//	logger = log.New(io.MultiWriter(os.Stdout, logFile), "[INFO] ", log.LstdFlags)
+	//	logger = log.New(io.MultiWriter(os.Stdout, logFile), "", log.LstdFlags)
+	logger = log.New(io.MultiWriter(os.Stdout, logFile), "", 0) // O 0 desabilita o timestamp
 
 	// Exemplos de uso do logger
 	logger.Printf("Inciando log formatado de : %s", _APP_)
@@ -113,7 +122,8 @@ func main() {
 	pflag.BoolVarP(&showVersion, "version", "V", false, "Show version")
 	pflag.BoolVarP(&showHelp, "help", "h", false, "Show help")
 	pflag.BoolVarP(&forceFlag, "force", "f", false, "Force flag")
-	pflag.StringVarP(&languageCode, "language", "l", "", "Language code")
+	//	pflag.StringVarP(&languageCode, "language", "l", "", "Language code")
+	pflag.StringSliceVarP(&languages, "language", "l", nil, "Language code")
 	//	pflag.Lookup("language").NoOptDefVal = "4321"
 
 	pflag.Parse()
@@ -138,77 +148,75 @@ func main() {
 	_, err := os.Stat(inputFile)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Fatalf("%s Arquivo informado não existe! %v\n", red("[ERROR]"), err)
 			logger.Printf("%s Arquivo informado não existe! %v\n", red("[ERROR]"), err)
 		} else {
-			log.Fatalf("%s Ocorreu um erro ao verificar o arquivo! %v\n", red("[ERROR]"), err)
 			logger.Printf("%s Ocorreu um erro ao verificar o arquivo! %v\n", red("[ERROR]"), err)
 		}
 	}
 
-	if languageCode != "" {
-		supportedLanguages = []string{ languageCode }
+	//	if languageCode != "" {
+	//		supportedLanguages = []string{languageCode}
+	//	}
+	if len(languages) != 0 {
+		supportedLanguages = languages
 	}
 
-	// Preparar o arquivo .pot uma vez no início
-	fmt.Printf("%s Preparing %s.pot file...\n", cyan("[INFO]"), inputFile)
-	logger.Printf("%s Preparing %s.pot file...\n", cyan("[INFO]"), inputFile)
-	prepareGettext(inputFile)
-	var wg sync.WaitGroup
+	if len(supportedLanguages) > 0 {
+		logger.Printf("%s Preparing %s.pot file...\n", cyan("[INFO]"), inputFile)
+		prepareGettext(inputFile)
+		var wg sync.WaitGroup
 
-	for _, lang := range supportedLanguages {
-		wg.Add(1)
-		go func(lang string) {
-			defer wg.Done()
-			if languageCode == "" || languageCode == lang {
-				prepareMsginit(inputFile,lang)
-				translateFile(inputFile, lang)
-			}
-		}(lang)
+		for _, lang := range supportedLanguages {
+			wg.Add(1)
+			go func(lang string) {
+				defer wg.Done()
+				if languageCode == "" || languageCode == lang {
+					prepareMsginit(inputFile, lang)
+					translateFile(inputFile, lang)
+					writeMsgfmtToMo(inputFile, lang)
+					os.Remove(fmt.Sprintf("%s-temp-%s.po", inputFile, lang))
+				}
+			}(lang)
+		}
+		wg.Wait()
 	}
-	wg.Wait()
 }
 
-func prepareMsginit(inputFile,lang string) {
-	// Verificar se o arquivo .pot já existe
+func prepareMsginit(inputFile, lang string) {
 	potFile := inputFile + ".pot"
-	poFile := inputFile + ".po"
+	poFile := fmt.Sprintf("%s-temp-%s.po", inputFile, lang)
+
 	if _, err := os.Stat(poFile); os.IsNotExist(err) || forceFlag {
-		// O arquivo .po nao existe, então executamos o msginit
-		fmt.Printf("%s Running msginit for language %s...\n", yellow("[INFO]"), "en")
-		logger.Printf("%s Running msginit for language %s...\n", yellow("[INFO]"), "en")
+		logger.Printf("%s Running msginit for language %s...\n", cyan("[INFO]"), lang)
 		cmd := exec.Command("msginit", "--no-translator", "--locale="+lang, "--input="+potFile, "--output="+poFile)
-//		cmd.Stdout = os.Stdout
-//		cmd.Stderr = os.Stderr
-//		cmd.Stdout = os.NewFile(0, "/dev/null")
-//		cmd.Stderr = os.NewFile(0, "/dev/null")
+
 		if err := cmd.Run(); err != nil {
-			log.Fatalf("%s Error running msginit: %v\n", red("[ERROR]"), err)
 			logger.Printf("%s Error running msginit: %v\n", red("[ERROR]"), err)
 		}
-		fmt.Printf("%s Catalog of messages initialized %s: %s\n", green("[SUCCESS]"), lang, poFile)
-		logger.Printf("%s Catlog of messages initialized %s: %s\n", green("[SUCCESS]"), lang, poFile)
-	}
+		logger.Printf("%s Catalog of messages initialized for %s: %s\n", green("[ OK ]"), lang, poFile)
 
-	// Executar sed #1 e sed #2 uma vez no início
-	fmt.Printf("%s Running sed #1...\n", yellow("[INFO]"))
-	logger.Printf("%s Running sed #1 ...\n", yellow("[INFO]"))
-	cmd := exec.Command("sed", "-i", "s|Content-Type: text/plain; charset=ASCII|Content-Type: text/plain; charset=utf-8|g", poFile)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		log.Fatalf("%s Error running sed #1: %v\n", red("[ERROR]"), err)
-		logger.Printf("%s Error running sed #1: %v\n", red("[ERROR]"), err)
+		logger.Printf("%s Running sed #1 in %s\n", cyan("[INFO]"), poFile)
+		cmd = exec.Command("sed", "-i", "s|Content-Type: text/plain; charset=ASCII|Content-Type: text/plain; charset=utf-8|g", poFile)
+
+		if err := cmd.Run(); err != nil {
+			logger.Printf("%s Error running sed #1: %v\n", red("[ERROR]"), err)
+		}
 	}
 }
 
 func translateFile(inputFile, lang string) {
+	poFile := fmt.Sprintf("%s-%s.po", inputFile, lang)
+	poFileTemp := fmt.Sprintf("%s-temp-%s.po", inputFile, lang)
 	translatedFile := fmt.Sprintf("%s-%s.po", inputFile, lang)
 
-	// Abrir o arquivo .pot para leitura
-	file, err := os.Open(inputFile + ".po")
+	if _, err := os.Stat(poFile); os.IsExist(err) || forceFlag == false {
+		logger.Printf("%s Skipping %s, already exists\n", cyan("[INFO]"), poFile)
+		return
+	}
+
+	// Abrir o arquivo .po para leitura
+	file, err := os.Open(poFileTemp)
 	if err != nil {
-		log.Fatalf("%s Error opening file: %v\n", red("[ERROR]"), err)
 		logger.Printf("%s Error opening file: %v\n", red("[ERROR]"), err)
 	}
 	defer file.Close()
@@ -216,12 +224,11 @@ func translateFile(inputFile, lang string) {
 	// Abrir o arquivo .po para escrita
 	outputFile, err := os.Create(translatedFile)
 	if err != nil {
-		log.Fatalf("%s Error creating file: %v\n", red("[ERROR]"), err)
 		logger.Printf("%s Error creating file: %v\n", red("[ERROR]"), err)
 	}
 	defer outputFile.Close()
 
-	// Criar um scanner para ler o arquivo .pot
+	// Criar um scanner para ler o arquivo .po
 	scanner := bufio.NewScanner(file)
 
 	// Variável para armazenar as linhas do texto msgid
@@ -254,76 +261,61 @@ func translateFile(inputFile, lang string) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("%s Error reading file: %v\n", red("[ERROR]"), err)
 		logger.Printf("%s Error reading file: %v\n", red("[ERROR]"), err)
 	}
 
-	fmt.Printf("%s Translated to %s: %s\n", green("[SUCCESS]"), lang, translatedFile)
 	logger.Printf("%s Translated to %s: %s\n", green("[SUCCESS]"), lang, translatedFile)
-	writeMsgfmtToMo(translatedFile, inputFile, lang)
 }
 
-func writeMsgfmtToMo(translatedFile, inputFile, lang string) {
+func writeMsgfmtToMo(inputFile, lang string) {
+	translatedFile := fmt.Sprintf("%s-%s.po", inputFile, lang)
 	directoryPath := "usr/share/locale/" + lang + "/LC_MESSAGES"
-	err := os.MkdirAll(directoryPath, os.ModePerm)
+	moFile := fmt.Sprintf("%s/%s.mo", directoryPath, inputFile)
 
-	if err != nil {
-		fmt.Printf("Ocorreu um erro ao criar o diretório: %v\n", err)
-		logger.Printf("Ocorreu um erro ao criar o diretório: %v\n", err)
-	} else {
-		fmt.Printf("%s Diretório criado com sucesso. %s...\n", yellow("[INFO]"), directoryPath)
-		logger.Printf("%s Diretório criado com sucesso. %s...\n", yellow("[INFO]"), directoryPath)
+	if err := os.MkdirAll(directoryPath, os.ModePerm); err != nil {
+		logger.Printf("%s Ocorreu um erro ao tentar criar o diretório: %v\n", red("[ERROR]"), err)
+		return
 	}
-	cmd := exec.Command("msgfmt", translatedFile, "-o", directoryPath+"/"+inputFile+".mo")
+	logger.Printf("%s Diretório criado com sucesso: %s\n", cyan("[INFO]"), directoryPath)
+
+	cmd := exec.Command("msgfmt", "-v", translatedFile, "-o", moFile)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		log.Printf("%s Error running msgfmt: %v\n", red("[ERROR]"), err)
 		logger.Printf("%s Error running msgfmt: %v\n", red("[ERROR]"), err)
+		return
 	}
-	fmt.Printf("%s Translated to %s: %s\n", green("[SUCCESS]"), lang, inputFile+".mo")
-	logger.Printf("%s Translated to %s: %s\n", green("[SUCCESS]"), lang, inputFile+".mo")
+	logger.Printf("%s Translated to language %s: %s\n", green("[SUCCESS]"), lang, moFile)
 }
 
 func prepareGettext(inputFile string) {
-	// Verificar se o arquivo inputFile existe
 	if _, err := os.Stat(inputFile); os.IsNotExist(err) {
-		log.Fatalf("%s Input file does not exist: %s\n", red("[ERROR]"), inputFile)
 		logger.Printf("%s Input file does not exist: %s\n", red("[ERROR]"), inputFile)
 	}
 
 	// Verificar se o arquivo .pot já existe
 	potFile := inputFile + ".pot"
 	if _, err := os.Stat(potFile); os.IsNotExist(err) || forceFlag {
-		// O arquivo .pot não existe, então executamos o xgettext
-		fmt.Printf("%s Running xgettext for language %s...\n", yellow("[INFO]"), "en")
-		logger.Printf("%s Running xgettext for language %s...\n", yellow("[INFO]"), "en")
+		logger.Printf("%s Running xgettext for language %s...\n", cyan("[INFO]"), "en")
 		cmd := exec.Command("xgettext", "--verbose", "--from-code=UTF-8", "--language=shell", "--keyword=gettext", "--output="+potFile, inputFile)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
-			log.Fatalf("%s Error running xgettext: %v\n", red("[ERROR]"), err)
 			logger.Printf("%s Error running xgettext: %v\n", red("[ERROR]"), err)
 		}
 		if _, err := os.Stat(potFile); os.IsNotExist(err) {
-			// O arquivo .pot não foi gerado
-			log.Fatalf("%s Skipping proccess, %s not generated by xgettext \n", red("[ERROR]"), potFile)
 			logger.Printf("%s Skipping proccess, %s not generated by xgettext \n", red("[ERROR]"), potFile)
 			return
 		}
 	} else {
-		fmt.Printf("%s Skipping xgettext, %s already exists\n", yellow("[INFO]"), potFile)
-		logger.Printf("%s Skipping xgettext, %s already exists\n", yellow("[INFO]"), potFile)
+		logger.Printf("%s Skipping xgettext, %s already exists\n", cyan("[INFO]"), potFile)
 	}
 
-	// Executar sed #1 e sed #2 uma vez no início
-	fmt.Printf("%s Running sed #1 and sed #2...\n", yellow("[INFO]"))
-	logger.Printf("%s Running sed #1 and sed #2...\n", yellow("[INFO]"))
+	logger.Printf("%s Running sed #1 and sed #2...\n", cyan("[INFO]"))
 	cmd := exec.Command("sed", "-i", "s/Content-Type: text\\/plain; charset=CHARSET\\\\n/Content-Type: text\\/plain; charset=UTF-8\\\\n/", potFile)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		log.Fatalf("%s Error running sed #1: %v\n", red("[ERROR]"), err)
 		logger.Printf("%s Error running sed #1: %v\n", red("[ERROR]"), err)
 	}
 
@@ -331,7 +323,6 @@ func prepareGettext(inputFile string) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		log.Fatalf("%s Error running sed #2: %v\n", red("[ERROR]"), err)
 		logger.Printf("%s Error running sed #2: %v\n", red("[ERROR]"), err)
 	}
 }
@@ -345,7 +336,6 @@ func translateMessage(msgid, languageCode string) string {
 		// output, err := cmd.CombinedOutput()
 		output, err := cmd.Output()
 		if err != nil {
-			log.Printf("%s Error translating message: %v\n", red("[ERROR]"), err)
 			logger.Printf("%s Error translating message: %v\n", red("[ERROR]"), err)
 			msgstr = msgid
 		} else {
@@ -355,14 +345,12 @@ func translateMessage(msgid, languageCode string) string {
 	} else {
 		msgstr = msgid
 	}
-	fmt.Printf("%s (%s)\t%s [len=%-3d] %s %s => %s\n", yellow("[INFO]"), cyan(languageCode), red("Translating msgid:"), len(msgid), msgid, green("to"), msgstr)
-	logger.Printf("%s (%s)\t%s [len=%-3d] %s %s => %s\n", yellow("[INFO]"), cyan(languageCode), red("Translating msgid:"), len(msgid), msgid, green("to"), msgstr)
+	logger.Printf("%s (%s)\t%s [len=%-3d] %s %s => %s\n", cyan("[INFO]"), cyan(languageCode), red("Translating msgid:"), len(msgid), msgid, green("to"), msgstr)
 	return msgstr
 }
 
 func usage() {
-	fmt.Println("Usage: chili-tradutor-go -i <input_file> [-V] [-h] [-f] [-l <language_code>]")
-	// fmt.Fprintf(os.Stderr, "Usage of chili-tradutor-go:\n")
+	fmt.Println("Usage: chili-tradutor-go -i <input_file> [-V] [-h] [-f] [-l <en,fr,es,...>]")
 	fmt.Fprintf(os.Stderr, "  --i, --inputfile          Input file\n")
 	fmt.Fprintf(os.Stderr, "  --V, --version            Show version\n")
 	fmt.Fprintf(os.Stderr, "  --h, --help               Show help\n")
