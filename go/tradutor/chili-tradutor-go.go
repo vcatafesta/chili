@@ -84,6 +84,7 @@ var (
 	showVersion  bool
 	showHelp     bool
 	forceFlag    bool
+	quietFlag    bool
 	languageCode string
 	languages    []string
 )
@@ -100,6 +101,10 @@ var (
 )
 
 func init() {
+
+}
+
+func confLog() {
 	fileLog := "/tmp/"+_APP_+".log"
 	logFile, err := os.OpenFile(fileLog, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
@@ -111,7 +116,12 @@ func init() {
 	//	logger = log.New(logFile, "", log.LstdFlags)
 	//	logger = log.New(io.MultiWriter(os.Stdout, logFile), "[INFO] ", log.LstdFlags)
 	//	logger = log.New(io.MultiWriter(os.Stdout, logFile), "", log.LstdFlags)
-	logger = log.New(io.MultiWriter(os.Stdout, logFile), "", 0) // O 0 desabilita o timestamp
+
+	if quietFlag {
+		logger = log.New(logFile, "", 0)
+	} else {
+		logger = log.New(io.MultiWriter(os.Stdout, logFile), "", 0) // O 0 desabilita o timestamp
+	}
 
 	// Exemplos de uso do logger
 	logger.Printf("Iniciando log formatado em : %s", fileLog)
@@ -123,6 +133,7 @@ func main() {
 	pflag.BoolVarP(&showVersion, "version", "V", false, "Show version")
 	pflag.BoolVarP(&showHelp, "help", "h", false, "Show help")
 	pflag.BoolVarP(&forceFlag, "force", "f", false, "Force flag")
+	pflag.BoolVarP(&quietFlag, "quiet", "q", false, "Quiet flag")
 	//	pflag.StringVarP(&languageCode, "language", "l", "", "Language code")
 	pflag.StringSliceVarP(&languages, "language", "l", nil, "Language code")
 	//	pflag.Lookup("language").NoOptDefVal = "4321"
@@ -140,6 +151,8 @@ func main() {
 			IsForce = true
 		}
 	}
+
+	confLog()
 
 	if inputFile == "" || len(os.Args) < 2 {
 		usage()
@@ -195,7 +208,11 @@ func prepareMsginit(inputFile, lang string) {
 		if err := cmd.Run(); err != nil {
 			logger.Printf("%s Error running msginit: %v\n", red("[ERROR]"), err)
 		}
-		logger.Printf("%s Catalogo de mensagens inicializado para %s: %s\n", green("[ OK ]"), lang, poFileTmp)
+
+		logger.Printf("%s Catalogo de mensagens inicializado para %s: %s\n", green("[ OK ]"), cyan(lang), magenta(poFileTmp))
+		if quietFlag {
+			fmt.Printf("%s Catalogo de mensagens inicializado para %s: %s\n", green("[ OK ]"), cyan(lang), magenta(poFileTmp))
+		}
 
 		logger.Printf("%s Rodando sed #1 em %s\n", cyan("[INFO]"), poFileTmp)
 		cmd = exec.Command("sed", "-i", "s|Content-Type: text/plain; charset=ASCII|Content-Type: text/plain; charset=utf-8|g", poFileTmp)
@@ -262,31 +279,40 @@ func translateFile(inputFile, lang string) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		logger.Printf("%s Error reading file: %v\n", red("[ERROR]"), err)
+		logger.Printf("%s Error reading file: [%v]\n", red("[ERROR]"), err)
 	}
-
-	logger.Printf("%s Traduzido para %s: %s\n", green("[SUCCESS]"), lang, translatedFile)
+	logger.Printf("%s Traduzido para %s: [%s]\n", green("[FEITO]"), lang, translatedFile)
 }
 
 func writeMsgfmtToMo(inputFile, lang string) {
 	directoryPath := "usr/share/locale/" + lang + "/LC_MESSAGES"
 	translatedFile := fmt.Sprintf("%s-%s.po", inputFile, lang)
 	moFile := fmt.Sprintf("%s/%s.mo", directoryPath, inputFile)
+	var cmd *exec.Cmd
 
 	if err := os.MkdirAll(directoryPath, os.ModePerm); err != nil {
 		logger.Printf("%s Ocorreu um erro ao tentar criar o diretório: %v\n", red("[ERROR]"), err)
 		return
 	}
-	logger.Printf("%s Diretório criado com sucesso: %s\n", cyan("[INFO]"), directoryPath)
+	logger.Printf("%s Diretório criado com FEITO: %s\n", cyan("[INFO]"), directoryPath)
 
-	cmd := exec.Command("msgfmt", "-v", translatedFile, "-o", moFile)
+
+	if quietFlag {
+		cmd = exec.Command("msgfmt", translatedFile, "-o", moFile)
+	} else {
+		cmd = exec.Command("msgfmt", "-v", translatedFile, "-o", moFile)
+	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		logger.Printf("%s Error running msgfmt: %v\n", red("[ERROR]"), err)
 		return
 	}
-	logger.Printf("%s Translated to language %s: %s\n", green("[SUCCESS]"), lang, moFile)
+	if quietFlag {
+		fmt.Printf("%s Traduzido para o idioma %s:\t%s\n", green("[FEITO]"), cyan(lang), magenta(moFile))
+	} else {
+		logger.Printf("%s Traduzido para o idioma %s:\t%s\n", green("[FEITO]"), cyan(lang), magenta(moFile))
+	}
 }
 
 func prepareGettext(inputFile string) {
@@ -345,15 +371,16 @@ func translateMessage(msgid, languageCode string) string {
 	} else {
 		msgstr = msgid
 	}
-	logger.Printf("%s (%s)\t%s [len=%-3d] %s %s => %s\n", cyan("[INFO]"), cyan(languageCode), red("Translating msgid:"), len(msgid), msgid, green("to"), msgstr)
+	logger.Printf("%s (%s)\t%s [len=%-3d] %s %s => %s\n", cyan("[INFO]"), cyan(languageCode), yellow("Trazudindo msgid:"), len(msgid), msgid, green("to"), msgstr)
 	return msgstr
 }
 
 func usage() {
-	fmt.Println("Usage: chili-tradutor-go -i <input_file> [-V] [-h] [-f] [-l <en,fr,es,...>]")
+	fmt.Println("Uso: chili-tradutor-go -i <input_file> [-q] [-V] [-h] [-f] [-l <en,fr,es,...>]")
 	fmt.Fprintf(os.Stderr, "  --i, --inputfile          Input file\n")
 	fmt.Fprintf(os.Stderr, "  --V, --version            Show version\n")
 	fmt.Fprintf(os.Stderr, "  --h, --help               Show help\n")
 	fmt.Fprintf(os.Stderr, "  --f, --force              Force flag\n")
+	fmt.Fprintf(os.Stderr, "  --q, --quiet              Quiet flag\n")
 	fmt.Fprintf(os.Stderr, "  --l, --language           Language code\n")
 }
