@@ -1,0 +1,78 @@
+#!/usr/bin/env lua 
+
+dias = {"Domingo", "Segunda", "Terca", "Quarta", "Quinta", "Sexta", "Sabado"}
+
+-- for i = 1, 10, 2 do
+--     print(i)
+-- end
+
+for k, v in pairs(dias) do
+    print(k .. " - " .. v)
+end
+
+print(8 * 9, 9 / 8)
+a = math.sin(3) + math.cos(10)
+print(os.date())
+
+print "Hello World"
+print("Hello World")
+dofile 'main.lua'
+dofile('main.lua')
+print [[a multi-line  
+    message]]
+print([[a multi-line
+    message]])
+
+type {}
+type({})
+print(os.date())
+print(os.getenv("SHELL"))
+print(os.getenv('CDPATH'))
+
+function maximum(a)
+    local mi = 1 -- maximum index
+    local m = a[mi] -- maximum value
+    for i, val in ipairs(a) do
+        if val > m then
+            mi = i
+            m = val
+        end
+    end
+    return m, mi
+end
+
+print(maximum({8, 10, 23, 12, 5})) -- > 23   3
+
+local openPop = assert(io.popen('/bin/ls -la', 'r'))
+local output = openPop:read('*all')
+openPop:close()
+print(output) -- > Prints the output of the command.
+
+os.execute("ls")
+-- Função para executar um comando e verificar o valor de retorno
+local status = os.execute("ls -la")
+if status == true then
+    print("Comando executado com sucesso", status)
+else
+    print("O comando falhou com um código de saída: ", status)
+end
+
+-- set locale for Portuguese-Brazil
+print(os.setlocale('pt_BR')) -- > pt_BR
+print(3, 4) -- > 3    4
+print(3.4) -- > stdin:1: malformed number near `3.4'
+
+print(os.clock() / 60 / 60) -- > 34.381006944444 (hours)
+print(os.date("%x")) -- > 25/04/07
+print(os.date("%c")) -- > 25/04/07 10:10:05
+print(os.date("%A, %m %B %Y")) -- > Wednesday, 04 April 2007
+
+f = io.input("test.txt")
+repeat
+    s = f:read("*l") -- read one line
+    if s then -- if not end of file (EOF)
+        print(s) -- print that line
+    end
+until not s -- until end of file
+f:close() -- close that file now
+
