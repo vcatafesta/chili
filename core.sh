@@ -1324,7 +1324,16 @@ function maxcol()
 	printf $COLUMNS
 }
 
-inkey()
+inkey() {
+	tempo="$1"
+	msg="$2"
+    >/dev/tty printf '%s' "${msg:-Pressione qualquer tecla para continuar...}"
+    [[ $ZSH_VERSION ]] && read -krs  # Use -u0 to read from STDIN
+    [[ $BASH_VERSION ]] && </dev/tty read -t "$tempo" -rsn1
+    printf '\n'
+}
+
+inkeyOLD()
 {
 	read -t "$1" -n1 -r -p "" lastkey
 }

@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "7jmNB8svNRcWuJyKmv6kWwPttZmm/mETmzbKXgnZl9jeOr+W+cd308z4hAvOcwS8WpWz64txfqyTQvGKzr0Cmw==",
+  "success": true,
+  "projectFilePath": "/home/vcatafesta/HelloWorld/HelloWorld.csproj",
+  "expectedPackageFiles": [
+    "/home/vcatafesta/.nuget/packages/microsoft.aspnetcore.app.ref/7.0.11/microsoft.aspnetcore.app.ref.7.0.11.nupkg.sha512"
+  ],
+  "logs": []
+}

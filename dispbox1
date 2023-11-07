@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+
+# Parâmetros
+linha=10
+col=10
+altura=10
+nmaxlen=40
+
+clear
+# Move o cursor para a posição inicial da primeira linha do quadro
+tput cup $linha $col
+
+# Imprime o quadro com base nas coordenadas, largura e altura
+for ((i = 0; i < altura; i++)); do
+    if [ $i -eq 0 ]; then
+        echo -n "┌"
+        for ((j = 1; j < nmaxlen - 1; j++)); do
+            echo -n "─"
+        done
+        echo "┐"
+    elif [ $i -eq $((altura - 1)) ]; then
+        echo -n "└"
+        for ((j = 1; j < nmaxlen - 1; j++)); do
+            echo -n "─"
+        done
+        echo "┘"
+    else
+        echo -n "│"
+        for ((j = 1; j < nmaxlen - 1; j++)); do
+            echo -n " "
+        done
+        echo "│"
+    fi
+    ((++linha))
+	tput cup $linha $col
+done
+
+# Move o cursor para a linha do conteúdo centralizado

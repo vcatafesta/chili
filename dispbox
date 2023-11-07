@@ -1,0 +1,224 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+
+bold=$(tput bold)
+underline=$(tput smul)
+nounderline=$(tput rmul)
+reverse=$(tput rev)
+
+black=$(tput bold)$(tput setaf 0)
+red=$(tput bold)$(tput setaf 196)
+green=$(tput bold)$(tput setaf 2)
+yellow=$(tput bold)$(tput setaf 3)
+blue=$(tput setaf 4)
+pink=$(tput setaf 5)
+magenta=$(tput setaf 5)
+cyan=$(tput setaf 6)
+white=$(tput setaf 7)
+marrom=$(tput setab 8)
+
+function print() {
+	local row="$1"
+	local col="$2"
+	local msg="$3"
+	local color="$4"
+
+	setpos "$row" "$col"
+	printf "%s" "$color"
+	echo -e -n "$bold$white$msg"
+	echo -e "$reset"
+}
+
+function setpos() {
+	local row="$1"
+	local col="$2"
+	tput cup "$row" "$col"
+}
+
+function dispboxOLD() {
+	local -n aCoord_var="$1"
+	local -n aCabec_var="$2"
+	local -n aLen_var="$3"
+
+	# Usar eval para criar cópias locais dos arrays
+	aCoord=("${aCoord_var[@]}")
+	aCabec=("${aCabec_var[@]}")
+	aLen=("${aLen_var[@]}")
+
+	local linha="${aCoord[0]}"
+	local col="${aCoord[1]}"
+	local altura="${aCoord[2]}"
+	local largura="${aCoord[3]}"
+
+	local mensagem="$5"
+	local color=$(tput setab 6)
+	local tamanho=$((largura - 2))
+	local largura_mensagem=${#mensagem}
+	local coluna_inicio=$(((largura - largura_mensagem) / 2 + col))
+
+	# Imprime o quadro com base nas coordenadas, largura e altura
+	for ((i = 0; i < altura; i++)); do
+		tput cup $((linha + i)) "$col"
+		if [ $i -eq 0 ]; then
+			echo "┌$(printf '─%.0s' $(seq 1 $((largura - 2))))┐"
+		elif [ $i -eq $((altura - 1)) ]; then
+			echo "└$(printf '─%.0s' $(seq 1 $((largura - 2))))┘"
+		else
+			echo "│$(printf ' %.0s' $(seq 1 $((largura - 2))))│"
+		fi
+	done
+
+	setpos "$linha" "$((col + 1))"
+	printf "$color%-${tamanho}s" " "
+
+	x=0
+	for i in "${aCabec[*]}"; do
+		print "$linha" "$((col + ${aLen[x]}))" "$bold$white$i"
+		((++x))
+	done
+	tput sgr0
+}
+
+sh_splitarray() {
+	local str=("$1")
+	local pos="$2"
+	local sep="${3:-'|'}"
+	local array
+
+	[[ $# -eq 3 && "$pos" = "|" && "$sep" =~ ^[0-9]+$ ]] && {
+		sep="$2"
+		pos="$3"
+	}
+	[[ $# -eq 2 && "$pos" = "$sep" ]] && {
+		sep="$pos"
+		pos=1
+	}
+	[[ $# -eq 1 || ! "$pos" =~ ^[0-9]+$ ]] && { pos=1; }
+
+	IFS="$sep" read -r -a array <<<"$str"
+	echo "${array[pos - 1]}"
+}
+
+len_split_str() {
+	local anew
+	IFS='|' read -r -a anew <<<"$1"
+	echo "${#anew[@]}"
+}
+
+
+# dispbox "0|0|6" "ID|DESCRICAO DO PRODUTO|ESTOQUE|PREÇO" "5|40|5|11" "$marrom" 'left'
+function dispbox() {
+	local -A Aarray
+	Aarray[coord]="$1"
+	Aarray[cabec]="$2"
+	Aarray[len]="$3"
+	local color="$4"
+	local align="$5"
+
+	local aCoord="${Aarray[coord]}"
+	local aCabec="${Aarray[cabec]}"
+	local aLen="${Aarray[len]}"
+
+	local linha="$(sh_splitarray "$aCoord" 1)"
+	local col="$(sh_splitarray "$aCoord" 2)"
+	local altura="$(sh_splitarray "$aCoord" 3)"
+
+	local cprintf=
+	local nmaxlen=0
+	local str
+	local lenstr
+	local max_width
+	local nlen="$(len_split_str "${aCabec[@]}")"
+
+	[[ -n "$align" && ($align != 'right' && $align != 'left') ]] && align='right'
+	[[ -z "$align" ]] && align='right'
+
+	# Função para alinhar à esquerda
+	function align_left() {
+		local field_width="$1"
+		local str="$2"
+		local i="$3"
+		local nlen="$4"
+		local str_width=${#str}
+		local sep='|'
+
+		if [[ "$i" -eq "$nlen" ]]; then
+			sep=''
+		fi
+		if ((str_width < field_width)); then
+			local extra_space=$((field_width - str_width))
+			printf "%s%*s${sep}\n" "$str" "$extra_space" " "
+		else
+			printf "%s${sep}\n" "$str"
+		fi
+	}
+
+	# Função para alinhar à direita
+	function align_right() {
+		local field_width="$1"
+		local str="$2"
+		local i="$3"
+		local nlen="$4"
+		local str_width=${#str}
+		local sep='|'
+
+		if [[ "$i" -eq "$nlen" ]]; then
+			sep=''
+		fi
+
+		if ((str_width < field_width)); then
+			local extra_space=$((field_width - str_width))
+			printf "%*s%*s${sep}\n" "$extra_space" " " "$str_width" "$str"
+		else
+			printf "%*s${sep}\n" "$str_width" "$str"
+		fi
+	}
+
+	function calculate_field_width() {
+		local field="$1"
+		local max_width="$2"
+		local field_width="${#field}"
+
+		if ((field_width > max_width)); then
+			echo "$field_width"
+		else
+			echo "$max_width"
+		fi
+	}
+
+	for ((i = 1; i <= nlen; i++)); do
+		str="$(sh_splitarray "$aCabec" $i)"
+		max_width="$(sh_splitarray "$aLen" $i)"
+		field_width=$(calculate_field_width "$str" "$max_width")
+		if [[ "$align" = 'left' ]]; then
+			cprintf+="$(align_left "${field_width}" "$str" "$i" "$nlen")"
+		else
+			cprintf+="$(align_right "${field_width}" "$str" "$i" "$nlen")"
+		fi
+		nmaxlen=$((nmaxlen + field_width + 1))
+	done
+
+	# Imprime o quadro com base nas coordenadas, largura e altura
+	for ((i = 0; i < altura; i++)); do
+		tput cup $((linha + i)) "$col"
+		if [ $i -eq 0 ]; then
+			echo "┌$(printf '─%.0s' $(seq 1 $((nmaxlen - 1))))┐"
+		elif [ $i -eq $((altura - 1)) ]; then
+			echo "└$(printf '─%.0s' $(seq 1 $((nmaxlen - 1))))┘"
+		else
+			echo "│$(printf ' %.0s' $(seq 1 $((nmaxlen - 1))))│"
+		fi
+	done
+	setpos "$linha" "$((col + 1))"
+	printf "$color%-${nmaxlen}s" "$cprintf"
+	tput sgr0
+}
+
+clear
+#aCoord=(10 10 20 80)
+#aCabec=(ID NOME)
+#aLen=(5 40)
+##dispbox "${aCoord[@]}" "${aCabec[@]}" "${aLen[@]}"
+#dispbox "aCoord" "aCabec" "aLen"
+
+dispbox "0|0|6" "ID|DESCRICAO DO PRODUTO|ESTOQUE|PREÇO" "5|40|5|11" "$marrom"
