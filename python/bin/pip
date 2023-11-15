@@ -1,4 +1,4 @@
-#!/github/chili/python/bin/python
+#!/chili/python/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

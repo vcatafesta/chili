@@ -1,4 +1,7 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
 # coding: cp860
+
 from __future__ import print_function
 from __future__ import division
 from tmenu import *

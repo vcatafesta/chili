@@ -6,14 +6,14 @@ import multiprocessing
 import string
 import threading
 import time
+import os
 #import winsound
 #from ctypes import wintypes
 #from msvcrt import getch
 #import WConio
 import psutil
-from colorconsole import terminal
-from progress_bar import *
-
+#from colorconsole import terminal
+#from progress_bar import *
 from define import *
 
 #mylib = ctypes.CDLL('msvcr90.dll')
@@ -38,6 +38,19 @@ VK_MENU = 0x12
 # C struct definitions
 
 #wintypes.ULONG_PTR = wintypes.WPARAM
+
+modules = ['colorconsole', 'progress_bar']
+for module in modules:
+    try:
+        __import__(module)
+    except Exception as e:
+        print('Installing modules...')
+        os.system('python3 -m pip install ' + str(module))
+#        os.system('clear')
+
+print('All modules installed or available.')
+from colorconsole import terminal
+from progress_bar import *
 
 
 class newvar():
