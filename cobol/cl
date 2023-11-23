@@ -1,5 +1,9 @@
 #!/bin/bash
-cobc -x -O $1.cbl
-[[ $? -eq 0 ]] && ./$1
+
+file="$1"
+if cobc -F -x -O $file; then
+	file_name_without_extension="${file%%.*}"
+	./$file_name_without_extension
+fi
 
 
