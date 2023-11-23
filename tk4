@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+
+docker run -ti -p 3270:3270 -p8038:8038 skunklabz/tk4-hercules
