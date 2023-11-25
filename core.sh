@@ -1293,7 +1293,7 @@ function TracaLinha() {
     tput cup $row $col
     echo -n ${Linha// /$Traco}
 }
-export -f TrocaLinha
+export -f TracaLinha
 
 function replleft() {
     local str=$1

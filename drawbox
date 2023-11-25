@@ -51,40 +51,106 @@ function TracaLinha() {
     echo ${Linha// /$Traco}
 }
 
+function padr() {
+   texto=$1
+   COLS=$2
+   char=$3
+   if test $# -eq 1; then
+      COLS=$(tput cols)
+      char='='
+   fi
+   printf "%*s\n" $COLS "$texto" |sed "s/ /$char/g"
+}
+
+function padl() {
+   texto=$1
+   COLS=$2
+   char=$3
+   if test $# -eq 1; then
+      COLS=$(tput cols)
+      char='='
+   fi
+   printf "%-*s\n" $COLS "$texto" |sed "s/ /$char/g"
+}
+
+padc() {
+   texto=$1
+   COLS=$2
+   char=$3
+   if test $# -eq 1; then
+      COLS=$(tput cols)
+      char='='
+   fi
+   printf "%*s\n" $(((${#texto} + $COLS) / 2)) "$texto" | sed "s/ /$char/g"
+}
+
 function replleft() {
-    local str=$1
-    local nsize=${2:-${#str}}
+    local str="$1"
+    local nlenstr="${#str}"
+    local nsize=${2:-$nlenstr}
     local char=${3:-'#'}
+    local padding=$((nsize-nlenstr))
     local value
 
-    printf -v value "%${nsize}s\n" $str
-    printf '%s\n' ${value// /$char}
+#   printf -v value "%${nsize}s" "$str"; printf "%s\n" "${value// /$char}"
+    if [[ $char = ' ' ]]; then
+        printf "%${padding}s" ; : "${value// /$char}"; echo $_$str
+    else
+        printf -v value "%${padding}s" ; : "${value// /$char}"; echo $_$str
+    fi
 }
 
 function replright() {
-    local str=$1
-    local nsize=${2:-${#str}}
+    local str="$1"
+    local nlenstr=${#str}
+    local nsize=${2:-$nlenstr}
     local char=${3:-'#'}
+    local padding=$((nsize-nlenstr))
     local value
 
-    printf -v value "%-${nsize}s\n" $str
-    printf '%s\n' ${value// /$char}
+#   printf -v value "%-${nsize}s" "$str"; printf "%s\n" "${value// /$char}"
+    printf -v value "%${padding}s" ; : "${value// /$char}"; echo $str$_
 }
 
 function replicate() {
-    local char=${1:-'#'}
-    local nsize=${2:-$(tput cols)}
+    local char="${1:-"#"}"
+    local nsize="${2:-"$(tput cols)"}"
     local line
 
-    printf -v line "%*s" "$nsize" && echo "${line// /$char}"
+    printf -v line "%*s" "$nsize" && echo "${line// /"$char"}"
 }
 
 clear
-DrawBox1 "string em vermelho"
-DrawBox "string"
+#DrawBox1 "string em vermelho"
+#DrawBox "string"
 TracaLinha 10 10
 TracaLinha 10 10 20
-replleft 123,45 15 '*'
-replright 123,45 15 '*'
-replicate '#' 50
+echo '---------1---------2---------3---------4---------5---------6---------7---------8'
+replicate "#" 50
 replicate
+
+#var="123 45"
+#var="123,45"
+#var="VILMAR CATAFESTA"
+#len=${#var}
+#tam=24
+#char="#"
+#padding=$((tam-len))
+#printf -v value "%-*s" "${padding}" "$var"; echo $_
+#printf "$char%.${padding}s"
+#printf -v line "%*s" "$padding" ; : ${line// /"$char"}; echo $_$var
+#printf -v line "%*s" "$padding" ; : ${line// /"$char"}; echo $var$_
+
+#echo '---------1---------2---------3---------4---------5---------6---------7---------8'
+replleft "TESTE DE STRING" 20 '#'
+replleft "TESTE DE STRING" 20 ' '
+replleft "TESTE DE STRING" 20 '*'
+replleft 123,45 20 '#'
+
+replright "TESTE DE STRING" 20 '#'
+replright "TESTE DE STRING" 20 ' '
+replright "TESTE DE STRING" 20 '*'
+replright 123,45 20
+
+tam=20
+printf '#%.0s' {1..$tam}

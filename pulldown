@@ -1,0 +1,410 @@
+#!/usr/bin/env bash
+
+function sh_config() {
+	declare -gi pselecionadoV=1
+	declare -gi pselecionadoH=1
+	declare -gA Acores=(
+		[cabecalho]="$roxo"
+		[logo]="$red"
+		[statussup]="$ciano"
+		[statusinf]="$azul"
+		[box]="$azul"
+		[boxtitle]="${reverse}$azul"
+		[dispbox]="$cinza"
+		[msgok]="$green"
+		[msgerror]="$red"
+		[conf]="$red"
+		[panofundo]="█▓░▒PullDown█▒▓░"
+		[panofundo]="█ ▓ ░ ▒"
+		[panofundo]="';'"
+		[panofundo]="█"
+		[corpanofundo]="$cinza"
+	)
+}
+
+function tela() {
+	sh_fundo
+	titulo 0 "NOME DO TEU APP" "${Acores[cabecalho]}" "$(date)" "v1.0.0"
+	titulo 1 "MENU PRINCIPAL" "${Acores[statussup]}"
+	titulo "$(($(lastrow) - 1))" "${Aempresa[razao]}" "${Acores[statusinf]}" "$PWD" "$USER"
+}
+
+function sh_setvarcolors() {
+	if [[ -n "$(command -v "tput")" ]]; then
+		reset=$(tput sgr0)
+		rst=$(tput sgr0)
+		bold=$(tput bold)
+		reverse=$(tput rev)
+
+		black=$(tput bold)$(tput setaf 0)
+		red=$(tput bold)$(tput setaf 196)
+		green=$(tput bold)$(tput setaf 2)
+		yellow=$(tput bold)$(tput setaf 3)
+		blue=$(tput setaf 27)
+		magenta=$(tput setaf 5)
+		cyan=$(tput setaf 6)
+		white=$(tput setaf 7)
+		gray=$(tput setaf 8)
+		orange=$(tput setaf 202)
+		purple=$(tput setaf 125)
+		violet=$(tput setaf 61)
+
+		# Definir cores de fundo
+		preto=$(tput setab 0)
+		vermelho=$(tput setab 196)
+		verde=$(tput setab 2)
+		amarelo=$(tput setab 3)
+		azul=$(tput setab 20)
+		roxo=$(tput setab 5)
+		ciano=$(tput setab 6)
+		branca="${black}$(tput setab 7)"
+		cinza=$(tput setab 8)
+		laranja=$(tput setab 202)
+		roxa=$(tput setab 125)
+		violeta=$(tput setab 61)
+	fi
+}
+
+function lastrow() { echo "$(tput lines)"; }
+function lastcol() { echo "$(tput cols)"; }
+
+function setpos() {
+	local row="$1"
+	local col="$2"
+
+	Prow="$row"
+	Pcol="$col"
+	printf "\e[$((row + 1));$((col + 1))H"
+}
+
+function replicate() {
+	local char=${1:-'#'}
+	local nsize=${2:-$(tput cols)}
+	local line
+
+	printf -v line "%*s" "$nsize" && echo "${line// /$char}"
+}
+
+function box() {
+	local row="$1"
+	local col="$2"
+	local altura="$3"
+	local largura="$4"
+	local mensagem="$5"
+	local color="$6"
+	local color_boxtitle="${Acores[boxtitle]}"
+	local tamanho=$((largura - 2))
+	local largura_mensagem=${#mensagem}
+	local coluna_inicio=$(((largura - largura_mensagem) / 2 + col))
+
+	printf "%s" "$color"
+	mabox "$row" "$col" "$altura" "$largura"
+
+	if [[ -n "$mensagem" ]]; then
+		setpos "$row" "$((col + 1))"
+		printf "$reset$color_boxtitle%-${tamanho}s" " "
+		setpos "$row" "$coluna_inicio"
+		echo -e "$color_boxtitle$mensagem"
+	fi
+	tput sgr0
+}
+
+function mabox() {
+	local ntop="$1"
+	local nleft="$2"
+	local nbottom="$3"
+	local nright="$4"
+	local color="$5"
+
+	((ntop++))
+	((nleft++))
+	nbottom=$((ntop + nbottom - 1))
+
+	if [[ -n "$color" ]]; then
+		if ((color > 15)); then
+			tput setab $color
+		else
+			tput setaf $color
+		fi
+	fi
+
+	# Criação da moldura superior e inferior
+	local frame_top="┌$(replicate "─" "$((nright - 2))")┐"
+	local frame_bottom="└$(replicate "─" "$((nright - 2))")┘"
+
+	# Desenha a moldura superior
+	printf "\e[%s;%sH%s" $ntop $nleft "$frame_top"
+
+	# Desenha os lados do menu
+	for ((i = 1; i <= nbottom - ntop; i++)); do
+		printf "\e[$((ntop + i));%sH%s" $nleft "│$(replicate " " $((nright - 2)))│"
+	done
+
+	# Desenha a moldura inferior
+	printf "\e[$((nbottom));%sH%s" $nleft "$frame_bottom"
+}
+
+function titulo() {
+	local row="$1"
+	local mensagem="$2"
+	local color="${3:-$black}"
+	local extra_left="$4"
+	local extra_right="$5"
+	local largura_terminal=$(tput cols)
+	local largura_mensagem=${#mensagem}
+	local coluna_inicio=$(((largura_terminal - largura_mensagem) / 2))
+	local nlen
+
+	tput sc # Salva a posição atual do cursor
+	setpos "$row" 0
+	printf "$color%-${largura_terminal}s" ''
+
+	if [[ -n "$extra_left" ]]; then
+		setpos "$row" 0
+		printf "$bold$white%s" "$extra_left"
+	fi
+
+	if [[ -n "$extra_right" ]]; then
+		nlen=${#extra_right}
+		setpos "$row" $((largura_terminal - nlen))
+		printf "$bold$white%s" "$extra_right"
+	fi
+
+	setpos "$row" "$coluna_inicio"
+	printf "$bold$white%s" "$mensagem"
+	tput sgr0
+	tput rc
+}
+
+function sh_fundo() {
+	local color="${Acores[corpanofundo]}"
+	local frame="${Acores[panofundo]}"
+	local lastcol="$(lastcol)"
+	local lastrow="$(lastrow)"
+	local buffer="$(replicate "$frame" "$((lastcol * (lastrow - 3) / ${#frame}))")"
+	printf "${color}\e[%s;%sH%s" 3 0 "$buffer"
+}
+
+function sh_splitarray() {
+	local str=("$1")
+	local pos="${2:-1}"
+	local sep="${3:-'|'}"
+
+	# Corrigir argumentos se a ordem for invertida ou ausente
+	[[ "$pos" == "$sep" ]] && {
+		sep="${2:-'|'}"
+		pos="${3:-1}"
+	}
+	IFS="$sep" read -r -a array <<<"$str"
+	echo "${array[pos - 1]}"
+}
+
+function len_split_str() {
+	local anew
+	IFS='|' read -r -a anew <<<"$1"
+	echo "${#anew[@]}"
+}
+
+function print() {
+	local row="$1"
+	local col="$2"
+	local msg="$3"
+	local color="${4:-${Acores[box]}}"
+
+	setpos "$row" "$col"
+	printf "${color}${msg}"
+}
+
+function yesno() {
+	local linha=$1
+	local coluna=$2
+	local titulo="$3"
+	local itens=("Sim" "Não")
+	local tamanho_maximo=${#titulo}
+	local quantidade_itens="${#itens[@]}"
+	local i tecla selecionado item_formatado
+	local sair_do_menu=false
+	local color="${Acores[conf]}"
+
+	tamanho_maximo=$((tamanho_maximo))
+	for item in "${itens[@]}"; do
+		((tamanho_maximo = tamanho_maximo < ${#item} ? ${#item} : tamanho_maximo))
+	done
+
+	box "$linha" "$coluna" "$((quantidade_itens + 4))" "$((tamanho_maximo + 2))" "" "$color"
+	print "$((linha + 1))" "$((coluna + 1))" "$titulo" "$color"
+	print "$((linha + 2))" "$((coluna))" "├$(replicate "─" "$((tamanho_maximo))")┤" "$color"
+	printf '\a' # beep
+
+	while ! $sair_do_menu; do
+		for i in "${!itens[@]}"; do
+			local item="${itens[i]}"
+			local padding=$((tamanho_maximo - ${#item} - 2))
+			[[ -n "${aCorItemMenu[i]}" ]] && color="${aCorItemMenu[i]}"
+			if [[ $i -eq $selecionado ]]; then
+				item_formatado="${reverse}${color}►${item^^}◄%${padding}s${reset}"
+			else
+				item_formatado="${color} ${item^} %${padding}s${reset}"
+			fi
+			printf "\e[$((linha + i + 4));%sH${item_formatado}${rst}" "$((coluna + 2))"
+		done
+
+		read -r -n 1 -s tecla
+		case $tecla in
+		"A") ((selecionado = selecionado > 0 ? selecionado - 1 : quantidade_itens - 1)) ;;
+		"B") ((selecionado = selecionado < quantidade_itens - 1 ? selecionado + 1 : 0)) ;;
+		"") return $((selecionado)) ;;
+		esac
+	done
+}
+
+function show_menu_pulldown() {
+	local linha=$1
+	local coluna=$2
+	local titulo="$3"
+	local itens=("${@:4}")
+	local tamanho_titulo=${#titulo}
+	local quantidade_itens="${#itens[@]}"
+	local tamanho_maximo=$tamanho_titulo
+	local i
+	local tecla
+	local item_formatado
+	local sair_do_menu=false
+	local color="${Acores[box]}"
+	local lastcol="$(lastcol)"
+
+	# Calcular o tamanho máximo diretamente no loop
+	for valor in "${itens[@]}"; do
+		item=$(sh_splitarray "$valor" 1)
+		str+="$item "
+		((tamanho_maximo = ${#item} > tamanho_maximo ? ${#item} : tamanho_maximo))
+	done
+
+	((tamanho_maximo += 2)) # Adiciona 2 espaços entre os itens
+	((tamanho_maximo = tamanho_maximo < tamanho_titulo ? tamanho_titulo : tamanho_maximo))
+
+	nTop=$((linha + 1))
+	nLeft=1
+	((--pselecionadoV))
+	((--pselecionadoH))
+
+	# Iterar sobre os itens novamente para destacar o item selecionado em reverso
+	while ! $sair_do_menu; do
+		sh_fundo
+		printf "${color}\e[%s;%sH%${lastcol}s" $nTop $coluna ""
+		npos=1
+
+		for i in "${!itens[@]}"; do
+			local str="${itens[i]}"
+			local item=$(sh_splitarray "$str" 1)
+			local padding="${#item}"
+			[[ -n "${aCorItemMenu[i]}" ]] && color="${aCorItemMenu[i]}"
+
+			if [[ $i -eq $pselecionadoH ]]; then
+				# Formato do item selecionado no menu principal
+				item_formatado="${reverse}${color}${item^}${reset}"
+				nLeft="$((npos - 1))"
+				nItensSubMenu="$(len_split_str "$str")"
+				declare -a subitens=()
+				tamanho2_maximo=0
+
+				for ((x = 2; x <= nItensSubMenu; x++)); do
+					item2="$(sh_splitarray "$str" $x)"
+					((tamanho2_maximo = ${#item2} > tamanho2_maximo ? ${#item2} : tamanho2_maximo))
+					subitens+=("$item2")
+				done
+
+				((tamanho2_maximo = tamanho2_maximo < padding ? padding : tamanho2_maximo))
+				nRight="$((npos + tamanho2_maximo - nLeft + 1))"
+				box "$nTop" "$nLeft" "$((nItensSubMenu + 1))" "$nRight" "" "$color"
+
+				for x in "${!subitens[@]}"; do
+					#					printf "\e[%s;%sH" $((linha + x + 3)) $((coluna + npos +1 ))
+					local item2="${subitens[x]}"
+					local padding2=$((tamanho2_maximo - ${#item2}))
+					[[ -n "${aCorItemMenu[i]}" ]] && color="${aCorItemMenu[x]}"
+
+					if [[ $x -eq $pselecionadoV ]]; then
+						item2_formatado="${reverse}${color}${item2^}%${padding2}s${reset}"
+					else
+						item2_formatado="${color}${item2^}%${padding2}s${reset}"
+					fi
+					printf "\e[%s;%sH${item2_formatado}${rst}" $((linha + x + 3)) $((coluna + npos + 1))
+				done
+			else
+				item_formatado="${color}${item^}${reset}"
+			fi
+			printf "\e[$((linha + 1));%sH${item_formatado}${rst}" "$npos"
+			npos=$((npos + padding + 1))
+		done
+		read -r -n 1 -s tecla
+		case $tecla in
+		"A") ((pselecionadoV = pselecionadoV > 0 ? pselecionadoV - 1 : nItensSubMenu - 2)) ;;
+		"B") ((pselecionadoV = pselecionadoV < nItensSubMenu - 2 ? pselecionadoV + 1 : 0)) ;;
+		"D")
+			pselecionadoV=0
+			((pselecionadoH = pselecionadoH > 0 ? pselecionadoH - 1 : quantidade_itens - 1))
+			;;
+		"C")
+			pselecionadoV=0
+			((pselecionadoH = pselecionadoH < quantidade_itens - 1 ? pselecionadoH + 1 : 0))
+			;;
+		"")
+			((++pselecionadoV))
+			((++pselecionadoH))
+			return "${pselecionadoH}${pselecionadoV}"
+			;;
+		esac
+	done
+}
+
+function about::dev() {
+	local half_lastrow=$(($(lastrow) / 2))
+	local half_lastcol=$(($(lastcol) / 4))
+	yesno $((half_lastrow - 6)) $half_lastcol "Opcao em desenvolvimento"
+}
+
+function sh_main_menu() {
+	local xtitle="MENU PRINCIPAL"
+	local half_lastrow=$(($(lastrow) / 2))
+	local half_lastcol=$(($(lastcol) / 4))
+	local opcao
+	declare -a options=(
+		"Sair|Sair do Sistema"
+		"Produtos|Inclusao|Alteracao|Exclusao|Consulta"
+		"Fornecedores|Inclusao|Alteracao|Exclusao|Consulta"
+		"Relatorios|Produtos|Fornecedores"
+		"Consultas|Produtos|Fornecedores"
+		"Manutencao|Item 1|Item 2|Item 3"
+		"Configuracao|Dados|Cores|Pano de Fundo"
+		"Sobre|Sobre o sistema"
+	)
+
+	while true; do
+		tela
+		show_menu_pulldown 2 0 "$xtitle" "${options[@]}"
+		opcao="$?"
+
+		case "$opcao" in
+		11)
+			if yesno $((half_lastrow - 6)) $half_lastcol "$(gettext "Pergunta: Deseja realmente Sair?")"; then
+				clear
+				exit 0
+			fi
+			;;
+		21 | 22 | 23 | 24) about::dev ;;
+		31 | 32 | 33 | 34) about::dev ;;
+		31 | 32 | 33 | 34) about::dev ;;
+		41 | 42) about::dev ;;
+		51 | 52) about::dev ;;
+		61 | 62 | 63) about::dev ;;
+		71 | 72 | 73) about::dev ;;
+		81) about::dev ;;
+		esac
+	done
+}
+
+clear
+sh_setvarcolors
+sh_config
+sh_main_menu
