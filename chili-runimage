@@ -206,10 +206,10 @@ function sh_set_qemu_common_options {
 	#	qemu_options+=(-device ramfb)			# ✗ not VGA compatible ✓ vgabios support ✓ UEFI support (QemuRamfbDxe)
 	#	qemu_options+=(-device cirrus-vga)		# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (cirrus.ko)
 	#	qemu_options+=(-device qxl)
-	#	qemu_options+=(-device qxl-vga)
+    #	qemu_options+=(-device qxl-vga)
 	qemu_options+=(-vga virtio) # ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (virtio-gpu.ko)
 	#	qemu_options+=(-device bochs-display)	# ✗ not VGA compatible	✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
-	#	qemu_options+=(-vga std)				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
+    #	qemu_options+=(-vga std)				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
 	#	qemu_options+=(-device qxl-vga)
 	#	qemu_options+=(-device ati-vga)
 	#	qemu_options+=(-vga qxl) 				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (qxl.ko) ✓ windows driver

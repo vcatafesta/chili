@@ -4,7 +4,7 @@
 function conf() {
 	read -r -p "$1 [Y/n]"
 	[[ ${REPLY^} == "" ]] && return 0
-	[[ ${REPLY^} == N ]]  && return 1 || return 0
+	[[ ${REPLY^} == N ]] && return 1 || return 0
 }
 
 function sh_setvarcolors() {
@@ -14,7 +14,7 @@ function sh_setvarcolors() {
 		tput sgr0 # reset colors
 		bold=$(tput bold)
 		reset=$(tput sgr0)
-		black=$(tput setaf 0);
+		black=$(tput setaf 0)
 		red=$(tput setaf 1)
 		green=$(tput setaf 2)
 		yellow=$(tput bold)$(tput setaf 3)
@@ -23,9 +23,9 @@ function sh_setvarcolors() {
 		cyan=$(tput setaf 6)
 		white=$(tput setaf 7)
 		orange=$(tput setaf 3)
-		purple=$(tput setaf 125);
-		violet=$(tput setaf 61);
-   else # doesn't support true-color
+		purple=$(tput setaf 125)
+		violet=$(tput setaf 61)
+	else # doesn't support true-color
 		bold=''
 		reset="\e[0m"
 		blue="\e[1;34m"
@@ -36,28 +36,28 @@ function sh_setvarcolors() {
 		white="\e[1;37m"
 		yellow="\e[1;33m"
 		pink="\033[35;1m"
-		black="\e[1;30m";
-		purple="\e[1;35m";
-		violet="\e[1;35m";
-   fi
+		black="\e[1;30m"
+		purple="\e[1;35m"
+		violet="\e[1;35m"
+	fi
 }
 
 function chili-image() {
 	# https://www.qemu.org/2021/08/22/fuse-blkexport/
 	qemu-img create -f raw foo.img 20G
-	parted -s foo.img 		\
-		'mklabel msdos' 		\
+	parted -s foo.img \
+		'mklabel msdos' \
 		'mkpart primary ext4 2048s 100%'
 	qemu-img convert -p -f raw -O qcow2 foo.img foo.qcow2 && rm foo.img
 	file foo.qcow2
 	kpartx -l foo.qcow2
 
-#	qemu-storage-daemon \
-#    --blockdev node-name=prot-node,driver=file,filename=foo.qcow2 \
-#    --blockdev node-name=fmt-node,driver=qcow2,file=prot-node \
-#    --export \
-#    type=fuse,id=exp0,node-name=fmt-node,mountpoint=foo.qcow2,writable=on \
-#    &
+	#	qemu-storage-daemon \
+	#    --blockdev node-name=prot-node,driver=file,filename=foo.qcow2 \
+	#    --blockdev node-name=fmt-node,driver=qcow2,file=prot-node \
+	#    --export \
+	#    type=fuse,id=exp0,node-name=fmt-node,mountpoint=foo.qcow2,writable=on \
+	#    &
 
 	qemu-storage-daemon \
 		--blockdev node-name=prot-node,driver=file,filename=foo.qcow2 \
@@ -88,7 +88,7 @@ function chili-mapdevice() {
 
 function chili-setup-img() {
 	qemu-img create foo.img -f raw 20G
-   qemu-img info foo.img
+	qemu-img info foo.img
 	losetup --find --show foo.img
 	#kpartx -av foo.img # mapear
 	#kpartx -d foo.img  #delete
@@ -123,7 +123,7 @@ if [[ $# -eq 0 ]]; then
 	printf '%s\n' "${red}Usage:${reset}"
 	printf '\t%s\n' "chili-parted ${yellow}/dev/sdX${reset}"
 	printf '\t%s\n' "chili-parted ${yellow}image.img${reset}"
-	exit 1;
+	exit 1
 fi
 
 function sh_parted() {
@@ -131,14 +131,14 @@ function sh_parted() {
 	if fdisk -l "$sd"; then
 		echo
 		echo "AVISO, CUIDADO, tudo será apagado!!"
-		if conf "Continuar com o particionamento?" ; then
-			parted --script "$sd" -- 															\
-				mklabel gpt             					 									\
-			   mkpart primary fat32      1MiB 3MiB   set 1 bios on name 1 BIOS  	\
-			   mkpart primary fat32      3MiB 128MiB set 2 esp  on name 2 EFI   	\
-			   mkpart primary ext4       128MiB 100%               name 3 ROOT  	\
-			   align-check optimal 1
-				parted --script "$sd" -- print
+		if conf "Continuar com o particionamento?"; then
+			parted --script "$sd" -- \
+				mklabel gpt \
+				mkpart primary fat32 1MiB 3MiB set 1 bios on name 1 BIOS \
+				mkpart primary fat32 3MiB 128MiB set 2 esp on name 2 EFI \
+				mkpart primary ext4 128MiB 100% name 3 ROOT \
+				align-check optimal 1
+			parted --script "$sd" -- print
 		fi
 	fi
 }

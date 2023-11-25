@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+
+function DrawBox1() {
+    string="$*";
+    tamanho=${#string}
+    tput setaf 4; printf "\e(0\x6c\e(B"
+    for i in $(seq $tamanho)
+        do printf "\e(0\x71\e(B"
+    done
+    printf "\e(0\x6b\e(B\n"; tput sgr0;
+    tput setaf 4; printf "\e(0\x78\e(B"
+    tput setaf 1; tput bold; echo -n $string; tput sgr0
+    tput setaf 4; printf "\e(0\x78\e(B\n"; tput sgr0;
+    tput setaf 4; printf "\e(0\x6d\e(B"
+    for i in $(seq $tamanho)
+        do printf "\e(0\x71\e(B"
+    done
+    printf "\e(0\x6a\e(B\n"; tput sgr0;
+}
+
+function DrawBox() {
+    string="$*";
+    tamanho=${#string}
+    tput setaf 4; printf "\e(0\x6c\e(B"
+    printf -v linha "%${tamanho}s" ' '
+    printf -v traco "\e(0\x71\e(B"
+    echo -n ${linha// /$traco}
+    printf "\e(0\x6b\e(B\n"; tput sgr0;
+    tput setaf 4; printf "\e(0\x78\e(B"
+    tput setaf 1; tput bold; echo -n $string; tput sgr0
+    tput setaf 4; printf "\e(0\x78\e(B\n"; tput sgr0;
+    tput setaf 4; printf "\e(0\x6d\e(B"
+    printf -v linha "%${tamanho}s" ' '
+    printf -v traco "\e(0\x71\e(B"
+    echo -n ${linha// /$traco}
+    printf "\e(0\x6a\e(B\n"; tput sgr0;
+}
+
+function TracaLinha() {
+    local row=$1
+    local col=$2
+    local lastcol="$(tput cols)"
+    local padding=$((lastcol - $col))
+    local Tamanho=${3:-$padding}
+    local Traco Linha
+
+    printf -v Linha "%${Tamanho}s" ' '
+    printf -v Traco "\e(0\x71\e(B"
+    tput cup $row $col
+    echo -n ${Linha// /$Traco}
+}
+
+function replleft() {
+    local str=$1
+    local nsize=${2:-${#str}}
+    local char=${3:-'#'}
+    local value
+
+    printf -v str "%${nsize}s\n" $str
+    printf '%s\n' ${str// /$char}
+}
+
+function replright() {
+    local str=$1
+    local nsize=${2:-${#str}}
+    local char=${3:-'#'}
+    local value
+
+    printf -v str "%-${nsize}s\n" $str
+    printf '%s\n' ${str// /$char}
+}
+
+function replicate() {
+    local char=${1:-'#'}
+    local nsize=${2:-$(tput cols)}
+    local line
+
+    printf -v line "%*s" "$nsize" && echo "${line// /$char}"
+}
+
+clear
+DrawBox1 "string em vermelho"
+DrawBox "string"
+TracaLinha 10 10
+replleft 123,45 15 '*'
+replright 123,45 15 '*'
+replicate '#' 50
+replicate

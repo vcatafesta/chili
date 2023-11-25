@@ -1230,7 +1230,7 @@ strzero() {
 
 # $1 - caractere
 # $2 - tamanho
-function replicate() {
+function replicateOLD() {
 	#  Repete um caractere um determinado número de vezes
 	#+ Recebe:
 	#+  Tamanho final da cadeia
@@ -1238,6 +1238,91 @@ function replicate() {
 	local Var
 	printf -v Var %$2s " "  #  Coloca em $Var $1 espaços
 	echo ${Var// /$1}       #  Troca os espaços pelo caractere escolhido
+}
+export -f replicateOLD
+
+#!/usr/bin/env bash
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+
+function DrawBox1() {
+    string="$*";
+    tamanho=${#string}
+    tput setaf 4; printf "\e(0\x6c\e(B"
+    for i in $(seq $tamanho)
+        do printf "\e(0\x71\e(B"
+    done
+    printf "\e(0\x6b\e(B\n"; tput sgr0;
+    tput setaf 4; printf "\e(0\x78\e(B"
+    tput setaf 1; tput bold; echo -n $string; tput sgr0
+    tput setaf 4; printf "\e(0\x78\e(B\n"; tput sgr0;
+    tput setaf 4; printf "\e(0\x6d\e(B"
+    for i in $(seq $tamanho)
+        do printf "\e(0\x71\e(B"
+    done
+    printf "\e(0\x6a\e(B\n"; tput sgr0;
+}
+
+function DrawBox() {
+    string="$*";
+    tamanho=${#string}
+    tput setaf 4; printf "\e(0\x6c\e(B"
+    printf -v linha "%${tamanho}s" ' '
+    printf -v traco "\e(0\x71\e(B"
+    echo -n ${linha// /$traco}
+    printf "\e(0\x6b\e(B\n"; tput sgr0;
+    tput setaf 4; printf "\e(0\x78\e(B"
+    tput setaf 1; tput bold; echo -n $string; tput sgr0
+    tput setaf 4; printf "\e(0\x78\e(B\n"; tput sgr0;
+    tput setaf 4; printf "\e(0\x6d\e(B"
+    printf -v linha "%${tamanho}s" ' '
+    printf -v traco "\e(0\x71\e(B"
+    echo -n ${linha// /$traco}
+    printf "\e(0\x6a\e(B\n"; tput sgr0;
+}
+
+function TracaLinha() {
+    local row=$1
+    local col=$2
+    local lastcol="$(tput cols)"
+    local padding=$((lastcol - $col))
+    local Tamanho=${3:-$padding}
+    local Traco Linha
+
+    printf -v Linha "%${Tamanho}s" ' '
+    printf -v Traco "\e(0\x71\e(B"
+    tput cup $row $col
+    echo -n ${Linha// /$Traco}
+}
+export -f TrocaLinha
+
+function replleft() {
+    local str=$1
+    local nsize=${2:-${#str}}
+    local char=${3:-'#'}
+    local value
+
+    printf -v str "%${nsize}s\n" $str
+    printf '%s\n' ${str// /$char}
+}
+export -f replleft
+
+function replright() {
+    local str=$1
+    local nsize=${2:-${#str}}
+    local char=${3:-'#'}
+    local value
+
+    printf -v str "%-${nsize}s\n" $str
+    printf '%s\n' ${str// /$char}
+}
+export -f replright
+
+function replicate() {
+    local char=${1:-'#'}
+    local nsize=${2:-$(tput cols)}
+    local line
+
+    printf -v line "%*s" "$nsize" && echo "${line// /$char}"
 }
 export -f replicate
 
@@ -2205,42 +2290,6 @@ function parseopts() {
 	OPTRET+=('--' "${unused_argv[@]}" "$@")
 	unset longoptmatch
 	return 0
-}
-
-function DrawBox1() {
-    string="$*";
-    tamanho=${#string}
-    tput setaf 4; printf "\e(0\x6c\e(B"
-    for i in $(seq $tamanho)
-        do printf "\e(0\x71\e(B"
-    done
-    printf "\e(0\x6b\e(B\n"; tput sgr0;
-    tput setaf 4; printf "\e(0\x78\e(B"
-    tput setaf 1; tput bold; echo -n $string; tput sgr0
-    tput setaf 4; printf "\e(0\x78\e(B\n"; tput sgr0;
-    tput setaf 4; printf "\e(0\x6d\e(B"
-    for i in $(seq $tamanho)
-        do printf "\e(0\x71\e(B"
-    done
-    printf "\e(0\x6a\e(B\n"; tput sgr0;
-}
-
-function DrawBox() {
-    string="$*";
-    tamanho=${#string}
-    tput setaf 4; printf "\e(0\x6c\e(B"
-    printf -v linha "%${tamanho}s" ' '
-    printf -v traco "\e(0\x71\e(B"
-    echo -n ${linha// /$traco}
-    printf "\e(0\x6b\e(B\n"; tput sgr0;
-    tput setaf 4; printf "\e(0\x78\e(B"
-    tput setaf 1; tput bold; echo -n $string; tput sgr0
-    tput setaf 4; printf "\e(0\x78\e(B\n"; tput sgr0;
-    tput setaf 4; printf "\e(0\x6d\e(B"
-    printf -v linha "%${tamanho}s" ' '
-    printf -v traco "\e(0\x71\e(B"
-    echo -n ${linha// /$traco}
-    printf "\e(0\x6a\e(B\n"; tput sgr0;
 }
 
 BOOTLOG="/tmp/${APP}-$USER-$(sh_diahora).log"

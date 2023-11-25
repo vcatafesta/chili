@@ -1,7 +1,7 @@
 #!/bin/bash
 
 file="$1"
-if cobc -F -x -O $file; then
+if cobc -x -j -O $file; then
 	file_name_without_extension="${file%%.*}"
 	./$file_name_without_extension
 fi
