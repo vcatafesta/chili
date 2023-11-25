@@ -48,7 +48,7 @@ function TracaLinha() {
     printf -v Linha "%${Tamanho}s" ' '
     printf -v Traco "\e(0\x71\e(B"
     tput cup $row $col
-    echo -n ${Linha// /$Traco}
+    echo ${Linha// /$Traco}
 }
 
 function replleft() {
@@ -57,8 +57,8 @@ function replleft() {
     local char=${3:-'#'}
     local value
 
-    printf -v str "%${nsize}s\n" $str
-    printf '%s\n' ${str// /$char}
+    printf -v value "%${nsize}s\n" $str
+    printf '%s\n' ${value// /$char}
 }
 
 function replright() {
@@ -67,8 +67,8 @@ function replright() {
     local char=${3:-'#'}
     local value
 
-    printf -v str "%-${nsize}s\n" $str
-    printf '%s\n' ${str// /$char}
+    printf -v value "%-${nsize}s\n" $str
+    printf '%s\n' ${value// /$char}
 }
 
 function replicate() {
@@ -83,6 +83,7 @@ clear
 DrawBox1 "string em vermelho"
 DrawBox "string"
 TracaLinha 10 10
+TracaLinha 10 10 20
 replleft 123,45 15 '*'
 replright 123,45 15 '*'
 replicate '#' 50

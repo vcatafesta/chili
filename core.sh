@@ -1301,8 +1301,8 @@ function replleft() {
     local char=${3:-'#'}
     local value
 
-    printf -v str "%${nsize}s\n" $str
-    printf '%s\n' ${str// /$char}
+    printf -v value "%${nsize}s\n" $str
+    printf '%s\n' ${value// /$char}
 }
 export -f replleft
 
@@ -1312,8 +1312,8 @@ function replright() {
     local char=${3:-'#'}
     local value
 
-    printf -v str "%-${nsize}s\n" $str
-    printf '%s\n' ${str// /$char}
+    printf -v value "%-${nsize}s\n" $str
+    printf '%s\n' ${value// /$char}
 }
 export -f replright
 
