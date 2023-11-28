@@ -44,8 +44,8 @@ quadro_menor_altura=$((altura / 3))
 # Divide o quadro em uma grade de 9 posições
 for ((i=0; i<3; i++)); do
   for ((j=0; j<3; j++)); do
-    local quadro_x=$((pos_x + j * (quadro_menor_largura + 1) + 1))
-    local quadro_y=$((pos_y + i * (quadro_menor_altura + 1) + 1))
+    quadro_x=$((pos_x + j * (quadro_menor_largura + 1) + 1))
+    quadro_y=$((pos_y + i * (quadro_menor_altura + 1) + 1))
     imprimir_quadro $quadro_x $quadro_y $quadro_menor_largura $quadro_menor_altura
   done
 done

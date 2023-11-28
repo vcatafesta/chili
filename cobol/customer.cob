@@ -26,10 +26,10 @@
        01 WSEOF PIC A(1).
 
        PROCEDURE DIVISION.
-        PERFORM 001-Main.
-        PERFORM 002-Inclusao.
-        PERFORM 003-Print.
-        STOP RUN.
+            PERFORM 001-Main.
+            PERFORM 002-Inclusao.
+            PERFORM 003-Print.
+            STOP RUN.
        
        001-Main.
            OPEN EXTEND CustomerFile.
