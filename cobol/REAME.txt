@@ -1,0 +1,21 @@
+Counting columns in a line of COBOL source text (historically important)
+IGNORE the first 6 colums
+      Indicator column is column 7.  * for comments, - for continuation, others
+      |A margin starts in column 8, all "real" source code starts here
+      ||   B margin starts in column 12, but B margin is now deemed OBSOLETE
+      ||   |       (Columns 73-80 are ignored, just like the first 6)   IGNORE..
+      ||   |                                                            |
+      || 1 |       2         3         4         5         6         7  |      8
+123456*89012345678901234567890123456789012345678901234567890123456789012XXXXXXXX
+
+      * Comment line, the asterisk HAS to be in column 7
+      *> New standard "to end of line" comment
+      *> Can be anywhere past any FIXED form "A" margin
+
+I Enter Data Properly
+I E D P
+
+IDENTIFICATION
+ENVIRONMENT
+DATA
+PROCEDURE

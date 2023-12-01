@@ -1,0 +1,15 @@
+IDENTIFICATION DIVISION.
+PROGRAM-ID. MeuPrograma.
+
+DATA DIVISION.
+WORKING-STORAGE SECTION.
+01 Contador PIC 9(3) VALUE 0.
+
+PROCEDURE DIVISION.
+    PERFORM 10-VEZES 10 times.
+    DISPLAY 'Programa COBOL concluído.'.
+    GOBACK.
+
+10-VEZES.
+    ADD 1 TO Contador.
+    DISPLAY 'Esta é a vez número ' Contador.

@@ -1,21 +1,19 @@
-       IDENTIFICATION DIVISION.
-       PROGRAM-ID. HELLO.
-       ENVIRONMENT DIVISION.
-       DATA DIVISION.
+       identification division.
+       program-id. vilmar.
+       environment division.
+       data division.
+            working-storage section.
+               01 ws-nome   pic x(20).
+               01 nome      pic x(50)       value "r202".
+               01 idade     pic 9(2)        value 57.
+               01 salario   pic 9(6)v9(2)   value 20000.00.
+            
+       procedure division.
+            display "nome      : " nome
+            display "idade     : " idade
+            display "salario   : " salario
 
-       WORKING-STORAGE SECTION.
-       01 WS-NOME PIC X(20).
-       01 NOME PIC X(50) VALUE "R202".
-       01 IDADE PIC 9(3) VALUE 50.
-       01 SALARIO PIC 9(6)V9(2) VALUE 20000.00.
-
-       PROCEDURE DIVISION.
-           DISPLAY "HELLO WORLD".
-           DISPLAY "Nome    : " NOME.
-           DISPLAY "Idade   : " IDADE.
-           DISPLAY "Salario : " SALARIO.
-
-           display "Digite um nome"
-           accept WS-NOME
-           display "nome digitado foi " WS-NOME
-           STOP RUN.
+            display "nome      : " with no advancing
+            accept ws-nome
+            display "resultado : " ws-nome
+            stop run.
