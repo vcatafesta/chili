@@ -1,11 +1,11 @@
       ******************************************************************
-      * Author:
+      * Author: Vilmar Catafesta.
       * Date:
       * Purpose:
       * Tectonics: cobc
       ******************************************************************
        IDENTIFICATION DIVISION.
-       PROGRAM-ID. LOOP.
+       PROGRAM-ID. loop.
        DATA DIVISION.
        FILE SECTION.
        WORKING-STORAGE SECTION.
@@ -45,4 +45,4 @@
 
            DISPLAY "Hello world"
            STOP RUN.
-       END PROGRAM LOOP.
+       END PROGRAM loop.
