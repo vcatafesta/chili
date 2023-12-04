@@ -6,84 +6,97 @@
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            SELECT CustomerFile ASSIGN TO "customer.dat"
-              ORGANIZATION IS INDEXED
-              ACCESS MODE IS RANDOM
-              RECORD KEY IS IDNum.
+                         ORGANIZATION IS INDEXED
+                         ACCESS MODE  IS RANDOM
+                         RECORD KEY   IS IDNum
+                         FILE STATUS  IS TEMP-ST.
        DATA DIVISION.
        FILE SECTION.
        FD CustomerFile.
        01 CustomerData.
-            02 IDNum     PIC 99.
-            02 FirstName PIC X(15).
-            02 LastName  PIC X(15).
+            02 IDNum     pic 99.
+            02 FirstName pic x(15).
+            02 LastName  pic x(15).
 
        WORKING-STORAGE SECTION.
-       01 Choice PIC 9.
-       01 StayOpen PIC X VALUE 'Y'.
-       01 CustExists PIC X.
+       01 Choice     pic 9.
+       01 StayOpen   pic x value 'Y'.
+       01 CustExists pic x.
+       01 RUNDATA-FS pic 99.
 
        PROCEDURE DIVISION.
        001-Main.
-           OPEN I-O CustomerFile.
-           PERFORM UNTIL StayOpen='N'
-           DISPLAY ' '
-           DISPLAY "CUSTOMER RECORDS"
-           DISPLAY "1 - Add Customer"
-           DISPLAY "2 - Delete Customer"
-           DISPLAY "3 - Update Customer"
-           DISPLAY "4 - Get Customer"
-           DISPLAY "0 - Quit"
-           DISPLAY ' '
-           DISPLAY "Choice : " WITH NO ADVANCING
-           accept Choice
-           EVALUATE Choice
-                WHEN 1 perform AddCust
-                WHEN 2 perform DeleteCust
-                WHEN 3 perform UpdateCust
-                WHEN 4 perform GetCust
-                WHEN OTHER move 'N' to StayOpen
-           END-EVALUATE
-           end-perform.
-           CLOSE CustomerFile.
-           stop run.
-       
+            perform 001-menu.
+            stop run.
+
+       001-menu.
+            Perform openDatabase.
+            Perform Until StayOpen='N'
+                Display ' '
+                Display "CUSTOMER RECORDS"
+                Display "----------------"
+                Display "1 - Add Customer"
+                Display "2 - Delete Customer"
+                Display "3 - Update Customer"
+                Display "4 - Get Customer"
+                Display "0 - Quit"
+                Display ' '
+                Display "Choice : " WITH NO ADVANCING
+                Accept Choice
+                Evaluate Choice
+                    When 1 Perform AddCust
+                    When 2 Perform DeleteCust
+                    When 3 Perform UpdateCust
+                    When 4 Perform GetCust
+                    When Other move 'N' to StayOpen
+                End-Evaluate
+            End-Perform.
+            Perform closeDatabase.
+            Stop Run.
+              
+openDatabase.
+    Open I-O CustomerFile.
+    if RUNDATA-FS not equal to 0
+        display "** ERROR ** not able to open customefile file **"
+        go to closeDatabase
+    end-if.
+
+closeDatabase.         
+    Close CustomerFile.
+    if RUNDATA-FS not equal to 0
+        display "** ERROR ** unable to cloe customefile file **"
+        
+    end-if.
+
 AddCust.
-    display ' '
-    display "ID        : " with no advancing.
-    accept IDNum.
-    display "FirstName : " with no advancing.
-    accept FirstName.
-    display "LastName  : " with no advancing.
-    accept LastName.
-    write CustomerData
-        invalid key display "ID Taken"
-    end-write.
+    Display ' '
+    Display "ID        : " with no advancing Accept IDNum
+    Display "FirstName : " with no advancing Accept FirstName
+    Display "LastName  : " with no advancing Accept LastName
+    Write CustomerData
+        Invalid Key Display "ID Taken"
+    End-Write.
 
 DeleteCust.
-    display ' '
-    display "ID        : " with no advancing.
-    accept IDNum.
-    delete CustomerFile
-        invalid key display "Key Doesn't exist"
-    end-delete.
+    Display ' '
+    Display "ID        : " with no advancing Accept IDNum
+    Delete CustomerFile
+        Invalid Key display "Key Doesn't exist"
+    End-Delete.
 
 UpdateCust.
     move 'Y' to CustExists
     display ' '
-    display "ID        : " with no advancing
-    accept IDNum
+    display "ID        : " With No Advancing Accept IDNum
     read CustomerFile
         invalid key move 'N' to CustExists
     end-read
     if CustExists='N'
         display "Customer Doesn't exist"
     else
-        display "ID        : " with no advancing
-        accept IDNum
-        display "FirstName : " with no advancing
-        accept FirstName
-        display "LastName  : " with no advancing
-        accept LastName
+        display "ID        : " with no advancing accept IDNum
+        display "FirstName : " with no advancing accept FirstName
+        display "LastName  : " with no advancing accept LastName
     end-if
     rewrite CustomerData
         invalid key display 'Customer not updated'
@@ -92,8 +105,7 @@ UpdateCust.
 GetCust.   
     move 'Y' to CustExists
     display ' '
-    display "ID        : " with no advancing
-    accept IDNum
+    display "ID        : " With No Advancing Accept IDNum
     read CustomerFile
         invalid key move 'N' to CustExists
     end-read
