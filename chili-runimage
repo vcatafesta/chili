@@ -7,7 +7,7 @@
 #
 #  chili-runimage
 #  Created: 2023/04/25
-#  Altered: 2023/10/16
+#  Altered: 2023/12/04
 #
 #  Copyright (c) 2023-2023, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -42,7 +42,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 
 #system
 readonly APP="${0##*/}"
-readonly _VERSION_='1.2.00-20231016'
+readonly _VERSION_='1.3.00-20231204'
 readonly DEPENDENCIES=('tput' 'printf' 'qemu-system-x86_64' 'gettext')
 readonly PACKAGEDEP=([tput]='ncurses' [printf]='coreutils' [qemu - system - x86_64X]='qemu' [gettext]='gettext')
 readonly iface_bridge='br0'
@@ -123,7 +123,6 @@ function sh_setenvironment {
 	DONE="${COL_LIGHT_GREEN} done!${COL_NC}"
 	OVER="\\r\\033[K"
 	DOTPREFIX="  ${black}::${reset} "
-	sh_set_qemu_common_options
 }
 
 function sh_unsetvarcolors {
@@ -157,7 +156,8 @@ function sh_checkDependencies {
 function filerun_bios {
 	if test $# -ge 1; then
 		if test -r $1; then
-			qemu-system-x86_64 -drive file=${1},format=raw,if=none,id=disk1 -device ide-hd,drive=disk1,bootindex=1 -device virtio-scsi-pci,id=scsi0 "${qemu_options[@]}"
+#			qemu-system-x86_64 -drive file=${1},format=raw,if=none,id=disk1 -device ide-hd,drive=disk1,bootindex=1 -device virtio-scsi-pci,id=scsi0 "${qemu_options[@]}"
+			qemu-system-x86_64 -drive file=${1},if=none,id=disk1 -device ide-hd,drive=disk1,bootindex=1 -device virtio-scsi-pci,id=scsi0 "${qemu_options[@]}"
 		else
 			log_msg "${red}ERROR: ${cyan}'$1' ${red}$(gettext "erro de leitura ou não existe")"
 		fi
@@ -180,11 +180,19 @@ function filerun_uefi {
 
 			if [[ ${1: -4} == ".iso" ]]; then
 				# ISO disk
-				qemu-system-x86_64 -cdrom $1 \
-					-boot d -drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=off -drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd "${qemu_options[@]}"
+				qemu-system-x86_64 \
+				    -cdrom $1 \
+					-boot d \
+					-drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=on \
+					-drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd \
+					"${qemu_options[@]}"
 			else
 				# RAW disk
-				qemu-system-x86_64 -drive file=${1},format=raw,if=virtio -drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=off -drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd "${qemu_options[@]}"
+				qemu-system-x86_64 \
+				    -drive file=${1},format=raw,if=virtio \
+				    -drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=on \
+				    -drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd \
+				    "${qemu_options[@]}"
 			fi
 		else
 			log_msg "${red}ERROR: ${cyan}'$1' ${red}$(gettext "erro de leitura ou não existe")"
@@ -200,7 +208,15 @@ function sh_set_qemu_common_options {
 	qemu_options+=(-machine accel=kvm)
 	qemu_options+=(-cpu host)
 	qemu_options+=(-smp "$(nproc)")
+    #	qemu_options+=(-m ${xmem})
+    #   qemu_options+=(-name "$HOSTNAME")
 	qemu_options+=(-name 'chili-runimage')
+    #   qemu_options+=(-drive file=${1},if=none,id=disk1)
+    #   qemu_options+=(-device ide-hd,drive=disk1,bootindex=1)
+    #   qemu_options+=(-name archiso,process=archiso_0)
+    #   qemu_options+=(-device virtio-scsi-pci,id=scsi0)
+    #   qemu_options+=(-netdev user,id=net0)
+    #   qemu_options+=(-device e1000,netdev=net0)
 	#	qemu_options+=(-vga std)				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
 	#	qemu_options+=(-device VGA)
 	#	qemu_options+=(-device ramfb)			# ✗ not VGA compatible ✓ vgabios support ✓ UEFI support (QemuRamfbDxe)
@@ -216,8 +232,8 @@ function sh_set_qemu_common_options {
 	qemu_options+=(-display gtk)
 	qemu_options+=(-device intel-hda)
 	qemu_options+=(-audiodev pa,id=snd0,server=localhost)
-	qemu_options+=(-device hda-output,audiodev=snd0)
 	qemu_options+=(-device ich9-intel-hda)
+	qemu_options+=(-device hda-output,audiodev=snd0)
 	qemu_options+=(-global ICH9-LPC.disable_s3=1)
 	qemu_options+=(-machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0)
 	qemu_options+=(-serial stdio)
@@ -256,6 +272,7 @@ EOF
 
 sh_setenvironment
 sh_checkDependencies
+sh_set_qemu_common_options
 
 OPTIONS=m:ubVnh
 LONGOPTIONS=memory:,uefi,bridge,version,nocolor,help
@@ -303,7 +320,7 @@ while test ${#opts[*]} -gt 0; do
 done
 
 if [[ $# > 0 ]] ; then
-	sh_checkRoot
+#	sh_checkRoot
 	qemu_options+=(-m ${xmem})
 	if ((bridge)); then
 		random_mac_net0=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
