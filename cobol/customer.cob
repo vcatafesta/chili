@@ -6,9 +6,10 @@
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            SELECT CustomerFile ASSIGN TO "customer.txt"
-              ORGANIZATION IS LINE SEQUENTIAL.
+              ORGANIZATION IS LINE SEQUENTIAL
+              FILE STATUS IS CUS-FILESTATUS.
            SELECT CustomerReport assign to 'customer.rpt'
-              ORGANIZATION IS LINE SEQUENTIAL.
+              ORGANIZATION IS LINE SEQUENTIAL.              
        DATA DIVISION.
        FILE SECTION.
        FD CustomerReport.
@@ -23,6 +24,7 @@
            88 WS-EOF value HIGH-VALUE.    
 
        WORKING-STORAGE SECTION.
+       01 CUS-FILESTATUS PIC X(02).
        01 PageHeading.
            02 filler pic x(13) value "Customer List".
        01 PageFooting.
@@ -58,11 +60,18 @@
 
        001-Main.
            OPEN EXTEND CustomerFile.
-               MOVE 1 TO IDNum.
-               MOVE 'VILMAR' TO FirstName.
-               MOVE 'CATAFESTA' TO LastName.
+           EVALUATE TRUE
+           WHEN CUS-FILESTATUS = "35"
+                DISPLAY "FILE NOT FOUND : "
+                DISPLAY "FILE STATUS IS : " CUS-FILESTATUS
+                STOP RUN
+           WHEN CUS-FILESTATUS = "00"
+               MOVE 1 TO IDNum
+               MOVE 'VILMAR' TO FirstName
+               MOVE 'CATAFESTA' TO LastName
                WRITE CustomerData
-               END-WRITE.
+               END-WRITE
+           END-EVALUATE.     
            CLOSE CustomerFile.
        
        002-Inclusao.
