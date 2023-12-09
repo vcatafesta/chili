@@ -387,8 +387,10 @@ $(printf "%${nlen}s$sep%-6s$sep%6s$sep%-6s$sep%-15s$sep%-30s" "DEVICE" "TRAN" "S
 			exit 0
 			;;
 		3)
-			result=$(fdisk -l "$sd")
-			message=$(printf "\n\n%s" "$result")
+
+            result0=$(smartctl -i "$sd")
+            result=$(fdisk -l "$sd")
+            message=$(printf "\n\n%s\n\n%s" "$result0" "$result")
 			display_result "$cmsg_disco_origem" \
 				"${BOLD}${RED}${REVERSE}Info disk : $sd${RESET}" \
 				"${BOLD}${WHITE}$message"
