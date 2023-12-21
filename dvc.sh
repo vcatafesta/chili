@@ -19,6 +19,14 @@ bin[8]="Área de telecomunicações"
 bin[9]="Outros emissores: como Governo"
 bin[0]="Outros emissores: como Governo"
 
+
+regex_visa='/^4[0-9]{12}(?:[0-9]{3})?$/'
+regex_mastercard='/^5[1-5][0-9]{14}$|^2(?:2(?:2[1-9]|[3-9][0-9])|[3-6][0-9][0-9]|7(?:[01][0-9]|20))[0-9]{12}$/'
+regex_amex='/^3[47][0-9]{13}$/'
+regex_discover='/^65[4-9][0-9]{13}|64[4-9][0-9]{13}|6011[0-9]{12}|(622(?:12[6-9]|1[3-9][0-9]|[2-8][0-9][0-9]|9[01][0-9]|92[0-5])[0-9]{10})$/'
+regex_diners_club='/^3(?:0[0-5]|[68][0-9])[0-9]{11}$/'
+regex_jcb='/^(?:2131|1800|35[0-9]{3})[0-9]{11}$/'
+
 calcula_checksum() {
     card_prefix="$1"
     reversed_prefix=$(echo "$card_prefix" | rev)
