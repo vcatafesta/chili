@@ -1,0 +1,20 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. DesenhaTriangulo.
+
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01 ALTURA PIC 99 VALUE 5.
+       01 LINHA PIC 99.
+       01 COLUNA PIC 99.
+
+       PROCEDURE DIVISION.
+           PERFORM VARYING LINHA FROM 1 BY 1 UNTIL LINHA > ALTURA
+               MOVE 0 TO COLUNA
+               PERFORM VARYING COLUNA FROM 1 BY 1 UNTIL COLUNA >= LINHA * 2 - 1
+                   DISPLAY '#' WITH NO ADVANCING
+               END-PERFORM
+               DISPLAY SPACE
+           END-PERFORM.
+
+           STOP RUN.
+
