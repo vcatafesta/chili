@@ -10,6 +10,6 @@ impl Person {
 }
 
 fn main() {
-	let person = Person { name: "Vilmar Catafesta".to_string(), age: 53};
+	let person = Person { name: "Vilmar Catafesta".to_string(), age: 2023-1966};
 	print!("{}\n", person.sayhi())
 }

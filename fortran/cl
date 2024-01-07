@@ -1,0 +1,10 @@
+#!/bin/bash
+
+file="$1"
+file_name_without_extension="${file%%.*}"
+if gfortran -o $file_name_without_extension $file; then
+	./$file_name_without_extension
+    :
+fi
+
+
