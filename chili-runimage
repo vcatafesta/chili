@@ -204,6 +204,8 @@ function filerun_uefi {
 }
 
 function sh_set_qemu_common_options {
+#	qemu_options+=(-drive file=/dev/nvme1n1,format=raw)
+#	qemu_options+=(-drive file=/dev/sdj,format=raw)
 	qemu_options+=(-no-fd-bootchk)
 	qemu_options+=(-machine accel=kvm)
 	qemu_options+=(-cpu host)
