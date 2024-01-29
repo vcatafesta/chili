@@ -149,7 +149,7 @@ sh_setrand() {
 	local x y
 
 # 	aVmode=('1080' '1080' '1080')
-	aHmode=('2560 1080' '1920 1080' '1680 1080')
+	aHmode=('2560 1080' '1920 1080' '1680 1080' '1366 768')
 	aRefresh=('33' '44' '50' '60' '75')
 
 	for x in "${aHmode[@]}"; do
@@ -186,6 +186,7 @@ sh_setrand() {
 		0) #add
 			xrandr --verbose --newmode $modeline
 			xrandr --verbose --addmode $output $mode
+			xrandr --verbose --output $output --mode $mode
 			inkey 2
 			;;
 		3) # remove

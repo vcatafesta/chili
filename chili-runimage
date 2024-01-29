@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 #shellcheck disable=SC2034,SC2155,SC2154,SC2181
+#https://wiki.gentoo.org/wiki/QEMU/Options
+
+#BOOT_USB="/dev/sdb"
+#sudo cp ~/.config/pulse/cookie /root/.config/pulse/cookie
+#sudo qemu-system-x86_64 \
+#-machine accel=kvm:tcg \
+#-m 4096 \
+#-bios /usr/share/ovmf/OVMF.fd \
+#-audiodev pa,id=pa,server=unix:${XDG_RUNTIME_DIR}/pulse/native,out.stream-name=foobar,in.stream-name=foobar \
+#-device intel-hda \
+#-device hda-duplex,audiodev=pa,mixer=off -rtc base=localtime,clock=host \
+#-smp 16 \
+#-vga virtio \
+#-display gtk,gl=on \
+#-drive file=$BOOT_USB,format=raw,index=0,media=disk
+
 #
 #	Requeriments:
 # - qemu
@@ -34,6 +50,8 @@
 
 export TEXTDOMAINDIR=/usr/share/locale
 export TEXTDOMAIN=chili-runimage
+#export XDG_RUNTIME_DIR ; XDG_RUNTIME_DIR=/run/user/$(id -g)
+#sudo cp ~/.config/pulse/cookie /root/.config/pulse/cookie
 
 #debug
 export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
@@ -44,7 +62,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 readonly APP="${0##*/}"
 readonly _VERSION_='1.3.00-20231204'
 readonly DEPENDENCIES=('tput' 'printf' 'qemu-system-x86_64' 'gettext')
-readonly PACKAGEDEP=([tput]='ncurses' [printf]='coreutils' [qemu - system - x86_64X]='qemu' [gettext]='gettext')
+readonly PACKAGEDEP=([tput]='ncurses' [printf]='coreutils' [qemu-system-x86_64]='qemu' [gettext]='gettext')
 readonly iface_bridge='br0'
 declare xmem='16G'
 declare -i uefi=0
@@ -156,8 +174,9 @@ function sh_checkDependencies {
 function filerun_bios {
 	if test $# -ge 1; then
 		if test -r $1; then
-#			qemu-system-x86_64 -drive file=${1},format=raw,if=none,id=disk1 -device ide-hd,drive=disk1,bootindex=1 -device virtio-scsi-pci,id=scsi0 "${qemu_options[@]}"
-			qemu-system-x86_64 -drive file=${1},if=none,id=disk1 -device ide-hd,drive=disk1,bootindex=1 -device virtio-scsi-pci,id=scsi0 "${qemu_options[@]}"
+			#			qemu-system-x86_64 -drive file=${1},format=raw,if=none,id=disk1 -device ide-hd,drive=disk1,bootindex=1 -device virtio-scsi-pci,id=scsi0 "${qemu_options[@]}"
+			#			qemu-system-x86_64 -drive file=${1},format=raw,index=0,media=disk,if=none,id=disk1 -device ide-hd,drive=disk1,bootindex=1 -device virtio-scsi-pci,id=scsi0 "${qemu_options[@]}"
+			qemu-system-x86_64 -drive file=${1},format=raw,media=disk,if=none,id=disk1 -device ide-hd,drive=disk1,bootindex=1 -device virtio-scsi-pci,id=scsi0 "${qemu_options[@]}"
 		else
 			log_msg "${red}ERROR: ${cyan}'$1' ${red}$(gettext "erro de leitura ou não existe")"
 		fi
@@ -181,7 +200,7 @@ function filerun_uefi {
 			if [[ ${1: -4} == ".iso" ]]; then
 				# ISO disk
 				qemu-system-x86_64 \
-				    -cdrom $1 \
+					-cdrom $1 \
 					-boot d \
 					-drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=on \
 					-drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd \
@@ -189,10 +208,10 @@ function filerun_uefi {
 			else
 				# RAW disk
 				qemu-system-x86_64 \
-				    -drive file=${1},format=raw,if=virtio \
-				    -drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=on \
-				    -drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd \
-				    "${qemu_options[@]}"
+					-drive file=${1},format=raw,if=virtio \
+					-drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=on \
+					-drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd \
+					"${qemu_options[@]}"
 			fi
 		else
 			log_msg "${red}ERROR: ${cyan}'$1' ${red}$(gettext "erro de leitura ou não existe")"
@@ -204,36 +223,58 @@ function filerun_uefi {
 }
 
 function sh_set_qemu_common_options {
-#	qemu_options+=(-drive file=/dev/nvme1n1,format=raw)
-#	qemu_options+=(-drive file=/dev/sdj,format=raw)
+#   qemu_options+=(-drive id=disk,file=/archlive/qemu/hda.img,format=raw,if=none -device ahci,id=ahci -device ide-hd,drive=disk,bus=ahci.0)
+#   qemu_options+=(-device virtio-scsi-pci,id=scsi1 -drive file=/archlive/qemu/hda.img,if=none,format=raw,discard=unmap,aio=native,cache=none,id=someid -device scsi-hd,drive=someid,bus=scsi0.0)
+#	qemu_options+=(-drive file=/archlive/qemu/hdb.img,format=raw,media=disk)
+#	qemu_options+=(-drive file=/archlive/qemu/hdc.img,format=raw,media=disk)
+#	qemu_options+=(-drive file=/archlive/qemu/hdd.img,format=raw,media=disk)
 	qemu_options+=(-no-fd-bootchk)
 	qemu_options+=(-machine accel=kvm)
 	qemu_options+=(-cpu host)
 	qemu_options+=(-smp "$(nproc)")
-    #	qemu_options+=(-m ${xmem})
-    #   qemu_options+=(-name "$HOSTNAME")
+	#	qemu_options+=(-m ${xmem})
+	#   qemu_options+=(-name "$HOSTNAME")
 	qemu_options+=(-name 'chili-runimage')
-    #   qemu_options+=(-drive file=${1},if=none,id=disk1)
-    #   qemu_options+=(-device ide-hd,drive=disk1,bootindex=1)
-    #   qemu_options+=(-name archiso,process=archiso_0)
-    #   qemu_options+=(-device virtio-scsi-pci,id=scsi0)
-    #   qemu_options+=(-netdev user,id=net0)
-    #   qemu_options+=(-device e1000,netdev=net0)
-	#	qemu_options+=(-vga std)				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
-	#	qemu_options+=(-device VGA)
-	#	qemu_options+=(-device ramfb)			# ✗ not VGA compatible ✓ vgabios support ✓ UEFI support (QemuRamfbDxe)
-	#	qemu_options+=(-device cirrus-vga)		# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (cirrus.ko)
-	#	qemu_options+=(-device qxl)
-    #	qemu_options+=(-device qxl-vga)
-	qemu_options+=(-vga virtio) # ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (virtio-gpu.ko)
+	#   qemu_options+=(-drive file=${1},if=none,id=disk1)
+	#   qemu_options+=(-device ide-hd,drive=disk1,bootindex=1)
+	#   qemu_options+=(-name archiso,process=archiso_0)
+	#   qemu_options+=(-device virtio-scsi-pci,id=scsi0)
+	#   qemu_options+=(-netdev user,id=net0)
+	#   qemu_options+=(-device e1000,netdev=net0)
+    #gpu
+	#  	qemu_options+=(-vga virtio)             # ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (virtio-gpu.ko)
+	#	qemu_options+=(-device virtio-vga)      # ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (virtio-gpu.ko)
+    #   qemu_options+=(-device virtio-gpu-pci)  # ✗ not VGA compatible ✗ no vgabios support ✓ UEFI support (VirtioGpuDxe) ✓ linux driver (virtio-gpu.ko)
+    #   qemu_options+=(-device virtio-gpu-pci virgl=on)  # ✗ not VGA compatible ✗ no vgabios support ✓ UEFI support (VirtioGpuDxe) ✓ linux driver (virtio-gpu.ko)
+	#   qemu_options+=(-vga qxl) 				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (qxl.ko) ✓ windows driver
+	#	qemu_options+=(-device qxl-vga)			# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (qxl.ko) ✓ windows driver
 	#	qemu_options+=(-device bochs-display)	# ✗ not VGA compatible	✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
-    #	qemu_options+=(-vga std)				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
-	#	qemu_options+=(-device qxl-vga)
-	#	qemu_options+=(-device ati-vga)
-	#	qemu_options+=(-vga qxl) 				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (qxl.ko) ✓ windows driver
-	qemu_options+=(-display gtk)
+	#	qemu_options+=(-vga std)				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
+	#	qemu_options+=(-device VGA)				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
+		qemu_options+=(-device VGA,vgamem_mb=1024)    # ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
+	#	qemu_options+=(-device ramfb)			# ✗ não compatível com VGA ✓ vgabios suporte ✓ Suporte UEFI (QemuRamfbDxe)
+	#	qemu_options+=(-vga cirrus)		        # ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (cirrus.ko)
+	#	qemu_options+=(-device cirrus-vga)		# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (cirrus.ko)
+	#	qemu_options+=(-device ati-vga)         # ✓ VGA compatível ✓ vgabios suporte ✗ sem suporte UEFI
+    #   qemu_options+=(-vga vmware)             # ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (virtio-gpu.ko)
+	#display
+	#   qemu_options+=(-display sdl)
+	#   qemu_options+=(-display sdl,gl=on)
+	#   qemu_options+=(-display curses)
+	#   qemu_options+=(-display none)
+	#   qemu_options+=(-display gtk)
+    qemu_options+=(-display gtk,gl=on)
+	#   qemu_options+=(-display vnc=127.0.0.1:0)
 	qemu_options+=(-device intel-hda)
-	qemu_options+=(-audiodev pa,id=snd0,server=localhost)
+	#	qemu_options+=(-audiodev pa,id=snd0,server=localhost)
+    #   qemu_options+=(-audiodev pa,id=snd0,server=unix:/tmp/pulse-socket)
+    qemu_options+=(-audiodev pa,id=snd0)
+	#	qemu_options+=(-audiodev pipewire,id=snd0)
+
+	#    qemu_options+=(-audiodev pa,id=snd0,server=unix:${XDG_RUNTIME_DIR}/pulse/native,out.stream-name=foobar,in.stream-name=foobar)
+	#   qemu_options+=(-device hda-duplex,audiodev=snd0,mixer=off)
+	#  qemu_options+=(-rtc base=localtime,clock=host)
+
 	qemu_options+=(-device ich9-intel-hda)
 	qemu_options+=(-device hda-output,audiodev=snd0)
 	qemu_options+=(-global ICH9-LPC.disable_s3=1)
@@ -276,18 +317,26 @@ sh_setenvironment
 sh_checkDependencies
 sh_set_qemu_common_options
 
-OPTIONS=m:ubVnh
-LONGOPTIONS=memory:,uefi,bridge,version,nocolor,help
+OPTIONS=m:ubVnhd
+LONGOPTIONS=memory:,uefi,bridge,version,nocolor,help,drive:
 #if ! opts=($(getopt --options="$OPTIONS" --longoptions="$LONGOPTIONS" --name "$0" -- "$@")); then
 #	sh_usage
 #fi
 #eval set -- "${opts[*]}"
-
 opts=($(getopt --options="$OPTIONS" --longoptions="$LONGOPTIONS" --name "$0" -- "$@"))
 eval set -- "${opts[*]}"
 
 while test ${#opts[*]} -gt 0; do
 	case $1 in
+	-d | --drive)
+		if [[ -n $2 ]]; then
+			drive=1
+			drive_path=$2
+			shift
+		else
+			die "$(gettext "Argumento inválido para --drive. Use formato device, como /dev/sdX (por exemplo).")" >&2
+		fi
+		;;
 	-u | --uefi)
 		uefi=1
 		;;
@@ -321,23 +370,26 @@ while test ${#opts[*]} -gt 0; do
 	shift
 done
 
-if [[ $# > 0 ]] ; then
-#	sh_checkRoot
+if [[ $# > 0 ]]; then
+	#	sh_checkRoot
 	qemu_options+=(-m ${xmem})
 	if ((bridge)); then
 		random_mac_net0=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
 		random_mac_net1=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
 		#	echo $random_mac_net0
 		#	echo $random_mac_net1
-        qemu_options+=(-netdev bridge,id=net0)
+		qemu_options+=(-netdev bridge,id=net0,smb=$HOME)
 		qemu_options+=(-device e1000,netdev=net0)
-#		qemu_options+=(-netdev bridge,id=net0,br=$iface_bridge)
-#		qemu_options+=(-device e1000,netdev=net0,mac=$random_mac_net0)
-#		qemu_options+=(-netdev bridge,id=net1,br=$iface_bridge)
-#		qemu_options+=(-device e1000,netdev=net1,mac=$random_mac_net1)
+		#		qemu_options+=(-netdev bridge,id=net0,br=$iface_bridge)
+		#		qemu_options+=(-device e1000,netdev=net0,mac=$random_mac_net0)
+		#		qemu_options+=(-netdev bridge,id=net1,br=$iface_bridge)
+		#		qemu_options+=(-device e1000,netdev=net1,mac=$random_mac_net1)
 	else
-		qemu_options+=(-netdev user,id=net0)
+		qemu_options+=(-netdev user,id=net0,smb=$HOME)
 		qemu_options+=(-device e1000,netdev=net0)
+	fi
+	if ((drive)); then
+		qemu_options+=(-drive file=$drive_path,format=raw,media=disk)
 	fi
 	if ((uefi)); then
 		filerun_uefi "$@"
