@@ -4,7 +4,7 @@
 #[chili]
 #Server = file://localhost/github/ChiliOS/packages/core
 
-cpath=/github/ChiliOS/packages/core
+cpathRepo=/github/ChiliOS/packages/core
 
 sh_setvarcolors() {
 	# does the terminal support true-color?
@@ -53,4 +53,5 @@ sh_checkroot() {
 
 sh_setvarcolors
 sh_checkroot
-repo-add -n $cpath/chili.db.tar.gz /$cpath/*.tar*
+#repo-add --new --verify --key E838465EC3F8F292 --sign $cpathRepo/chili.db.tar.gz $cpathRepo/*.pkg $cpathRepo/*.pkg.tar.zst
+repo-add --new --remove --verify --sign $cpathRepo/chili.db.tar.gz $cpathRepo/*.pkg.tar
