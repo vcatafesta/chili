@@ -1,31 +1,11 @@
 #!/usr/bin/env bash
 #shellcheck disable=SC2034,SC2155,SC2154,SC2181
-#https://wiki.gentoo.org/wiki/QEMU/Options
-
-#BOOT_USB="/dev/sdb"
-#sudo cp ~/.config/pulse/cookie /root/.config/pulse/cookie
-#sudo qemu-system-x86_64 \
-#-machine accel=kvm:tcg \
-#-m 4096 \
-#-bios /usr/share/ovmf/OVMF.fd \
-#-audiodev pa,id=pa,server=unix:${XDG_RUNTIME_DIR}/pulse/native,out.stream-name=foobar,in.stream-name=foobar \
-#-device intel-hda \
-#-device hda-duplex,audiodev=pa,mixer=off -rtc base=localtime,clock=host \
-#-smp 16 \
-#-vga virtio \
-#-display gtk,gl=on \
-#-drive file=$BOOT_USB,format=raw,index=0,media=disk
-
-#
-#	Requeriments:
-# - qemu
-# - edk2-ovmf (when UEFI booting)
 #
 #  chili-runimage
 #  Created: 2023/04/25
-#  Altered: 2024/02/13
+#  Altered: ter 13 fev 2024 19:15:00 -04
 #
-#  Copyright (c) 2023-2023, Vilmar Catafesta <vcatafesta@gmail.com>
+#  Copyright (c) 2023-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -47,11 +27,30 @@
 #  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 #  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Requeriments:
+# - qemu
+# - edk2-ovmf (when UEFI booting)
+# https://wiki.gentoo.org/wiki/QEMU/Options
+
+#BOOT_USB="/dev/sdb"
+#sudo cp ~/.config/pulse/cookie /root/.config/pulse/cookie
+#sudo qemu-system-x86_64 \
+#-machine accel=kvm:tcg \
+#-m 4096 \
+#-bios /usr/share/ovmf/OVMF.fd \
+#-audiodev pa,id=pa,server=unix:${XDG_RUNTIME_DIR}/pulse/native,out.stream-name=foobar,in.stream-name=foobar \
+#-device intel-hda \
+#-device hda-duplex,audiodev=pa,mixer=off -rtc base=localtime,clock=host \
+#-smp 16 \
+#-vga virtio \
+#-display gtk,gl=on \
+#-drive file=$BOOT_USB,format=raw,index=0,media=disk
 
 export TEXTDOMAINDIR=/usr/share/locale
 export TEXTDOMAIN=chili-runimage
 #export XDG_RUNTIME_DIR ; XDG_RUNTIME_DIR=/run/user/$(id -g)
-sudo cp ~/.config/pulse/cookie /root/.config/pulse/cookie
+sudo cp ~/.config/pulse/cookie /root/.config/pulse/cookie > /dev/null 2>&-
 
 #debug
 export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
@@ -60,7 +59,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 
 #system
 readonly APP="${0##*/}"
-readonly _VERSION_='1.4.00-20240213'
+readonly _VERSION_='1.5.00-20240213'
 readonly DEPENDENCIES=('tput' 'printf' 'qemu-system-x86_64' 'gettext')
 readonly PACKAGEDEP=([tput]='ncurses' [printf]='coreutils' [qemu - system - x86_64]='qemu' [gettext]='gettext')
 readonly iface_bridge='br0'
@@ -188,16 +187,29 @@ function filerun_bios {
 }
 
 function filerun_uefi {
+	local ovmf_code
+	local ovmf_vars
+   	local working_dir
+    local cpath_edk2=('/usr/share/edk2/x64' '/usr/share/edk2-ovmf/x64')
+    local cpath
+
 	if test $# -ge 1; then
 		if test -r $1; then
-			local ovmf_code='/usr/share/edk2-ovmf/x64/OVMF_CODE.fd'
-			local working_dir="$(mktemp -dt chili-runimage-$USER.XXX)"
+		    for cpath in "${cpath_edk2[@]}"; do
+	    		if [[ -f "$cpath/OVMF_CODE.fd" ]]; then
+        			ovmf_code="$cpath/OVMF_CODE.fd"
+	        		ovmf_vars="$cpath/OVMF_VARS.fd"
+	    		    break
+    		    fi
+		    done
 
-			if [[ ! -f '/usr/share/edk2-ovmf/x64/OVMF_VARS.fd' ]]; then
+			if [[ -z $ovmf_code ]]; then
 				printf 'ERROR: %s\n' "OVMF_VARS.fd $(gettext "não encontrado. Instale o pacote") edk2-ovmf."
 				exit 1
 			fi
-			cp -av -- '/usr/share/edk2-ovmf/x64/OVMF_VARS.fd' "${working_dir}/"
+
+            working_dir="$(mktemp -dt chili-runimage-$USER.XXX)"
+			cp -av -- $ovmf_vars "${working_dir}/" > /dev/null 2>&-
 
 			if [[ ${1: -4} == ".iso" ]]; then
 				# ISO disk
