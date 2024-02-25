@@ -111,6 +111,8 @@ sh_init_bind() {
       sh_mount_bind shm "${CHROOTDIR}/dev/shm" -t tmpfs -o mode=1777,nosuid,nodev &&
       sh_mount_bind run "${CHROOTDIR}/run" -t tmpfs -o nosuid,nodev,mode=0755 &&
       sh_mount_bind tmp "${CHROOTDIR}/tmp" -t tmpfs -o mode=1777,strictatime,nodev,nosuid
+      touch "$CHROOTDIR/etc/resolv.conf"
+      mount --bind /etc/resolv.conf "$CHROOTDIR/etc/resolv.conf"
       msg "Starting CHROOT at $CHROOTDIR"
       chroot ${CHROOTDIR}
 		sh_stop_bind
