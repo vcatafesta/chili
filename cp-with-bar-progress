@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+
+# 1. Antes de mais nada certifique-se das ferramentas de construção de software no seu computador, exemplo:
+# sudo apt install gcc g++ make build-essential
+
+mkdir -p $HOME/github
+cd $HOME/github
+
+# 2. Baixe o GNU CoreUtils
+wget http://ftp.gnu.org/gnu/coreutils/coreutils-8.32.tar.xz
+
+# 3. Descompacte
+tar xvJf coreutils-8.32.tar.xz
+
+# 4. Entre no diretório e depois baixe o patch
+cd coreutils-8.32/
+wget https://raw.githubusercontent.com/jarun/advcpmv/master/advcpmv-0.8-8.32.patch
+
+# 5. Aplique o patch
+patch -p1 -i advcpmv-0.8-8.32.patch
+
+# 6. Compile
+./configure
+make
+
+# O binário será criado no diretório src , ou seja coreutils-8.32/src/cp,
+# você pode movê-lo para substituir o cp original com o comando: sudo cp src/cp $(which cp)(cp copia cp 😃 ).
+# Ou criar um alias(acho mais recomendado):
+
+mkdir -p ~/.local/bin
+cp src/cp ~/.local/bin/cp
+echo 'alias cp="${HOME}/.local/bin/cp"' >> ~/.bashrc
+alias cp="${HOME}/.local/bin/cp --progress-bar"
+#exec $SHELL
+
+# E testar, exemplo:
+# Use o parâmetro --progress-bar
+# cp --progress-bar Documentos/Fedora-Workstation-Live-x86_64-33-1.2.iso .
+
+
+
