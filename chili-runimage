@@ -64,7 +64,7 @@ readonly DEPENDENCIES=('tput' 'printf' 'qemu-system-x86_64' 'gettext')
 readonly PACKAGEDEP=([tput]='ncurses' [printf]='coreutils' [qemu-system-x86_64]='qemu' [gettext]='gettext')
 readonly iface_bridge='br0'
 declare xmem='4G'
-declare audioserver='pulseaudio'
+declare audioserver='alsa'
 declare videodevice='virtio-vga'
 declare -i uefi=0
 declare -i bridge=0
