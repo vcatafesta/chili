@@ -4,8 +4,8 @@
 # 1. Antes de mais nada certifique-se das ferramentas de construção de software no seu computador, exemplo:
 # sudo apt install gcc g++ make build-essential
 
-mkdir -p $HOME/github
-cd $HOME/github
+mkdir -p $HOME/src
+cd $HOME/src
 
 # 2. Baixe o GNU CoreUtils
 wget http://ftp.gnu.org/gnu/coreutils/coreutils-8.32.tar.xz
@@ -30,7 +30,8 @@ make
 
 mkdir -p ~/.local/bin
 cp src/cp ~/.local/bin/cp
-echo 'alias cp="${HOME}/.local/bin/cp"' >> ~/.bashrc
+#echo 'alias cp="${HOME}/.local/bin/cp"' >> ~/.bashrc
+echo 'alias cp="${HOME}/.local/bin/cp --progress-bar"' >> ~/.bashrc
 alias cp="${HOME}/.local/bin/cp --progress-bar"
 #exec $SHELL
 
