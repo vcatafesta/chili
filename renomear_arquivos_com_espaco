@@ -3,15 +3,25 @@
 
 # Percorre todos os arquivos no diretório atual
 for file in *; do
-    # Verifica se o nome do arquivo contém espaços
-    if [[ "$file" == *" "* ]]; then
+    # Verifica se o nome do arquivo contém espaços e parênteses
+    if [[ "$file" == *" "* && "$file" == *"("* && "$file" == *")"* ]]; then
         # Remove os espaços substituindo por underscores
         new_name=$(echo "$file" | tr ' ' '_')
-        
+
+        # Remove os parênteses
+        new_name=${new_name//'('/}
+        new_name=${new_name//')'/}
+
         # Renomeia o arquivo
-        mv "$file" "$new_name"
-        echo "Arquivo renomeado: $file -> $new_name"
+        mv -v "$file" "$new_name"
+        #echo "Arquivo renomeado: $file -> $new_name"
+    elif [[ "$file" == *"("* && "$file" == *")"* ]]; then
+        # Remove os parênteses
+        new_name=${file//'('/}
+        new_name=${new_name//')'/}
+
+        # Renomeia o arquivo
+        mv -v "$file" "$new_name"
+        #echo "Arquivo renomeado: $file -> $new_name"
     fi
 done
-
-
