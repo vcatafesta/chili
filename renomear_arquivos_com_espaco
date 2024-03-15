@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+
+# Percorre todos os arquivos no diretório atual
+for file in *; do
+    # Verifica se o nome do arquivo contém espaços
+    if [[ "$file" == *" "* ]]; then
+        # Remove os espaços substituindo por underscores
+        new_name=$(echo "$file" | tr ' ' '_')
+        
+        # Renomeia o arquivo
+        mv "$file" "$new_name"
+        echo "Arquivo renomeado: $file -> $new_name"
+    fi
+done
+
+
