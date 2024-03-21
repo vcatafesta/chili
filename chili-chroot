@@ -32,7 +32,7 @@
 #  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #########################################################################
 shopt -s extglob
-#findmount
+#findmnt
 
 sh_setenvironment() {
 	declare -g ON_MOUNTS=()

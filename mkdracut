@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+
+for kv in /lib/modules/*; do
+  kver=$(basename "${kv}")
+
+  dracut \
+    --compress zstd \
+    --no-hostonly \
+    --add "base dmsquash-live livenet kernel-modules" \
+    --force "/boot/initrd-$kver.img" \
+    "$kver"
+done

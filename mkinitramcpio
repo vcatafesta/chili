@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+
+# Defina o diretório temporário para criar o initramfs
+TEMP_DIR="/tmp/initramfs"
+INITRAMFS_FILE="/tmp/initramfs.cpio"
+
+# Crie o diretório temporário e sua estrutura de diretórios
+mkdir -p "$TEMP_DIR"/{bin,lib/modules}
+
+# Copie os módulos do kernel necessários para o initramfs
+# Lembre-se de ajustar o caminho do módulo overlayfs conforme necessário
+cp /lib/modules/5.8.12-chili/kernel/fs/overlayfs/overlay.ko "$TEMP_DIR"/lib/modules/5.8.12-chili/kernel/fs/overlayfs/
+
+# Crie o arquivo initramfs usando cpio
+(cd "$TEMP_DIR" && find . | cpio -H newc -o > "$INITRAMFS_FILE")
+
+# Limpeza: remova o diretório temporário
+rm -rf "$TEMP_DIR"
+
+echo "Initramfs criado com sucesso em $INITRAMFS_FILE"
+
+
