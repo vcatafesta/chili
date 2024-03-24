@@ -630,9 +630,9 @@ function sh_touchconf() {
 		URL='https://www.linuxfromscratch.org/lfs/view/stable/'
 		LICENSE='MIT'
 		LFS_VERSION='12.1'
-		LFS_INIT='SYSTEMD'
+		LFS_INIT='SYSV'
 		ARCH='x86_64'
-		DISTRO='chili'
+		DISTRO='mazonos'
 		LOCALDIR='/github/ChiliOS'
 		PKGCORE="$LOCALDIR/packages/core"
 		CACHEDIR='/var/cache/fetch'
@@ -1424,7 +1424,7 @@ process_folder_update() {
 			((++count))
 		done
 	fi
-	log_msg "Updating... ${red}$(strzero "$count" 5)${blue} packages in ${yellow}$Folders"
+	log_msg "${black}Updating... ${red}$(strzero "$count" 5)${blue} packages ${white}in ${yellow}$Folders${reset}"
 }
 # Exporta a função para uso com o parallel
 export -f process_folder_update
@@ -1474,7 +1474,7 @@ function sh_update() {
 	mapfile -t FoldersInRepo <<<"$(lynx -listonly -nonumbers -dump -justify "$SITE/packages/" | grep -Po '.*packages\/\K.*?(?=\/)')"
 	log_msg "${pink}Updating folders from $SITE"
 
-	log_msg "${pink}Synchronizing package databases from $SITE/packages/"
+	log_msg "${pink}Synchronizing package databases from $SITE/packages/${reset}"
 	#	spinner & SPINNERPID=$!
 
 	: <<'comment'
@@ -1510,7 +1510,7 @@ function sh_update() {
 				((++count))
 			done
 		fi
-		log_msg "Updating... ${red}$(strzero "$count" 5)${blue} packages in ${yellow}$Folders"
+		log_msg "${yellow}Updating... ${red}$(strzero "$count" 5)${blue} packages in ${yellow}$Folders"
 	done
 comment
 
@@ -1624,7 +1624,7 @@ function sh_updateMazon() {
 			done
 		fi
 		cstrvalue=$(strzero "$count" 5)
-		log_success_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
+		log_success_msg2 "  {yellow}Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
 	done
 comment
 
@@ -1671,7 +1671,7 @@ comment
 			done
 		fi
 		cstrvalue=$(strzero "$count" 5)
-		log_success_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
+		log_success_msg2 "  ${yellow}Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
 	}
 
 	# Obtém a lista de pastas a serem processadas (substitua por sua própria lista)
