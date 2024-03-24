@@ -616,6 +616,7 @@ function sh_touchconf() {
 		#PKG_SITE='https://chililinux.org'                                          # for use set GITSITE=0
 		#PKG_SITE='http://localhost'                                                # for use set GITSITE=0
 		#PKG_SITE='https://mazonos.com'                                             # for use set GITSITE=0
+		#PKG_SITE='https://chililinux.com/mazonos'                                  # for use set GITSITE=0
 
 		#not needed change
 		PKG_RAW='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master'
