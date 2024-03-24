@@ -160,37 +160,38 @@ sh_setEnvironment() {
 
 	if [[ "$PKG_EXT" = "chi.zst" ]]; then
 		export CHILI_OS=$true
-		#PKG_RE='^([a-z-]+)(-)([0-9\\.]+)(-)([0-9])(-)(.*)(.chi.zst)$'
-		#PKG_RE='([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)-(([0-9]+(\.[0-9]+)*)(-([0-9]+))?)-([^.]+).*'
-		#PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 				#SOEN
-		#		PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst'    			#VC
-		export PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)(\.chi\.zst)$' #VC
-		#		PKG_RE_LYNX='(?!.*\/)(.*)-(([^-]+)-([0-9]+))-([^.]+)(\.chi\.zst)$'
-		#		PKG_RE_FULL1='(?:")(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst(?="><a)'
-		#		PKG_RE_FULL2='(?:e">)(.+)-(([^-]+)-([0-9]+))-([^.]+)(\.chi)(\.zst)(?=<\/a)'
-		#		GREP_RE='.chi\.zst\"'
-		export GREP_RE='href="/[^"]*\.chi\.zst"'
-
-		#SED_RE='^.+>(.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).*[ ]([0-9]+k?)(.*)'
-		#SED_RE='^.+="(.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)".+<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).+[ ]([0-9]+k?)(.*)'
+#		export PKG_RE='^([a-z-]+)(-)([0-9\\.]+)(-)([0-9])(-)(.*)(.chi.zst)$'
+#		export PKG_RE='([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)-(([0-9]+(\.[0-9]+)*)(-([0-9]+))?)-([^.]+).*'
+#		export PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 				#SOEN
+#		export PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst'    			#VC
+		export PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)(\.chi\.zst)$' 			#VC
+#		export PKG_RE_LYNX='(?!.*\/)(.*)-(([^-]+)-([0-9]+))-([^.]+)(\.chi\.zst)$'
+#		export PKG_RE_FULL1='(?:")(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst(?="><a)'
+#		export PKG_RE_FULL2='(?:e">)(.+)-(([^-]+)-([0-9]+))-([^.]+)(\.chi)(\.zst)(?=<\/a)'
+#		export GREP_RE='.chi\.zst\"'
+		export GREP_RE_LITESPEED='href="/[^"]*\.chi\.zst"' 						#litespeed
+		export GREP_RE_NGINX='href="[^"]*\.chi\.zst"'  							#nginx
+#		export SED_RE='^.+>(.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).*[ ]([0-9]+k?)(.*)'
+#		export SED_RE='^.+="(.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)".+<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).+[ ]([0-9]+k?)(.*)'
 		export SED_RE='^.*["|\/](.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)".+<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).+[ ]([0-9]+k?).*'
-		#		FETCH_RE='-[^a-z]+?[^-]+-[0-9].*-'
-		#		FETCH_RE='-[^-]+-[0-9]-'
-		#		FETCH_RE='-[^-]+[0-9]+-[^.]+.chi.*'
-		#		FETCH_RE='-[^-]+[0-9]+[^.]*\.chi[^.]*\.zst'
+#		export FETCH_RE='-[^a-z]+?[^-]+-[0-9].*-'
+#		export FETCH_RE='-[^-]+-[0-9]-'
+#		export FETCH_RE='-[^-]+[0-9]+-[^.]+.chi.*'
+#		export FETCH_RE='-[^-]+[0-9]+[^.]*\.chi[^.]*\.zst'
 		export FETCH_RE='-[^-]+[0-9]+[^.]*.chi[^.]*.zst'
 	else
 		export CHILI_OS=$false
-		#PKG_RE='(.+)-(([^-]+)-([0-9]+))\.mz' 						#SOEN
+#		export PKG_RE='(.+)-(([^-]+)-([0-9]+))\.mz' 							#SOEN
 		export PKG_RE='(.+)-(([^-]+)-([0-9]))\.mz' #VC
-		#		PKG_RE_LYNX='(?!.*\/)(.+)-(([^-]+)-([0-9]))\.mz$'		#VC
-		#export GREP_RE='.mz\"'
-		#export GREP_RE='.mz$'  #VC sáb 23 mar 2024 22:56:55 -04
-		export GREP_RE='href="/[^"]*\.mz"'
-		#		SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9]+[.]?[0-9]+.?).+'
-		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9]?[.]?[0-9]?.?).+'
-		#		SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9.])+([BKMGT]?)\b'
-		#		SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9.]+)+([BKMGT])?'
+		export PKG_RE_LYNX='(?!.*\/)(.+)-(([^-]+)-([0-9]))\.mz$'				#VC
+#		export GREP_RE='.mz\"'
+#		export GREP_RE='.mz$'
+		export GREP_RE_LITESPEED='href="/[^"]*\.mz"' 							#litespeed
+		export GREP_RE_NGINX='href="[^"]*\.mz"'  								#nginx
+#		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9]+[.]?[0-9]+.?).+'
+#		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9]?[.]?[0-9]?.?).+'
+#		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9.])+([BKMGT]?)\b'
+#		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9.]+)+([BKMGT])?'
 		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+(([0-9]+)([BKMGT]?)).+'
 		export FETCH_RE='-[^-]+-[0-9]+[.]'
 	fi
@@ -223,6 +224,12 @@ function sh_diahora() {
 	DIAHORA=$(date +"%d%m%Y-%T" | sed 's/://g')
 	printf "%s\n" "$DIAHORA"
 }
+
+function string_alltrim() {
+	local cstr=$1
+	echo "${cstr//[$'\t\r\n ']}"
+}
+export -f string_alltrim
 
 function fmtplus() {
 	printf "${bold}${yellow}%03d/%03d${reset}" "$ncounter" "$ncounter"
@@ -603,20 +610,20 @@ function sh_touchconf() {
 		# fetch.conf
 		######################################################################
 		# extension of packages: chili=chi.zst, mazonos=mz
-		#PKG_EXT='mz'       # https://mazonos.com
-		PKG_EXT='chi.zst'  # https://chililinux.com | https://chilios.com.br | https://github.com/vcatafesta/ChiliOS
+		PKG_EXT='mz'       # https://mazonos.com
+		#PKG_EXT='chi.zst'  # https://chililinux.com | https://chilios.com.br | https://github.com/vcatafesta/ChiliOS
 
 		# packages hosted on GITHUB repository: yes='1', not='0'
 		GITSITE='0'
 
 		# distro hosting website/packages
 		#PKG_SITE='https://github.com/vcatafesta/ChiliOS/tree/master'  # for use set GITSITE=1
-		PKG_SITE='https://chililinux.com'                                           # for use set GITSITE=0
+		#PKG_SITE='https://chililinux.com'                                           # for use set GITSITE=0
 		#PKG_SITE='https://chilios.com.br'                                          # for use set GITSITE=0
 		#PKG_SITE='https://chililinux.org'                                          # for use set GITSITE=0
 		#PKG_SITE='http://localhost'                                                # for use set GITSITE=0
 		#PKG_SITE='https://mazonos.com'                                             # for use set GITSITE=0
-		#PKG_SITE='https://chililinux.com/mazonos'                                  # for use set GITSITE=0
+		PKG_SITE='https://chililinux.com/mazonos'                                  # for use set GITSITE=0
 
 		#not needed change
 		PKG_RAW='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master'
@@ -1342,6 +1349,168 @@ function sh_checkdir() {
 	return $?
 }
 
+# Função para processar uma pasta
+process_folder_update() {
+	Folders="$1"
+	FOLDER_TEMP="$TMP_DIR_FOLDERS/$Folders"
+	if response=$(curl --compressed -k -s -w "%{http_code}\n" --url "$SITE/packages/$Folders/" --output "$FOLDER_TEMP") && [[ "$response" = "404" ]]; then
+		log_msg $ERR_ERROR "${red}error${reset}: $response Not Found ${orange}==> $SITE/packages/$Folders/"
+		exit 1
+	fi
+	mapfile -t SizePkgInFolders < <(sed -nE "s/$SED_RE/\9/p" "$FOLDER_TEMP")
+
+	if [[ "$Folders" != "meta" ]]; then
+#		if ((CHILI_OS)); then
+#			mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2-\5\6/p" "$FOLDER_TEMP")
+#		else
+#			mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2\6/p" "$FOLDER_TEMP")
+#		fi
+
+		case ${HTTP_SERVER} in
+		Apache | nginx)
+			mapfile -t PackagesInFolders < <(grep -oP $GREP_RE_NGINX $FOLDER_TEMP | sed 's/href="//; s/"$//');;		# dom mar 24 01:33:15 -04 2024
+		LiteSpeed | cloudflare)
+			mapfile -t PackagesInFolders < <(grep -oP $GREP_RE_LITESPEED $FOLDER_TEMP | sed 's/.*\///; s/"$//');;	# dom mar 24 01:33:15 -04 2024
+		GitHub.com)
+			mapfile -t PackagesInFolders < <(grep -oP $GREP_RE_NGINX $FOLDER_TEMP | sed 's/href="//; s/"$//');;		# dom mar 24 01:33:15 -04 2024
+		esac
+		count=0
+		for pkgInFolder in "${PackagesInFolders[@]}"; do
+			if [[ -n "$pkgInFolder" ]]; then
+				sh_splitpkg "$pkgInFolder"
+				pkg_size=$(human_to_bytes "${SizePkgInFolders[$count]}")
+				echo "${aPKGSPLIT[$PKG_BASE]}$SEP${aPKGSPLIT[$PKG_VERSION]}$SEP${aPKGSPLIT[$PKG_BUILD]}$SEP${aPKGSPLIT[$PKG_FULLNAME]}$SEP${Folders}/${pkgInFolder}$SEP${aPKGSPLIT[$PKG_BASE_VERSION]}$SEP${pkg_size}" >>"$CACHEDIR_SEARCH/$PACKAGES_SPLIT"
+				((++count))
+			fi
+		done
+	else
+		mapfile -t MetaPkgInFolders <<<"$(lynx -listonly -nonumbers -dump "$SITE/packages/$Folders/" | grep -Po '.*\/\K.*')"
+		count=0
+		for MetaInFolder in "${MetaPkgInFolders[@]}"; do
+			echo "$Folders/$MetaInFolder" >>"$FOLDERS_METAPACKAGES"
+			echo "$MetaInFolder" >>"$METAPACKAGES"
+			((++count))
+		done
+	fi
+	log_msg "${black}Updating... ${red}$(strzero "$count" 5)${blue} packages ${white}in ${yellow}$Folders${reset}"
+}
+# Exporta a função para uso com o parallel
+export -f process_folder_update
+
+# -Syy
+function sh_update() {
+	local response
+	local Folders
+	local FoldersInRepo
+	local PackagesInFolders
+	local MetaPkgInFolders
+	local MetaInFolder
+	local cstrvalue
+	local response
+	local count
+	local nfilesInReposit
+	local nfilesInstalled
+	local nfilesInCache
+	local oldverbose=$verbose
+	local dw=(	"$CACHEDIR_SEARCH/$PACKAGES_SPLIT"
+				"$CACHEDIR_SEARCH/$FOLDERS_METAPACKAGES"
+				"$CACHEDIR_SEARCH/$METAPACKAGES"
+			)
+
+	verbose=2
+	if ((LSELF)); then
+		sh_selfupdate "$@"
+		return $?
+	fi
+
+	#internet?
+	sh_checknet || return 1
+
+	if response=$(curl --compressed -s -w "%{http_code}\n" -o /dev/null -k --url "$SITE/packages/") && [[ "$response" = "404" ]]; then
+		log_msg $ERR_ERROR "${red}error${reset}: $response Not Found $orange==> $SITE/packages/"
+		exit 1
+	fi
+
+	export HTTP_SERVER="$(string_alltrim "$(curl --compressed -s -k --head -w '%{http_code}\n' --url "${SITE}" | grep '^[Ss]erver' | awk '{print $2}')" | cut -d/ -f1)"
+	log_msg "${pink}Checking http server: ${white}$HTTP_SERVER"
+	pushd "$CACHEDIR_SEARCH/" >/dev/null 2>&- || return 1
+	sh_backup
+
+	for i in ${dw[@]}; do
+		printf '' >|"$i"
+	done
+	log_msg "${pink}Cleaning up: ${white}$CACHEDIR_SEARCH/"
+
+	mapfile -t FoldersInRepo <<<"$(lynx -listonly -nonumbers -dump -justify "$SITE/packages/" | grep -Po '.*packages\/\K.*?(?=\/)')"
+	log_msg "${pink}Updating folders from: ${white}$SITE"
+
+	log_msg "${pink}Synchronizing package databases from: ${white}$SITE/packages/${reset}"
+	#	spinner & SPINNERPID=$!
+
+#	for Folders in "${FoldersInRepo[@]}"; do
+#		FOLDER_TEMP="$TMP_DIR_FOLDERS/$Folders"
+#		if response=$(curl --compressed -k -s -w "%{http_code}\n" --url "$SITE/packages/$Folders/" --output "$FOLDER_TEMP") && [[ "$response" = "404" ]]; then
+#			log_msg $ERR_ERROR "${red}error${reset}: $response Not Found ${orange}==> $SITE/packages/$Folders/"
+#			exit 1
+#		fi
+#		mapfile -t SizePkgInFolders < <(sed -nE "s/$SED_RE/\9/p" "$FOLDER_TEMP")
+#
+#		if [[ "$Folders" != "meta" ]]; then
+#			if ((CHILI_OS)); then
+#				mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2-\5\6/p" "$FOLDER_TEMP")
+#			else
+#				mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2\6/p" "$FOLDER_TEMP")
+#			fi
+#			count=0
+#			for pkgInFolder in "${PackagesInFolders[@]}"; do
+#				if [[ -n "$pkgInFolder" ]]; then
+#					sh_splitpkg "$pkgInFolder"
+#					pkg_size=$(human_to_bytes "${SizePkgInFolders[$count]}")
+#					echo "${aPKGSPLIT[$PKG_BASE]}$SEP${aPKGSPLIT[$PKG_VERSION]}$SEP${aPKGSPLIT[$PKG_BUILD]}$SEP${aPKGSPLIT[$PKG_FULLNAME]}$SEP${Folders}/${pkgInFolder}$SEP${aPKGSPLIT[$PKG_BASE_VERSION]}$SEP${pkg_size}" >>"$CACHEDIR_SEARCH/$PACKAGES_SPLIT"
+#					((++count))
+#				fi
+#			done
+#		else
+#			mapfile -t MetaPkgInFolders <<<"$(lynx -listonly -nonumbers -dump "$SITE/packages/$Folders/" | grep -Po '.*\/\K.*')"
+#			count=0
+#			for MetaInFolder in "${MetaPkgInFolders[@]}"; do
+#				echo "$Folders/$MetaInFolder" >>"$FOLDERS_METAPACKAGES"
+#				echo "$MetaInFolder" >>"$METAPACKAGES"
+#				((++count))
+#			done
+#		fi
+#		log_msg "${yellow}Updating... ${red}$(strzero "$count" 5)${blue} packages in ${yellow}$Folders"
+#	done
+
+	# Lista de pastas a serem processadas (substitua pela sua própria lista)
+	#dw=("folder1" "folder2" "folder3")
+
+	# Processa as pastas em paralelo
+	parallel --gnu --jobs $MAX_PARALLEL process_folder_update ::: "${FoldersInRepo[@]}" &
+#	for Folders in "${FoldersInRepo[@]}"; do
+#		parallel --gnu --jobs $MAX_PARALLEL process_folder_update ::: "$Folders" &
+#	done
+	wait
+	#{ kill $SPINNERPID; wait $SPINNERPID 2>/dev/null; echo ;}
+
+#	LLIST=$true ; sh_recreatefilepackagesinstalled
+	verbose=$oldverbose
+	sh_pkgincache
+	sh_cleaning
+	unset FOLDER_TEMP
+
+	nfilesInReposit=$(sh_linecount "$CACHEDIR_SEARCH/$PACKAGES_SPLIT")
+	nfilesInstalled=$(sh_linecount "$CACHEDIR_SEARCH/$PACKAGES_INSTALLED_SPLIT")
+	nfilesInCache=$(sh_linecount "$CACHEDIR_SEARCH/$PACKAGES_IN_CACHE")
+	log_msg "${pink}All list packages updated!"
+	log_msg "${red}$(strzero "$nfilesInReposit" 5) ${bold}${green}packages in the repository"
+	log_msg "${red}$(strzero "$nfilesInstalled" 5) ${bold}${green}installed packages"
+	log_msg "${red}$(strzero "$nfilesInCache" 5) ${bold}${green}packages in cache $CACHEDIR_ARCHIVES"
+	echo
+	msg "${reset}Use: # ${0##*/} --help for helping${reset}"
+	popd >/dev/null 2>&- || return 1
+}
+
 # -Sy
 function sh_updaterepo() {
 	local response
@@ -1386,318 +1555,6 @@ function sh_updaterepo() {
 	log_msg "${green}($(strzero "$nfilesInstalled" 5)) installed packages${reset}"
 	echo
 	msg "${reset}Use: # ${0##*/} --help for helping${reset}"
-	popd >/dev/null 2>&- || return 1
-}
-
-# Função para processar uma pasta
-process_folder_update() {
-	Folders="$1"
-	FOLDER_TEMP="$TMP_DIR_FOLDERS/$Folders"
-	if response=$(curl --compressed -k -s -w "%{http_code}\n" --url "$SITE/packages/$Folders/" --output "$FOLDER_TEMP") && [[ "$response" = "404" ]]; then
-		log_msg $ERR_ERROR "${red}error${reset}: $response Not Found ${orange}==> $SITE/packages/$Folders/"
-		exit 1
-	fi
-	mapfile -t SizePkgInFolders < <(sed -nE "s/$SED_RE/\9/p" "$FOLDER_TEMP")
-
-	if [[ "$Folders" != "meta" ]]; then
-#		if ((CHILI_OS)); then
-#			mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2-\5\6/p" "$FOLDER_TEMP")
-#		else
-#			mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2\6/p" "$FOLDER_TEMP")
-#		fi
-		mapfile -t PackagesInFolders < <(grep -oP $GREP_RE $FOLDER_TEMP | sed 's/.*\///; s/"$//')	# dom mar 24 01:33:15 -04 2024
-		count=0
-		for pkgInFolder in "${PackagesInFolders[@]}"; do
-			if [[ -n "$pkgInFolder" ]]; then
-				sh_splitpkg "$pkgInFolder"
-				pkg_size=$(human_to_bytes "${SizePkgInFolders[$count]}")
-				echo "${aPKGSPLIT[$PKG_BASE]}$SEP${aPKGSPLIT[$PKG_VERSION]}$SEP${aPKGSPLIT[$PKG_BUILD]}$SEP${aPKGSPLIT[$PKG_FULLNAME]}$SEP${Folders}/${pkgInFolder}$SEP${aPKGSPLIT[$PKG_BASE_VERSION]}$SEP${pkg_size}" >>"$CACHEDIR_SEARCH/$PACKAGES_SPLIT"
-				((++count))
-			fi
-		done
-	else
-		mapfile -t MetaPkgInFolders <<<"$(lynx -listonly -nonumbers -dump "$SITE/packages/$Folders/" | grep -Po '.*\/\K.*')"
-		count=0
-		for MetaInFolder in "${MetaPkgInFolders[@]}"; do
-			echo "$Folders/$MetaInFolder" >>"$FOLDERS_METAPACKAGES"
-			echo "$MetaInFolder" >>"$METAPACKAGES"
-			((++count))
-		done
-	fi
-	log_msg "${black}Updating... ${red}$(strzero "$count" 5)${blue} packages ${white}in ${yellow}$Folders${reset}"
-}
-# Exporta a função para uso com o parallel
-export -f process_folder_update
-
-# -Syy
-function sh_update() {
-	local response
-	local Folders
-	local FoldersInRepo
-	local PackagesInFolders
-	local MetaPkgInFolders
-	local MetaInFolder
-	local cstrvalue
-	local response
-	local count
-	local nfilesInReposit
-	local nfilesInstalled
-	local nfilesInCache
-	local oldverbose=$verbose
-	local dw=("$CACHEDIR_SEARCH/$PACKAGES_SPLIT"
-		"$CACHEDIR_SEARCH/$FOLDERS_METAPACKAGES"
-		"$CACHEDIR_SEARCH/$METAPACKAGES"
-	)
-
-	verbose=2
-	if ((LSELF)); then
-		sh_selfupdate "$@"
-		return $?
-	fi
-
-	#internet?
-	sh_checknet || return 1
-
-	if response=$(curl --compressed -s -w "%{http_code}\n" -o /dev/null -k --url "$SITE/packages/") && [[ "$response" = "404" ]]; then
-		log_msg $ERR_ERROR "${red}error${reset}: $response Not Found $orange==> $SITE/packages/"
-		exit 1
-	fi
-
-	pushd "$CACHEDIR_SEARCH/" >/dev/null 2>&- || return 1
-	sh_backup
-
-	for i in ${dw[@]}; do
-		printf '' >|"$i"
-	done
-	log_msg "${pink}Cleaning up $CACHEDIR_SEARCH/"
-
-	mapfile -t FoldersInRepo <<<"$(lynx -listonly -nonumbers -dump -justify "$SITE/packages/" | grep -Po '.*packages\/\K.*?(?=\/)')"
-	log_msg "${pink}Updating folders from $SITE"
-
-	log_msg "${pink}Synchronizing package databases from $SITE/packages/${reset}"
-	#	spinner & SPINNERPID=$!
-
-	: <<'comment'
-	for Folders in "${FoldersInRepo[@]}"; do
-		FOLDER_TEMP="$TMP_DIR_FOLDERS/$Folders"
-		if response=$(curl --compressed -k -s -w "%{http_code}\n" --url "$SITE/packages/$Folders/" --output "$FOLDER_TEMP") && [[ "$response" = "404" ]]; then
-			log_msg $ERR_ERROR "${red}error${reset}: $response Not Found ${orange}==> $SITE/packages/$Folders/"
-			exit 1
-		fi
-		mapfile -t SizePkgInFolders < <(sed -nE "s/$SED_RE/\9/p" "$FOLDER_TEMP")
-
-		if [[ "$Folders" != "meta" ]]; then
-			if ((CHILI_OS)); then
-				mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2-\5\6/p" "$FOLDER_TEMP")
-			else
-				mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2\6/p" "$FOLDER_TEMP")
-			fi
-			count=0
-			for pkgInFolder in "${PackagesInFolders[@]}"; do
-				if [[ -n "$pkgInFolder" ]]; then
-					sh_splitpkg "$pkgInFolder"
-					pkg_size=$(human_to_bytes "${SizePkgInFolders[$count]}")
-					echo "${aPKGSPLIT[$PKG_BASE]}$SEP${aPKGSPLIT[$PKG_VERSION]}$SEP${aPKGSPLIT[$PKG_BUILD]}$SEP${aPKGSPLIT[$PKG_FULLNAME]}$SEP${Folders}/${pkgInFolder}$SEP${aPKGSPLIT[$PKG_BASE_VERSION]}$SEP${pkg_size}" >>"$CACHEDIR_SEARCH/$PACKAGES_SPLIT"
-					((++count))
-				fi
-			done
-		else
-			mapfile -t MetaPkgInFolders <<<"$(lynx -listonly -nonumbers -dump "$SITE/packages/$Folders/" | grep -Po '.*\/\K.*')"
-			count=0
-			for MetaInFolder in "${MetaPkgInFolders[@]}"; do
-				echo "$Folders/$MetaInFolder" >>"$FOLDERS_METAPACKAGES"
-				echo "$MetaInFolder" >>"$METAPACKAGES"
-				((++count))
-			done
-		fi
-		log_msg "${yellow}Updating... ${red}$(strzero "$count" 5)${blue} packages in ${yellow}$Folders"
-	done
-comment
-
-	# Lista de pastas a serem processadas (substitua pela sua própria lista)
-	#	dw=("folder1" "folder2" "folder3")
-
-	# Processa as pastas em paralelo
-
-	parallel --gnu --jobs $MAX_PARALLEL process_folder_update ::: "${FoldersInRepo[@]}" &
-#	for Folders in "${FoldersInRepo[@]}"; do
-#		parallel --gnu --jobs $MAX_PARALLEL process_folder_update ::: "$Folders" &
-#	done
-	wait
-
-	#	{ kill $SPINNERPID; wait $SPINNERPID 2>/dev/null; echo ;}
-
-#	LLIST=$true ; sh_recreatefilepackagesinstalled
-	verbose=$oldverbose
-	sh_pkgincache
-	sh_cleaning
-	unset FOLDER_TEMP
-
-	nfilesInReposit=$(sh_linecount "$CACHEDIR_SEARCH/$PACKAGES_SPLIT")
-	nfilesInstalled=$(sh_linecount "$CACHEDIR_SEARCH/$PACKAGES_INSTALLED_SPLIT")
-	nfilesInCache=$(sh_linecount "$CACHEDIR_SEARCH/$PACKAGES_IN_CACHE")
-	log_msg "${pink}All list packages updated!"
-	log_msg "${red}$(strzero "$nfilesInReposit" 5) ${bold}${green}packages in the repository"
-	log_msg "${red}$(strzero "$nfilesInstalled" 5) ${bold}${green}installed packages"
-	log_msg "${red}$(strzero "$nfilesInCache" 5) ${bold}${green}packages in cache $CACHEDIR_ARCHIVES"
-	echo
-	msg "${reset}Use: # ${0##*/} --help for helping${reset}"
-	popd >/dev/null 2>&- || return 1
-}
-
-function sh_updateMazon() {
-	local nfilesInReposit
-	local nfilesInstalled
-	local nfilesInCache
-	local HTTP_SERVER
-	local response
-	local Folders
-	local count
-	local dw=("$CACHEDIR_SEARCH/$PACKAGES_SPLIT" "$CACHEDIR_SEARCH/$FOLDERS_METAPACKAGES" "$CACHEDIR_SEARCH/$METAPACKAGES")
-
-	((LSELF)) && {
-		sh_selfupdate "$@"
-		return $?
-	}
-	sh_checknet || return 1
-	if response=$(curl --compressed -s -w "%{http_code}\n" -o /dev/null -k --url "${SITE}/packages/") && [[ "$response" -eq 404 ]]; then
-		log_msg $ERR_ERROR "${red}error${reset}: $response Not Found ${orange}==> $SITE/packages/"
-		exit 1
-	fi
-
-	pushd "$CACHEDIR_SEARCH/" >/dev/null 2>&- || return 1
-	sh_backup
-
-	log_msg "${pink}Cleaning up ${CACHEDIR_SEARCH}/${reset}"
-	for i in ${dw[@]}; do
-		printf '' >|"$i"
-	done
-	HTTP_SERVER="$(string_alltrim "$(curl --compressed -s -k --head -w '%{http_code}\n' --url "${SITE}" | grep '^[Ss]erver' | awk '{print $2}')" | cut -d/ -f1)"
-
-	log_msg "${pink}Updating folders from ${SITE}${reset}"
-	case ${HTTP_SERVER} in
-	Apache | nginx) mapfile -t FoldersInRepo <<<"$(curl --compressed -k -s --url "${SITE}/packages/" | grep -Po '>[[:alnum:]]*/' | sed 's/>//g;s/\///g' | tee "$CACHEDIR_SEARCH/$FOLDERS_METAPACKAGES")" ;;
-	LiteSpeed | cloudflare) mapfile -t FoldersInRepo <<<"$(curl --compressed -k -s --url "${SITE}/packages/" | grep -Po 'packages\/[a-z]+' | sed 's/packages\///g' | tee "$CACHEDIR_SEARCH/$FOLDERS_METAPACKAGES")" ;;
-	GitHub.com) mapfile -t FoldersInRepo <<<"$(curl --compressed -k -s --url "$SITE/packages/" | grep /packages/ | sed 's/<[^>]*>//g;s/ //g' | tee "$CACHEDIR_SEARCH/$FOLDERS_METAPACKAGES")" ;;
-	esac
-
-	log_msg "${pink}Synchronizing package databases from ${SITE}${reset}"
-	#spinner & SPINNERPID=$!
-
-	: <<'comment'
-	for Folders in ${FoldersInRepo[@]}; do
-		FOLDER_TEMP="$TMP_DIR_FOLDERS/$Folders"
-		response=$(curl --compressed --insecure -s -w "%{http_code}\n" -k --url "$SITE/packages/$Folders/" --output "$FOLDER_TEMP")
-		case ${HTTP_SERVER} in
-		Apache | nginx)
-			if [[ $Folders != "meta" ]]; then
-				mapfile -t PackagesInFolders < <(grep -Eo '>'"$PKG_RE"'<' "$FOLDER_TEMP" | sed 's/>//g; s/<//g')
-			else
-				mapfile -t MetaPkgInFolders < <(grep -E '.meta\"' "$FOLDER_TEMP" | cut -d'"' -f2)
-			fi
-			mapfile -t SizePkgInFolders < <(grep -E "$GREP_RE" "$FOLDER_TEMP" | awk '{print $5}')
-			;;
-		LiteSpeed | GitHub.com | cloudflare)
-			if [[ $Folders != "meta" ]]; then
-#				mapfile -t PackagesInFolders <<<"$(sed 's/^.*href="//' "$FOLDER_TEMP" | sed 's/".*$//' | sed 's/\// /g' | grep -E ".${PKG_EXT}$" | awk '{print $NF}')"
-				mapfile -t PackagesInFolders <<<"$(grep -oP "$GREP_RE" "$FOLDER_TEMP" | sed 's/.*\///; s/"$//')"
-			else
-				mafile -t MetaPkgInFolders <<<"$(sed 's/^.*href="//' "$FOLDER_TEMP" | sed 's/".*$//' | sed 's/\// /g' | grep -E ".meta$" | awk '{print $NF}')"
-			fi
-#			mapfile -t SizePkgInFolders < <(grep -E "$GREP_RE $FOLDER_TEMP" | awk '{print $9}' | cut -d'"' -f2)
-			;;
-		esac
-
-		count=0
-		if [[ $Folders != "meta" ]]; then
-			for pkgInFolder in "${PackagesInFolders[@]}"; do
-				sh_splitpkg "$pkgInFolder"
-				pkg_size="${SizePkgInFolders[$count]}"
-				echo "${aPKGSPLIT[$PKG_BASE]}$SEP${aPKGSPLIT[$PKG_VERSION]}$SEP${aPKGSPLIT[$PKG_BUILD]}$SEP${aPKGSPLIT[$PKG_FULLNAME]}$SEP${Folders}/${pkgInFolder}$SEP${aPKGSPLIT[$PKG_BASE_VERSION]}$SEP${pkg_size}" >>"$CACHEDIR_SEARCH"/"$PACKAGES_SPLIT"
-				((count++))
-			done
-		else
-			for MetaInFolder in "${MetaPkgInFolders[@]}"; do
-				echo "${Folders}/${MetaInFolder}" >>"$FOLDERS_METAPACKAGES"
-				echo "${MetaInFolder}" >>"$METAPACKAGES"
-				((count++))
-			done
-		fi
-		cstrvalue=$(strzero "$count" 5)
-		log_success_msg2 "  {yellow}Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
-	done
-comment
-
-	# Função para processar uma pasta
-	process_folder() {
-		Folders="$1"
-		FOLDER_TEMP="$TMP_DIR_FOLDERS/$Folders"
-		response=$(curl --compressed --insecure -s -w "%{http_code}\n" -k --url "$SITE/packages/$Folders/" --output "$FOLDER_TEMP")
-
-		case ${HTTP_SERVER} in
-		Apache | nginx)
-			if [[ $Folders != "meta" ]]; then
-#				mapfile -t PackagesInFolders < <(grep -Eo '>'"$PKG_RE"'<' "$FOLDER_TEMP" | sed 's/>//g; s/<//g')
-				mapfile -t PackagesInFolders < <(grep -oP $GREP_RE $FOLDER_TEMP | sed 's/.*\///; s/"$//')
-			else
-				mapfile -t MetaPkgInFolders < <(grep -E '.meta\"' "$FOLDER_TEMP" | cut -d'"' -f2)
-			fi
-			mapfile -t SizePkgInFolders < <(grep -E "$GREP_RE" "$FOLDER_TEMP" | awk '{print $5}')
-			;;
-		LiteSpeed | GitHub.com | cloudflare)
-			if [[ $Folders != "meta" ]]; then
-#				mapfile -t PackagesInFolders <<<"$(sed 's/^.*href="//' "$FOLDER_TEMP" | sed 's/".*$//' | sed 's/\// /g' | grep -E ".${PKG_EXT}$" | awk '{print $NF}')"
-				mapfile -t PackagesInFolders < <(grep -oP $GREP_RE $FOLDER_TEMP | sed 's/.*\///; s/"$//')
-			else
-				mapfile -t MetaPkgInFolders <<<"$(sed 's/^.*href="//' "$FOLDER_TEMP" | sed 's/".*$//' | sed 's/\// /g' | grep -E ".meta$" | awk '{print $NF}')"
-			fi
-			mapfile -t SizePkgInFolders < <(grep -E "$GREP_RE $FOLDER_TEMP" | awk '{print $9}' | cut -d'"' -f2)
-			;;
-		esac
-
-		count=0
-		if [[ $Folders != "meta" ]]; then
-			for pkgInFolder in "${PackagesInFolders[@]}"; do
-				sh_splitpkg "$pkgInFolder"
-				pkg_size="${SizePkgInFolders[$count]}"
-				echo "${aPKGSPLIT[$PKG_BASE]}$SEP${aPKGSPLIT[$PKG_VERSION]}$SEP${aPKGSPLIT[$PKG_BUILD]}$SEP${aPKGSPLIT[$PKG_FULLNAME]}$SEP${Folders}/${pkgInFolder}$SEP${aPKGSPLIT[$PKG_BASE_VERSION]}$SEP${pkg_size}"
-				((count++))
-			done
-		else
-			for MetaInFolder in "${MetaPkgInFolders[@]}"; do
-				echo "${Folders}/${MetaInFolder}" >>"$FOLDERS_METAPACKAGES"
-				echo "${MetaInFolder}" >>"$METAPACKAGES"
-				((count++))
-			done
-		fi
-		cstrvalue=$(strzero "$count" 5)
-		log_success_msg2 "  ${yellow}Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
-	}
-
-	# Obtém a lista de pastas a serem processadas (substitua por sua própria lista)
-	#	FoldersInRepo=("folder1" "folder2" "folder3")
-
-	# Processa as pastas em paralelo
-	export -f process_folder
-	parallel --gnu --jobs $MAX_PARALLEL process_folder ::: "${FoldersInRepo[@]}" &
-	wait
-
-	#	{ kill $SPINNERPID; wait $SPINNERPID 2>/dev/null; echo ;}
-
-#	LLIST=$true ; sh_recreatefilepackagesinstalled
-	sh_pkgincache
-	sh_cleaning
-	unset FOLDER_TEMP
-
-	nfilesInReposit=$(wc -l <"$CACHEDIR_SEARCH/$PACKAGES_SPLIT")
-	nfilesInstalled=$(wc -l <"$CACHEDIR_SEARCH/$PACKAGES_INSTALLED_SPLIT")
-	nfilesInCache=$(wc -l <"$CACHEDIR_SEARCH/$PACKAGES_IN_CACHE")
-	log_msg "${cyan}All list packages updated!${reset}"
-	log_msg "${blue}($(strzero "$nfilesInReposit" 5)) packages in the repository${reset}"
-	log_msg "${green}($(strzero "$nfilesInstalled" 5)) installed packages${reset}"
-	log_msg "${green}($(strzero "$nfilesInCache" 5)) packages in cache $CACHEDIR_ARCHIVES${reset}"
-	echo
-	log_msg "${reset}Use: # ${0##*/} --help for helping${reset}"
 	popd >/dev/null 2>&- || return 1
 }
 
@@ -3667,7 +3524,7 @@ sh_cleaning() {
 
 sh_backup() {
 	if ((verbose >= 2)); then
-		log_msg "${pink}Making backup: $CACHEDIR_SEARCH/${reset}"
+		log_msg "${pink}Making backup: ${white}$CACHEDIR_SEARCH/${reset}"
 	fi
 	mkdir -p "$TMP_DIR_BACKUP" >/dev/null 2>&-
 	mkdir -p "$TMP_DIR_FOLDERS" >/dev/null 2>&-
