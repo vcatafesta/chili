@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+
+git clone --bare . /mnt/pendrive/projeto.git
+git remote add origin /mnt/pendrive/projeto.git
+touch qualquermerda.txt
+git add -A
+git commit -m "$(date) Vilmar Catafesta (vcatafesta@gmail.com)"
+git push origin master

@@ -6,10 +6,10 @@
 # 	Chili GNU/Linux - https://github.com/vcatafesta/ChiliOS
 #	Chili GNU/Linux - https://chililinux.com
 #	Chili GNU/Linux - https://chilios.com.br
-# 	MazonOS GNU/Linux - http://mazonos.com
+# 	MazonOS GNU/Linux - https://mazonos.com
 #
 # 	Created: 2019/04/05
-# 	Altered: 2023/09/22
+# 	Altered: 2024/03/24
 #
 # 	Copyright (c) 2019-2022, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -40,7 +40,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob
 
 # Import lib
-readonly _VERSION_="3.44.20230922"
+readonly _VERSION_="3.46.20240324"
 #LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 #[[ -f "${LIBRARY}/core.sh" ]] && source "${LIBRARY}/core.sh"
 SYSCONFDIR=${SYSCONFDIR:-'/etc/fetch'}
@@ -168,7 +168,9 @@ sh_setEnvironment() {
 		#		PKG_RE_LYNX='(?!.*\/)(.*)-(([^-]+)-([0-9]+))-([^.]+)(\.chi\.zst)$'
 		#		PKG_RE_FULL1='(?:")(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst(?="><a)'
 		#		PKG_RE_FULL2='(?:e">)(.+)-(([^-]+)-([0-9]+))-([^.]+)(\.chi)(\.zst)(?=<\/a)'
-		GREP_RE='.chi\.zst\"'
+		#		GREP_RE='.chi\.zst\"'
+		export GREP_RE='href="/[^"]*\.chi\.zst"'
+
 		#SED_RE='^.+>(.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).*[ ]([0-9]+k?)(.*)'
 		#SED_RE='^.+="(.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)".+<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).+[ ]([0-9]+k?)(.*)'
 		export SED_RE='^.*["|\/](.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)".+<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).+[ ]([0-9]+k?).*'
@@ -182,7 +184,9 @@ sh_setEnvironment() {
 		#PKG_RE='(.+)-(([^-]+)-([0-9]+))\.mz' 						#SOEN
 		export PKG_RE='(.+)-(([^-]+)-([0-9]))\.mz' #VC
 		#		PKG_RE_LYNX='(?!.*\/)(.+)-(([^-]+)-([0-9]))\.mz$'		#VC
-		export GREP_RE='.mz\"'
+		#export GREP_RE='.mz\"'
+		#export GREP_RE='.mz$'  #VC sáb 23 mar 2024 22:56:55 -04
+		export GREP_RE='href="/[^"]*\.mz"'
 		#		SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9]+[.]?[0-9]+.?).+'
 		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9]?[.]?[0-9]?.?).+'
 		#		SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9.])+([BKMGT]?)\b'
@@ -599,7 +603,7 @@ function sh_touchconf() {
 		# fetch.conf
 		######################################################################
 		# extension of packages: chili=chi.zst, mazonos=mz
-		#PKG_EXT='mz'       # http://mazonos.com
+		#PKG_EXT='mz'       # https://mazonos.com
 		PKG_EXT='chi.zst'  # https://chililinux.com | https://chilios.com.br | https://github.com/vcatafesta/ChiliOS
 
 		# packages hosted on GITHUB repository: yes='1', not='0'
@@ -608,10 +612,11 @@ function sh_touchconf() {
 		# distro hosting website/packages
 		#PKG_SITE='https://github.com/vcatafesta/ChiliOS/tree/master'  # for use set GITSITE=1
 		PKG_SITE='https://chililinux.com'                                           # for use set GITSITE=0
-		#PKG_SITE='https://chilios.com.br'                                           # for use set GITSITE=0
+		#PKG_SITE='https://chilios.com.br'                                          # for use set GITSITE=0
 		#PKG_SITE='https://chililinux.org'                                          # for use set GITSITE=0
-		#PKG_SITE='http://localhost'                                                   # for use set GITSITE=0
-		#PKG_SITE='http://mazonos.com'                                                # for use set GITSITE=0
+		#PKG_SITE='http://localhost'                                                # for use set GITSITE=0
+		#PKG_SITE='https://mazonos.com'                                             # for use set GITSITE=0
+		#PKG_SITE='https://chililinux.com/mazonos'                                  # for use set GITSITE=0
 
 		#not needed change
 		PKG_RAW='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master'
@@ -623,11 +628,11 @@ function sh_touchconf() {
 		CREATE_SHA256='0'
 		DESC_BUILD='1'
 		URL='https://www.linuxfromscratch.org/lfs/view/stable/'
-		LICENSE='GPL2'
-		LFS_VERSION='12.0'
-		LFS_INIT='SYSTEMD'
+		LICENSE='MIT'
+		LFS_VERSION='12.1'
+		LFS_INIT='SYSV'
 		ARCH='x86_64'
-		DISTRO='chili'
+		DISTRO='mazonos'
 		LOCALDIR='/github/ChiliOS'
 		PKGCORE="$LOCALDIR/packages/core"
 		CACHEDIR='/var/cache/fetch'
@@ -1395,11 +1400,12 @@ process_folder_update() {
 	mapfile -t SizePkgInFolders < <(sed -nE "s/$SED_RE/\9/p" "$FOLDER_TEMP")
 
 	if [[ "$Folders" != "meta" ]]; then
-		if ((CHILI_OS)); then
-			mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2-\5\6/p" "$FOLDER_TEMP")
-		else
-			mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2\6/p" "$FOLDER_TEMP")
-		fi
+#		if ((CHILI_OS)); then
+#			mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2-\5\6/p" "$FOLDER_TEMP")
+#		else
+#			mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2\6/p" "$FOLDER_TEMP")
+#		fi
+		mapfile -t PackagesInFolders < <(grep -oP $GREP_RE $FOLDER_TEMP | sed 's/.*\///; s/"$//')	# dom mar 24 01:33:15 -04 2024
 		count=0
 		for pkgInFolder in "${PackagesInFolders[@]}"; do
 			if [[ -n "$pkgInFolder" ]]; then
@@ -1418,7 +1424,7 @@ process_folder_update() {
 			((++count))
 		done
 	fi
-	log_msg "Updating... ${red}$(strzero "$count" 5)${blue} packages in ${yellow}$Folders"
+	log_msg "${black}Updating... ${red}$(strzero "$count" 5)${blue} packages ${white}in ${yellow}$Folders${reset}"
 }
 # Exporta a função para uso com o parallel
 export -f process_folder_update
@@ -1468,7 +1474,7 @@ function sh_update() {
 	mapfile -t FoldersInRepo <<<"$(lynx -listonly -nonumbers -dump -justify "$SITE/packages/" | grep -Po '.*packages\/\K.*?(?=\/)')"
 	log_msg "${pink}Updating folders from $SITE"
 
-	log_msg "${pink}Synchronizing package databases from $SITE/packages/"
+	log_msg "${pink}Synchronizing package databases from $SITE/packages/${reset}"
 	#	spinner & SPINNERPID=$!
 
 	: <<'comment'
@@ -1504,7 +1510,7 @@ function sh_update() {
 				((++count))
 			done
 		fi
-		log_msg "Updating... ${red}$(strzero "$count" 5)${blue} packages in ${yellow}$Folders"
+		log_msg "${yellow}Updating... ${red}$(strzero "$count" 5)${blue} packages in ${yellow}$Folders"
 	done
 comment
 
@@ -1593,7 +1599,8 @@ function sh_updateMazon() {
 			;;
 		LiteSpeed | GitHub.com | cloudflare)
 			if [[ $Folders != "meta" ]]; then
-				mapfile -t PackagesInFolders <<<"$(sed 's/^.*href="//' "$FOLDER_TEMP" | sed 's/".*$//' | sed 's/\// /g' | grep -E ".${PKG_EXT}$" | awk '{print $NF}')"
+#				mapfile -t PackagesInFolders <<<"$(sed 's/^.*href="//' "$FOLDER_TEMP" | sed 's/".*$//' | sed 's/\// /g' | grep -E ".${PKG_EXT}$" | awk '{print $NF}')"
+				mapfile -t PackagesInFolders <<<"$(grep -oP "$GREP_RE" "$FOLDER_TEMP" | sed 's/.*\///; s/"$//')"
 			else
 				mafile -t MetaPkgInFolders <<<"$(sed 's/^.*href="//' "$FOLDER_TEMP" | sed 's/".*$//' | sed 's/\// /g' | grep -E ".meta$" | awk '{print $NF}')"
 			fi
@@ -1617,7 +1624,7 @@ function sh_updateMazon() {
 			done
 		fi
 		cstrvalue=$(strzero "$count" 5)
-		log_success_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
+		log_success_msg2 "  {yellow}Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
 	done
 comment
 
@@ -1630,7 +1637,8 @@ comment
 		case ${HTTP_SERVER} in
 		Apache | nginx)
 			if [[ $Folders != "meta" ]]; then
-				mapfile -t PackagesInFolders < <(grep -Eo '>'"$PKG_RE"'<' "$FOLDER_TEMP" | sed 's/>//g; s/<//g')
+#				mapfile -t PackagesInFolders < <(grep -Eo '>'"$PKG_RE"'<' "$FOLDER_TEMP" | sed 's/>//g; s/<//g')
+				mapfile -t PackagesInFolders < <(grep -oP $GREP_RE $FOLDER_TEMP | sed 's/.*\///; s/"$//')
 			else
 				mapfile -t MetaPkgInFolders < <(grep -E '.meta\"' "$FOLDER_TEMP" | cut -d'"' -f2)
 			fi
@@ -1638,7 +1646,8 @@ comment
 			;;
 		LiteSpeed | GitHub.com | cloudflare)
 			if [[ $Folders != "meta" ]]; then
-				mapfile -t PackagesInFolders <<<"$(sed 's/^.*href="//' "$FOLDER_TEMP" | sed 's/".*$//' | sed 's/\// /g' | grep -E ".${PKG_EXT}$" | awk '{print $NF}')"
+#				mapfile -t PackagesInFolders <<<"$(sed 's/^.*href="//' "$FOLDER_TEMP" | sed 's/".*$//' | sed 's/\// /g' | grep -E ".${PKG_EXT}$" | awk '{print $NF}')"
+				mapfile -t PackagesInFolders < <(grep -oP $GREP_RE $FOLDER_TEMP | sed 's/.*\///; s/"$//')
 			else
 				mapfile -t MetaPkgInFolders <<<"$(sed 's/^.*href="//' "$FOLDER_TEMP" | sed 's/".*$//' | sed 's/\// /g' | grep -E ".meta$" | awk '{print $NF}')"
 			fi
@@ -1662,7 +1671,7 @@ comment
 			done
 		fi
 		cstrvalue=$(strzero "$count" 5)
-		log_success_msg2 "  Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
+		log_success_msg2 "  ${yellow}Updating... (${blue}${cstrvalue}${reset}) packages in ${Folders}"
 	}
 
 	# Obtém a lista de pastas a serem processadas (substitua por sua própria lista)
