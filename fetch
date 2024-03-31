@@ -9,9 +9,9 @@
 # 	MazonOS GNU/Linux - https://mazonos.com
 #
 # 	Created: 2019/04/05
-# 	Altered: 2024/03/28
+# 	Altered: 2024/03/31
 #
-# 	Copyright (c) 2019-2022, Vilmar Catafesta <vcatafesta@gmail.com>
+# 	Copyright (c) 2019-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob
 
 # Import lib
-readonly _VERSION_="3.5.20240328"
+readonly _VERSION_="3.5.20240331"
 #LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 #[[ -f "${LIBRARY}/core.sh" ]] && source "${LIBRARY}/core.sh"
 SYSCONFDIR=${SYSCONFDIR:-'/etc/fetch'}
@@ -162,10 +162,9 @@ sh_setEnvironment() {
 	if [[ "$PKG_EXT" = "chi.zst" ]]; then
 		export CHILI_OS=$true
 #		export PKG_RE='^([a-z-]+)(-)([0-9\\.]+)(-)([0-9])(-)(.*)(.chi.zst)$'
-#		export PKG_RE='([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)-(([0-9]+(\.[0-9]+)*)(-([0-9]+))?)-([^.]+).*'
+		export PKG_RE='([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)-(([0-9]+(\.[0-9]+)*)(-([0-9]+))?)-([^.]+).*'
 #		export PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 				#SOEN
-#		export PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst'    			#VC
-		export PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)(\.chi\.zst)$' 			#VC
+#		export PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)(\.chi\.zst)$' 			#VC
 #		export PKG_RE_LYNX='(?!.*\/)(.*)-(([^-]+)-([0-9]+))-([^.]+)(\.chi\.zst)$'
 #		export PKG_RE_FULL1='(?:")(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst(?="><a)'
 #		export PKG_RE_FULL2='(?:e">)(.+)-(([^-]+)-([0-9]+))-([^.]+)(\.chi)(\.zst)(?=<\/a)'
@@ -611,20 +610,20 @@ function sh_touchconf() {
 		# fetch.conf
 		######################################################################
 		# extension of packages: chili=chi.zst, mazonos=mz
-		PKG_EXT='mz'       # https://mazonos.com
-		#PKG_EXT='chi.zst'  # https://chililinux.com | https://chilios.com.br | https://github.com/vcatafesta/ChiliOS
+		#PKG_EXT='mz'       # https://mazonos.com
+		PKG_EXT='chi.zst'  # https://chililinux.com | https://chilios.com.br | https://github.com/vcatafesta/ChiliOS
 
 		# packages hosted on GITHUB repository: yes='1', not='0'
 		GITSITE='0'
 
 		# distro hosting website/packages
 		#PKG_SITE='https://github.com/vcatafesta/ChiliOS/tree/master'  # for use set GITSITE=1
-		#PKG_SITE='https://chililinux.com'                                           # for use set GITSITE=0
+		PKG_SITE='https://chililinux.com'                                           # for use set GITSITE=0
 		#PKG_SITE='https://chilios.com.br'                                          # for use set GITSITE=0
 		#PKG_SITE='https://chililinux.org'                                          # for use set GITSITE=0
 		#PKG_SITE='http://localhost'                                                # for use set GITSITE=0
 		#PKG_SITE='https://mazonos.com'                                             # for use set GITSITE=0
-		PKG_SITE='https://chililinux.com/mazonos'                                  # for use set GITSITE=0
+		#PKG_SITE='https://chililinux.com/mazonos'                                  # for use set GITSITE=0
 
 		#not needed change
 		PKG_RAW='https://raw.githubusercontent.com/vcatafesta/ChiliOS/master'
@@ -638,13 +637,14 @@ function sh_touchconf() {
 		URL='https://www.linuxfromscratch.org/lfs/view/stable/'
 		LICENSE='MIT'
 		LFS_VERSION='12.1'
-		LFS_INIT='SYSV'
+		LFS_INIT='SYSTEMD'
 		ARCH='x86_64'
-		DISTRO='mazonos'
+		DISTRO='chili'
 		LOCALDIR='/github/ChiliOS'
 		PKGCORE="$LOCALDIR/packages/core"
 		CACHEDIR='/var/cache/fetch'
 		ALIEN_CACHE_DIR='/var/cache/pacman/pkg'
+		#ALIEN_CACHE_DIR='/var/cache/xbps'
 		IGNOREPKG=('glibc' 'file')
 
 		#end
@@ -3314,16 +3314,20 @@ function sh_alienpkg_exec() {
 			ncount=0
 			pkgtar=${package##*/}          #remove diretorio deixando somente nome do pacote
 			extensao=$(sh_getextensao "${pkgtar}")
+
 			case $extensao in
+			zst)            pkgtar=${pkgtar%%.pkg.tar.zst};;	#remove .tar.zst ext
+			xz)		        pkgtar=${pkgtar%%.pkg.tar.xz};; 	#remove .tar.xz ext;;
 			pkg.tar.zst) 	pkgtar=${pkgtar%%.pkg.tar.zst};;	#remove .tar.zst ext
 			pkg.tar.xz)		pkgtar=${pkgtar%%.pkg.tar.xz};; 	#remove .tar.xz ext;;
 			spkg.tar.xz)	pkgtar=${pkgtar%%.spkg.tar.xz};;	#remove .tar.xz ext from venom
-			xbps)			pkgtar=${pkgtar%%.xbps};;	        #remove .xbps from void
+			xbps)			pkgtar=${pkgtar%%.xbps}             #remove .xbps from void
+			                pkgtar=${pkgtar/_/-}
+			                ;;
 			esac
 			! ((CHILI_OS)) && pkgtar=${pkgtar%%-any}
 			! ((CHILI_OS)) && pkgtar=${pkgtar%%-x86_64}
 			! ((CHILI_OS)) && pkgtar=${pkgtar%%.x86_64} # void
-			pkgtar=${pkgtar/_/-}
 			cPacoteSemExt=${pkgtar%%.*}       # https://elmord.org/blog/?entry=20121227-manipulando-strings-bash
 			cPacoteSemExt=${cPacoteSemExt%-*} # https://elmord.org/blog/?entry=20121227-manipulando-strings-bash
 
