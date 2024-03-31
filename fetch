@@ -9,7 +9,7 @@
 # 	MazonOS GNU/Linux - https://mazonos.com
 #
 # 	Created: 2019/04/05
-# 	Altered: 2024/03/24
+# 	Altered: 2024/03/28
 #
 # 	Copyright (c) 2019-2022, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -40,7 +40,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob
 
 # Import lib
-readonly _VERSION_="3.46.20240324"
+readonly _VERSION_="3.5.20240328"
 #LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 #[[ -f "${LIBRARY}/core.sh" ]] && source "${LIBRARY}/core.sh"
 SYSCONFDIR=${SYSCONFDIR:-'/etc/fetch'}
@@ -156,7 +156,8 @@ sh_setEnvironment() {
 	#DATE_RE='(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})'	#2022-03-16 14:22
 	#RE_ALIEN='.+\.zst$|.+\.xz$' 						#VC
 	#RE_ALIEN='.+\.[zst|xz]+$'  						#VC
-	export RE_ALIEN='.+\.(zst|xz)$' #Bagatini/Blau
+#	export RE_ALIEN='.+\.(zst|xz)$' #Bagatini/Blau
+	export RE_ALIEN='.+\.(zst|xz|xbps)$' #Bagatini/Blau
 
 	if [[ "$PKG_EXT" = "chi.zst" ]]; then
 		export CHILI_OS=$true
@@ -181,9 +182,9 @@ sh_setEnvironment() {
 		export FETCH_RE='-[^-]+[0-9]+[^.]*.chi[^.]*.zst'
 	else
 		export CHILI_OS=$false
-#		export PKG_RE='(.+)-(([^-]+)-([0-9]+))\.mz' 							#SOEN
-		export PKG_RE='(.+)-(([^-]+)-([0-9]))\.mz' #VC
-		export PKG_RE_LYNX='(?!.*\/)(.+)-(([^-]+)-([0-9]))\.mz$'				#VC
+#		export PKG_RE='(.+)-(([^-]+)-([0-9]))\.mz' 								#VC
+		export PKG_RE='(.+)-(([^-]+)-([0-9]+))\.mz' 							#SOEN
+#		export PKG_RE_LYNX='(?!.*\/)(.+)-(([^-]+)-([0-9]))\.mz$'				#VC
 #		export GREP_RE='.mz\"'
 #		export GREP_RE='.mz$'
 		export GREP_RE_LITESPEED='href="/[^"]*\.mz"' 							#litespeed
@@ -2067,7 +2068,7 @@ sh_splitpkg() {
 		pkg_arch="${BASH_REMATCH[5]}"
 		pkg_base_version="${pkg_base}-${pkg_version_build}"
 
-		: <<'comment'
+: <<'comment'
 		#debug "$pkg_base \n $pkg_version_build \n $pkg_version \n $pkg_build \n $pkg_arch \n $pkg_base_version \n"
 		debug   " file            : $file\n" \
 		        "pkg_folder_dir  : $pkg_folder_dir\n" \
@@ -3145,11 +3146,11 @@ sh_generate_desc() {
 		desc="$public_pkgdesc"
 		pkgdesc="$public_pkgdesc"
 		size='$SIZE'
-		license=(${public_license[@]})
+		license=('${public_license[@]}')
 		url='$public_url'
-		source=(${public_source[@]})
-		validpgpkeys=(${public_validpgpkeys[@]})
-		sha256sums=(${public_sha256sums[@]})
+		source=('${public_source[@]}')
+		validpgpkeys=('${public_validpgpkeys[@]}')
+		sha256sums=('${public_sha256sums[@]}')
 		dep=(${public_deps[@]})
 		depends=(${public_depends[@]})
 	EOF
@@ -3199,7 +3200,18 @@ sh_generatepkg() {
 		[[ -z "$field_build" ]] && field_build="$DESC_BUILD"
 		[[ -z "$DESC" ]] && DESC="$field_pkgname-$field_version"
 
-		sh_generate_desc "$field_pkgname" "$field_version" "$field_build" "${field_pkgver::-2}" "$field_pkgrel" || return $ERR_ERROR
+#		debug	"pkgname: $field_pkgname\n" \
+#				"version: $field_version\n" \
+#				"build:   $field_build\n" \
+#				"pkgver:  ${field_pkgver::-2}\n" \
+#				"pkgrel:  $field_pkgrel"
+
+		sh_generate_desc \
+			"$field_pkgname" \
+			"$field_version" \
+			"$field_build" \
+			"${field_pkgver::-2}" \
+			"$field_pkgrel" || return $ERR_ERROR
 	fi
 	return $ERR_OK
 }
@@ -3229,6 +3241,13 @@ sh_createpkg() {
 	}
 }
 
+function sh_getextensao {
+	local arquivo="$1"
+	local extensao="${arquivo##*.}"	# Extrair a extensão do arquivo
+
+	echo $extensao
+}
+
 # -Sa
 sh_alienpkg_main() {
 	sh_alienpkg_initvars "$*"
@@ -3242,6 +3261,7 @@ sh_alienpkg_initvars() {
 }
 
 function sh_alienpkg_exec() {
+	local extensao
 	local param="$*"
 	local pkg
 	local package
@@ -3293,11 +3313,17 @@ function sh_alienpkg_exec() {
 		for package in ${pkg[@]}; do
 			ncount=0
 			pkgtar=${package##*/}          #remove diretorio deixando somente nome do pacote
-			pkgtar=${pkgtar%%.pkg.tar.zst} #remove .tar.zst ext
-			pkgtar=${pkgtar%%.pkg.tar.xz}  #remove .tar.xz ext
-			pkgtar=${pkgtar%%.spkg.tar.xz} #remove .tar.xz ext from venom
+			extensao=$(sh_getextensao "${pkgtar}")
+			case $extensao in
+			pkg.tar.zst) 	pkgtar=${pkgtar%%.pkg.tar.zst};;	#remove .tar.zst ext
+			pkg.tar.xz)		pkgtar=${pkgtar%%.pkg.tar.xz};; 	#remove .tar.xz ext;;
+			spkg.tar.xz)	pkgtar=${pkgtar%%.spkg.tar.xz};;	#remove .tar.xz ext from venom
+			xbps)			pkgtar=${pkgtar%%.xbps};;	        #remove .xbps from void
+			esac
 			! ((CHILI_OS)) && pkgtar=${pkgtar%%-any}
 			! ((CHILI_OS)) && pkgtar=${pkgtar%%-x86_64}
+			! ((CHILI_OS)) && pkgtar=${pkgtar%%.x86_64} # void
+			pkgtar=${pkgtar/_/-}
 			cPacoteSemExt=${pkgtar%%.*}       # https://elmord.org/blog/?entry=20121227-manipulando-strings-bash
 			cPacoteSemExt=${cPacoteSemExt%-*} # https://elmord.org/blog/?entry=20121227-manipulando-strings-bash
 
@@ -3335,28 +3361,54 @@ function sh_alienpkg_exec() {
 			luit-[0-9]*) sed -i -e "/D_XOPEN/s/5/6/" configure ;;
 			esac
 
-			sed -i 's/ = /="/g' "$destdir/.PKGINFO" >/dev/null 2>&-
-			sed -i 's/$/"/g' "$destdir/.PKGINFO" >/dev/null 2>&-
-			source "$destdir/.PKGINFO" >/dev/null 2>&-
+			case $extensao in
+			#pacman
+			pkg.tar.zst|pkg.tar.xz)
+				if [[ -e "$destdir/.PKGINFO" ]] ; then
+					sed -i 's/ = /="/g' "$destdir/.PKGINFO" >/dev/null 2>&-
+					sed -i 's/$/"/g' "$destdir/.PKGINFO" >/dev/null 2>&-
+					source "$destdir/.PKGINFO" >/dev/null 2>&-
+				fi
 
-			export DESC_BUILD="${pkgtar: -1}"
-			export URL="$url"
-			export LICENSE="$license"
-			export ARCH="$arch"
-			export SIZE="$size"
-			export DESC="$pkgdesc"
-			export DEP="$depend"
-			export DESC_PACKNAME="$pkgname"
-			export DESC_VERSION="$pkgver"
-			export DESC_BUILD="${pkgver: -1}"
+				export DESC_BUILD="${pkgtar: -1}"
+				export URL="$url"
+				export LICENSE="$license"
+				export ARCH="$arch"
+				export SIZE="$size"
+				export DESC="$pkgdesc"
+				export DEP="$depend"
+				export DESC_PACKNAME="$pkgname"
+				export DESC_VERSION="$pkgver"
+				export DESC_BUILD="${pkgver: -1}"
 
-			if [[ -e "$destdir"/.PKGINFO ]]; then
-				deps=$(grep ^depend "$destdir"/.PKGINFO | awk -F'"' '{print $2}')
-			else
-				deps=(${depends[@]})
-			fi
+				if [[ -e "$destdir"/.PKGINFO ]]; then
+					deps=$(grep ^depend "$destdir"/.PKGINFO | awk -F'"' '{print $2}')
+				else
+					deps=(${depends[@]})
+				fi
+				;;
+
+			xbps)
+				local fileprops="$destdir/props.plist"
+				if [[ -e "$fileprops" ]]; then
+					# Ler o conteúdo do arquivo XML
+					xml_content="$(<$destdir/props.plist)"
+					# Extrair os valores das chaves do arquivo XML usando awk
+#					pkgname=$(awk -F'[<>]' '/<key>pkgname<\/key>/{getline; print $3}' "$destdir"/props.plist)
+#					pkgver=$(awk -F'[<>]' '/<key>pkgver<\/key>/{getline; print $3}' "$destdir"/props.plist)
+#					maintainer=$(awk -F'[<>]' '/<key>maintainer<\/key>/{getline; print $3}' "$destdir"/props.plist)
+					export public_pkgdesc=$(awk -F'[<>]' '/<key>short_desc<\/key>/{getline; print $3}' "$fileprops")
+					export public_url=$(awk -F'[<>]' '/<key>homepage<\/key>/{getline; print $3}' "$fileprops")
+					export public_license=$(awk -F'[<>]' '/<key>license<\/key>/{getline; print $3}' "$fileprops")
+					export public_deps=$(awk -F'[<>]' '/<key>run_depends<\/key>/{f=1; next} f && /<\/array>/{f=0} f{print $3}' "$fileprops")
+					export public_deps=($(awk -F'[<>]' '/<key>run_depends<\/key>/{f=1; next} f && /<\/array>/{f=0} f{gsub(/&gt;/, ">"); gsub(/&lt;/, "<"); print $3}' "$fileprops"))
+					export public_depends=($(awk -F'[<>]' '/<key>run_depends<\/key>/{f=1; next} f && /<\/array>/{f=0} f{gsub(/&gt;/, ">"); gsub(/&lt;/, "<"); print $3}' "$fileprops"))
+				fi
+				;;
+			esac
 			pushd "$destdir" >/dev/null 2>&- || return 1
 			rm -f "$destdir"/.BUILDINFO "$destdir"/.MTREE "$destdir"/.PKGINFO >/dev/null 2>&-
+			rm -f "$destdir"/props.plist "$destdir"/files.plist >/dev/null 2>&-
 
 #			((++ncount))
 			sh_createpkg "$pkgtar"

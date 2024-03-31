@@ -8,7 +8,7 @@
 #  Chili GNU/Linux - https://chilios.com.br
 #
 #  Created: 2019/04/05
-#  Altered: 2023/09/06
+#  Altered: 2024/03/26
 #
 #  Copyright (c) 2019-2022, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -38,7 +38,7 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="4.0.2.20230906"
+declare -r _VERSION_="4.0.3.20240326"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
@@ -80,9 +80,9 @@ sh_setEnvironment() {
 	readonly err_not_fatal=$false
 	readonly dir_install="/mnt/chili-install"
 	readonly chili_iso="liveiso"
-	declare shell='/bin/sh'
-	declare xdistro=$(uname -n)
-	declare sep="\xe2\x94\x82"
+	declare -g shell='/bin/bash'
+	declare -g xdistro=$(uname -n)
+	declare -g sep="\xe2\x94\x82"
 
 	# log
 	readonly LOGGER='/dev/tty8'
@@ -440,7 +440,6 @@ sh_cmd_job() {
 	eval "$cjob" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
 	lretval="${PIPESTATUS[0]}"
 	evaluate_retval "$lretval" "$erro_fatal"
-	shell='/bin/sh'
 	return "$lretval"
 }
 
@@ -455,7 +454,6 @@ sh_chroot_job() {
 	chroot "$dir_install" "$shell" -c "$cjob" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
 	lretval="${PIPESTATUS[0]}"
 	evaluate_retval "$lretval" "$erro_fatal"
-	shell='/bin/sh'
 	[[ -z "$erro_fatal" ]] && return "$lretval" || return "$erro_fatal"
 }
 
