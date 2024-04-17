@@ -46,23 +46,24 @@ readonly DEPENDENCIES=(grep)
 a=3
 b=a
 
-     echo '1 =' $`echo $b`				# a
-eval echo '2 =' $`echo $b`				# 3
-eval echo '3.1 =' $(echo $b)			# ERRADO
-eval echo '3.2 =' $(eval echo '$'"$b") 	# CERTO
-eval echo '4 =' \$$(echo $b)			# CERTO
-     echo '5 =' ${!b} 					# indireção - indiretamente o valor de b
+     echo '1 =' `echo $b`				# a
+eval echo '2 =' $`echo $b`				# 3 - CERTO
+eval echo '3 =' $(echo $b)				# a - ERRADO
+eval echo '4 =' $(eval echo '$'"$b") 	# 3 - CERTO
+eval echo '5 =' \$$(echo $b)			# 3 - CERTO
+     echo '6 =' ${!b} 					# 3 - indireção - indiretamente o valor de b
 
 echo '##################################################################################'
 
 a=3
 b=a
-echo '1 =' $a
+     echo '1 =' $a
 eval echo '2 =' $a
 # Correção do erro na linha 3
 eval echo '3 =' $(eval echo '$'"$b")
 eval echo '4 =' \$$(echo $b)
-echo '5 =' ${!b}
+eval echo '4 =' \$$(echo $b)
+     echo '5 =' ${!b}
 
 echo '##################################################################################'
 
