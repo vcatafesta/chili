@@ -1706,7 +1706,7 @@ mkl() {
             return
         }
     fi
-    log_msg "Aguarde, criando arquivo Lua ${cyan}'$prg'${reset} on $PWD"
+    log_msg "Criando arquivo Lua ${cyan}'$prg'${reset} on $PWD"
     cat >"$prg" <<"EOF"
 #!/usr/bin/env lua 
 
@@ -1719,15 +1719,19 @@ EOF
 }
 
 makebash() {
-	prg='script.sh'
+	local red=$(tput bold)$(tput setaf 196)
+	local cyan=$(tput setaf 6)
+	local reset=$(tput sgr0)
+	local prg='script.sh'
+
 	if test $# -ge 1; then
 		prg="$1"
 		[[ -e "$prg" ]] && {
-			log_err "${red}error: ${reset}Arquivo ${cyan}'$1'${reset} já existe. Abortando..."
+			log_err "${red}error: ${reset}Arquivo ${cyan}'$1'${reset} já existe"
 			return
 		}
 	fi
-	log_msg "Aguarde, criando arquivo ${cyan}'$prg'${reset} on $PWD"
+	log_msg "Criando script bash ${cyan}'$prg'${reset} on $PWD"
 	cat >"$prg" <<"EOF"
 #!/usr/bin/env bash
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
