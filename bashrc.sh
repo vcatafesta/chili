@@ -1377,6 +1377,10 @@ function mput() {
 export -f mput
 
 function gpull() {
+	local red=$(tput bold)$(tput setaf 196)
+	local cyan=$(tput setaf 6)
+	local reset=$(tput sgr0)
+
 	log_wait_msg "${blue}Iniciando git pull ${reset}"
 	git config credential.helper store
 	#	sudo git config pull.ff only
@@ -1399,6 +1403,10 @@ function gbare() {
 export -f gbare
 
 function gpush() {
+	local red=$(tput bold)$(tput setaf 196)
+	local cyan=$(tput setaf 6)
+	local reset=$(tput sgr0)
+
 	log_wait_msg "${red}Iniciando git push ${reset}"
 	#export GIT_CURL_VERBOSE=1
 	sudo git config --global http.postBuffer 524288000
