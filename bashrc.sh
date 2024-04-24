@@ -1902,7 +1902,7 @@ make_cpp_file() {
 	[[ ${prg: -4} != ".cpp" ]] && prg+=".cpp"
 	log_wait_msg "Aguarde, criando arquivo $prg on $PWD"
 	cat >"$prg" <<-EOF
-		// $prg, Copyright (c) 2023 Vilmar Catafesta <vcatafesta@gmail.com>
+		// $prg, Copyright (c) 1991,2024 Vilmar Catafesta <vcatafesta@gmail.com>
 		#ifdef __cplusplus
 		   #include <iostream>  // std::cout
 		   #include <filesystem>
@@ -2030,7 +2030,7 @@ make_c_file() {
 	[[ ${prg: -2} != ".c" ]] && prg+=".c"
 	log_wait_msg "Criando arquivo $prg on $PWD"
 	if cat >"$prg" <<-EOF; then
-		// $prg, Copyright (c) 2023 Vilmar Catafesta <vcatafesta@gmail.com>
+		// $prg, Copyright (c) 1991,2024 Vilmar Catafesta <vcatafesta@gmail.com>
 		#include <stdio.h>
 		#include <stdlib.h>
 		#include <stdbool.h>
@@ -2068,7 +2068,7 @@ make_c_file() {
 		#define HIDDEN       "\033[8m"
 
 		int main(int argc, char **argv) {
-		   printf("%s$prg, Copyright (c) 2023 Vilmar Catafesta <vcatafesta@gmail.com>%s\n\n", RED, RESET);
+		   printf("%s$prg, Copyright (c) 1991,2024 Vilmar Catafesta <vcatafesta@gmail.com>%s\n\n", RED, RESET);
 		   printf("%sHello World\n%s", GREEN, RESET);
 		   return EXIT_SUCCESS;
 		}

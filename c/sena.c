@@ -36,7 +36,7 @@
 #define HIDDEN       "\033[8m"
 
 int main(int argc, char **argv) {
-	printf("%ssena.c, Copyright (c) 2023 Vilmar Catafesta <vcatafesta@gmail.com>%s\n\n", RED, RESET);
+	printf("%ssena.c, Copyright (c) 2024 Vilmar Catafesta <vcatafesta@gmail.com>%s\n\n", RED, RESET);
 
 	int jogadas = 60;
 	int jogos = 6;
