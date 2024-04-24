@@ -985,7 +985,7 @@ filerun() { chili-qemurunfile $@; }
 fr() { chili-qemurunfile "$@"; }
 fru() { chili-qemurunuefi $@; }
 frr() { chili-qemurunimg $@; }
-fileinfo() { qemu-img info $@; }
+fileinfo() { for i in "${@}"; do qemu-img info $i; echo; done; }
 export -f fr
 export -f chili-qemurunfile
 
@@ -2010,7 +2010,11 @@ make_cpp_file() {
 mkc() { make_c_file "$@"; }
 
 make_c_file() {
-	prg='main.c'
+	local red=$(tput bold)$(tput setaf 196)
+	local cyan=$(tput setaf 6)
+	local reset=$(tput sgr0)
+	local prg='main.c'
+
 	if test $# -ge 1; then
 		prg="$1"
 		[[ -e "$prg" ]] && {
@@ -2024,8 +2028,8 @@ make_c_file() {
 	fi
 	#! [[ "$prg" =~ ".c" ]]   && prg+=".c"
 	[[ ${prg: -2} != ".c" ]] && prg+=".c"
-	log_wait_msg "Aguarde, criando arquivo $prg on $PWD"
-	cat >"$prg" <<-EOF
+	log_wait_msg "Criando arquivo $prg on $PWD"
+	if cat >"$prg" <<-EOF; then
 		// $prg, Copyright (c) 2023 Vilmar Catafesta <vcatafesta@gmail.com>
 		#include <stdio.h>
 		#include <stdlib.h>
@@ -2070,10 +2074,10 @@ make_c_file() {
 		}
 
 	EOF
-	#echo $(replicate '=' 80)
-	#cat $prg
-	#echo $(replicate '=' 80)
-	log_success_msg2 "Feito! ${cyan}'$prg' ${reset}criado on $PWD"
+		log_success_msg2 "Feito! ${cyan}'$prg' ${reset}criado on $PWD"
+	else
+		msg "${red}Erro. Abortando..."
+	fi
 }
 
 MK() {
