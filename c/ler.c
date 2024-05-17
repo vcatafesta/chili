@@ -1,11 +1,11 @@
-// sena.c, Copyright (c) 1991,2024 Vilmar Catafesta <vcatafesta@gmail.com>
+// ler.c, Copyright (c) 1991,2024 Vilmar Catafesta <vcatafesta@gmail.com>
 #include <stdio.h>
-#include <stdlib.h> 	// srand rand
-#include <time.h> 		// time
+#include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 
@@ -35,43 +35,36 @@
 #define INVERTED     "\033[7m"
 #define HIDDEN       "\033[8m"
 
+
 int main(int argc, char **argv) {
-	printf("%ssena.c, Copyright (c) 1991,2024 Vilmar Catafesta <vcatafesta@gmail.com>%s\n\n", RED, RESET);
+	printf("%sler.c, Copyright (c) 1991,2024 Vilmar Catafesta <vcatafesta@gmail.com>%s\n", YELLOW, RESET);
 
-	int jogadas = 20;
-	int jogos = 6;
-	int array_jogos[jogos];
+	const int BUFFER = 1024;
+	char *cfilename = "arquivo.txt";
+	char conteudo[BUFFER];
+	int line = 1;
 
-	srand(time(NULL));
+	if(access(cfilename, R_OK)) {
+		fprintf(stderr, "Erro: arquivo 'arquivo.txt' não existe\n");
+      return EXIT_FAILURE;
+	}
 
-	for(size_t x = 0; x < jogadas; x++) {
-		for(size_t i = 0; i < jogos; i++) {
-			array_jogos[i] = ( rand() % 60 + 1);
 
-			for(size_t j = 0; j < i; j++) {
-				if(array_jogos[i] == array_jogos[j]) {
-					i--;
-					break;
-				}
+	if(argc > 1) {
+		if(strcmp(argv[1], "-n") == 0 || strcmp(argv[1], "--number") == 0) {
+			FILE *file = fopen("arquivo.txt", "r");
+			while(fgets(conteudo, BUFFER, file)) {
+				printf("%d %s", line, conteudo);
+				line++;
 			}
+			fclose(file);
+		} else {
+			printf("%sErro nos parâmetros\n%s", RED, RESET);
+			return 1;
 		}
-
-		for(size_t i = 0; i < jogos; ++i) {
-			for(size_t j = i + 1; j < jogos; ++j) {
-				if(array_jogos[i] > array_jogos[j]) {
-					int temp = array_jogos[i];
-					array_jogos[i] = array_jogos[j];
-					array_jogos[j] = temp;
-				}
-			}
-		}
-
-
-		for(size_t i = 0; i < jogos; i++) {
-			printf("%s%02d%s ", CYAN, array_jogos[i], RESET);
-		}
-
-		putchar('\n');
+	}else {
+	   fprintf( stderr,"use: ler <filename>\n" );
+      return EXIT_FAILURE;
 	}
 
 	return EXIT_SUCCESS;
