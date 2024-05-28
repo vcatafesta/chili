@@ -439,14 +439,18 @@ if [[ $# > 0 ]]; then
 		random_mac_net1=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
 		#	echo $random_mac_net0
 		#	echo $random_mac_net1
-		qemu_options+=(-netdev bridge,id=net0,smb=$HOME)
+		#	qemu_options+=(-netdev bridge,id=net0,smb=$HOME)
+		qemu_options+=(-netdev bridge,id=net0)
 		qemu_options+=(-device e1000,netdev=net0)
 		#		qemu_options+=(-netdev bridge,id=net0,br=$iface_bridge)
 		#		qemu_options+=(-device e1000,netdev=net0,mac=$random_mac_net0)
 		#		qemu_options+=(-netdev bridge,id=net1,br=$iface_bridge)
 		#		qemu_options+=(-device e1000,netdev=net1,mac=$random_mac_net1)
+		qemu_options+=(-netdev tap,ifname=tap0,script=no,downscript=no,id=mynet0)
+		qemu_options+=(-device virtio-net-device,netdev=mynet0,mac=92:7b:15:c3:4d:ec)
 	else
-		qemu_options+=(-netdev user,id=net0,smb=$HOME)
+		#	qemu_options+=(-netdev user,id=net0,smb=$HOME)
+		qemu_options+=(-netdev user,id=net0)
 		qemu_options+=(-device e1000,netdev=net0)
 	fi
 	if ((drive)); then

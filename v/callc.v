@@ -8,14 +8,22 @@ struct C.sqlite3_stmt {
 }
 
 type FnSqlite3Callback = fn (voidptr, int, &&char, &&char) int
+
 fn C.sqlite3_open(&char, &&C.sqlite3) int
+
 fn C.sqlite3_close(&C.sqlite3) int
+
 fn C.sqlite3_column_int(stmt &C.sqlite3_stmt, n int) int
+
 // ... you can also just define the type of parameter and leave out the C. prefix
 fn C.sqlite3_prepare_v2(&C.sqlite3, &char, int, &&C.sqlite3_stmt, &&char) int
+
 fn C.sqlite3_step(&C.sqlite3_stmt)
+
 fn C.sqlite3_finalize(&C.sqlite3_stmt)
+
 fn C.sqlite3_exec(db &C.sqlite3, sql &char, cb FnSqlite3Callback, cb_arg voidptr, emsg &&char) int
+
 fn C.sqlite3_free(voidptr)
 
 fn my_callback(arg voidptr, howmany int, cvalues &&char, cnames &&char) int {
