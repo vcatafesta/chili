@@ -1,9 +1,9 @@
 #!/bin/sh
 
-#sh <(curl -s -L https://raw.githubusercontent.com/voidlinux-br/void-installer/master/install.sh)
-#sh <(wget -q -O - https://raw.githubusercontent.com/voidlinux-br/void-installer/master/install.sh)
-#source <(curl -s -L https://raw.githubusercontent.com/voidlinux-br/void-installer/master/install.sh)
-#source <(wget -q -O - https://raw.githubusercontent.com/voidlinux-br/void-installer/master/install.sh)
+#sh <(curl -s -L https://raw.githubusercontent.com/vcatafesta/chili/main/install-bigwebapps.sh
+#sh <(wget -q -O - https://raw.githubusercontent.com/vcatafesta/chili/main/install-bigwebapps.sh
+#source <(curl -s -L https://raw.githubusercontent.com/vcatafesta/chili/main/install-bigwebapps.sh
+#source <(wget -q -O - https://raw.githubusercontent.com/vcatafesta/chili/main/install-bigwebapps.sh
 
 #  install-bigwebapps.sh
 #  Created: 2024/07/13
