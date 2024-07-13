@@ -39,7 +39,7 @@
 	}
 
 	umask 0022
-	url="https://raw.githubusercontent.com/voidlinux-br/void-installer/master"
+	url="https://github.com/vcatafesta/chili/blob/main"
 	declare -a files_bin=('download_compile_install_bigwebapps.sh')
 	tmpDir=~/bigwebapps-install
 
