@@ -49,13 +49,13 @@ cd /tmp/biglinux-webapps || exit 1
 rm PKGBUILD
 wget https://raw.githubusercontent.com/vcatafesta/biglinux-webapps/main/pkgbuild/PKGBUILD
 sed -i 's|url="https://github.com/biglinux/biglinux-webapps"|url="https://github.com/vcatafesta/biglinux-webapps"|'g PKGBUILD
-makepkg --force --install --syncdeps --noconfirm
+makepkg --force --install --clean --cleanbuild --syncdeps --noconfirm
 
 mkdir -p /tmp/bigcontrolcenter-base
 cd /tmp/bigcontrolcenter-base || exit 1
 rm PKGBUILD
 wget https://raw.githubusercontent.com/vcatafesta/bigcontrolcenter-base/main/pkgbuild/PKGBUILD
 sed -i 's|url="https://github.com/biglinux/$pkgname"|url="https://github.com/vcatafesta/$pkgname"|'g PKGBUILD
-makepkg --force --install --syncdeps --noconfirm
+makepkg --force --install --clean --cleanbuild --syncdeps --noconfirm
 
 
