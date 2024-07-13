@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+#
+#  chili-makebash
+#  Created: 2024/04/16
+#  Altered: 2024/04/16
+#
+#  Copyright (c) 2022-2024, Vilmar Catafesta <vcatafesta@gmail.com>
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
+#export LANGUAGE=pt_BR
+export TEXTDOMAINDIR=/usr/share/locale
+export TEXTDOMAIN=chili-makebash
+
+#debug
+export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
+#set -x
+#set -e
+shopt -s extglob
+
+#system
+readonly APP="${0##*/}"
+readonly _VERSION_='1.0.0-20240416'
+readonly distro=$(uname -n)
+readonly DEPENDENCIES=(grep)
+
+#!/bin/bash
+
+# Função para ler chave de arquivo .ini usando Python
+function read_ini_value() {
+    local filename="$1"
+    local section="$2"
+    local key="$3"
+
+python3 - "$filename" "$section" "$key" <<EOF
+import configparser
+import sys
+
+def read_ini_value(filename, section, key):
+    config = configparser.ConfigParser(allow_no_value=True, delimiters='=')
+    config.optionxform = str  # Preserve case sensitivity
+
+    try:
+        with open(filename, 'r', encoding='utf-8') as file:
+            config.read_file(file)
+
+        if section in config:
+            if key in config[section]:
+                print(config[section][key])
+            else:
+                print(f"Key '{key}' not found in section '{section}'")
+        else:
+            print(f"Section '{section}' not found in '{filename}'")
+    except FileNotFoundError:
+        print(f"File '{filename}' does not exist")
+
+if __name__ == "__main__":
+    if len(sys.argv) != 4:
+        print("Usage: python3 - filename section key")
+        sys.exit(1)
+
+    filename = sys.argv[1]
+    section = sys.argv[2]
+    key = sys.argv[3]
+
+    read_ini_value(filename, section, key)
+EOF
+}
+
+# Função para escrever chave em arquivo .ini usando Python
+function write_ini_value() {
+    local filename="$1"
+    local section="$2"
+    local key="$3"
+    local value="$4"
+
+python3 - "$filename" "$section" "$key" "$value" <<EOF
+import configparser
+import sys
+
+def write_ini_value(filename, section, key, value):
+    config = configparser.ConfigParser(allow_no_value=True, delimiters='=')
+    config.optionxform = str  # Preserve case sensitivity
+
+    try:
+        with open(filename, 'r', encoding='utf-8') as file:
+            config.read_file(file)
+    except FileNotFoundError:
+        pass  # If the file does not exist, we will create it
+
+    if not config.has_section(section):
+        config.add_section(section)
+    
+    config.set(section, key, value)
+    
+    with open(filename, 'w', encoding='utf-8') as configfile:
+        config.write(configfile, space_around_delimiters=False)
+
+if __name__ == "__main__":
+    if len(sys.argv) != 5:
+        print("Usage: python3 - filename section key value")
+        sys.exit(1)
+
+    filename = sys.argv[1]
+    section = sys.argv[2]
+    key = sys.argv[3]
+    value = sys.argv[4]
+
+    write_ini_value(filename, section, key, value)
+EOF
+}
+
+# Exemplo de uso:
+# read_ini_value "config.ini" "Settings" "username"
+# write_ini_value "config.ini" "Settings" "username" "new_value"
+
+# Para ler o valor, use a função read_ini_value
+# Para escrever o valor, use a função write_ini_value
+
+read_ini_value "$@"
+# write_ini_value "$@"
