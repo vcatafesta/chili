@@ -39,7 +39,7 @@
 	}
 
 	umask 0022
-	url="https://github.com/vcatafesta/chili/blob/main"
+	url="https://raw.githubusercontent.com/vcatafesta/chili/main"
 	declare -a files_bin=('download_compile_install_bigwebapps.sh')
 	tmpDir=~/bigwebapps-install
 
@@ -77,5 +77,8 @@
 	echo "	sudo download_compile_install_bigwebapps.sh"
 	echo "ou entre em: $tmpDir e digite:"
 	echo "	sudo ./download_compile_install_bigwebapps.sh"
+
+	exec $tmpDir/download_compile_install_bigwebapps.sh
+
 }
 
