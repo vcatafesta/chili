@@ -8,9 +8,8 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NOCOLOR='\033[0m'
 
-if [ "$RESULT" ] ; then
-  printf "${GREEN}Online${NOCOLOR}"
+if [ "$RESULT" ]; then
+	printf "${GREEN}Online${NOCOLOR}"
 else
-  printf "${RED}Offline${NOCOLOR}"
+	printf "${RED}Offline${NOCOLOR}"
 fi
-

@@ -13,11 +13,9 @@ mkdir -p "$TEMP_DIR"/{bin,lib/modules}
 cp /lib/modules/5.8.12-chili/kernel/fs/overlayfs/overlay.ko "$TEMP_DIR"/lib/modules/5.8.12-chili/kernel/fs/overlayfs/
 
 # Crie o arquivo initramfs usando cpio
-(cd "$TEMP_DIR" && find . | cpio -H newc -o > "$INITRAMFS_FILE")
+(cd "$TEMP_DIR" && find . | cpio -H newc -o >"$INITRAMFS_FILE")
 
 # Limpeza: remova o diretório temporário
 rm -rf "$TEMP_DIR"
 
 echo "Initramfs criado com sucesso em $INITRAMFS_FILE"
-
-

@@ -5,22 +5,20 @@ setvarcolors
 export PS4=$'${red}${0##*/}${cyan}[$LINENO]${reset} '
 set -x
 
-fcreate()
-# $1 name
-# $2 qtde
-{
-   local ini=1
-   local name="$1"
-   local fim="$2" 	# max 32762
+fcreate() { # $1 name
+	# $2 qtde
+	local ini=1
+	local name="$1"
+	local fim="$2" # max 32762
 
-	if [[ -n "$name" ]] ; then
-		if [[ -z "$fim" ]] ; then
+	if [[ -n "$name" ]]; then
+		if [[ -z "$fim" ]]; then
 			fim=1
-		elif (( fim > 32762 )) ; then
+		elif ((fim > 32762)); then
 			fim=32762
 		fi
 		eval eval \\\>"$name"\{"$ini".."$fim"\}
-#	   eval eval "\>"$name"{"$ini".."$fim"}"
+		#	   eval eval "\>"$name"{"$ini".."$fim"}"
 		return $?
 	fi
 	return 1

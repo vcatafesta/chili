@@ -12,4 +12,4 @@ find . -type b,c,d,l,p,f,s -printf '%n %p %P %s %t \n' -fprint ARQ
 
 eval \>arq{a..d}\;
 #find . -size 0 -exec bash -c 'rm {}; echo removi >> arq.log' \;
-find . -size 0 -exec bash -c 'rm {}; echo removi >> arq.log' +;
+find . -size 0 -exec bash -c 'rm {}; echo removi >> arq.log' +

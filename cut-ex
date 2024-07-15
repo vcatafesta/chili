@@ -4,4 +4,3 @@ find /var/cache/pacman/pkg/ | cut -f1- -sd.
 find /var/cache/pacman/pkg/ | cut -f2- -sd.
 find /var/cache/pacman/pkg/ | cut -f3- -sd.
 find /var/cache/pacman/pkg/ | cut -f1- -sd. | sort | uniq -c
-

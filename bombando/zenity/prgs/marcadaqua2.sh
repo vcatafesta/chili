@@ -22,41 +22,39 @@ Brilho=40
 #+ que não aceita --text e por isso temos de criar
 #+ um --title que seja bastante informativo.
 MarDag=$(zenity --file-selection \
-   --title "Seleção do arquivo que será usado como marca d'água") || exit 1
+	--title "Seleção do arquivo que será usado como marca d'água") || exit 1
 
 #  Solicita localização da marca d'água.
 Local=$(zenity --list --radiolist --title "$Titulo" --height 360 \
-    --text "Informe em qual local das imagens se situará a marca d'água"           \
-    --column Marque --column "" --column Localização --hide-column 2               \
-    false center centro                       \
-    true southeast "Canto inferior direito"   \
-    false south "Centro inferior"             \
-    false southwest "Canto inferior esquerdo" \
-    false west "Centro esqueda"               \
-    false northwest "Canto superior esquerdo" \
-    false north "Centro superior"             \
-    false northeast "Canto superior direito"  \
-    false east "Centro direito"               \
-    false tile "lado-a-lado sobre a imagem") || exit 1
+	--text "Informe em qual local das imagens se situará a marca d'água" \
+	--column Marque --column "" --column Localização --hide-column 2 \
+	false center centro \
+	true southeast "Canto inferior direito" \
+	false south "Centro inferior" \
+	false southwest "Canto inferior esquerdo" \
+	false west "Centro esqueda" \
+	false northwest "Canto superior esquerdo" \
+	false north "Centro superior" \
+	false northeast "Canto superior direito" \
+	false east "Centro direito" \
+	false tile "lado-a-lado sobre a imagem") || exit 1
 
 #  Preparando $Local para fazer tile ("azulejar")
 #+ ou receber local da marca d'água
 [[ $Local == 'tile' ]] && Local=--tile || Local='--gravity '$Local
 
-
 IFS='
-'   # Somente o <ENTER> como separador entre campos
+' # Somente o <ENTER> como separador entre campos
 i=0
-TotArqs=$(echo "$NAUTILUS_SCRIPT_SELECTED_FILE_PATHS" | wc -l) 
-#  No for a seguir um echo numérico atualiza 
-#+ a barra de progresso e um echo seguido de um 
+TotArqs=$(echo "$NAUTILUS_SCRIPT_SELECTED_FILE_PATHS" | wc -l)
+#  No for a seguir um echo numérico atualiza
+#+ a barra de progresso e um echo seguido de um
 #+ jogo-da-velha (#) atualiza o texto do cabeçalho.
 #+ Agora a mágica do ImageMagick junto com o nautilus e com o zenity
-for Arq in $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS
-do 
-    echo $((++i * 100 / $TotArqs))
-    echo "# Redimensionando $(basename $Arq)" 
-    composite "$MarDag" -watermark $Brilho $Local "$Arq" "$Arq"
+for Arq in $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS; do
+	echo $((++i * 100 / $TotArqs))
+	echo "# Redimensionando $(basename $Arq)"
+	composite "$MarDag" -watermark $Brilho $Local "$Arq" "$Arq"
 done | zenity --progress \ 
-    --title "Aguarde. Em redimensionamento" \ 
-    --auto-close --auto-kill
+--title "Aguarde. Em redimensionamento" \ 
+--auto-close --auto-kill

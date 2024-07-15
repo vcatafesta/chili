@@ -11,31 +11,31 @@ readonly URL='https://disease.sh/v3/covid-19/countries?sort=deaths'
 readonly DEPENDENCIES=(curl jq termgraph)
 
 checkDependencies() {
-  local errorFound=0
+	local errorFound=0
 
-  for command in "${DEPENDENCIES[@]}"; do
-    if ! which "$command" > /dev/null ; then
-      echo "ERRO: não encontrei o comando '$command'" >&2
-      errorFound=1
-    fi
-  done
+	for command in "${DEPENDENCIES[@]}"; do
+		if ! which "$command" >/dev/null; then
+			echo "ERRO: não encontrei o comando '$command'" >&2
+			errorFound=1
+		fi
+	done
 
-  if [[ "$errorFound" != "0" ]]; then
-    echo "---IMPOSSÍVEL CONTINUAR---"
-    echo "Esse script precisa dos comandos listados acima" >&2
-    echo "Instale-os e/ou verifique se estão no seu \$PATH" >&2
-    exit 1
-  fi
+	if [[ "$errorFound" != "0" ]]; then
+		echo "---IMPOSSÍVEL CONTINUAR---"
+		echo "Esse script precisa dos comandos listados acima" >&2
+		echo "Instale-os e/ou verifique se estão no seu \$PATH" >&2
+		exit 1
+	fi
 }
 
 main() {
-  checkDependencies
+	checkDependencies
 
-  curl --silent "$URL" \
-    | jq '.[:10][] | "\(.country);\(.deaths)"' \
-    | tr -d \" \
-    | termgraph --delim ';' --title 'Países com maior casos de mortes por COVID-19' \
-    | sed 's/\.00$//'
+	curl --silent "$URL" |
+		jq '.[:10][] | "\(.country);\(.deaths)"' |
+		tr -d \" |
+		termgraph --delim ';' --title 'Países com maior casos de mortes por COVID-19' |
+		sed 's/\.00$//'
 }
 
 main "$@"

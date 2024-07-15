@@ -1,9 +1,8 @@
 #!/bin/bash
 
-if [ "$1" == "" ] 
-then
-    echo "usage: $0 URL"
-    exit 0
+if [ "$1" == "" ]; then
+	echo "usage: $0 URL"
+	exit 0
 fi
 
 URL=$1
@@ -20,6 +19,6 @@ HEADERS="HTTP/1.1\r\nHost: $HOST\r\nConnection: close\r\nContent-Length: 0\r\n\r
 
 exec 3<>/dev/tcp/$HOST/$PORT
 echo -e "GET $URLPATH$FILENAME $HEADERS" >&3
-cat <&3 > $SAVENAME
+cat <&3 >$SAVENAME
 
 sed -i $SAVENAME -e '1,/^\r$/d'

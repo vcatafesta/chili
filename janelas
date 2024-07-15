@@ -45,4 +45,3 @@ readonly distro=$(uname -n)
 readonly DEPENDENCIES=(grep)
 
 qdbus6 org.kde.KWin /KWin org.kde.KWin.showDebugConsole
-

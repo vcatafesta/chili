@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 file='/tmp/packages-installed-split.csv'
-:<<'comment'
+: <<'comment'
 mapfile -t public_pkg_main < "$file"
 main7=${public_pkg_main[@]%,*}; a7=${public_pkg_main[@]##*,}
 main6=${main7[@]%,*}; a6=${main7[@]##*,}
@@ -31,11 +31,10 @@ exit
    public_pkg_site=($(awk -F$SEP '{ print $8 }' $file_list_packages))
 comment
 
-func()
-{
+func() {
 	indice=$1
 	linha=$2
-#	final+=(${linha%%,*})
+	#	final+=(${linha%%,*})
 	final+=($linha)
 }
 
@@ -52,34 +51,34 @@ func()
 #echo ${a[@]}
 
 showRecord() {
-    printf 'key[%d] = %d, %d\n' "$1" "${vals[@]:keys[$1]*2:2}"
+	printf 'key[%d] = %d, %d\n' "$1" "${vals[@]:keys[$1]*2:2}"
 }
 
 parseRecords() {
-    trap 'unset -f _f' RETURN
-    _f() {
-        local x
-        IFS=: read -r _ x
-        ((keys[x]=n++))
-    }
-    local n
+	trap 'unset -f _f' RETURN
+	_f() {
+		local x
+		IFS=: read -r _ x
+		((keys[x] = n++))
+	}
+	local n
 
-    _f
-    mapfile -tc2 -C _f "$1"
-    eval "$1"'=("${'"$1"'[@]##*:}")' # Return the array with some modification
+	_f
+	mapfile -tc2 -C _f "$1"
+	eval "$1"'=("${'"$1"'[@]##*:}")' # Return the array with some modification
 }
 
 main() {
-    local -a keys vals
-    parseRecords vals
-    showRecord "$1"
+	local -a keys vals
+	parseRecords vals
+	showRecord "$1"
 }
 
 main "$1" <<-"EOF"
-fabric.domain:123
-routex:1
-routey:2
-fabric.domain:321
-routex:6
-routey:4
+	fabric.domain:123
+	routex:1
+	routey:2
+	fabric.domain:321
+	routex:6
+	routey:4
 EOF

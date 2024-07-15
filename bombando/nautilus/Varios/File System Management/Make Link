@@ -16,11 +16,9 @@ DESKTOP="$HOME/.gnome-desktop"
 IFS="
 "
 
-for FILE in $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS
-do
-    if [ ! -e "$DESKTOP/`basename $FILE`" ]
-    then
-        ln -s "$FILE" $DESKTOP
-    fi
+for FILE in $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS; do
+	    if [ ! -e "$DESKTOP/$(basename $FILE)" ]
+	    then
+	        ln -s "$FILE" $DESKTOP
+	    fi
 done
-

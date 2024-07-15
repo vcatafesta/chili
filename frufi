@@ -40,10 +40,10 @@ run_image() {
 			local ovmf_code='/usr/share/edk2-ovmf/x64/OVMF_CODE.fd'
 		fi
 		qemu_options+=(
-#			'-drive' "if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=on"
+			#			'-drive' "if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=on"
 			'-drive' "if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=off"
 			'-drive' "if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd"
-#			'-global' "driver=cfi.pflash01,property=secure,value=${secure_boot}"
+			#			'-global' "driver=cfi.pflash01,property=secure,value=${secure_boot}"
 		)
 	fi
 
@@ -64,25 +64,25 @@ run_image() {
 
 do_qemu1() {
 	sudo qemu-system-x86_64 \
-        -drive file=$image,if=none,id=disk1 \
-        -device ide-hd,drive=disk1,bootindex=1 \
-        -hda /archlive/qemu/hda.img \
-        -hdb /archlive/qemu/hdb.img \
-        -hdc /archlive/qemu/hdc.img \
-        -hdd /archlive/qemu/hdd.img \
-        -m "size=8128,slots=0,maxmem=$((8128*1024*1024))" \
-        -name archiso,process=archiso_0 \
-        -device virtio-scsi-pci,id=scsi0 \
-        -audiodev pa,id=snd0,server=localhost \
-        -device ich9-intel-hda \
-        -device hda-output,audiodev=snd0 \
-        -device virtio-net-pci,romfile=,netdev=net0 -netdev user,id=net0,hostfwd=tcp::60022-:22 \
-        -global ICH9-LPC.disable_s3=1 \
-        -machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0 \
-        "${qemu_options[@]}" \
-         -smp 36 \
-         -enable-kvm \
-        -serial stdio
+		-drive file=$image,if=none,id=disk1 \
+		-device ide-hd,drive=disk1,bootindex=1 \
+		-hda /archlive/qemu/hda.img \
+		-hdb /archlive/qemu/hdb.img \
+		-hdc /archlive/qemu/hdc.img \
+		-hdd /archlive/qemu/hdd.img \
+		-m "size=8128,slots=0,maxmem=$((8128 * 1024 * 1024))" \
+		-name archiso,process=archiso_0 \
+		-device virtio-scsi-pci,id=scsi0 \
+		-audiodev pa,id=snd0,server=localhost \
+		-device ich9-intel-hda \
+		-device hda-output,audiodev=snd0 \
+		-device virtio-net-pci,romfile=,netdev=net0 -netdev user,id=net0,hostfwd=tcp::60022-:22 \
+		-global ICH9-LPC.disable_s3=1 \
+		-machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0 \
+		"${qemu_options[@]}" \
+		-smp 36 \
+		-enable-kvm \
+		-serial stdio
 }
 #        -display "${display}" \
 #	     -vga std \
@@ -94,22 +94,22 @@ do_qemu() {
 
 	copy_ovmf_vars
 	sudo qemu-system-x86_64 \
-	  -cpu host \
-	  -m 8192 \
-	  -drive file=${image},if=virtio,format=raw \
-	  -device virtio-net-pci,netdev=net0 -netdev user,id=net0 \
-	  -vga virtio \
-	  -display gtk \
-	  -device intel-hda \
-  	  -audiodev pa,id=snd0,server=localhost \
-	  -device hda-output,audiodev=snd0 \
-	  -net nic,model=virtio \
-	  -net user \
-	  -drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=off \
-	  -drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd \
-     -enable-kvm \
-	  -smp 36 \
-     -serial stdio
+		-cpu host \
+		-m 8192 \
+		-drive file=${image},if=virtio,format=raw \
+		-device virtio-net-pci,netdev=net0 -netdev user,id=net0 \
+		-vga virtio \
+		-display gtk \
+		-device intel-hda \
+		-audiodev pa,id=snd0,server=localhost \
+		-device hda-output,audiodev=snd0 \
+		-net nic,model=virtio \
+		-net user \
+		-drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=off \
+		-drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd \
+		-enable-kvm \
+		-smp 36 \
+		-serial stdio
 }
 
 image=$1

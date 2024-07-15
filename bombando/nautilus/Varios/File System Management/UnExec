@@ -17,17 +17,12 @@ MODE="644"
 IFS="
 "
 
-for ARG in $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS
-do
-	if [ -d "$ARG" ]
-	then
-		for FILE in `find "$ARG" -type f`
-		do
+for ARG in $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS; do
+	if [ -d "$ARG" ]; then
+		for FILE in $(find "$ARG" -type f); do
 			chmod -f $MODE "$FILE"
 		done
-	elif [ -f "$ARG" ]
-	then
+	elif [ -f "$ARG" ]; then
 		chmod -f $MODE "$ARG"
 	fi
 done
-

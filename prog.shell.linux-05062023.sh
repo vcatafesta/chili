@@ -13,12 +13,10 @@
 # {//} Equivalente ao dirname
 
 seq 3 -1 1 |
-	parallel sleep {}\;\
-	echo {} {#} {%}
+	parallel sleep {}\; echo {} {#} {%}
 
 ls *.jpg |
 	parallel --dryrun convert {} {.}.png
 
 find . -type f \( -name \*.csv -o -name \*.txt \) 2>&- |
 	parallel gzip
-

@@ -1,9 +1,8 @@
 #!/bin/bash
-for ((int=1; int<=100; int++))
-do
-    echo $int	# Atualizou percentagem
-    sleep 0.03
-done | zenity --progress                        \
-    --auto-close                                \
-    --text="Contando vagarosamente de 1 a 100"  \
-    --title="Exemplo de Progress"
+for ((int = 1; int <= 100; int++)); do
+	echo $int # Atualizou percentagem
+	sleep 0.03
+done | zenity --progress \
+	--auto-close \
+	--text="Contando vagarosamente de 1 a 100" \
+	--title="Exemplo de Progress"

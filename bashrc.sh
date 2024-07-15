@@ -239,9 +239,12 @@ function sh_bashrc_configure() {
 	alias ver="lsb_release -a"
 	alias cdg="cd /github/ChiliOS/packages/core"
 	alias cdr="cd /github/ChiliOS/repo"
-	alias cdb="cd /github/ChiliOS/packages"
 	alias cdp="cd /var/cache/pacman/pkg"
 	alias cda="cd /var/cache/fetch/archives"
+	alias cda="cd $HOME/.local/share/applications/"
+	alias cdb="cd /github/bcc/"
+	alias dira="dir $HOME/.local/share/applications/"
+	alias dirb="dir /github/bcc/"
 	alias cds="cd /var/cache/fetch/search"
 	alias cdd="cd /var/cache/fetch/desc"
 	alias cdl="cd /github/sci/linux"
@@ -293,7 +296,7 @@ function sh_bashrc_configure() {
 	alias ip="ip -c"
 
 	#	alias rmake="hbmk2 -info"
-	alias rmake="[ ! -d /tmp/.hbmk ] && { mkdir -p /tmp/.hbmk; }; hbmk2 -info -comp=gcc   -cpp=yes -jobs=36"
+	alias rmake="[ ! -d /tmp/.hbmk ] && { mkdir -p /tmp/.hbmk; }; hbmk2 -debug -info -comp=gcc -cpp=yes -jobs=36"
 	#	alias rmake="hbmk2 -info -comp=clang -cpp=yes -jobs=36"
 
 	#man colour
@@ -412,6 +415,13 @@ function tolower() { find . -name "*$1*" | while read; do mv "$REPLY" "${REPLY,,
 function toupper() { find . -name "*$1*" | while read; do mv "$REPLY" "${REPLY^^}"; done; }
 function path()    { echo -e "${PATH//:/\\n}"; }
 function load()    { source $1; }
+function toSpaceFixer() {
+	local novo_nome
+	find . -name "*$1*" | while read; do
+		novo_nome="${REPLY// /_}"
+		mv "$REPLY" "$novo_nome"
+	done;
+}
 
 #function xdel() {
 #   [ "$1" ] || {
@@ -464,26 +474,39 @@ function xdel() {
 
 function lsa() {
 	echo -n ${orange}
-#	ls -l | awk '/^-/ {print $9}'
-#	ls -la | grep -v "^d"
+	#	ls -l | awk '/^-/ {print $9}'
+	#	ls -la | grep -v "^d"
 	find . -type f -exec basename {} \;
 }
 
 function lsd() {
-#	printf "%s\n" "${orange}"
-#	ls -l | awk '/^d/ {print $9}'
-#	ls -la | grep "^d"
+	#	printf "%s\n" "${orange}"
+	#	ls -l | awk '/^d/ {print $9}'
+	#	ls -la | grep "^d"
 	ls -ld --color=always -- */ 2>/dev/null
-#	find . -type d
-#    printf "%s" "${reset}"
+	#	find . -type d
+	#	printf "%s" "${reset}"
+}
+
+function chili-session() {
+	local _session="$XDG_SESSION_TYPE"
+	echo "Desktop: $XDG_CURRENT_DESKTOP"
+	echo "Session: $_session"
 }
 
 function setkeyboardX() {
-	session=$(loginctl show-session "$XDG_SESSION_ID" -p Type --value)
-	case $session in
-	x11) setxkbmap -model abnt2 -layout br -variant abnt2 ;;
-	wayland) loginctl show-session "$XDG_SESSION_ID" -p Type --value ;;
+#	local _session=$(loginctl show-session "$XDG_SESSION_ID" -p Type --value)
+	local _session="$XDG_SESSION_TYPE"
+	echo "Desktop: $XDG_CURRENT_DESKTOP"
+	echo "Session: $_session"
+
+	case $_session in
+		x11) setxkbmap -model abnt2 -layout br -variant abnt2 ;;
+		wayland) sudo localectl set-x11-keymap br abnt2 ;;
 	esac
+#	sudo setxkbmap -query
+#	sudo setxkbmap -print -verbose 10
+	localectl status
 }
 
 function rsync-fs() {
@@ -935,6 +958,7 @@ EOF
 #qemu-system-x86_64 -monitor stdio -smp "$(nproc)" -k pt-br -machine accel=kvm -m 4096 -cdrom "$1" -hda "/home/vcatafesta/.aqemu/Linux_2.6_HDA.img" -boot once=d,menu=off -net nic -net user -rtc base=localtime -name "runcdrom"
 chili-qemurunfile() {
 	if test $# -ge 1; then
+		[[ -f "$1" ]] || { echo "Imagem $1 não encontrada!"; return; }
 		sudo qemu-system-x86_64 \
 			-monitor stdio \
 			-no-fd-bootchk \
@@ -1403,6 +1427,7 @@ function gbare() {
 export -f gbare
 
 function gpush() {
+	local cabec="$1"  # ex: weblib.sh: sh_webapp_backup - Erro ao fazer o backup
 	local red=$(tput bold)$(tput setaf 196)
 	local cyan=$(tput setaf 6)
 	local reset=$(tput sgr0)
@@ -1413,7 +1438,11 @@ function gpush() {
 	sudo git config credential.helper store
 	#	sudo git add .
 	git add -A
-	git commit -m "$(date) Vilmar Catafesta (vcatafesta@gmail.com)"
+	if [[ -z "$cabec" ]]; then
+		git commit -m "$(date) Vilmar Catafesta (vcatafesta@gmail.com)"
+	else
+		git commit -m "$cabec"
+	fi
 	git push --force
 }
 export -f gpush
@@ -1740,15 +1769,15 @@ makebash() {
 		}
 	fi
 	log_msg "Criando script bash ${cyan}'$prg'${reset} on $PWD"
-	cat >"$prg" <<"EOF"
+	cat >"$prg" <<-EOF
 #!/usr/bin/env bash
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  chili-makebash
-#  Created: 2024/04/16
-#  Altered: 2024/04/16
+#  $prg
+#  Created: $(date +'%Y/%m/%d') - $(date +'%H:%M')
+#  Altered: $(date +'%Y/%m/%d') - $(date +'%H:%M')
 #
-#  Copyright (c) 2022-2024, Vilmar Catafesta <vcatafesta@gmail.com>
+#  Copyright (c) $(date +'%Y')-$(date +'%Y'), Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -1792,7 +1821,7 @@ EOF
 	#echo $(replicate '=' 80)
 	#cat $prg
 	#echo $(replicate '=' 80)
-	log_msg "Feito! arquivo ${cyan}'$prg' ${reset}criado on $PWD"
+	log_msg "Feito! arquivo ${red}'$prg' ${reset}criado on $PWD"
 }
 
 mkcobol() {

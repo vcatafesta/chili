@@ -156,42 +156,42 @@ sh_setEnvironment() {
 	#DATE_RE='(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})'	#2022-03-16 14:22
 	#RE_ALIEN='.+\.zst$|.+\.xz$' 						#VC
 	#RE_ALIEN='.+\.[zst|xz]+$'  						#VC
-#	export RE_ALIEN='.+\.(zst|xz)$' #Bagatini/Blau
+	#	export RE_ALIEN='.+\.(zst|xz)$' #Bagatini/Blau
 	export RE_ALIEN='.+\.(zst|xz|xbps)$' #Bagatini/Blau
 
 	if [[ "$PKG_EXT" = "chi.zst" ]]; then
 		export CHILI_OS=$true
-#		export PKG_RE='^([a-z-]+)(-)([0-9\\.]+)(-)([0-9])(-)(.*)(.chi.zst)$'
+		#		export PKG_RE='^([a-z-]+)(-)([0-9\\.]+)(-)([0-9])(-)(.*)(.chi.zst)$'
 		export PKG_RE='([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)-(([0-9]+(\.[0-9]+)*)(-([0-9]+))?)-([^.]+).*'
-#		export PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 				#SOEN
-#		export PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)(\.chi\.zst)$' 			#VC
-#		export PKG_RE_LYNX='(?!.*\/)(.*)-(([^-]+)-([0-9]+))-([^.]+)(\.chi\.zst)$'
-#		export PKG_RE_FULL1='(?:")(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst(?="><a)'
-#		export PKG_RE_FULL2='(?:e">)(.+)-(([^-]+)-([0-9]+))-([^.]+)(\.chi)(\.zst)(?=<\/a)'
-#		export GREP_RE='.chi\.zst\"'
-		export GREP_RE_LITESPEED='href="/[^"]*\.chi\.zst"' 						#litespeed
-		export GREP_RE_NGINX='href="[^"]*\.chi\.zst"'  							#nginx
-#		export SED_RE='^.+>(.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).*[ ]([0-9]+k?)(.*)'
-#		export SED_RE='^.+="(.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)".+<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).+[ ]([0-9]+k?)(.*)'
+		#		export PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst' 				#SOEN
+		#		export PKG_RE='(.+)-(([^-]+)-([0-9]+))-([^.]+)(\.chi\.zst)$' 			#VC
+		#		export PKG_RE_LYNX='(?!.*\/)(.*)-(([^-]+)-([0-9]+))-([^.]+)(\.chi\.zst)$'
+		#		export PKG_RE_FULL1='(?:")(.+)-(([^-]+)-([0-9]+))-([^.]+)\.chi\.zst(?="><a)'
+		#		export PKG_RE_FULL2='(?:e">)(.+)-(([^-]+)-([0-9]+))-([^.]+)(\.chi)(\.zst)(?=<\/a)'
+		#		export GREP_RE='.chi\.zst\"'
+		export GREP_RE_LITESPEED='href="/[^"]*\.chi\.zst"' #litespeed
+		export GREP_RE_NGINX='href="[^"]*\.chi\.zst"'      #nginx
+		#		export SED_RE='^.+>(.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).*[ ]([0-9]+k?)(.*)'
+		#		export SED_RE='^.+="(.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)".+<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).+[ ]([0-9]+k?)(.*)'
 		export SED_RE='^.*["|\/](.+)-(([^-]+)-([0-9]+))-([^.]+)(.chi.zst)".+<.a>.*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2}).+[ ]([0-9]+k?).*'
-#		export FETCH_RE='-[^a-z]+?[^-]+-[0-9].*-'
-#		export FETCH_RE='-[^-]+-[0-9]-'
-#		export FETCH_RE='-[^-]+[0-9]+-[^.]+.chi.*'
-#		export FETCH_RE='-[^-]+[0-9]+[^.]*\.chi[^.]*\.zst'
+		#		export FETCH_RE='-[^a-z]+?[^-]+-[0-9].*-'
+		#		export FETCH_RE='-[^-]+-[0-9]-'
+		#		export FETCH_RE='-[^-]+[0-9]+-[^.]+.chi.*'
+		#		export FETCH_RE='-[^-]+[0-9]+[^.]*\.chi[^.]*\.zst'
 		export FETCH_RE='-[^-]+[0-9]+[^.]*.chi[^.]*.zst'
 	else
 		export CHILI_OS=$false
-#		export PKG_RE='(.+)-(([^-]+)-([0-9]))\.mz' 								#VC
-		export PKG_RE='(.+)-(([^-]+)-([0-9]+))\.mz' 							#SOEN
-#		export PKG_RE_LYNX='(?!.*\/)(.+)-(([^-]+)-([0-9]))\.mz$'				#VC
-#		export GREP_RE='.mz\"'
-#		export GREP_RE='.mz$'
-		export GREP_RE_LITESPEED='href="/[^"]*\.mz"' 							#litespeed
-		export GREP_RE_NGINX='href="[^"]*\.mz"'  								#nginx
-#		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9]+[.]?[0-9]+.?).+'
-#		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9]?[.]?[0-9]?.?).+'
-#		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9.])+([BKMGT]?)\b'
-#		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9.]+)+([BKMGT])?'
+		#		export PKG_RE='(.+)-(([^-]+)-([0-9]))\.mz' 								#VC
+		export PKG_RE='(.+)-(([^-]+)-([0-9]+))\.mz' #SOEN
+		#		export PKG_RE_LYNX='(?!.*\/)(.+)-(([^-]+)-([0-9]))\.mz$'				#VC
+		#		export GREP_RE='.mz\"'
+		#		export GREP_RE='.mz$'
+		export GREP_RE_LITESPEED='href="/[^"]*\.mz"' #litespeed
+		export GREP_RE_NGINX='href="[^"]*\.mz"'      #nginx
+		#		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9]+[.]?[0-9]+.?).+'
+		#		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9]?[.]?[0-9]?.?).+'
+		#		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9.])+([BKMGT]?)\b'
+		#		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+([0-9.]+)+([BKMGT])?'
 		export SED_RE='^.+href="(.+)-(([^-]+)-([0-9]))()(\.mz\b)".+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}-[A-z]{3}-[0-9]{4})[ ]([0-9]{2}:[0-9]{2})[ ]+(([0-9]+)([BKMGT]?)).+'
 		export FETCH_RE='-[^-]+-[0-9]+[.]'
 	fi
@@ -227,7 +227,7 @@ function sh_diahora() {
 
 function string_alltrim() {
 	local cstr=$1
-	echo "${cstr//[$'\t\r\n ']}"
+	echo "${cstr//[$'\t\r\n ']/}"
 }
 export -f string_alltrim
 
@@ -1361,19 +1361,22 @@ process_folder_update() {
 	mapfile -t SizePkgInFolders < <(sed -nE "s/$SED_RE/\9/p" "$FOLDER_TEMP")
 
 	if [[ "$Folders" != "meta" ]]; then
-#		if ((CHILI_OS)); then
-#			mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2-\5\6/p" "$FOLDER_TEMP")
-#		else
-#			mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2\6/p" "$FOLDER_TEMP")
-#		fi
+		#		if ((CHILI_OS)); then
+		#			mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2-\5\6/p" "$FOLDER_TEMP")
+		#		else
+		#			mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2\6/p" "$FOLDER_TEMP")
+		#		fi
 
 		case ${HTTP_SERVER} in
 		Apache | nginx)
-			mapfile -t PackagesInFolders < <(grep -oP $GREP_RE_NGINX $FOLDER_TEMP | sed 's/href="//; s/"$//');;		# dom mar 24 01:33:15 -04 2024
+			mapfile -t PackagesInFolders < <(grep -oP $GREP_RE_NGINX $FOLDER_TEMP | sed 's/href="//; s/"$//')
+			;; # dom mar 24 01:33:15 -04 2024
 		LiteSpeed | cloudflare)
-			mapfile -t PackagesInFolders < <(grep -oP $GREP_RE_LITESPEED $FOLDER_TEMP | sed 's/.*\///; s/"$//');;	# dom mar 24 01:33:15 -04 2024
+			mapfile -t PackagesInFolders < <(grep -oP $GREP_RE_LITESPEED $FOLDER_TEMP | sed 's/.*\///; s/"$//')
+			;; # dom mar 24 01:33:15 -04 2024
 		GitHub.com)
-			mapfile -t PackagesInFolders < <(grep -oP $GREP_RE_NGINX $FOLDER_TEMP | sed 's/href="//; s/"$//');;		# dom mar 24 01:33:15 -04 2024
+			mapfile -t PackagesInFolders < <(grep -oP $GREP_RE_NGINX $FOLDER_TEMP | sed 's/href="//; s/"$//')
+			;; # dom mar 24 01:33:15 -04 2024
 		esac
 		count=0
 		for pkgInFolder in "${PackagesInFolders[@]}"; do
@@ -1413,10 +1416,10 @@ function sh_update() {
 	local nfilesInstalled
 	local nfilesInCache
 	local oldverbose=$verbose
-	local dw=(	"$CACHEDIR_SEARCH/$PACKAGES_SPLIT"
-				"$CACHEDIR_SEARCH/$FOLDERS_METAPACKAGES"
-				"$CACHEDIR_SEARCH/$METAPACKAGES"
-			)
+	local dw=("$CACHEDIR_SEARCH/$PACKAGES_SPLIT"
+		"$CACHEDIR_SEARCH/$FOLDERS_METAPACKAGES"
+		"$CACHEDIR_SEARCH/$METAPACKAGES"
+	)
 
 	verbose=2
 	if ((LSELF)); then
@@ -1448,53 +1451,53 @@ function sh_update() {
 	log_msg "${pink}Synchronizing package databases from: ${white}$SITE/packages/${reset}"
 	#	spinner & SPINNERPID=$!
 
-#	for Folders in "${FoldersInRepo[@]}"; do
-#		FOLDER_TEMP="$TMP_DIR_FOLDERS/$Folders"
-#		if response=$(curl --compressed -k -s -w "%{http_code}\n" --url "$SITE/packages/$Folders/" --output "$FOLDER_TEMP") && [[ "$response" = "404" ]]; then
-#			log_msg $ERR_ERROR "${red}error${reset}: $response Not Found ${orange}==> $SITE/packages/$Folders/"
-#			exit 1
-#		fi
-#		mapfile -t SizePkgInFolders < <(sed -nE "s/$SED_RE/\9/p" "$FOLDER_TEMP")
-#
-#		if [[ "$Folders" != "meta" ]]; then
-#			if ((CHILI_OS)); then
-#				mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2-\5\6/p" "$FOLDER_TEMP")
-#			else
-#				mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2\6/p" "$FOLDER_TEMP")
-#			fi
-#			count=0
-#			for pkgInFolder in "${PackagesInFolders[@]}"; do
-#				if [[ -n "$pkgInFolder" ]]; then
-#					sh_splitpkg "$pkgInFolder"
-#					pkg_size=$(human_to_bytes "${SizePkgInFolders[$count]}")
-#					echo "${aPKGSPLIT[$PKG_BASE]}$SEP${aPKGSPLIT[$PKG_VERSION]}$SEP${aPKGSPLIT[$PKG_BUILD]}$SEP${aPKGSPLIT[$PKG_FULLNAME]}$SEP${Folders}/${pkgInFolder}$SEP${aPKGSPLIT[$PKG_BASE_VERSION]}$SEP${pkg_size}" >>"$CACHEDIR_SEARCH/$PACKAGES_SPLIT"
-#					((++count))
-#				fi
-#			done
-#		else
-#			mapfile -t MetaPkgInFolders <<<"$(lynx -listonly -nonumbers -dump "$SITE/packages/$Folders/" | grep -Po '.*\/\K.*')"
-#			count=0
-#			for MetaInFolder in "${MetaPkgInFolders[@]}"; do
-#				echo "$Folders/$MetaInFolder" >>"$FOLDERS_METAPACKAGES"
-#				echo "$MetaInFolder" >>"$METAPACKAGES"
-#				((++count))
-#			done
-#		fi
-#		log_msg "${yellow}Updating... ${red}$(strzero "$count" 5)${blue} packages in ${yellow}$Folders"
-#	done
+	#	for Folders in "${FoldersInRepo[@]}"; do
+	#		FOLDER_TEMP="$TMP_DIR_FOLDERS/$Folders"
+	#		if response=$(curl --compressed -k -s -w "%{http_code}\n" --url "$SITE/packages/$Folders/" --output "$FOLDER_TEMP") && [[ "$response" = "404" ]]; then
+	#			log_msg $ERR_ERROR "${red}error${reset}: $response Not Found ${orange}==> $SITE/packages/$Folders/"
+	#			exit 1
+	#		fi
+	#		mapfile -t SizePkgInFolders < <(sed -nE "s/$SED_RE/\9/p" "$FOLDER_TEMP")
+	#
+	#		if [[ "$Folders" != "meta" ]]; then
+	#			if ((CHILI_OS)); then
+	#				mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2-\5\6/p" "$FOLDER_TEMP")
+	#			else
+	#				mapfile -t PackagesInFolders < <(sed -nE "s/$SED_RE/\1-\2\6/p" "$FOLDER_TEMP")
+	#			fi
+	#			count=0
+	#			for pkgInFolder in "${PackagesInFolders[@]}"; do
+	#				if [[ -n "$pkgInFolder" ]]; then
+	#					sh_splitpkg "$pkgInFolder"
+	#					pkg_size=$(human_to_bytes "${SizePkgInFolders[$count]}")
+	#					echo "${aPKGSPLIT[$PKG_BASE]}$SEP${aPKGSPLIT[$PKG_VERSION]}$SEP${aPKGSPLIT[$PKG_BUILD]}$SEP${aPKGSPLIT[$PKG_FULLNAME]}$SEP${Folders}/${pkgInFolder}$SEP${aPKGSPLIT[$PKG_BASE_VERSION]}$SEP${pkg_size}" >>"$CACHEDIR_SEARCH/$PACKAGES_SPLIT"
+	#					((++count))
+	#				fi
+	#			done
+	#		else
+	#			mapfile -t MetaPkgInFolders <<<"$(lynx -listonly -nonumbers -dump "$SITE/packages/$Folders/" | grep -Po '.*\/\K.*')"
+	#			count=0
+	#			for MetaInFolder in "${MetaPkgInFolders[@]}"; do
+	#				echo "$Folders/$MetaInFolder" >>"$FOLDERS_METAPACKAGES"
+	#				echo "$MetaInFolder" >>"$METAPACKAGES"
+	#				((++count))
+	#			done
+	#		fi
+	#		log_msg "${yellow}Updating... ${red}$(strzero "$count" 5)${blue} packages in ${yellow}$Folders"
+	#	done
 
 	# Lista de pastas a serem processadas (substitua pela sua própria lista)
 	#dw=("folder1" "folder2" "folder3")
 
 	# Processa as pastas em paralelo
 	parallel --gnu --jobs $MAX_PARALLEL process_folder_update ::: "${FoldersInRepo[@]}" &
-#	for Folders in "${FoldersInRepo[@]}"; do
-#		parallel --gnu --jobs $MAX_PARALLEL process_folder_update ::: "$Folders" &
-#	done
+	#	for Folders in "${FoldersInRepo[@]}"; do
+	#		parallel --gnu --jobs $MAX_PARALLEL process_folder_update ::: "$Folders" &
+	#	done
 	wait
 	#{ kill $SPINNERPID; wait $SPINNERPID 2>/dev/null; echo ;}
 
-#	LLIST=$true ; sh_recreatefilepackagesinstalled
+	#	LLIST=$true ; sh_recreatefilepackagesinstalled
 	verbose=$oldverbose
 	sh_pkgincache
 	sh_cleaning
@@ -2068,7 +2071,7 @@ sh_splitpkg() {
 		pkg_arch="${BASH_REMATCH[5]}"
 		pkg_base_version="${pkg_base}-${pkg_version_build}"
 
-: <<'comment'
+		: <<'comment'
 		#debug "$pkg_base \n $pkg_version_build \n $pkg_version \n $pkg_build \n $pkg_arch \n $pkg_base_version \n"
 		debug   " file            : $file\n" \
 		        "pkg_folder_dir  : $pkg_folder_dir\n" \
@@ -2487,7 +2490,7 @@ sh_recreateFilesFromArch() {
 		for item in "${aCache[@]}"; do
 			[[ "$item" == "ALPM_DB_VERSION" || $item == ',,,,' || -z $item ]] && continue
 			[[ -f "$CACHEDIR_DESC/$item.desc" ]] || printf '' >|"$CACHEDIR_DESC/$item.desc"
-			grep -v '^%FILES%' $arch_path/$item/files > $CACHEDIR_LIST/$item.list
+			grep -v '^%FILES%' $arch_path/$item/files >$CACHEDIR_LIST/$item.list
 		done
 		return 0
 	fi
@@ -2512,7 +2515,7 @@ function sh_recreatefilepackagesinstalled() {
 	((verbose > 1)) && log_msg "$(gettext "Lendo listas de pacotes instalados")"
 
 	printf '' >|"$CACHEDIR_SEARCH/$PACKAGES_INSTALLED_SPLIT"
-#	mapfile -t aCache < <(printf '%s\n' "$CACHEDIR_DESC"/* | awk -F "$re" 'list[$1]++')
+	#	mapfile -t aCache < <(printf '%s\n' "$CACHEDIR_DESC"/* | awk -F "$re" 'list[$1]++')
 	mapfile -t aCache < <(printf '%s\n' "$CACHEDIR_LIST"/* | awk -F "$re" 'list[$1]++')
 	#2	aCache=$(grep -Po "$re" < <(printf '%s\n' $CACHEDIR_DESC/*) )
 	#1	aCache=$(find $CACHEDIR_DESC/ -regextype posix-egrep -regex "$re" -type f | sort -V)
@@ -2553,7 +2556,7 @@ function sh_recreatefilepackagesinstalled() {
 		lresult=0
 	fi
 	log_msg "${yellow}($nfiles) ${cyan}$(gettext "pacotes encontrados")"
-	log_msg "${yellow}($((nfiles-pkgNumber))) ${cyan}$(gettext "pacotes antigos removidos manualmente?")"
+	log_msg "${yellow}($((nfiles - pkgNumber))) ${cyan}$(gettext "pacotes antigos removidos manualmente?")"
 	log_msg "${yellow}($pkgNumber) ${cyan}$(gettext "pacotes instalados/listados - (usar -Sr --verbose ou --table para listar)")"
 	return $lresult
 }
@@ -2794,7 +2797,7 @@ sh_manage_scripts_and_archives() {
 		return 1
 	fi
 
-#	pushd "/tmp/info/" >/dev/null 2>&- || return 1
+	#	pushd "/tmp/info/" >/dev/null 2>&- || return 1
 	if ! mv '/tmp/info/desc' "$CACHEDIR_DESC/${packname}.desc"; then
 		log_msg $ERR_ERROR "ERROR! could not move desc to /${dir_desc}/${packname}.desc"
 		return 1
@@ -2820,7 +2823,7 @@ sh_manage_scripts_and_archives() {
 		fi
 	fi
 
-#	popd >/dev/null 2>&- || return 1
+	#	popd >/dev/null 2>&- || return 1
 	[[ -d "/info/" ]] && rm -r "/info/"
 	[[ -d '/tmp/info/' ]] && rm -r "/tmp/info/"
 	[[ -e '/.BUILDINFO' ]] && rm "/.BUILDINFO"
@@ -3092,7 +3095,6 @@ sh_create_pkg() {
 	evaluate_retval
 }
 
-
 sh_generate_desc() {
 	local i
 	local DESC_PACKNAME=$1
@@ -3101,8 +3103,8 @@ sh_generate_desc() {
 	local field_pkgver=$4
 	local field_pkgrel=$5
 
-	DESC="${DESC//\'/}"							# Remove todas as ocorrências de apóstrofe
-	public_pkgdesc="${public_pkgdesc//\'/}"		# Remove todas as ocorrências de apóstrofe
+	DESC="${DESC//\'/}"                     # Remove todas as ocorrências de apóstrofe
+	public_pkgdesc="${public_pkgdesc//\'/}" # Remove todas as ocorrências de apóstrofe
 	[[ ! -d "info" ]] && mkdir info >/dev/null 2>&-
 
 	if [ -e info/desc ]; then
@@ -3119,14 +3121,14 @@ sh_generate_desc() {
 			fi
 		fi
 	fi
-	[[ -z "$SIZE"    ]] && SIZE=$(sizeof_du .)
+	[[ -z "$SIZE" ]] && SIZE=$(sizeof_du .)
 	[[ -z "$public_url" ]] && public_url="$URL"
 	[[ -z "$public_pkgdesc" ]] && public_pkgdesc="$DESC"
 	[[ -z "$public_license" ]] && public_license="$LICENSE"
-	[[ -z "$public_arch"    ]] && public_arch="$ARCH"
-	[[ -z "$public_source"  ]] && public_source=""
-	[[ -z "$public_validpgpkeys"  ]] && public_validpgpkeys=""
-	[[ -z "$public_sha256sums"  ]] && public_sha256sums=""
+	[[ -z "$public_arch" ]] && public_arch="$ARCH"
+	[[ -z "$public_source" ]] && public_source=""
+	[[ -z "$public_validpgpkeys" ]] && public_validpgpkeys=""
+	[[ -z "$public_sha256sums" ]] && public_sha256sums=""
 
 	cat >"info/desc" <<-EOF
 		######################################################################
@@ -3200,11 +3202,11 @@ sh_generatepkg() {
 		[[ -z "$field_build" ]] && field_build="$DESC_BUILD"
 		[[ -z "$DESC" ]] && DESC="$field_pkgname-$field_version"
 
-#		debug	"pkgname: $field_pkgname\n" \
-#				"version: $field_version\n" \
-#				"build:   $field_build\n" \
-#				"pkgver:  ${field_pkgver::-2}\n" \
-#				"pkgrel:  $field_pkgrel"
+		#		debug	"pkgname: $field_pkgname\n" \
+		#				"version: $field_version\n" \
+		#				"build:   $field_build\n" \
+		#				"pkgver:  ${field_pkgver::-2}\n" \
+		#				"pkgrel:  $field_pkgrel"
 
 		sh_generate_desc \
 			"$field_pkgname" \
@@ -3226,7 +3228,7 @@ sh_createpkg() {
 	for s in "${param[@]}"; do pkg="$s"; done
 	[[ -z "$pkg" ]] && pkg=$(echo "$PWD" | sed 's/\// /g' | awk '{print $NF}')
 	((verbose >= 1)) && {
-	((++ncount))
+		((++ncount))
 		log_msg "$(fmt) Building package $pkg"
 	}
 
@@ -3236,14 +3238,14 @@ sh_createpkg() {
 	sh_verify_on "$pkg" || exit 1
 	sh_create_pkg "$pkg" || exit 1
 	((verbose >= 1)) && {
-	((++ncount))
+		((++ncount))
 		log_msg "$(fmt) Generating package ${yellow}$pkg"
 	}
 }
 
 function sh_getextensao {
 	local arquivo="$1"
-	local extensao="${arquivo##*.}"	# Extrair a extensão do arquivo
+	local extensao="${arquivo##*.}" # Extrair a extensão do arquivo
 
 	echo $extensao
 }
@@ -3312,24 +3314,25 @@ function sh_alienpkg_exec() {
 	if ((ntotalpkg)); then # package found?
 		for package in ${pkg[@]}; do
 			ncount=0
-			pkgtar=${package##*/}          #remove diretorio deixando somente nome do pacote
+			pkgtar=${package##*/} #remove diretorio deixando somente nome do pacote
 			extensao=$(sh_getextensao "${pkgtar}")
 
 			case $extensao in
-			zst)            pkgtar=${pkgtar%%.pkg.tar.zst};;	#remove .tar.zst ext
-			xz)		        pkgtar=${pkgtar%%.pkg.tar.xz};; 	#remove .tar.xz ext;;
-			pkg.tar.zst) 	pkgtar=${pkgtar%%.pkg.tar.zst};;	#remove .tar.zst ext
-			pkg.tar.xz)		pkgtar=${pkgtar%%.pkg.tar.xz};; 	#remove .tar.xz ext;;
-			spkg.tar.xz)	pkgtar=${pkgtar%%.spkg.tar.xz};;	#remove .tar.xz ext from venom
-			xbps)			pkgtar=${pkgtar%%.xbps}             #remove .xbps from void
-			                pkgtar=${pkgtar/_/-}
-			                ;;
+			zst) pkgtar=${pkgtar%%.pkg.tar.zst} ;;         #remove .tar.zst ext
+			xz) pkgtar=${pkgtar%%.pkg.tar.xz} ;;           #remove .tar.xz ext;;
+			pkg.tar.zst) pkgtar=${pkgtar%%.pkg.tar.zst} ;; #remove .tar.zst ext
+			pkg.tar.xz) pkgtar=${pkgtar%%.pkg.tar.xz} ;;   #remove .tar.xz ext;;
+			spkg.tar.xz) pkgtar=${pkgtar%%.spkg.tar.xz} ;; #remove .tar.xz ext from venom
+			xbps)
+				pkgtar=${pkgtar%%.xbps} #remove .xbps from void
+				pkgtar=${pkgtar/_/-}
+				;;
 			esac
 			! ((CHILI_OS)) && pkgtar=${pkgtar%%-any}
 			! ((CHILI_OS)) && pkgtar=${pkgtar%%-x86_64}
 			! ((CHILI_OS)) && pkgtar=${pkgtar%%.x86_64} # void
-			cPacoteSemExt=${pkgtar%%.*}       # https://elmord.org/blog/?entry=20121227-manipulando-strings-bash
-			cPacoteSemExt=${cPacoteSemExt%-*} # https://elmord.org/blog/?entry=20121227-manipulando-strings-bash
+			cPacoteSemExt=${pkgtar%%.*}                 # https://elmord.org/blog/?entry=20121227-manipulando-strings-bash
+			cPacoteSemExt=${cPacoteSemExt%-*}           # https://elmord.org/blog/?entry=20121227-manipulando-strings-bash
 
 			if ! ((LFORCELOCAL)); then
 				firstletter=${pkgtar::1}
@@ -3367,8 +3370,8 @@ function sh_alienpkg_exec() {
 
 			case $extensao in
 			#pacman
-			pkg.tar.zst|pkg.tar.xz)
-				if [[ -e "$destdir/.PKGINFO" ]] ; then
+			pkg.tar.zst | pkg.tar.xz)
+				if [[ -e "$destdir/.PKGINFO" ]]; then
 					sed -i 's/ = /="/g' "$destdir/.PKGINFO" >/dev/null 2>&-
 					sed -i 's/$/"/g' "$destdir/.PKGINFO" >/dev/null 2>&-
 					source "$destdir/.PKGINFO" >/dev/null 2>&-
@@ -3398,9 +3401,9 @@ function sh_alienpkg_exec() {
 					# Ler o conteúdo do arquivo XML
 					xml_content="$(<$destdir/props.plist)"
 					# Extrair os valores das chaves do arquivo XML usando awk
-#					pkgname=$(awk -F'[<>]' '/<key>pkgname<\/key>/{getline; print $3}' "$destdir"/props.plist)
-#					pkgver=$(awk -F'[<>]' '/<key>pkgver<\/key>/{getline; print $3}' "$destdir"/props.plist)
-#					maintainer=$(awk -F'[<>]' '/<key>maintainer<\/key>/{getline; print $3}' "$destdir"/props.plist)
+					#					pkgname=$(awk -F'[<>]' '/<key>pkgname<\/key>/{getline; print $3}' "$destdir"/props.plist)
+					#					pkgver=$(awk -F'[<>]' '/<key>pkgver<\/key>/{getline; print $3}' "$destdir"/props.plist)
+					#					maintainer=$(awk -F'[<>]' '/<key>maintainer<\/key>/{getline; print $3}' "$destdir"/props.plist)
 					export public_pkgdesc=$(awk -F'[<>]' '/<key>short_desc<\/key>/{getline; print $3}' "$fileprops")
 					export public_url=$(awk -F'[<>]' '/<key>homepage<\/key>/{getline; print $3}' "$fileprops")
 					export public_license=$(awk -F'[<>]' '/<key>license<\/key>/{getline; print $3}' "$fileprops")
@@ -3414,7 +3417,7 @@ function sh_alienpkg_exec() {
 			rm -f "$destdir"/.BUILDINFO "$destdir"/.MTREE "$destdir"/.PKGINFO >/dev/null 2>&-
 			rm -f "$destdir"/props.plist "$destdir"/files.plist >/dev/null 2>&-
 
-#			((++ncount))
+			#			((++ncount))
 			sh_createpkg "$pkgtar"
 			((verbose >= 1)) && echo
 			((--ntotalpkg))

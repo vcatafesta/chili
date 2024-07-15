@@ -1,26 +1,26 @@
 #!/bin/bash
 (
-echo 10	# Atualizou percentagem
-sleep 1
-echo "# Atualizando logs do mail"
-sleep 1
-echo 20	# Atualizou percentagem
-sleep 1
-echo "# Resetando os jobs do cron"
-sleep 1
-echo 50	# Atualizou percentagem
-sleep 1
-echo Esta linha será ignorada
-sleep 1
-echo 75	# Atualizou percentagem
-sleep 1
-echo "# Rebutando o sistema"
-sleep 1
-echo 100 # Atualizou percentagem
-sleep 1
-) | zenity --progress                           \
-        --title="Atualização dos logs"          \
-        --text="Pesquisando os logs de mail..." \
-        --percentage=0 || 
-            zenity --error \
-                --text="Atualização cancelada."
+	echo 10 # Atualizou percentagem
+	sleep 1
+	echo "# Atualizando logs do mail"
+	sleep 1
+	echo 20 # Atualizou percentagem
+	sleep 1
+	echo "# Resetando os jobs do cron"
+	sleep 1
+	echo 50 # Atualizou percentagem
+	sleep 1
+	echo Esta linha será ignorada
+	sleep 1
+	echo 75 # Atualizou percentagem
+	sleep 1
+	echo "# Rebutando o sistema"
+	sleep 1
+	echo 100 # Atualizou percentagem
+	sleep 1
+) | zenity --progress \
+	--title="Atualização dos logs" \
+	--text="Pesquisando os logs de mail..." \
+	--percentage=0 ||
+	zenity --error \
+		--text="Atualização cancelada."

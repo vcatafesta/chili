@@ -23,7 +23,7 @@ function sh_insert_data() {
 	local insert_data_sql="INSERT INTO flatpak (package, desc, summary) VALUES ('$package', '$desc_content', '$summary_content');"
 
 	sqlite3 "$DB_NAME" "$insert_data_sql"
-#	echo "Dados inseridos na tabela 'flatpak' para o pacote '$package' com sucesso."
+	#	echo "Dados inseridos na tabela 'flatpak' para o pacote '$package' com sucesso."
 }
 
 # Função para verificar se um pacote já existe na tabela
@@ -54,47 +54,47 @@ function sh_main() {
 	declare -A package_data
 
 	rm -f $OUTPUT_FILE
-	cat >> $OUTPUT_FILE <<-EOF
-#!/usr/bin/env bash
-#shellcheck disable=SC2155,SC2034
-#shellcheck source=/dev/null
+	cat >>$OUTPUT_FILE <<-EOF
+		#!/usr/bin/env bash
+		#shellcheck disable=SC2155,SC2034
+		#shellcheck source=/dev/null
 
-#  hardware-info.sh.htm
-#  Description: Control Center to help usage of BigLinux
-#
-#  Created: 2022/02/28
-#  Altered: 2023/08/19
-#
-#  Copyright (c) 2023-2023, Vilmar Catafesta <vcatafesta@gmail.com>
-#                2022-2023, Bruno Gonçalves <www.biglinux.com.br>
-#                2022-2023, Rafael Ruscher <rruscher@gmail.com>
-#  All rights reserved.
-#
-#  Redistribution and use in source and binary forms, with or without
-#  modification, are permitted provided that the following conditions
-#  are met:
-#  1. Redistributions of source code must retain the above copyright
-#     notice, this list of conditions and the following disclaimer.
-#  2. Redistributions in binary form must reproduce the above copyright
-#     notice, this list of conditions and the following disclaimer in the
-#     documentation and/or other materials provided with the distribution.
-#
-#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+		#  hardware-info.sh.htm
+		#  Description: Control Center to help usage of BigLinux
+		#
+		#  Created: 2022/02/28
+		#  Altered: 2023/08/19
+		#
+		#  Copyright (c) 2023-2023, Vilmar Catafesta <vcatafesta@gmail.com>
+		#                2022-2023, Bruno Gonçalves <www.biglinux.com.br>
+		#                2022-2023, Rafael Ruscher <rruscher@gmail.com>
+		#  All rights reserved.
+		#
+		#  Redistribution and use in source and binary forms, with or without
+		#  modification, are permitted provided that the following conditions
+		#  are met:
+		#  1. Redistributions of source code must retain the above copyright
+		#     notice, this list of conditions and the following disclaimer.
+		#  2. Redistributions in binary form must reproduce the above copyright
+		#     notice, this list of conditions and the following disclaimer in the
+		#     documentation and/or other materials provided with the distribution.
+		#
+		#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR $()AS IS'' AND ANY EXPRESS OR
+		#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+		#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+		#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+		#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+		#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+		#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+		#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+		#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+		#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-APP="${0##*/}"
-_VERSION_="1.0.0-20230819"
-declare -gA package_data
+		APP="${0##*/}"
+		_VERSION_="1.0.0-20230819"
+		declare -gA package_data
 
-EOF
+	EOF
 
 	# Percorrer diretórios base
 	for package_dir in "$base_directory"/*; do
@@ -108,20 +108,20 @@ EOF
 			if [ -f "$desc_file" ] && [ -f "$summary_file" ]; then
 				sh_check_package_exists "$package"
 				if [ $? -eq 1 ]; then
-#					sh_insert_data "$desc_file" "$summary_file" "$package"
-#					echo "$summary_content|$desc_content"
-#					package_data["$package"]="$summary_content|$desc_content"
+					#					sh_insert_data "$desc_file" "$summary_file" "$package"
+					#					echo "$summary_content|$desc_content"
+					#					package_data["$package"]="$summary_content|$desc_content"
 					summary=$(cat $summary_file)
 					desc=$(cat $desc_file)
-#					echo "package_data[$package]='$summary|$desc'" | tee -a "$OUTPUT_FILE"
+					#					echo "package_data[$package]='$summary|$desc'" | tee -a "$OUTPUT_FILE"
 					((++count))
 					echo "$count $package"
-#					echo "package_data[$package]='$summary|$desc'" >> "$OUTPUT_FILE"
-					echo "package_data[$package]=\"\$(gettext \$\"$summary\")|\$(gettext \$\"$desc\")\"" >> "$OUTPUT_FILE"
+					#					echo "package_data[$package]='$summary|$desc'" >> "$OUTPUT_FILE"
+					echo "package_data[$package]=\"\$(gettext \$\"$summary\")|\$(gettext \$\"$desc\")\"" >>"$OUTPUT_FILE"
 
-#					if [[ $count -eq 10 ]]; then
-#						exit
-#					fi
+					#					if [[ $count -eq 10 ]]; then
+					#						exit
+					#					fi
 				else
 					#          echo "Pacote '$package' já existe na tabela. Pular..."
 					:

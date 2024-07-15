@@ -61,5 +61,3 @@ if mkdir -p /tmp/biglinux-webapps-install; then
 		makepkg --force --install --clean --cleanbuild --syncdeps --noconfirm || exit 1
 	fi
 fi
-
-

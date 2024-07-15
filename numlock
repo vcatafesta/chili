@@ -1,7 +1,6 @@
 #!/bin/bash
 # https://wiki.archlinux.org/title/Activating_numlock_on_bootup_(Portugu%C3%AAs)
 
-for tty in /dev/tty{1..6}
-do
-    /usr/bin/setleds -D +num < "$tty";
+for tty in /dev/tty{1..6}; do
+	/usr/bin/setleds -D +num <"$tty"
 done

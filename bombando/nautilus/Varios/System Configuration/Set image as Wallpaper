@@ -17,13 +17,13 @@
 #		gdialog, which is usually included in the gnome-utils package
 #
 # INSTALLATION:	copy to the ~/.gnome2/nautilus-scripts directory
-#		
+#
 # USAGE:	Select the file that you would like to use as your wallpaper
 #		in Nautilus, right click, go to Scripts, and then select this
 #		script. You will then be asked to selest how you would like
 #		the image displayed.
 #
-# VERSION INFO:	
+# VERSION INFO:
 #		0.1 (20020928) - Initial public release
 #
 # COPYRIGHT:	Copyright (C) 2002 Karl Bowden <kbowden@pacificspeed.com.au>

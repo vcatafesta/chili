@@ -3,51 +3,51 @@
 
 # Função para definir as cores usando tput
 definir_cores() {
-    cor_vermelho=$(tput setaf 1)
-    cor_verde=$(tput setaf 2)
-    cor_magenta=$(tput setaf 5)
-    cor_reset=$(tput sgr0)
+	cor_vermelho=$(tput setaf 1)
+	cor_verde=$(tput setaf 2)
+	cor_magenta=$(tput setaf 5)
+	cor_reset=$(tput sgr0)
 }
 
 # Função para mostrar o conteúdo do cabeçalho de arquivos binários
 mostrar_conteudo_cabecalho() {
-    arquivo="$1"
-    tipo_cabecalho="$2"
-    cabecalho=$(xxd -l 16 -p "$arquivo")
-    echo "Cabeçalho do arquivo '$arquivo' (primeiros 16 bytes em hexadecimal):"
-    echo "$cabecalho"
+	arquivo="$1"
+	tipo_cabecalho="$2"
+	cabecalho=$(xxd -l 16 -p "$arquivo")
+	echo "Cabeçalho do arquivo '$arquivo' (primeiros 16 bytes em hexadecimal):"
+	echo "$cabecalho"
 }
 
 # Função para mostrar a lista de arquivos que contêm a string
 mostrar_arquivos_com_string() {
-    diretorio="$1"
-    string="$2"
-    
-    # Utiliza o comando 'find' para encontrar todos os arquivos no diretório fornecido
-    # A opção '-type f' indica que estamos procurando apenas por arquivos, não diretórios
-    find_output=$(find "$diretorio" -type f)
+	diretorio="$1"
+	string="$2"
 
-    # Loop pelos arquivos encontrados para verificar se a string está presente em algum deles
-    arquivos_encontrados=""
-    while IFS= read -r arquivo; do
-        # Usa o comando 'file' para verificar se o arquivo é binário
-        tipo_arquivo=$(file "$arquivo")
-        if [[ $tipo_arquivo == *"executable"* || $tipo_arquivo == *"binary"* ]]; then
-            # O arquivo é binário, então verifica se a string está presente em seu conteúdo
-            grep_output=$(grep -Hn "$string" "$arquivo" 2>/dev/null)
-            if [ -n "$grep_output" ]; then
-                arquivos_encontrados+="$grep_output\n"
-            fi
-        fi
-    done <<< "$find_output"
+	# Utiliza o comando 'find' para encontrar todos os arquivos no diretório fornecido
+	# A opção '-type f' indica que estamos procurando apenas por arquivos, não diretórios
+	find_output=$(find "$diretorio" -type f)
 
-    # Exibe o resultado na tela com cores
-    if [ -n "$arquivos_encontrados" ]; then
-        echo "${cor_verde}Arquivos que contêm a string '$string':${cor_reset}"
-        echo -e "$arquivos_encontrados" | sed -E "s/(${string}.*):/${cor_magenta}\1${cor_reset}/" | sed "s/:\([0-9]\+\):/:${cor_verde}\1${cor_reset}/"
-    else
-        echo "${cor_vermelho}Nenhum arquivo encontrado com a string '$string' em '$diretorio'.${cor_reset}"
-    fi
+	# Loop pelos arquivos encontrados para verificar se a string está presente em algum deles
+	arquivos_encontrados=""
+	while IFS= read -r arquivo; do
+		# Usa o comando 'file' para verificar se o arquivo é binário
+		tipo_arquivo=$(file "$arquivo")
+		if [[ $tipo_arquivo == *"executable"* || $tipo_arquivo == *"binary"* ]]; then
+			# O arquivo é binário, então verifica se a string está presente em seu conteúdo
+			grep_output=$(grep -Hn "$string" "$arquivo" 2>/dev/null)
+			if [ -n "$grep_output" ]; then
+				arquivos_encontrados+="$grep_output\n"
+			fi
+		fi
+	done <<<"$find_output"
+
+	# Exibe o resultado na tela com cores
+	if [ -n "$arquivos_encontrados" ]; then
+		echo "${cor_verde}Arquivos que contêm a string '$string':${cor_reset}"
+		echo -e "$arquivos_encontrados" | sed -E "s/(${string}.*):/${cor_magenta}\1${cor_reset}/" | sed "s/:\([0-9]\+\):/:${cor_verde}\1${cor_reset}/"
+	else
+		echo "${cor_vermelho}Nenhum arquivo encontrado com a string '$string' em '$diretorio'.${cor_reset}"
+	fi
 }
 
 # Definir as cores
@@ -59,60 +59,60 @@ opcao_d=0
 
 # Faz o parsing das opções usando getopts
 while getopts ":c:d:" opcao; do
-    case "$opcao" in
-        c)
-            opcao_c=1
-            tipo_cabecalho="$OPTARG"
-            ;;
-        d)
-            opcao_d=1
-            diretorio="$OPTARG"
-            ;;
-        \?)
-            echo "Opção inválida: -$OPTARG" >&2
-            exit 1
-            ;;
-        :)
-            echo "A opção -$OPTARG requer um argumento." >&2
-            exit 1
-            ;;
-    esac
+	case "$opcao" in
+	c)
+		opcao_c=1
+		tipo_cabecalho="$OPTARG"
+		;;
+	d)
+		opcao_d=1
+		diretorio="$OPTARG"
+		;;
+	\?)
+		echo "Opção inválida: -$OPTARG" >&2
+		exit 1
+		;;
+	:)
+		echo "A opção -$OPTARG requer um argumento." >&2
+		exit 1
+		;;
+	esac
 done
 
 # Verifica se foi fornecida a opção -d
 if [ $opcao_d -eq 1 ]; then
-    # Verifica se o diretório existe
-    if [ ! -d "$diretorio" ]; then
-        echo "O diretório '$diretorio' não existe." >&2
-        exit 1
-    fi
+	# Verifica se o diretório existe
+	if [ ! -d "$diretorio" ]; then
+		echo "O diretório '$diretorio' não existe." >&2
+		exit 1
+	fi
 else
-    diretorio="$PWD"
+	diretorio="$PWD"
 fi
 
 # Verifica se a opção -c foi usada
 if [ $opcao_c -eq 1 ]; then
-    # Se a opção -c foi usada sem o argumento correto, exibe uma mensagem de erro
-    if [ -z "$tipo_cabecalho" ]; then
-        echo "Uso: $0 -c TIPO [diretório]" >&2
-        echo "Opções:" >&2
-        echo "  -c TIPO    Mostrar o conteúdo do cabeçalho de um arquivo binário com o TIPO especificado" >&2
-        echo "  -d DIR     Diretório a ser pesquisado (padrão é o diretório atual)" >&2
-        exit 1
-    fi
+	# Se a opção -c foi usada sem o argumento correto, exibe uma mensagem de erro
+	if [ -z "$tipo_cabecalho" ]; then
+		echo "Uso: $0 -c TIPO [diretório]" >&2
+		echo "Opções:" >&2
+		echo "  -c TIPO    Mostrar o conteúdo do cabeçalho de um arquivo binário com o TIPO especificado" >&2
+		echo "  -d DIR     Diretório a ser pesquisado (padrão é o diretório atual)" >&2
+		exit 1
+	fi
 
-    # Utiliza o comando 'find' para encontrar arquivos compatíveis com o cabeçalho especificado
-    find_output=$(find "$diretorio" -type f -exec file {} \; | grep -i "$tipo_cabecalho" | cut -d: -f1)
+	# Utiliza o comando 'find' para encontrar arquivos compatíveis com o cabeçalho especificado
+	find_output=$(find "$diretorio" -type f -exec file {} \; | grep -i "$tipo_cabecalho" | cut -d: -f1)
 
-    # Exibe o resultado na tela
-    if [ -n "$find_output" ]; then
-        echo "${cor_verde}Arquivos com o cabeçalho '$tipo_cabecalho':${cor_reset}"
-        echo "$find_output" | sed "s/\.\///" # Remove o "./" do início do caminho do arquivo
-    else
-        echo "${cor_vermelho}Nenhum arquivo encontrado com o cabeçalho '$tipo_cabecalho' em '$diretorio'.${cor_reset}"
-    fi
+	# Exibe o resultado na tela
+	if [ -n "$find_output" ]; then
+		echo "${cor_verde}Arquivos com o cabeçalho '$tipo_cabecalho':${cor_reset}"
+		echo "$find_output" | sed "s/\.\///" # Remove o "./" do início do caminho do arquivo
+	else
+		echo "${cor_vermelho}Nenhum arquivo encontrado com o cabeçalho '$tipo_cabecalho' em '$diretorio'.${cor_reset}"
+	fi
 
-    exit 0
+	exit 0
 fi
 
 # Restante dos argumentos após as opções são a string de pesquisa
@@ -121,14 +121,13 @@ string="$1"
 
 # Verifica se a string de pesquisa foi fornecida
 if [ -z "$string" ]; then
-    # Se a opção -c não foi usada e não há string de pesquisa, exibe a mensagem de uso padrão
-    echo "Uso: $0 [opções] [diretório] string" >&2
-    echo "Opções:" >&2
-    echo "  -c TIPO    Mostrar o conteúdo do cabeçalho de um arquivo binário com o TIPO especificado" >&2
-    echo "  -d DIR     Diretório a ser pesquisado (padrão é o diretório atual)" >&2
-    exit 1
+	# Se a opção -c não foi usada e não há string de pesquisa, exibe a mensagem de uso padrão
+	echo "Uso: $0 [opções] [diretório] string" >&2
+	echo "Opções:" >&2
+	echo "  -c TIPO    Mostrar o conteúdo do cabeçalho de um arquivo binário com o TIPO especificado" >&2
+	echo "  -d DIR     Diretório a ser pesquisado (padrão é o diretório atual)" >&2
+	exit 1
 fi
 
 # Se a opção -c não foi usada, mostra a lista de arquivos com a string de pesquisa
 mostrar_arquivos_com_string "$diretorio" "$string"
-

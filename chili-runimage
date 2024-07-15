@@ -50,7 +50,7 @@
 export TEXTDOMAINDIR=/usr/share/locale
 export TEXTDOMAIN=chili-runimage
 #export XDG_RUNTIME_DIR ; XDG_RUNTIME_DIR=/run/user/$(id -g)
-sudo cp ~/.config/pulse/cookie /root/.config/pulse/cookie > /dev/null 2>&-
+sudo cp ~/.config/pulse/cookie /root/.config/pulse/cookie >/dev/null 2>&-
 
 #debug
 export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
@@ -61,7 +61,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 readonly APP="${0##*/}"
 readonly _VERSION_='1.5.01-20240214'
 readonly DEPENDENCIES=('tput' 'printf' 'qemu-system-x86_64' 'gettext')
-readonly PACKAGEDEP=([tput]='ncurses' [printf]='coreutils' [qemu-system-x86_64]='qemu' [gettext]='gettext')
+readonly PACKAGEDEP=([tput]='ncurses' [printf]='coreutils' [qemu - system - x86_64]='qemu' [gettext]='gettext')
 readonly iface_bridge='br0'
 declare xmem='4G'
 #declare audioserver='pulseaudio'
@@ -80,18 +80,18 @@ function cleanup_working_dir {
 }
 
 function sh_debug() {
-    whiptail \
-        --fb \
-        --clear \
-        --backtitle "[debug]$0" \
-        --title "[debug]$0" \
-        --yesno "${*}\n" \
-        0 40
-    result=$?
-    if ((result)); then
-        exit
-    fi
-    return $result
+	whiptail \
+		--fb \
+		--clear \
+		--backtitle "[debug]$0" \
+		--title "[debug]$0" \
+		--yesno "${*}\n" \
+		0 40
+	result=$?
+	if ((result)); then
+		exit
+	fi
+	return $result
 }
 export -f sh_debug
 
@@ -207,27 +207,27 @@ function filerun_bios {
 function filerun_uefi {
 	local ovmf_code
 	local ovmf_vars
-   	local working_dir
-    local cpath_edk2=('/usr/share/edk2/x64' '/usr/share/edk2-ovmf/x64')
-    local cpath
+	local working_dir
+	local cpath_edk2=('/usr/share/edk2/x64' '/usr/share/edk2-ovmf/x64')
+	local cpath
 
 	if test $# -ge 1; then
 		if test -r $1; then
-		    for cpath in "${cpath_edk2[@]}"; do
-	    		if [[ -f "$cpath/OVMF_CODE.fd" ]]; then
-        			ovmf_code="$cpath/OVMF_CODE.fd"
-	        		ovmf_vars="$cpath/OVMF_VARS.fd"
-	    		    break
-    		    fi
-		    done
+			for cpath in "${cpath_edk2[@]}"; do
+				if [[ -f "$cpath/OVMF_CODE.fd" ]]; then
+					ovmf_code="$cpath/OVMF_CODE.fd"
+					ovmf_vars="$cpath/OVMF_VARS.fd"
+					break
+				fi
+			done
 
 			if [[ -z $ovmf_code ]]; then
 				printf 'ERROR: %s\n' "OVMF_VARS.fd $(gettext "não encontrado. Instale o pacote") edk2-ovmf."
 				exit 1
 			fi
 
-            working_dir="$(mktemp -dt chili-runimage-$USER.XXX)"
-			cp -av -- $ovmf_vars "${working_dir}/" > /dev/null 2>&-
+			working_dir="$(mktemp -dt chili-runimage-$USER.XXX)"
+			cp -av -- $ovmf_vars "${working_dir}/" >/dev/null 2>&-
 
 			if [[ ${1: -4} == ".iso" ]]; then
 				# ISO disk
@@ -291,8 +291,8 @@ function sh_set_qemu_common_options {
 	#	qemu_options+=(-device bochs-display)	# ✗ not VGA compatible	✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
 	#	qemu_options+=(-device ramfb)			# ✗ não compatível com VGA ✓ vgabios suporte ✓ Suporte UEFI (QemuRamfbDxe)
 
-    #   qemu_options+=(-vga "$videodevice")
-    qemu_options+=(-device "$videodevice")
+	#   qemu_options+=(-vga "$videodevice")
+	qemu_options+=(-device "$videodevice")
 
 	#display
 	#   qemu_options+=(-display sdl)
@@ -313,7 +313,7 @@ function sh_set_qemu_common_options {
 	else
 		qemu_options+=(-audiodev pipewire,id=snd0)
 	fi
-    qemu_options+=(-device hda-duplex,audiodev=snd0,mixer=off)
+	qemu_options+=(-device hda-duplex,audiodev=snd0,mixer=off)
 	qemu_options+=(-rtc base=localtime,clock=host)
 	qemu_options+=(-device ich9-intel-hda)
 	qemu_options+=(-device hda-output,audiodev=snd0)
@@ -371,7 +371,7 @@ eval set -- "${opts[*]}"
 
 while test ${#opts[*]} -gt 0; do
 	case $1 in
-	-v|--video)
+	-v | --video)
 		if [[ $2 =~ ^(virtio-vga|virtio-gpu-pci|qxl-vga|VGA|cirrus-vga|ati-vga|virtio-gpu-pci|bochs-display|ramfb)?$ ]]; then
 			videodevice="$2"
 			shift
@@ -379,7 +379,7 @@ while test ${#opts[*]} -gt 0; do
 			die "$(gettext "Argumento inválido para -v. Use virtio-vga,virtio-gpu-pci,qxl-vga,VGA,cirrus-vga,ati-vga,virtio-gpu-pci,bochs-display ou ramfb")" >&2
 		fi
 		;;
-	-a|--audio)
+	-a | --audio)
 		if [[ $2 =~ ^(pulseaudio|alsa|pipewire)?$ ]]; then
 			audioserver="$2"
 			shift
@@ -387,7 +387,7 @@ while test ${#opts[*]} -gt 0; do
 			die "$(gettext "Argumento inválido para -a. Use pulseaudio, alsa ou pipewire")" >&2
 		fi
 		;;
-	-d|--drive)
+	-d | --drive)
 		if [[ -n $2 ]]; then
 			drive=1
 			drive_path=$2
@@ -396,16 +396,16 @@ while test ${#opts[*]} -gt 0; do
 			die "$(gettext "Argumento inválido para --drive. Use formato device, como /dev/sdX (por exemplo).")" >&2
 		fi
 		;;
-	-u|--uefi)
+	-u | --uefi)
 		uefi=1
 		;;
-	-b|--bridge)
+	-b | --bridge)
 		bridge=1
 		;;
-	-n|--nocolor)
+	-n | --nocolor)
 		sh_unsetvarcolors
 		;;
-	-m|--memory)
+	-m | --memory)
 		if [[ $2 =~ ^[0-9]+[MG]?$ ]]; then
 			xmem=$2
 			shift
@@ -413,8 +413,8 @@ while test ${#opts[*]} -gt 0; do
 			die "$(gettext "Argumento inválido para -m. Use um formato como 16GB (por exemplo).")" >&2
 		fi
 		;;
-	-V|--version) sh_version ;;
-	-h|--help) sh_usage ;;
+	-V | --version) sh_version ;;
+	-h | --help) sh_usage ;;
 	--)
 		shift
 		break

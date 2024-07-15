@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#   FILE: mail_image -- 
+#   FILE: mail_image --
 # AUTHOR: W. Michael Petullo <mike@flyn.org>
 #   DATE: 31 May 2001
 #
@@ -21,17 +21,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-tmpdir=`mktemp -d /tmp/mail-image-XXXXXX`
+tmpdir=$(mktemp -d /tmp/mail-image-XXXXXX)
 
 for i in $*; do
 	cp $i $tmpdir
-	tmpfile=${tmpdir}/`basename $i`
+	tmpfile=${tmpdir}/$(basename $i)
 	mogrify -geometry '640x480>' $tmpfile
 	attachments=${attachments},${tmpfile}
 done
 
 # Get rid of the leading comma.
-attachments=`echo $attachments | sed 's/^,//g'`
+attachments=$(echo $attachments | sed 's/^,//g')
 
 balsa -a "$attachments"
 

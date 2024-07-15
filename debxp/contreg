@@ -64,30 +64,30 @@ msg_error='Wrong number of arguments!'
 # FUNCTIONS -------------------------------------------------------------------
 
 die() {
-    printf "Contreg $version\n$msg_error\n$msg_usage\n"
-    exit 1
+	printf "Contreg $version\n$msg_error\n$msg_usage\n"
+	exit 1
 }
 
 show_usage() {
-    printf "Contreg $version\n$msg_usage\n"
-    exit 0
+	printf "Contreg $version\n$msg_usage\n"
+	exit 0
 }
 
 show_version() {
-    echo "$msg_version"
-    exit 0
+	echo "$msg_version"
+	exit 0
 }
 
 # By José Almeida
 # https://gist.github.com/joseafga/7926e457175d097f52c3d8c48b78aa30
 args2seconds() {
-    local args=(0 0 "$@")
-    echo $(( ${args[-1]} + ${args[-2]}*60 + ${args[-3]}*3600 ))
+	local args=(0 0 "$@")
+	echo $((${args[-1]} + ${args[-2]} * 60 + ${args[-3]} * 3600))
 }
 
 get_term_size() {
-    term_size=($(tput lines) $(tput cols))
-    term_center=($((${term_size[0]}/2)) $((${term_size[1]}/2-4)))
+	term_size=($(tput lines) $(tput cols))
+	term_center=($((${term_size[0]} / 2)) $((${term_size[1]} / 2 - 4)))
 }
 
 # CHECKS AND INFO -------------------------------------------------------------
@@ -97,8 +97,8 @@ get_term_size() {
 
 # Usage or version options...
 case $1 in
-    h|-h|--help) show_usage;;
-    v|-v|--version) show_version;;
+h | -h | --help) show_usage ;;
+v | -v | --version) show_version ;;
 esac
 
 # CONVERSION ------------------------------------------------------------------
@@ -118,15 +118,15 @@ trap 'get_term_size' 28    # SIGWINCH
 get_term_size
 tput civis
 while [[ $secs -ge 0 ]]; do
-    tput clear
-    tput cup ${term_center[*]}
-    date -d"@$secs" -u '+%H:%M:%S'
-    ((secs--))
-    read -sN1 -t 0.995 action
-    case $action in
-        r) secs=$reset;;
-        p) read -sN1 cont;;
-        s) break;;
-    esac
+	tput clear
+	tput cup ${term_center[*]}
+	date -d"@$secs" -u '+%H:%M:%S'
+	((secs--))
+	read -sN1 -t 0.995 action
+	case $action in
+	r) secs=$reset ;;
+	p) read -sN1 cont ;;
+	s) break ;;
+	esac
 done
 tput cnorm

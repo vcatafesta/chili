@@ -29,4 +29,3 @@ echo "${arr[10]}"
 echo "${arr[11]}"
 echo "${arr[12]}"
 echo "${arr[13]}"
-

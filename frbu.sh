@@ -8,7 +8,7 @@ cleanup_working_dir() {
 
 frbu() {
 	if test $# -ge 1; then
-	   local ovmf_code='/usr/share/edk2-ovmf/x64/OVMF_CODE.fd'
+		local ovmf_code='/usr/share/edk2-ovmf/x64/OVMF_CODE.fd'
 		local working_dir="$(mktemp -dt frv.XXXXXXXXXX)"
 
 		if [[ ! -f '/usr/share/edk2-ovmf/x64/OVMF_VARS.fd' ]]; then
@@ -18,44 +18,44 @@ frbu() {
 		cp -av -- '/usr/share/edk2-ovmf/x64/OVMF_VARS.fd' "${working_dir}/"
 
 		if [[ ${1: -4} == ".iso" ]]; then
-		  # Executar como CD-ROM
+			# Executar como CD-ROM
 			sudo qemu-system-x86_64 \
-			  	-machine accel=kvm \
+				-machine accel=kvm \
 				-cpu host \
-			  	-smp "$(nproc)" \
-		    	-name 'Chili' \
-		    	-m 16G \
-			 	-cdrom $1 \
-			 	-boot d \
-			  	-vga virtio \
-			  	-display gtk \
-	       	-hda /archlive/qemu/hdc.img \
-			  	-device intel-hda -audiodev pa,id=snd0,server=localhost \
-			  	-device hda-output,audiodev=snd0 \
+				-smp "$(nproc)" \
+				-name 'Chili' \
+				-m 16G \
+				-cdrom $1 \
+				-boot d \
+				-vga virtio \
+				-display gtk \
+				-hda /archlive/qemu/hdc.img \
+				-device intel-hda -audiodev pa,id=snd0,server=localhost \
+				-device hda-output,audiodev=snd0 \
 				-net nic,model=virtio -net bridge,br=br0 \
- 				-drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=off \
-				-drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd \
-	        	-machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0 \
-			  	-serial stdio
-		else
-		  # Executar como disco RAW
-			sudo qemu-system-x86_64 \
-			  	-machine accel=kvm \
-				-cpu host \
-			  	-smp "$(nproc)" \
-		    	-name 'Chili' \
-			  	-m 16G \
-			  	-drive file=${1},if=virtio,format=raw \
-			  	-netdev bridge,br=br0,id=net0 \
-				-device virtio-net-pci,netdev=net0 \
-			  	-vga virtio \
-			  	-display gtk \
-	       	-hda /archlive/qemu/hdc.img \
-			  	-device intel-hda -audiodev pa,id=snd0,server=localhost \
-			  	-device hda-output,audiodev=snd0 \
 				-drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=off \
 				-drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd \
-			  	-serial stdio
+				-machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0 \
+				-serial stdio
+		else
+			# Executar como disco RAW
+			sudo qemu-system-x86_64 \
+				-machine accel=kvm \
+				-cpu host \
+				-smp "$(nproc)" \
+				-name 'Chili' \
+				-m 16G \
+				-drive file=${1},if=virtio,format=raw \
+				-netdev bridge,br=br0,id=net0 \
+				-device virtio-net-pci,netdev=net0 \
+				-vga virtio \
+				-display gtk \
+				-hda /archlive/qemu/hdc.img \
+				-device intel-hda -audiodev pa,id=snd0,server=localhost \
+				-device hda-output,audiodev=snd0 \
+				-drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=off \
+				-drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd \
+				-serial stdio
 		fi
 	else
 		cat <<EOF
@@ -63,7 +63,7 @@ usage:
 	frbu file.iso
 	frbu file.img
 EOF
-   fi
+	fi
 }
 
 #			  	-cpu host \

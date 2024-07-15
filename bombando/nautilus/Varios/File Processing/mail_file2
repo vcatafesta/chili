@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#   FILE: mail_file -- 
+#   FILE: mail_file --
 # AUTHOR: W. Michael Petullo <mike@flyn.org>
 #   DATE: 31 May 2001
 #
@@ -21,17 +21,16 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# ============================= shrink_image () =============================== 
-shrink_image()
-{
+# ============================= shrink_image () ===============================
+shrink_image() {
 	cp $1 $tmpdir
-	tmpfile=${tmpdir}/`basename $1`
+	tmpfile=${tmpdir}/$(basename $1)
 	mogrify -geometry '640x480>' $tmpfile
 	echo ${tmpfile}
 }
 
-# ============================= main () ======================================= 
-tmpdir=`mktemp -d /tmp/mail-image-XXXXXX`
+# ============================= main () =======================================
+tmpdir=$(mktemp -d /tmp/mail-image-XXXXXX)
 
 trap 'rm -rf $tmpdir' SIGHUP SIGINT SIGTERM EXIT
 
@@ -41,19 +40,24 @@ if [ -z $MAILER ]; then
 fi
 
 for i in $*; do
-	MAGIC=`file $i`
+	MAGIC=$(file $i)
 	echo $MAGIC
-	case `echo $MAGIC | tr 'A-Z' 'a-z'` in
-		*jpeg* )
-			attachments="${attachments} -a `shrink_image $i`" ;;
-		*gif* )
-			attachments="${attachments} -a `shrink_image $i`" ;;
-		*png* )
-			attachments="${attachments} -a `shrink_image $i`" ;;
-		*tiff* )
-			attachments="${attachments} -a `shrink_image $i`" ;;
-		* )
-			attachments="${attachments} -a $i"
+	case $(echo $MAGIC | tr 'A-Z' 'a-z') in
+	*jpeg*)
+		attachments="${attachments} -a $(shrink_image $i)"
+		;;
+	*gif*)
+		attachments="${attachments} -a $(shrink_image $i)"
+		;;
+	*png*)
+		attachments="${attachments} -a $(shrink_image $i)"
+		;;
+	*tiff*)
+		attachments="${attachments} -a $(shrink_image $i)"
+		;;
+	*)
+		attachments="${attachments} -a $i"
+		;;
 	esac
 done
 

@@ -5,11 +5,11 @@ shopt -s expand_aliases
 palavra='ViewMap'
 
 function converter_para_hifen1 {
-    local palavra="$1"
-    palavra_convertida=$(sed 's/[[:upper:]]/-&/g' <<< "$palavra")
-    palavra_convertida=${palavra_convertida,,}
-    palavra_convertida=${palavra_convertida#-}
-    echo "$palavra_convertida"
+	local palavra="$1"
+	palavra_convertida=$(sed 's/[[:upper:]]/-&/g' <<<"$palavra")
+	palavra_convertida=${palavra_convertida,,}
+	palavra_convertida=${palavra_convertida#-}
+	echo "$palavra_convertida"
 }
 export -f converter_para_hifen1
 
@@ -61,8 +61,8 @@ function vcatafesta1 {
 export -f vcatafesta1
 
 function vcatafesta2 {
-	read word <<< "${1//[[:upper:]]/-&}"
-	read word <<< "${word,,}"
+	read word <<<"${1//[[:upper:]]/-&}"
+	read word <<<"${word,,}"
 	echo "${word#-}"
 }
 export -f vcatafesta2
@@ -93,10 +93,10 @@ hyperfine \
 	--runs 1000 \
 	--ignore-failure \
 	--shell=bash "romeu $palavra" \
-				 "vitor $palavra" \
-				 "converter_para_hifen1 $palavra" \
-				 "converter_para_hifen2 $palavra" \
-				 "converter_para_hifen3 $palavra" \
-				 "vcatafesta1 $palavra" \
-				 "vcatafesta2 $palavra" \
-				 "bagatini $palavra"
+	"vitor $palavra" \
+	"converter_para_hifen1 $palavra" \
+	"converter_para_hifen2 $palavra" \
+	"converter_para_hifen3 $palavra" \
+	"vcatafesta1 $palavra" \
+	"vcatafesta2 $palavra" \
+	"bagatini $palavra"

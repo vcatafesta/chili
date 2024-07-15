@@ -18,19 +18,19 @@ prompt[2]='Jogar novamente? (S/n)'
 msg_quit='Saindo...'
 str_title='JOGO DA ADIVINHAÇÃO'
 
-is_number()	[[ $1 =~ ^[0-9]+$ ]]
-in_range() 	[[ $1 -ge $rmin && $1 -le $rmax ]]
-in_higher()	[[ $1 -gt $sec ]]
-in_lower() 	[[ $1 -lt $sec ]]
-get_secret() (( sec = RANDOM % 100 -1 ))
+is_number() [[ $1 =~ ^[0-9]+$ ]]
+in_range() [[ $1 -ge $rmin && $1 -le $rmax ]]
+in_higher() [[ $1 -gt $sec ]]
+in_lower() [[ $1 -lt $sec ]]
+get_secret() ((sec = RANDOM % 100 - 1))
 
-guess_update(){
+guess_update() {
 	local r
 	local go
 	case $1 in
-		1)	r='↓';;
-		2)	r='↑';;
-		*)	r='-';;
+	1) r='↓' ;;
+	2) r='↑' ;;
+	*) r='-' ;;
 	esac
 	guesses+="$count:$guess$r "
 	((count++))
@@ -38,23 +38,23 @@ guess_update(){
 	read -sN1 -p "${prompt[1]}" go
 }
 
-check_guess(){
+check_guess() {
 	ok=0
 	is_number $1 || return 3
-	in_range $1  || return 4
+	in_range $1 || return 4
 	in_lower $1 && return 1
 	in_higher $1 && return 2
 
 	return $ok
 }
 
-set_game(){
+set_game() {
 	count=1
 	guesses=''
 	get_secret
 }
 
-main(){
+main() {
 
 	set_game
 	while :; do
@@ -62,7 +62,10 @@ main(){
 		printf '%s\n\n' "$str_title"
 		[[ "$guesses" ]] && printf '%s\n\n' "$guesses"
 		read -e -p "${prompt[0]} " guess
-		check_guess "$guess" || { guess_update $?; continue; }
+		check_guess "$guess" || {
+			guess_update $?
+			continue
+		}
 		printf "${msg[$?]}\n" $count
 		printf '\n%s ' "${prompt[2]} "
 		read -sN1 again
@@ -75,4 +78,3 @@ main(){
 main
 
 #vim:set ts=3 sw=3 et:
-

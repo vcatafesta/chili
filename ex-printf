@@ -8,12 +8,12 @@
 # gera subshell
 valor=123.45
 valor=$(printf '%15s\n' $valor)
-tr ' ' '#' <<< $valor
+tr ' ' '#' <<<$valor
 
 #sem subshell
 valor=123.45
 printf -v valor "%15s\n" $valor
-tr ' ' '#' <<< $valor
+tr ' ' '#' <<<$valor
 
 #usando expansão de parametros
 valor=123.45
@@ -28,13 +28,14 @@ echo $mac
 printf '%s\n' ----------------------
 
 #jeito errado 2
-for ((x=0; x<20;x++)); do
+for ((x = 0; x < 20; x++)); do
 	printf '%s' -
-done; echo
+done
+echo
 
 #jeito correto 1
 printf -v espacos %20s
-tr ' ' - <<< "$espacos"
+tr ' ' - <<<"$espacos"
 
 #jeito corretíssimo
 printf -v espacos %20s
@@ -42,42 +43,60 @@ echo ${espacos// /-}
 
 printf "%$(tput cols)s\n" " " | tr " " -
 
-function DrawBox1
-{
-    string="$*";
-    tamanho=${#string}
-    tput setaf 4; printf "\e(0\x6c\e(B"
-    for i in $(seq $tamanho)
-        do printf "\e(0\x71\e(B"
-    done
-    printf "\e(0\x6b\e(B\n"; tput sgr0;
-    tput setaf 4; printf "\e(0\x78\e(B"
-    tput setaf 1; tput bold; echo -n $string; tput sgr0
-    tput setaf 4; printf "\e(0\x78\e(B\n"; tput sgr0;
-    tput setaf 4; printf "\e(0\x6d\e(B"
-    for i in $(seq $tamanho)
-        do printf "\e(0\x71\e(B"
-    done
-    printf "\e(0\x6a\e(B\n"; tput sgr0;
+function DrawBox1 {
+	string="$*"
+	tamanho=${#string}
+	tput setaf 4
+	printf "\e(0\x6c\e(B"
+	for i in $(seq $tamanho); do
+		printf "\e(0\x71\e(B"
+	done
+	printf "\e(0\x6b\e(B\n"
+	tput sgr0
+	tput setaf 4
+	printf "\e(0\x78\e(B"
+	tput setaf 1
+	tput bold
+	echo -n $string
+	tput sgr0
+	tput setaf 4
+	printf "\e(0\x78\e(B\n"
+	tput sgr0
+	tput setaf 4
+	printf "\e(0\x6d\e(B"
+	for i in $(seq $tamanho); do
+		printf "\e(0\x71\e(B"
+	done
+	printf "\e(0\x6a\e(B\n"
+	tput sgr0
 }
 
-function DrawBox
-{
-    string="$*";
-    tamanho=${#string}
-    tput setaf 4; printf "\e(0\x6c\e(B"
-    printf -v linha "%${tamanho}s" ' '
-    printf -v traco "\e(0\x71\e(B"
-    echo -n ${linha// /$traco}
-    printf "\e(0\x6b\e(B\n"; tput sgr0;
-    tput setaf 4; printf "\e(0\x78\e(B"
-    tput setaf 1; tput bold; echo -n $string; tput sgr0
-    tput setaf 4; printf "\e(0\x78\e(B\n"; tput sgr0;
-    tput setaf 4; printf "\e(0\x6d\e(B"
-    printf -v linha "%${tamanho}s" ' '
-    printf -v traco "\e(0\x71\e(B"
-    echo -n ${linha// /$traco}
-    printf "\e(0\x6a\e(B\n"; tput sgr0;
+function DrawBox {
+	string="$*"
+	tamanho=${#string}
+	tput setaf 4
+	printf "\e(0\x6c\e(B"
+	printf -v linha "%${tamanho}s" ' '
+	printf -v traco "\e(0\x71\e(B"
+	echo -n ${linha// /$traco}
+	printf "\e(0\x6b\e(B\n"
+	tput sgr0
+	tput setaf 4
+	printf "\e(0\x78\e(B"
+	tput setaf 1
+	tput bold
+	echo -n $string
+	tput sgr0
+	tput setaf 4
+	printf "\e(0\x78\e(B\n"
+	tput sgr0
+	tput setaf 4
+	printf "\e(0\x6d\e(B"
+	printf -v linha "%${tamanho}s" ' '
+	printf -v traco "\e(0\x71\e(B"
+	echo -n ${linha// /$traco}
+	printf "\e(0\x6a\e(B\n"
+	tput sgr0
 }
 
 DrawBox qualquer frase que caiba na tela

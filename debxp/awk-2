@@ -8,6 +8,4 @@ awk '
 	{
 		for (n=1; n <= NF; n++)
 		print $n
-	}' <<< "$var"
-
-
+	}' <<<"$var"

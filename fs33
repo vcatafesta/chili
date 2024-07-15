@@ -17,7 +17,7 @@ usage() {
 
 # Função para obter a largura do terminal
 obter_largura_terminal() {
- 	tput cols
+	tput cols
 }
 
 # Função para realizar a busca no cabeçalho do arquivo
@@ -42,7 +42,7 @@ buscar_no_conteudo() {
 		while IFS= read -r linha_com_numero; do
 			linha_numero=$(echo "$linha_com_numero" | cut -d: -f1)
 			linha_conteudo=$(echo "$linha_com_numero" | cut -d: -f2-)
-		   formato_saida="${cor_magenta}%-s${cor_branco} : ${cor_verde}%05d${cor_reset}%*s}\n"
+			formato_saida="${cor_magenta}%-s${cor_branco} : ${cor_verde}%05d${cor_reset}%*s}\n"
 			printf "$formato_saida" "$arquivo" "$linha_numero" $largura_coluna1 "$linha_conteudo"
 		done <<<"$resultado_conteudo"
 	fi

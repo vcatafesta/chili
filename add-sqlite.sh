@@ -19,4 +19,3 @@ echo
 sqlite3 "$db" "SELECT * FROM people"
 echo
 sqlite3 "$db" "SELECT rowid, fname,lname,telefone FROM people"
-

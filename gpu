@@ -19,42 +19,39 @@
 
 #all class
 json_data=$(lshw -json -quiet)
-os_host=$(jq -r '.[].children[0].product' <<< "$json_data")
-os_vendor=$(jq -r '.[].children[0].vendor' <<< "$json_data")
-os_version=$(jq -r '.[].children[0].version' <<< "$json_data")
+os_host=$(jq -r '.[].children[0].product' <<<"$json_data")
+os_vendor=$(jq -r '.[].children[0].vendor' <<<"$json_data")
+os_version=$(jq -r '.[].children[0].version' <<<"$json_data")
 echo host="$os_host"
 echo vendor="$os_vendor"
 echo version="$os_version"
 
-gpu_gpu=$(jq -r '.[0].children[0].children[6].children[3].children[0].product' <<< "$json_data")
-gpu_vendor=$(jq -r '.[0].children[0].children[6].children[3].children[0].vendor' <<< "$json_data")
-gpu_desc=$(jq -r '.[0].children[0].children[6].children[3].children[0].description' <<< "$json_data")
-gpu_driver=$(jq -r '.[0].children[0].children[6].children[3].children[0].configuration.driver' <<< "$json_data")
+gpu_gpu=$(jq -r '.[0].children[0].children[6].children[3].children[0].product' <<<"$json_data")
+gpu_vendor=$(jq -r '.[0].children[0].children[6].children[3].children[0].vendor' <<<"$json_data")
+gpu_desc=$(jq -r '.[0].children[0].children[6].children[3].children[0].description' <<<"$json_data")
+gpu_driver=$(jq -r '.[0].children[0].children[6].children[3].children[0].configuration.driver' <<<"$json_data")
 echo $gpu_gpu
 echo $gpu_vendor
 echo $gpu_desc
 echo $gpu_driver
 
-cpu_cpu=$(jq -r '.[0].children[0].children[5].product' <<< "$json_data")
-cpu_bits=$(jq -r '.[0].children[0].children[5].width' <<< "$json_data")
-cpu_cores=$(jq -r '.[0].children[0].children[5].configuration.cores' <<< "$json_data")
-cpu_threads=$(jq -r '.[0].children[0].children[5].configuration.threads' <<< "$json_data")
-cpu_enabledcores=$(jq -r '.[0].children[0].children[5].configuration.enabledcores' <<< "$json_data")
+cpu_cpu=$(jq -r '.[0].children[0].children[5].product' <<<"$json_data")
+cpu_bits=$(jq -r '.[0].children[0].children[5].width' <<<"$json_data")
+cpu_cores=$(jq -r '.[0].children[0].children[5].configuration.cores' <<<"$json_data")
+cpu_threads=$(jq -r '.[0].children[0].children[5].configuration.threads' <<<"$json_data")
+cpu_enabledcores=$(jq -r '.[0].children[0].children[5].configuration.enabledcores' <<<"$json_data")
 echo $cpu_cpu
 echo $cpu_bits
 echo $cpu_cores
 echo $cpu_threads
 echo $cpu_enabledcores
 
-
-bios_bios=$(jq -r '.[0].children[0].children[0].vendor' <<< "$json_data")
-bios_version=$(jq -r '.[0].children[0].children[0].version' <<< "$json_data")
-bios_date=$(jq -r '.[0].children[0].children[0].date' <<< "$json_data")
-bios_uefi=$(jq -r '.[0].children[0].children[0].capabilities.uefi' <<< "$json_data")
+bios_bios=$(jq -r '.[0].children[0].children[0].vendor' <<<"$json_data")
+bios_version=$(jq -r '.[0].children[0].children[0].version' <<<"$json_data")
+bios_date=$(jq -r '.[0].children[0].children[0].date' <<<"$json_data")
+bios_uefi=$(jq -r '.[0].children[0].children[0].capabilities.uefi' <<<"$json_data")
 
 echo $bios_bios
 echo $bios_version
 echo $bios_date
 echo $bios_uefi
-
-

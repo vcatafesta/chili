@@ -105,7 +105,6 @@ len_split_str() {
 	echo "${#anew[@]}"
 }
 
-
 # dispbox "0|0|6" "ID|DESCRICAO DO PRODUTO|ESTOQUE|PREÇO" "5|40|5|11" "$marrom" 'left'
 function dispbox() {
 	local -A Aarray

@@ -8,29 +8,27 @@
 #evite							#prefira
 #echo CADEIA					cmd <<< CADEIA
 
-Sexo=2 ; Nome=Marina; Valor=10.000,00
-cat << FimTxt
-	$( (( Sexo == 1 )) && echo -n Caro Senhor || echo -n Cara Senhora) $Nome
+Sexo=2
+Nome=Marina
+Valor=10.000,00
+cat <<FimTxt
+	$( ((Sexo == 1)) && echo -n Caro Senhor || echo -n Cara Senhora) $Nome
 	Hoje em $(date +%d/%m/%Y) acusamos o recebimento de sua fatura no total de $Valor
 FimTxt
 
-echo "$( (( Sexo==1 )) && echo -n Caro Senhor || echo -n Cara Senhora) $Nome"
+echo "$( ((Sexo == 1)) && echo -n Caro Senhor || echo -n Cara Senhora) $Nome"
 echo Hoje em "$(date +%d/%m/%Y)" acusamos o recebimenot de sua fatura no total de $Valor
 
-
-if [[ -p /dev/stdin ]]
-then
+if [[ -p /dev/stdin ]]; then
 	echo "1-Recebi via stdin:"
 	echo "$(cat -)"
 else
 	echo "[[ -s /dev/stdin ]] é falso"
 fi
 
-if [[ ! -t 0 ]]
-then
+if [[ ! -t 0 ]]; then
 	echo "2-Recebi via stdin :"
 	echo "$(cat -)"
 else
 	echo "Dados? Só se for por passagem de parametros"
 fi
-

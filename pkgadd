@@ -44,7 +44,7 @@ msgwarn() {
 }
 
 help() {
-	cat << EOF
+	cat <<EOF
 Usage:
   $(basename $0) [ <options> <package.spkg.txz> ]
 
@@ -68,13 +68,16 @@ EOF
 extract_opts() {
 	while [ "$1" ]; do
 		case $1 in
-			--*) opts="$opts $1";;
-			-*) char=${#1}; count=1
-			    while [ "$count" != "$char" ]; do
-			        count=$((count+1))
-			        opts="$opts -$(echo $1 | cut -c $count)"
-			   done;;
-			*) opts="$opts $1"
+		--*) opts="$opts $1" ;;
+		-*)
+			char=${#1}
+			count=1
+			while [ "$count" != "$char" ]; do
+				count=$((count + 1))
+				opts="$opts -$(echo $1 | cut -c $count)"
+			done
+			;;
+		*) opts="$opts $1" ;;
 		esac
 		shift
 	done
@@ -87,20 +90,23 @@ parse_opts() {
 	else
 		while [ "$1" ]; do
 			case $1 in
-			-u |           --upgrade) UPGRADE_PKG=yes ;;
-			-r |         --reinstall) REINSTALL_PKG=yes ;;
-			-c |   --ignore-conflict) IGNORE_CONFLICT=yes ;;
-			-v |           --verbose) VERBOSE_INSTALL="-v" ;;
-			-h |              --help) SHOWHELP=yes ;;
-			         --no-preinstall) NO_PREINSTALL=yes ;;
-			        --no-postinstall) NO_POSTINSTALL=yes ;;
-			         --no-preupgrade) NO_PREUPGRADE=yes ;;
-			        --no-postupgrade) NO_POSTUPGRADE=yes ;;
-			             --no-backup) NO_BACKUP=yes ;;
-			           --print-dbdir) PRINTDBDIR=yes ;;
-			                --root=*) ROOT_DIR="${1#*=}" ;;
-			            *.spkg.tar.*) PKGNAME="$(realpath $1)" ;;
-			                       *) msg "Invalid option! ($1)"; exit 1 ;;
+			-u | --upgrade) UPGRADE_PKG=yes ;;
+			-r | --reinstall) REINSTALL_PKG=yes ;;
+			-c | --ignore-conflict) IGNORE_CONFLICT=yes ;;
+			-v | --verbose) VERBOSE_INSTALL="-v" ;;
+			-h | --help) SHOWHELP=yes ;;
+			--no-preinstall) NO_PREINSTALL=yes ;;
+			--no-postinstall) NO_POSTINSTALL=yes ;;
+			--no-preupgrade) NO_PREUPGRADE=yes ;;
+			--no-postupgrade) NO_POSTUPGRADE=yes ;;
+			--no-backup) NO_BACKUP=yes ;;
+			--print-dbdir) PRINTDBDIR=yes ;;
+			--root=*) ROOT_DIR="${1#*=}" ;;
+			*.spkg.tar.*) PKGNAME="$(realpath $1)" ;;
+			*)
+				msg "Invalid option! ($1)"
+				exit 1
+				;;
 			esac
 			shift
 		done
@@ -191,12 +197,12 @@ if [ "$ALREADYINSTALLED" = "yes" ] && [ ! "$UPGRADE_PKG" ] && [ ! "$REINSTALL_PK
 fi
 
 # cant reinstall if not installed and cant upgrade if up-to-date
-if [ "$UPGRADE_PKG" ] || [ "$REINSTALL_PKG" ]; then	
+if [ "$UPGRADE_PKG" ] || [ "$REINSTALL_PKG" ]; then
 	if [ "$ALREADYINSTALLED" != "yes" ]; then
 		msgerr "Package '$name' not installed."
 		ret 1
 	fi
-	if [ "$UPGRADE_PKG" ]; then	
+	if [ "$UPGRADE_PKG" ]; then
 		if [ "$version-$release" = "$iversion-$irelease" ]; then
 			echo "Package '$name' is up-to-date. ($iversion-$irelease)"
 			ret 0
@@ -209,7 +215,7 @@ TMP_PKGINSTALL="$ROOT_DIR/$SCRATCHPKG_DIR/.tmp_pkginstall"
 TMP_CONFLICT="$ROOT_DIR/$SCRATCHPKG_DIR/.tmp_conflict"
 
 # check integrity of package and save list file/dirs to install in the meantime
-tar -tvf $PKGNAME > $TMP_PKGADD 2>/dev/null || {
+tar -tvf $PKGNAME >$TMP_PKGADD 2>/dev/null || {
 	msgerr "Package '$1' is corrupted!"
 	ret 1
 }
@@ -243,7 +249,7 @@ if [ ! "$IGNORE_CONFLICT" ]; then
 			fi
 		fi
 	done
-	
+
 	if [ -e "$TMP_CONFLICT" ]; then
 		msgerr "File conflict found!"
 		ret 1
@@ -265,28 +271,28 @@ tar -xvhpf "$PKGNAME" -C "$ROOT_DIR"/ | while read -r line; do
 		fi
 	fi
 	[ "$VERBOSE_INSTALL" ] && echo "extracted '$line'"
-	echo "$line" >> $TMP_PKGINSTALL
+	echo "$line" >>$TMP_PKGINSTALL
 done
 
 # remove old files from old package that not exist in new package
 if [ "$UPGRADE_PKG" ] || [ "$REINSTALL_PKG" ]; then
 	tail -n+2 "$ROOT_DIR/$PKGDB_DIR/$name" | tac | while read -r line; do
 		case $line in
-			*/[) ;;
-			*/) grep "^$line$" $ROOT_DIR/$PKGDB_DIR/* "$TMP_PKGINSTALL" 2>/dev/null | grep -qv "$ROOT_DIR/$PKGDB_DIR/$name" || rmdir $([ "$VERBOSE_INSTALL" ] && echo -v) "$ROOT_DIR/$line";;
-			 *) grep -q "^$line$" "$TMP_PKGINSTALL" || rm $([ "$VERBOSE_INSTALL" ] && echo -v) "$ROOT_DIR/$line";;
+		*/[) ;;
+		*/) grep "^$line$" $ROOT_DIR/$PKGDB_DIR/* "$TMP_PKGINSTALL" 2>/dev/null | grep -qv "$ROOT_DIR/$PKGDB_DIR/$name" || rmdir $([ "$VERBOSE_INSTALL" ] && echo -v) "$ROOT_DIR/$line" ;;
+		*) grep -q "^$line$" "$TMP_PKGINSTALL" || rm $([ "$VERBOSE_INSTALL" ] && echo -v) "$ROOT_DIR/$line" ;;
 		esac
 	done
 fi
 
 # register package into database
-echo "$version $release" > "$ROOT_DIR/$PKGDB_DIR/$name"
-cat "$TMP_PKGINSTALL" >> "$ROOT_DIR/$PKGDB_DIR/$name"
+echo "$version $release" >"$ROOT_DIR/$PKGDB_DIR/$name"
+cat "$TMP_PKGINSTALL" >>"$ROOT_DIR/$PKGDB_DIR/$name"
 mkdir -p "$ROOT_DIR/$PKGDBPERMS_DIR"
 rm -f "$ROOT_DIR/$PKGDBPERMS_DIR/$name"
 grep '/$' $TMP_PKGADD | while read -r perms own junk1 junk2 junk3 dir junk4; do
 	if [ "$perms" != drwxr-xr-x ] || [ "$own" != root/root ]; then
-		echo "$perms $own $dir" >> "$ROOT_DIR/$PKGDBPERMS_DIR/$name"
+		echo "$perms $own $dir" >>"$ROOT_DIR/$PKGDBPERMS_DIR/$name"
 		[ -s "$ROOT_DIR/$PKGDBPERMS_DIR/$name" ] || rm "$ROOT_DIR/$PKGDBPERMS_DIR/$name"
 	fi
 done

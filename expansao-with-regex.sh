@@ -45,5 +45,4 @@ readonly distro=$(uname -n)
 readonly DEPENDENCIES=(grep)
 
 [[ ${LANG/_*/} == @(pt|en|it|es) ]] && echo $LANG entendo esse idioma
-[[ $LANG == @(pt|en|it|es)_*     ]] && echo $LANG entendo esse idioma
-
+[[ $LANG == @(pt|en|it|es)_* ]] && echo $LANG entendo esse idioma

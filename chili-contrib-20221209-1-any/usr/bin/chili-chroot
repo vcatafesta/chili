@@ -34,70 +34,67 @@ LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 source /usr/lib/lsb/init-functions
 source "$LIBRARY"/core.sh
 
-chilichroot2()
-{
-   if [ $# -gt 0 ]; then
-      CHROOTDIR="$1"
-      log_wait_msg "Criando CHROOT on $CHROOTDIR"
-      mkdir -pv $CHROOTDIR
-      for i in /dev /dev/pts /proc /sys /run; do
-         log_wait_msg "Binding $CHROOTDIR$i"
-         sudo mount -B ${i} ${CHROOTDIR}${i}
-      done
-      log_wait_msg "Iniciando CHROOT at $CHROOTDIR"
-      sudo chroot ${CHROOTDIR}
-      log_wait_msg "Unbinding $CHROOTDIR"
-      sudo umount -rl ${CHROOTDIR}/run
-      sudo umount -rl ${CHROOTDIR}/sys
-      sudo umount -rl ${CHROOTDIR}/proc
-      sudo umount -rl ${CHROOTDIR}/dev/pts
-      sudo umount -rl ${CHROOTDIR}/dev
-      #sudo grub-install /dev/sdb
-      #sudo update-grub /dev/sdb
-   else
-      echo "Uso: chili-chroot /mnt/full"
-   fi
+chilichroot2() {
+	if [ $# -gt 0 ]; then
+		CHROOTDIR="$1"
+		log_wait_msg "Criando CHROOT on $CHROOTDIR"
+		mkdir -pv $CHROOTDIR
+		for i in /dev /dev/pts /proc /sys /run; do
+			log_wait_msg "Binding $CHROOTDIR$i"
+			sudo mount -B ${i} ${CHROOTDIR}${i}
+		done
+		log_wait_msg "Iniciando CHROOT at $CHROOTDIR"
+		sudo chroot ${CHROOTDIR}
+		log_wait_msg "Unbinding $CHROOTDIR"
+		sudo umount -rl ${CHROOTDIR}/run
+		sudo umount -rl ${CHROOTDIR}/sys
+		sudo umount -rl ${CHROOTDIR}/proc
+		sudo umount -rl ${CHROOTDIR}/dev/pts
+		sudo umount -rl ${CHROOTDIR}/dev
+		#sudo grub-install /dev/sdb
+		#sudo update-grub /dev/sdb
+	else
+		echo "Uso: chili-chroot /mnt/full"
+	fi
 }
 
-chrootmount()
-{
-   sudo mount "$@"
+chrootmount() {
+	sudo mount "$@"
 }
 
-chilichroot()
-{
-   if test $# -ge 1; then
-      CHROOTDIR="$1"
-      [[ ${CHROOTDIR} = '.' ]] && CHROOTDIR=${PWD}
-      log_wait_msg "Generate dirs in $CHROOTDIR"
-      for i in /proc /sys /dev /dev/pts /dev/shm /run /tmp /hostrun; do
-         mkdir -pv ${CHROOTDIR}${i}
-      done
-      log_wait_msg "Mounting on $CHROOTDIR"
-      chrootmount proc "${CHROOTDIR}/proc" -t proc -o nosuid,noexec,nodev &&
-      chrootmount sys "${CHROOTDIR}/sys" -t sysfs -o nosuid,noexec,nodev,ro &&
-      chrootmount udev "${CHROOTDIR}/dev" -t devtmpfs -o mode=0755,nosuid &&
-      chrootmount devpts "${CHROOTDIR}/dev/pts" -t devpts -o mode=0620,gid=5,nosuid,noexec &&
-      chrootmount shm "${CHROOTDIR}/dev/shm" -t tmpfs -o mode=1777,nosuid,nodev &&
-      chrootmount /run "${CHROOTDIR}/run" --bind &&
-      chrootmount /run "${CHROOTDIR}/hostrun" --bind &&
-      chrootmount tmp "${CHROOTDIR}/tmp" -t tmpfs -o mode=1777,strictatime,nodev,nosuid
-      log_wait_msg "Iniciando CHROOT at $CHROOTDIR"
-      sudo chroot ${CHROOTDIR}
-      log_wait_msg "Unbinding $CHROOTDIR"
-      sudo umount -r "${CHROOTDIR}/proc"
-      sudo umount -r "${CHROOTDIR}/sys"
-      sudo umount -r "${CHROOTDIR}/dev/pts"
-      sudo umount -r "${CHROOTDIR}/dev/shm"
-      sudo umount -r "${CHROOTDIR}/dev"
-      sudo umount -r "${CHROOTDIR}/run"
-      sudo umount -r "${CHROOTDIR}/hostrun"
-      sudo umount -r "${CHROOTDIR}/tmp"
-      #sudo grub-install /dev/sdb
-      #sudo update-grub /dev/sdb
-   else
-      printf "ERROR: No chroot directory specified\n"
-   fi
+chilichroot() {
+	if test $# -ge 1; then
+		CHROOTDIR="$1"
+		[[ ${CHROOTDIR} = '.' ]] && CHROOTDIR=${PWD}
+		log_wait_msg "Generate dirs in $CHROOTDIR"
+		for i in /proc /sys /dev /dev/pts /dev/shm /run /tmp /hostrun; do
+			mkdir -pv ${CHROOTDIR}${i}
+		done
+		log_wait_msg "Mounting on $CHROOTDIR"
+		chrootmount proc "${CHROOTDIR}/proc" -t proc -o nosuid,noexec,nodev &&
+			chrootmount sys "${CHROOTDIR}/sys" -t sysfs -o nosuid,noexec,nodev,ro &&
+			chrootmount udev "${CHROOTDIR}/dev" -t devtmpfs -o mode=0755,nosuid &&
+			chrootmount devpts "${CHROOTDIR}/dev/pts" -t devpts -o mode=0620,gid=5,nosuid,noexec &&
+			chrootmount shm "${CHROOTDIR}/dev/shm" -t tmpfs -o mode=1777,nosuid,nodev &&
+			chrootmount /run "${CHROOTDIR}/run" --bind &&
+			chrootmount /run "${CHROOTDIR}/hostrun" --bind &&
+			chrootmount tmp "${CHROOTDIR}/tmp" -t tmpfs -o mode=1777,strictatime,nodev,nosuid
+		log_wait_msg "Iniciando CHROOT at $CHROOTDIR"
+		sudo chroot ${CHROOTDIR}
+		log_wait_msg "Unbinding $CHROOTDIR"
+		sudo umount -r "${CHROOTDIR}/proc"
+		sudo umount -r "${CHROOTDIR}/sys"
+		sudo umount -r "${CHROOTDIR}/dev/pts"
+		sudo umount -r "${CHROOTDIR}/dev/shm"
+		sudo umount -r "${CHROOTDIR}/dev"
+		sudo umount -r "${CHROOTDIR}/run"
+		sudo umount -r "${CHROOTDIR}/hostrun"
+		sudo umount -r "${CHROOTDIR}/tmp"
+		#sudo grub-install /dev/sdb
+		#sudo update-grub /dev/sdb
+	else
+		printf "ERROR: No chroot directory specified\n"
+	fi
 }
 
 chilichroot "$@"

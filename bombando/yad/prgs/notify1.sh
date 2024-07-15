@@ -5,8 +5,7 @@
 #+ Thanks Karthik
 
 Saida=$(eval "$*" 2>/dev/null) || {
-    yad --text "Comando errado" --button gtk-ok
+	yad --text "Comando errado" --button gtk-ok
 	exit 1
-	}
-notify-send -t $((1000+300*$(echo -n $Saida | wc -w))) -u low -i gnome-terminal "$*" "$Saida" 
-
+}
+notify-send -t $((1000 + 300 * $(echo -n $Saida | wc -w))) -u low -i gnome-terminal "$*" "$Saida"

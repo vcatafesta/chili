@@ -12,4 +12,3 @@
 URL=$(gdialog --title "scp file(s) to?" --inputbox "url for host(ie.user@myhost.com:/tmp)" 200 550 2>&1)
 
 gnome-terminal -t "Copying file.." -x scp $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS $URL
-

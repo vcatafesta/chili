@@ -31,13 +31,10 @@ make
 mkdir -p ~/.local/bin
 cp src/cp ~/.local/bin/cp
 #echo 'alias cp="${HOME}/.local/bin/cp"' >> ~/.bashrc
-echo 'alias cp="${HOME}/.local/bin/cp --progress-bar"' >> ~/.bashrc
+echo 'alias cp="${HOME}/.local/bin/cp --progress-bar"' >>~/.bashrc
 alias cp="${HOME}/.local/bin/cp --progress-bar"
 #exec $SHELL
 
 # E testar, exemplo:
 # Use o parâmetro --progress-bar
 # cp --progress-bar Documentos/Fedora-Workstation-Live-x86_64-33-1.2.iso .
-
-
-

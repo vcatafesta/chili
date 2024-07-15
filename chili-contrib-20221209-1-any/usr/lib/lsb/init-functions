@@ -1,6 +1,6 @@
 #!/bin/sh
 ########################################################################
-# 
+#
 # Begin /lib/lsb/init-funtions
 #
 # Description : Run Level Control Functions
@@ -32,12 +32,12 @@ umask 022
 # the top 256 glyphs of the 9bit font.  This does
 # not affect framebuffer consoles
 
-NORMAL="\\033[0;39m"         # Standard console grey
-SUCCESS="\\033[1;32m"        # Success is green
-WARNING="\\033[1;33m"        # Warnings are yellow
-FAILURE="\\033[1;31m"        # Failures are red
-INFO="\\033[1;36m"           # Information is light cyan
-BRACKET="\\033[1;34m"        # Brackets are blue
+NORMAL="\\033[0;39m"  # Standard console grey
+SUCCESS="\\033[1;32m" # Success is green
+WARNING="\\033[1;33m" # Warnings are yellow
+FAILURE="\\033[1;31m" # Failures are red
+INFO="\\033[1;36m"    # Information is light cyan
+BRACKET="\\033[1;34m" # Brackets are blue
 
 # Use a colored prefix
 BMPREFIX="     "
@@ -60,18 +60,18 @@ KILLDELAY=3
 SCRIPT_STAT="0"
 
 # Set any user specified environment variables e.g. HEADLESS
-[ -r /etc/sysconfig/rc.site ]  && . /etc/sysconfig/rc.site
+[ -r /etc/sysconfig/rc.site ] && . /etc/sysconfig/rc.site
 
 ## Screen Dimensions
 # Find current screen size
 if [ -z "${COLUMNS}" ]; then
-   COLUMNS=$(stty size)
-   COLUMNS=${COLUMNS##* }
+	COLUMNS=$(stty size)
+	COLUMNS=${COLUMNS##* }
 fi
 
 # When using remote connections, such as a serial port, stty size returns 0
 if [ "${COLUMNS}" = "0" ]; then
-   COLUMNS=80
+	COLUMNS=80
 fi
 
 ## Measurements for positioning result messages
@@ -79,9 +79,9 @@ COL=$((${COLUMNS} - 8))
 WCOL=$((${COL} - 2))
 
 ## Set Cursor Position Commands, used via echo
-SET_COL="\\033[${COL}G"      # at the $COL char
-SET_WCOL="\\033[${WCOL}G"    # at the $WCOL char
-CURS_UP="\\033[1A\\033[0G"   # Up one line, at the 0'th char
+SET_COL="\\033[${COL}G"    # at the $COL char
+SET_WCOL="\\033[${WCOL}G"  # at the $WCOL char
+CURS_UP="\\033[1A\\033[0G" # Up one line, at the 0'th char
 CURS_ZERO="\\033[0G"
 
 ################################################################################
@@ -102,94 +102,92 @@ CURS_ZERO="\\033[0G"
 #       2 - invalid or excessive argument(s)                                   #
 #       5 - program is not installed                                           #
 ################################################################################
-start_daemon()
-{
-    local force=""
-    local nice="0"
-    local pidfile=""
-    local pidlist=""
-    local retval=""
+start_daemon() {
+	local force=""
+	local nice="0"
+	local pidfile=""
+	local pidlist=""
+	local retval=""
 
-    # Process arguments
-    while true
-    do
-        case "${1}" in
+	# Process arguments
+	while true; do
+		case "${1}" in
 
-            -f)
-                force="1"
-                shift 1
-                ;;
+		-f)
+			force="1"
+			shift 1
+			;;
 
-            -n)
-                nice="${2}"
-                shift 2
-                ;;
+		-n)
+			nice="${2}"
+			shift 2
+			;;
 
-            -p)
-                pidfile="${2}"
-                shift 2
-                ;;
+		-p)
+			pidfile="${2}"
+			shift 2
+			;;
 
-            -*)
-                return 2
-                ;;
+		-*)
+			return 2
+			;;
 
-            *)
-                program="${1}"
-                break
-                ;;
-        esac
-    done
+		*)
+			program="${1}"
+			break
+			;;
+		esac
+	done
 
-    # Check for a valid program
-    if [ ! -e "${program}" ]; then return 5; fi
+	# Check for a valid program
+	if [ ! -e "${program}" ]; then return 5; fi
 
-    # Execute
-    if [ -z "${force}" ]; then
-        if [ -z "${pidfile}" ]; then
-            # Determine the pid by discovery
-            pidlist=`pidofproc "${1}"`
-            retval="${?}"
-        else
-            # The PID file contains the needed PIDs
-            # Note that by LSB requirement, the path must be given to pidofproc,
-            # however, it is not used by the current implementation or standard.
-            pidlist=`pidofproc -p "${pidfile}" "${1}"`
-            retval="${?}"
-        fi
+	# Execute
+	if [ -z "${force}" ]; then
+		if [ -z "${pidfile}" ]; then
+			# Determine the pid by discovery
+			pidlist=$(pidofproc "${1}")
+			retval="${?}"
+		else
+			# The PID file contains the needed PIDs
+			# Note that by LSB requirement, the path must be given to pidofproc,
+			# however, it is not used by the current implementation or standard.
+			pidlist=$(pidofproc -p "${pidfile}" "${1}")
+			retval="${?}"
+		fi
 
-        # Return a value ONLY 
-        # It is the init script's (or distribution's functions) responsibilty
-        # to log messages!
-        case "${retval}" in
+		# Return a value ONLY
+		# It is the init script's (or distribution's functions) responsibilty
+		# to log messages!
+		case "${retval}" in
 
-            0)
-                # Program is already running correctly, this is a 
-                # successful start.
-                return 0
-                ;;
+		0)
+			# Program is already running correctly, this is a
+			# successful start.
+			return 0
+			;;
 
-            1)
-                # Program is not running, but an invalid pid file exists
-                # remove the pid file and continue
-                rm -f "${pidfile}"
-                ;;
+		1)
+			# Program is not running, but an invalid pid file exists
+			# remove the pid file and continue
+			rm -f "${pidfile}"
+			;;
 
-            3)
-                # Program is not running and no pidfile exists
-                # do nothing here, let start_deamon continue.
-                ;;
+		3)
+			# Program is not running and no pidfile exists
+			# do nothing here, let start_deamon continue.
+			;;
 
-            *)
-                # Others as returned by status values shall not be interpreted
-                # and returned as an unspecified error.
-                return 1
-                ;;
-        esac
-    fi
+		*)
+			# Others as returned by status values shall not be interpreted
+			# and returned as an unspecified error.
+			return 1
+			;;
+		esac
+	fi
 
-    # Do the start!
-    nice -n "${nice}" "${@}"
+	# Do the start!
+	nice -n "${nice}" "${@}"
 }
 
 ################################################################################
@@ -211,173 +209,172 @@ start_daemon()
 #       5 - program is not installed                                           #
 #       7 - program is not running and a signal was supplied                   #
 ################################################################################
-killproc()
-{
-    local pidfile
-    local program
-    local prefix
-    local progname
-    local signal="-TERM"
-    local fallback="-KILL"
-    local nosig
-    local pidlist
-    local retval
-    local pid
-    local delay="30"
-    local piddead
-    local dtime
+killproc() {
+	local pidfile
+	local program
+	local prefix
+	local progname
+	local signal="-TERM"
+	local fallback="-KILL"
+	local nosig
+	local pidlist
+	local retval
+	local pid
+	local delay="30"
+	local piddead
+	local dtime
 
-    # Process arguments
-    while true; do
-        case "${1}" in
-            -p)
-                pidfile="${2}"
-                shift 2
-                ;;
- 
-             *)
-                 program="${1}"
-                 if [ -n "${2}" ]; then
-                     signal="${2}"
-                     fallback=""
-                 else
-                     nosig=1
-                 fi
+	# Process arguments
+	while true; do
+		case "${1}" in
+		-p)
+			pidfile="${2}"
+			shift 2
+			;;
 
-                 # Error on additional arguments
-                 if [ -n "${3}" ]; then
-                     return 2
-                 else 
-                     break
-                 fi                 
-                 ;;
-        esac
-    done
+		*)
+			program="${1}"
+			if [ -n "${2}" ]; then
+				signal="${2}"
+				fallback=""
+			else
+				nosig=1
+			fi
 
-    # Check for a valid program
-    if [ ! -e "${program}" ]; then return 5; fi
+			# Error on additional arguments
+			if [ -n "${3}" ]; then
+				return 2
+			else
+				break
+			fi
+			;;
+		esac
+	done
 
-    # Check for a valid signal
-    check_signal "${signal}"
-    if [ "${?}" -ne "0" ]; then return 2; fi
+	# Check for a valid program
+	if [ ! -e "${program}" ]; then return 5; fi
 
-    # Get a list of pids
-    if [ -z "${pidfile}" ]; then
-        # determine the pid by discovery
-        pidlist=`pidofproc "${1}"`
-        retval="${?}"
-    else
-        # The PID file contains the needed PIDs
-        # Note that by LSB requirement, the path must be given to pidofproc,
-        # however, it is not used by the current implementation or standard.
-        pidlist=`pidofproc -p "${pidfile}" "${1}"`
-        retval="${?}"
-    fi
+	# Check for a valid signal
+	check_signal "${signal}"
+	if [ "${?}" -ne "0" ]; then return 2; fi
 
-    # Return a value ONLY
-    # It is the init script's (or distribution's functions) responsibilty
-    # to log messages!
-    case "${retval}" in
+	# Get a list of pids
+	if [ -z "${pidfile}" ]; then
+		# determine the pid by discovery
+		pidlist=$(pidofproc "${1}")
+		retval="${?}"
+	else
+		# The PID file contains the needed PIDs
+		# Note that by LSB requirement, the path must be given to pidofproc,
+		# however, it is not used by the current implementation or standard.
+		pidlist=$(pidofproc -p "${pidfile}" "${1}")
+		retval="${?}"
+	fi
 
-        0)
-            # Program is running correctly
-            # Do nothing here, let killproc continue.
-            ;;
+	# Return a value ONLY
+	# It is the init script's (or distribution's functions) responsibilty
+	# to log messages!
+	case "${retval}" in
 
-        1)
-            # Program is not running, but an invalid pid file exists
-            # Remove the pid file.
-            rm -f "${pidfile}"
+	0)
+		# Program is running correctly
+		# Do nothing here, let killproc continue.
+		;;
 
-            # This is only a success if no signal was passed.
-            if [ -n "${nosig}" ]; then
-                return 0
-            else
-                return 7
-            fi
-            ;;
+	1)
+		# Program is not running, but an invalid pid file exists
+		# Remove the pid file.
+		rm -f "${pidfile}"
 
-        3)
-            # Program is not running and no pidfile exists
-            # This is only a success if no signal was passed.
-            if [ -n "${nosig}" ]; then
-                return 0
-            else
-                return 7
-            fi
-            ;;
+		# This is only a success if no signal was passed.
+		if [ -n "${nosig}" ]; then
+			return 0
+		else
+			return 7
+		fi
+		;;
 
-        *)
-            # Others as returned by status values shall not be interpreted
-            # and returned as an unspecified error.
-            return 1
-            ;;
-    esac
+	3)
+		# Program is not running and no pidfile exists
+		# This is only a success if no signal was passed.
+		if [ -n "${nosig}" ]; then
+			return 0
+		else
+			return 7
+		fi
+		;;
 
-    # Perform different actions for exit signals and control signals
-    check_sig_type "${signal}"
+	*)
+		# Others as returned by status values shall not be interpreted
+		# and returned as an unspecified error.
+		return 1
+		;;
+	esac
 
-    if [ "${?}" -eq "0" ]; then # Signal is used to terminate the program
+	# Perform different actions for exit signals and control signals
+	check_sig_type "${signal}"
 
-        # Account for empty pidlist (pid file still exists and no 
-        # signal was given)
-        if [ "${pidlist}" != "" ]; then
+	if [ "${?}" -eq "0" ]; then # Signal is used to terminate the program
 
-            # Kill the list of pids
-            for pid in ${pidlist}; do
+		# Account for empty pidlist (pid file still exists and no
+		# signal was given)
+		if [ "${pidlist}" != "" ]; then
 
-                kill -0 "${pid}" 2> /dev/null
+			# Kill the list of pids
+			for pid in ${pidlist}; do
 
-                if [ "${?}" -ne "0" ]; then
-                    # Process is dead, continue to next and assume all is well
-                    continue
-                else
-                    kill "${signal}" "${pid}" 2> /dev/null
+				kill -0 "${pid}" 2>/dev/null
 
-                    # Wait up to ${delay}/10 seconds to for "${pid}" to 
-                    # terminate in 10ths of a second
+				if [ "${?}" -ne "0" ]; then
+					# Process is dead, continue to next and assume all is well
+					continue
+				else
+					kill "${signal}" "${pid}" 2>/dev/null
 
-                    while [ "${delay}" -ne "0" ]; do
-                        kill -0 "${pid}" 2> /dev/null || piddead="1"
-                        if [ "${piddead}" = "1" ]; then break; fi
-                        sleep 0.1
-                        delay="$(( ${delay} - 1 ))"
-                    done
+					# Wait up to ${delay}/10 seconds to for "${pid}" to
+					# terminate in 10ths of a second
 
-                    # If a fallback is set, and program is still running, then
-                    # use the fallback
-                    if [ -n "${fallback}" -a "${piddead}" != "1" ]; then
-                        kill "${fallback}" "${pid}" 2> /dev/null
-                        sleep 1
-                        # Check again, and fail if still running
-                        kill -0 "${pid}" 2> /dev/null && return 1
-                    fi
-                fi
-            done
-        fi
+					while [ "${delay}" -ne "0" ]; do
+						kill -0 "${pid}" 2>/dev/null || piddead="1"
+						if [ "${piddead}" = "1" ]; then break; fi
+						sleep 0.1
+						delay="$((${delay} - 1))"
+					done
 
-        # Check for and remove stale PID files.
-        if [ -z "${pidfile}" ]; then
-            # Find the basename of $program
-            prefix=`echo "${program}" | sed 's/[^/]*$//'`
-            progname=`echo "${program}" | sed "s@${prefix}@@"`
+					# If a fallback is set, and program is still running, then
+					# use the fallback
+					if [ -n "${fallback}" -a "${piddead}" != "1" ]; then
+						kill "${fallback}" "${pid}" 2>/dev/null
+						sleep 1
+						# Check again, and fail if still running
+						kill -0 "${pid}" 2>/dev/null && return 1
+					fi
+				fi
+			done
+		fi
 
-            if [ -e "/var/run/${progname}.pid" ]; then
-                rm -f "/var/run/${progname}.pid" 2> /dev/null
-            fi
-        else
-            if [ -e "${pidfile}" ]; then rm -f "${pidfile}" 2> /dev/null; fi
-        fi
+		# Check for and remove stale PID files.
+		if [ -z "${pidfile}" ]; then
+			# Find the basename of $program
+			prefix=$(echo "${program}" | sed 's/[^/]*$//')
+			progname=$(echo "${program}" | sed "s@${prefix}@@")
 
-    # For signals that do not expect a program to exit, simply
-    # let kill do its job, and evaluate kill's return for value
+			if [ -e "/var/run/${progname}.pid" ]; then
+				rm -f "/var/run/${progname}.pid" 2>/dev/null
+			fi
+		else
+			if [ -e "${pidfile}" ]; then rm -f "${pidfile}" 2>/dev/null; fi
+		fi
 
-    else # check_sig_type - signal is not used to terminate program
-        for pid in ${pidlist}; do
-            kill "${signal}" "${pid}"
-            if [ "${?}" -ne "0" ]; then return 1; fi
-        done
-    fi
+	# For signals that do not expect a program to exit, simply
+	# let kill do its job, and evaluate kill's return for value
+
+	else # check_sig_type - signal is not used to terminate program
+		for pid in ${pidlist}; do
+			kill "${signal}" "${pid}"
+			if [ "${?}" -ne "0" ]; then return 1; fi
+		done
+	fi
 }
 
 ################################################################################
@@ -394,84 +391,83 @@ killproc()
 #       1 - Program is dead, PID file still exists (remaining PIDs output)     #
 #       3 - Program is not running (no output)                                 #
 ################################################################################
-pidofproc()
-{
-    local pidfile
-    local program
-    local prefix
-    local progname
-    local pidlist
-    local lpids
-    local exitstatus="0"
+pidofproc() {
+	local pidfile
+	local program
+	local prefix
+	local progname
+	local pidlist
+	local lpids
+	local exitstatus="0"
 
-    # Process arguments
-    while true; do
-        case "${1}" in
+	# Process arguments
+	while true; do
+		case "${1}" in
 
-            -p)
-                pidfile="${2}"
-                shift 2
-                ;;
+		-p)
+			pidfile="${2}"
+			shift 2
+			;;
 
-            *)
-                program="${1}"
-                if [ -n "${2}" ]; then
-                    # Too many arguments
-                    # Since this is status, return unknown
-                    return 4
-                else
-                    break
-                fi
-                ;;
-        esac
-    done
+		*)
+			program="${1}"
+			if [ -n "${2}" ]; then
+				# Too many arguments
+				# Since this is status, return unknown
+				return 4
+			else
+				break
+			fi
+			;;
+		esac
+	done
 
-    # If a PID file is not specified, try and find one.
-    if [ -z "${pidfile}" ]; then
-        # Get the program's basename
-        prefix=`echo "${program}" | sed 's/[^/]*$//'`
+	# If a PID file is not specified, try and find one.
+	if [ -z "${pidfile}" ]; then
+		# Get the program's basename
+		prefix=$(echo "${program}" | sed 's/[^/]*$//')
 
-        if [ -z "${prefix}" ]; then 
-           progname="${program}"
-        else
-           progname=`echo "${program}" | sed "s@${prefix}@@"`
-        fi
+		if [ -z "${prefix}" ]; then
+			progname="${program}"
+		else
+			progname=$(echo "${program}" | sed "s@${prefix}@@")
+		fi
 
-        # If a PID file exists with that name, assume that is it.
-        if [ -e "/var/run/${progname}.pid" ]; then
-            pidfile="/var/run/${progname}.pid"
-        fi
-    fi
+		# If a PID file exists with that name, assume that is it.
+		if [ -e "/var/run/${progname}.pid" ]; then
+			pidfile="/var/run/${progname}.pid"
+		fi
+	fi
 
-    # If a PID file is set and exists, use it.
-    if [ -n "${pidfile}" -a -e "${pidfile}" ]; then
+	# If a PID file is set and exists, use it.
+	if [ -n "${pidfile}" -a -e "${pidfile}" ]; then
 
-        # Use the value in the first line of the pidfile
-        pidlist=`/bin/head -n1 "${pidfile}"`
-        # This can optionally be written as 'sed 1q' to repalce 'head -n1'
-        # should LFS move /bin/head to /usr/bin/head
-    else
-        # Use pidof
-        pidlist=`pidof "${program}"`
-    fi
+		# Use the value in the first line of the pidfile
+		pidlist=$(/bin/head -n1 "${pidfile}")
+		# This can optionally be written as 'sed 1q' to repalce 'head -n1'
+		# should LFS move /bin/head to /usr/bin/head
+	else
+		# Use pidof
+		pidlist=$(pidof "${program}")
+	fi
 
-    # Figure out if all listed PIDs are running.
-    for pid in ${pidlist}; do
-        kill -0 ${pid} 2> /dev/null
+	# Figure out if all listed PIDs are running.
+	for pid in ${pidlist}; do
+		kill -0 ${pid} 2>/dev/null
 
-        if [ "${?}" -eq "0" ]; then
-            lpids="${lpids}${pid} "
-        else
-            exitstatus="1"
-        fi
-    done
+		if [ "${?}" -eq "0" ]; then
+			lpids="${lpids}${pid} "
+		else
+			exitstatus="1"
+		fi
+	done
 
-    if [ -z "${lpids}" -a ! -f "${pidfile}" ]; then
-        return 3
-    else
-        echo "${lpids}"
-        return "${exitstatus}"
-    fi
+	if [ -z "${lpids}" -a ! -f "${pidfile}" ]; then
+		return 3
+	else
+		echo "${lpids}"
+		return "${exitstatus}"
+	fi
 }
 
 ################################################################################
@@ -487,63 +483,62 @@ pidofproc()
 #       0 - Status printed                                                     #
 #       1 - Input error. The daemon to check was not specified.                #
 ################################################################################
-statusproc()
-{
-   local pidfile
-   local pidlist
+statusproc() {
+	local pidfile
+	local pidlist
 
-   if [ "${#}" = "0" ]; then
-      echo "Usage: statusproc [-p pidfle] {program}"
-      exit 1
-   fi
+	if [ "${#}" = "0" ]; then
+		echo "Usage: statusproc [-p pidfle] {program}"
+		exit 1
+	fi
 
-   # Process arguments
-   while true; do
-       case "${1}" in
+	# Process arguments
+	while true; do
+		case "${1}" in
 
-           -p)
-               pidfile="${2}"
-               shift 2
-               ;;
+		-p)
+			pidfile="${2}"
+			shift 2
+			;;
 
-           *)
-               if [ -n "${2}" ]; then
-                   echo "Too many arguments"
-                   return 1
-               else
-                   break
-               fi
-               ;;
-       esac
-   done
+		*)
+			if [ -n "${2}" ]; then
+				echo "Too many arguments"
+				return 1
+			else
+				break
+			fi
+			;;
+		esac
+	done
 
-   if [ -n "${pidfile}" ]; then
-      pidlist=`pidofproc -p "${pidfile}" $@`
-   else
-      pidlist=`pidofproc $@`
-   fi
+	if [ -n "${pidfile}" ]; then
+		pidlist=$(pidofproc -p "${pidfile}" $@)
+	else
+		pidlist=$(pidofproc $@)
+	fi
 
-   # Trim trailing blanks
-   pidlist=`echo "${pidlist}" | sed -r 's/ +$//'`
+	# Trim trailing blanks
+	pidlist=$(echo "${pidlist}" | sed -r 's/ +$//')
 
-   base="${1##*/}"
+	base="${1##*/}"
 
-   if [ -n "${pidlist}" ]; then
-      /bin/echo -e "${INFO}${base} is running with Process" \
-         "ID(s) ${pidlist}.${NORMAL}"
-   else
-      if [ -n "${base}" -a -e "/var/run/${base}.pid" ]; then
-         /bin/echo -e "${WARNING}${1} is not running but" \
-            "/var/run/${base}.pid exists.${NORMAL}"
-      else
-         if [ -n "${pidfile}" -a -e "${pidfile}" ]; then
-            /bin/echo -e "${WARNING}${1} is not running" \
-               "but ${pidfile} exists.${NORMAL}"
-         else
-            /bin/echo -e "${INFO}${1} is not running.${NORMAL}"
-         fi
-      fi
-   fi
+	if [ -n "${pidlist}" ]; then
+		/bin/echo -e "${INFO}${base} is running with Process" \
+			"ID(s) ${pidlist}.${NORMAL}"
+	else
+		if [ -n "${base}" -a -e "/var/run/${base}.pid" ]; then
+			/bin/echo -e "${WARNING}${1} is not running but" \
+				"/var/run/${base}.pid exists.${NORMAL}"
+		else
+			if [ -n "${pidfile}" -a -e "${pidfile}" ]; then
+				/bin/echo -e "${WARNING}${1} is not running" \
+					"but ${pidfile} exists.${NORMAL}"
+			else
+				/bin/echo -e "${INFO}${1} is not running.${NORMAL}"
+			fi
+		fi
+	fi
 }
 
 ################################################################################
@@ -554,18 +549,16 @@ statusproc()
 #                                                                              #
 # Return value: Not used                                                       #
 ################################################################################
-timespec()
-{
-   STAMP="$(echo `date +"%b %d %T %:z"` `hostname`) "
-   return 0
+timespec() {
+	STAMP="$(echo $(date +"%b %d %T %:z") $(hostname)) "
+	return 0
 }
 
-log_wait_msg()
-{
-    echo -n -e "${BMPREFIX}${@}"
-    echo -e "${CURS_ZERO}${WAIT_PREFIX}${SET_COL}${WAIT_SUFFIX}"
-    echo " OK" >> ${BOOTLOG}
-    return 0
+log_wait_msg() {
+	echo -n -e "${BMPREFIX}${@}"
+	echo -e "${CURS_ZERO}${WAIT_PREFIX}${SET_COL}${WAIT_SUFFIX}"
+	echo " OK" >>${BOOTLOG}
+	return 0
 }
 
 ################################################################################
@@ -579,28 +572,26 @@ log_wait_msg()
 #                                                                              #
 # Return values: Not used                                                      #
 ################################################################################
-log_success_msg()
-{
-    /bin/echo -n -e "${BMPREFIX}${@}"
-    /bin/echo -e "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${SUCCESS_SUFFIX}"
+log_success_msg() {
+	/bin/echo -n -e "${BMPREFIX}${@}"
+	/bin/echo -e "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${SUCCESS_SUFFIX}"
 
-    # Strip non-printable characters from log file
-    logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
+	# Strip non-printable characters from log file
+	logmessage=$(echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g')
 
-    timespec
-    /bin/echo -e "${STAMP} ${logmessage} OK" >> ${BOOTLOG}
-    
-    return 0
+	timespec
+	/bin/echo -e "${STAMP} ${logmessage} OK" >>${BOOTLOG}
+
+	return 0
 }
 
-log_success_msg2()
-{
-    /bin/echo -n -e "${BMPREFIX}${@}"
-    /bin/echo -e "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${SUCCESS_SUFFIX}"
+log_success_msg2() {
+	/bin/echo -n -e "${BMPREFIX}${@}"
+	/bin/echo -e "${CURS_ZERO}${SUCCESS_PREFIX}${SET_COL}${SUCCESS_SUFFIX}"
 
-    echo " OK" >> ${BOOTLOG}
-    
-    return 0
+	echo " OK" >>${BOOTLOG}
+
+	return 0
 }
 
 ################################################################################
@@ -614,28 +605,26 @@ log_success_msg2()
 #                                                                              #
 # Return values: Not used                                                      #
 ################################################################################
-log_failure_msg()
-{
-    /bin/echo -n -e "${BMPREFIX}${@}"
-    /bin/echo -e "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}"
+log_failure_msg() {
+	/bin/echo -n -e "${BMPREFIX}${@}"
+	/bin/echo -e "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}"
 
-    # Strip non-printable characters from log file
+	# Strip non-printable characters from log file
 
-    timespec
-    logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
-    /bin/echo -e "${STAMP} ${logmessage} FAIL" >> ${BOOTLOG}
-    
-    return 0
+	timespec
+	logmessage=$(echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g')
+	/bin/echo -e "${STAMP} ${logmessage} FAIL" >>${BOOTLOG}
+
+	return 0
 }
 
-log_failure_msg2()
-{
-    /bin/echo -n -e "${BMPREFIX}${@}"
-    /bin/echo -e "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}"
+log_failure_msg2() {
+	/bin/echo -n -e "${BMPREFIX}${@}"
+	/bin/echo -e "${CURS_ZERO}${FAILURE_PREFIX}${SET_COL}${FAILURE_SUFFIX}"
 
-    echo "FAIL" >> ${BOOTLOG}
-    
-    return 0
+	echo "FAIL" >>${BOOTLOG}
+
+	return 0
 }
 
 ################################################################################
@@ -647,29 +636,27 @@ log_failure_msg2()
 #                                                                              #
 # Return values: Not used                                                      #
 ################################################################################
-log_warning_msg()
-{
-    /bin/echo -n -e "${BMPREFIX}${@}"
-    /bin/echo -e "${CURS_ZERO}${WARNING_PREFIX}${SET_COL}${WARNING_SUFFIX}"
+log_warning_msg() {
+	/bin/echo -n -e "${BMPREFIX}${@}"
+	/bin/echo -e "${CURS_ZERO}${WARNING_PREFIX}${SET_COL}${WARNING_SUFFIX}"
 
-    # Strip non-printable characters from log file
-    logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
-    timespec
-    /bin/echo -e "${STAMP} ${logmessage} WARN" >> ${BOOTLOG}
-    
-    return 0
+	# Strip non-printable characters from log file
+	logmessage=$(echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g')
+	timespec
+	/bin/echo -e "${STAMP} ${logmessage} WARN" >>${BOOTLOG}
+
+	return 0
 }
 
-log_skip_msg()
-{
-    /bin/echo -n -e "${BMPREFIX}${@}"
-    /bin/echo -e "${CURS_ZERO}${SKIP_PREFIX}${SET_COL}${SKIP_SUFFIX}"
+log_skip_msg() {
+	/bin/echo -n -e "${BMPREFIX}${@}"
+	/bin/echo -e "${CURS_ZERO}${SKIP_PREFIX}${SET_COL}${SKIP_SUFFIX}"
 
-    # Strip non-printable characters from log file
-    logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
-    /bin/echo "SKIP" >> ${BOOTLOG}
-    
-    return 0
+	# Strip non-printable characters from log file
+	logmessage=$(echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g')
+	/bin/echo "SKIP" >>${BOOTLOG}
+
+	return 0
 }
 
 ################################################################################
@@ -681,27 +668,25 @@ log_skip_msg()
 #                                                                              #
 # Return values: Not used                                                      #
 ################################################################################
-log_info_msg()
-{
-    /bin/echo -n -e "${BMPREFIX}${@}"
+log_info_msg() {
+	/bin/echo -n -e "${BMPREFIX}${@}"
 
-    # Strip non-printable characters from log file
-    logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
-    timespec
-    /bin/echo -n -e "${STAMP} ${logmessage}" >> ${BOOTLOG}
-    
-    return 0
+	# Strip non-printable characters from log file
+	logmessage=$(echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g')
+	timespec
+	/bin/echo -n -e "${STAMP} ${logmessage}" >>${BOOTLOG}
+
+	return 0
 }
 
-log_info_msg2()
-{
-    /bin/echo -n -e "${@}"
+log_info_msg2() {
+	/bin/echo -n -e "${@}"
 
-    # Strip non-printable characters from log file
-    logmessage=`echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g'`
-    /bin/echo -n -e "${logmessage}" >> ${BOOTLOG}
-    
-    return 0
+	# Strip non-printable characters from log file
+	logmessage=$(echo "${@}" | sed 's/\\\033[^a-zA-Z]*.//g')
+	/bin/echo -n -e "${logmessage}" >>${BOOTLOG}
+
+	return 0
 }
 
 ################################################################################
@@ -712,16 +697,15 @@ log_info_msg2()
 #                                                                              #
 # Return values: Not used                                                      #
 ################################################################################
-evaluate_retval()
-{
-   local error_value="${?}"
+evaluate_retval() {
+	local error_value="${?}"
 
-   if [ ${error_value} = 0 ]; then
-      log_success_msg2
-   else
-      log_failure_msg2
-   fi
-   return ${error_value}
+	if [ ${error_value} = 0 ]; then
+		log_success_msg2
+	else
+		log_failure_msg2
+	fi
+	return ${error_value}
 
 }
 
@@ -739,24 +723,23 @@ evaluate_retval()
 #       0 - Success (signal is valid                                           #
 #       1 - Signal is not valid                                                #
 ################################################################################
-check_signal()
-{
-    local valsig
+check_signal() {
+	local valsig
 
-    # Add error handling for invalid signals
-    valsig="-ALRM -HUP -INT -KILL -PIPE -POLL -PROF -TERM -USR1 -USR2"
-    valsig="${valsig} -VTALRM -STKFLT -PWR -WINCH -CHLD -URG -TSTP -TTIN"
-    valsig="${valsig} -TTOU -STOP -CONT -ABRT -FPE -ILL -QUIT -SEGV -TRAP"
-    valsig="${valsig} -SYS -EMT -BUS -XCPU -XFSZ -0 -1 -2 -3 -4 -5 -6 -8 -9"
-    valsig="${valsig} -11 -13 -14 -15"
+	# Add error handling for invalid signals
+	valsig="-ALRM -HUP -INT -KILL -PIPE -POLL -PROF -TERM -USR1 -USR2"
+	valsig="${valsig} -VTALRM -STKFLT -PWR -WINCH -CHLD -URG -TSTP -TTIN"
+	valsig="${valsig} -TTOU -STOP -CONT -ABRT -FPE -ILL -QUIT -SEGV -TRAP"
+	valsig="${valsig} -SYS -EMT -BUS -XCPU -XFSZ -0 -1 -2 -3 -4 -5 -6 -8 -9"
+	valsig="${valsig} -11 -13 -14 -15"
 
-    echo "${valsig}" | grep -- " ${1} " > /dev/null
+	echo "${valsig}" | grep -- " ${1} " >/dev/null
 
-    if [ "${?}" -eq "0" ]; then
-        return 0
-    else
-        return 1
-    fi
+	if [ "${?}" -eq "0" ]; then
+		return 0
+	else
+		return 1
+	fi
 }
 
 ################################################################################
@@ -774,20 +757,19 @@ check_signal()
 #       0 - Signal is used for program termination                             #
 #       1 - Signal is used for program control                                 #
 ################################################################################
-check_sig_type()
-{
-    local valsig
+check_sig_type() {
+	local valsig
 
-    # The list of termination signals (limited to generally used items)
-    valsig="-ALRM -INT -KILL -TERM -PWR -STOP -ABRT -QUIT -2 -3 -6 -9 -14 -15"
+	# The list of termination signals (limited to generally used items)
+	valsig="-ALRM -INT -KILL -TERM -PWR -STOP -ABRT -QUIT -2 -3 -6 -9 -14 -15"
 
-    echo "${valsig}" | grep -- " ${1} " > /dev/null
+	echo "${valsig}" | grep -- " ${1} " >/dev/null
 
-    if [ "${?}" -eq "0" ]; then
-        return 0
-    else
-        return 1
-    fi
+	if [ "${?}" -eq "0" ]; then
+		return 0
+	else
+		return 1
+	fi
 }
 
 ################################################################################
@@ -796,11 +778,10 @@ check_sig_type()
 # Purpose: Wait for the user to respond if not a headless system               #
 #                                                                              #
 ################################################################################
-wait_for_user()
-{
-   # Wait for the user by default
-   [ "${HEADLESS=0}" = "0" ] && read ENTER
-   return 0
+wait_for_user() {
+	# Wait for the user by default
+	[ "${HEADLESS=0}" = "0" ] && read ENTER
+	return 0
 }
 
 ################################################################################
@@ -809,10 +790,9 @@ wait_for_user()
 # Purpose: Utility to test if a variable is true | yes | 1                     #
 #                                                                              #
 ################################################################################
-is_true()
-{
-   [ "$1" = "1" ] || [ "$1" = "yes" ] || [ "$1" = "true" ] ||  [ "$1" = "y" ] ||
-   [ "$1" = "t" ]
+is_true() {
+	[ "$1" = "1" ] || [ "$1" = "yes" ] || [ "$1" = "true" ] || [ "$1" = "y" ] ||
+		[ "$1" = "t" ]
 }
 
 # End /lib/lsb/init-functions

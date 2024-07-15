@@ -34,8 +34,7 @@ done
 declare -p BASH_ARGV
 declare -p BASH_ARGC
 
-func()
-{
+func() {
 	echo 'func()'
 	declare -p BASH_ARGV
 	declare -p BASH_ARGC

@@ -3,33 +3,33 @@
 
 # Função para definir as cores usando tput
 definir_cores() {
-    cor_vermelho=$(tput setaf 1)
-    cor_verde=$(tput setaf 2)
-    cor_magenta=$(tput setaf 5)
-    cor_reset=$(tput sgr0)
+	cor_vermelho=$(tput setaf 1)
+	cor_verde=$(tput setaf 2)
+	cor_magenta=$(tput setaf 5)
+	cor_reset=$(tput sgr0)
 }
 
 # Função para exibir informações de uso do script
 usage() {
-    echo "Uso: $0 [diretório] [padrão]"
+	echo "Uso: $0 [diretório] [padrão]"
 }
 
 # Função para mostrar a lista de arquivos que contêm a string ou correspondem ao cabeçalho
 mostrar_resultados() {
-    diretorio="$1"
-    padrao="$2"
-    
-    # Utiliza o comando 'find' para encontrar todos os arquivos no diretório fornecido
-    # A opção '-type f,d,l' indica que estamos procurando por arquivos, diretórios e links simbólicos
-    find_output=$(find "$diretorio" -type f,d,l -exec file {} + | grep -iE "($padrao)" | cut -d: -f1)
+	diretorio="$1"
+	padrao="$2"
 
-    # Exibe o resultado na tela com cores
-    if [ -n "$find_output" ]; then
-        echo "${cor_verde}Arquivos correspondentes ao padrão '$padrao':${cor_reset}"
-        echo "$find_output" | sed "s/\.\///" # Remove o "./" do início do caminho do arquivo
-    else
-        echo "${cor_vermelho}Nenhum arquivo encontrado correspondente ao padrão '$padrao' em '$diretorio'.${cor_reset}"
-    fi
+	# Utiliza o comando 'find' para encontrar todos os arquivos no diretório fornecido
+	# A opção '-type f,d,l' indica que estamos procurando por arquivos, diretórios e links simbólicos
+	find_output=$(find "$diretorio" -type f,d,l -exec file {} + | grep -iE "($padrao)" | cut -d: -f1)
+
+	# Exibe o resultado na tela com cores
+	if [ -n "$find_output" ]; then
+		echo "${cor_verde}Arquivos correspondentes ao padrão '$padrao':${cor_reset}"
+		echo "$find_output" | sed "s/\.\///" # Remove o "./" do início do caminho do arquivo
+	else
+		echo "${cor_vermelho}Nenhum arquivo encontrado correspondente ao padrão '$padrao' em '$diretorio'.${cor_reset}"
+	fi
 }
 
 # Definir as cores
@@ -37,9 +37,9 @@ definir_cores
 
 # Verifica se a string de busca foi fornecida
 if [ -z "$1" ]; then
-    # Se nenhuma string de busca foi fornecida, exibe a mensagem de uso padrão
-    usage
-    exit 1
+	# Se nenhuma string de busca foi fornecida, exibe a mensagem de uso padrão
+	usage
+	exit 1
 fi
 
 # Restante dos argumentos após a string de busca é o diretório
@@ -48,4 +48,3 @@ padrao="$1"
 
 # Mostra os arquivos que correspondem à string de busca
 mostrar_resultados "$diretorio" "$padrao"
-

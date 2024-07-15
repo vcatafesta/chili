@@ -58,7 +58,7 @@ echo $b # 5
 
 b=9
 echo $a # 9
-echo $b # 
+echo $b #
 
 declare -f VlrTotal
 
@@ -66,7 +66,7 @@ function VlrTotal {
 	local USD=4.81
 	local EUR=5.25
 	local -n Ind=$1
-	bc <<< "$Ind * $2"
+	bc <<<"$Ind * $2"
 }
 
 VlrTotal "$@"
@@ -77,5 +77,5 @@ declare -p Var1
 declare -p Var2
 declare -p -c
 type -a
-declare -p Nom > temp
-declare -p    >> temp
+declare -p Nom >temp
+declare -p >>temp

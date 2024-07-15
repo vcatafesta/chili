@@ -2,36 +2,36 @@
 
 # Função para definir as cores usando tput
 definir_cores() {
-    cor_vermelho=$(tput setaf 1)
-    cor_verde=$(tput setaf 2)
-    cor_magenta=$(tput setaf 5)
-    cor_reset=$(tput sgr0)
+	cor_vermelho=$(tput setaf 1)
+	cor_verde=$(tput setaf 2)
+	cor_magenta=$(tput setaf 5)
+	cor_reset=$(tput sgr0)
 }
 
 # Verifica se o número de argumentos é válido
 if [ "$#" -eq 0 ]; then
-    echo "Uso: $0 [diretório] string"
-    exit 1
+	echo "Uso: $0 [diretório] string"
+	exit 1
 fi
 
 # Verifica se o primeiro argumento é um diretório válido
 if [ -d "$1" ]; then
-    diretorio="$1"
-    shift 1
+	diretorio="$1"
+	shift 1
 else
-    diretorio="$PWD"
+	diretorio="$PWD"
 fi
 
 # Verifica se o diretório existe
 if [ ! -d "$diretorio" ]; then
-    echo "O diretório '$diretorio' não existe."
-    exit 1
+	echo "O diretório '$diretorio' não existe."
+	exit 1
 fi
 
 # Verifica se a string de pesquisa foi fornecida
 if [ "$#" -ne 1 ]; then
-    echo "Uso: $0 [diretório] string"
-    exit 1
+	echo "Uso: $0 [diretório] string"
+	exit 1
 fi
 
 string="$1"
@@ -50,9 +50,8 @@ grep_output=$(find "$diretorio" -type f -exec grep -Hn "$string" {} + 2>/dev/nul
 
 # Exibe o resultado na tela com cores
 if [ -n "$grep_output" ]; then
-    echo "${cor_verde}Arquivos que contêm a string '$string':${cor_reset}"
-    echo "$grep_output" | sed -E "s/(${string}.*):/${cor_magenta}\1${cor_reset}/" | sed "s/:\([0-9]\+\):/:${cor_verde}\1${cor_reset}/"
+	echo "${cor_verde}Arquivos que contêm a string '$string':${cor_reset}"
+	echo "$grep_output" | sed -E "s/(${string}.*):/${cor_magenta}\1${cor_reset}/" | sed "s/:\([0-9]\+\):/:${cor_verde}\1${cor_reset}/"
 else
-    echo "${cor_vermelho}Nenhum arquivo encontrado com a string '$string' em '$diretorio'.${cor_reset}"
+	echo "${cor_vermelho}Nenhum arquivo encontrado com a string '$string' em '$diretorio'.${cor_reset}"
 fi
-

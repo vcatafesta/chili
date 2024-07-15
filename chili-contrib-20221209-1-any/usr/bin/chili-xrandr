@@ -7,18 +7,17 @@ setvarcolors
 export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 #set -x
 
-sh_setdevboy()
-{
+sh_setdevboy() {
 	umc 2560 1080 50 --rbt
 	# 2560x1080x49.94 @ 55.239kHz
 	#Modeline "2560x1080x49.94"  150.250000  2560 2608 2640 2720  1080 1083 1087 1106  +HSync -VSync
-	xrandr --verbose --newmode "2560x1080x49.94"  150.250000  2560 2608 2640 2720  1080 1083 1087 1106  +HSync -VSync
+	xrandr --verbose --newmode "2560x1080x49.94" 150.250000 2560 2608 2640 2720 1080 1083 1087 1106 +HSync -VSync
 	xrandr --verbose --addmode HDMI-1 "2560x1080x49.94"
 
 	umc 2560 1050 50 --rbt
 	# 2560x1050x49.93 @ 53.676kHz
 	#Modeline "2560x1050x49.93"  146.000000  2560 2608 2640 2720  1050 1053 1057 1075  +HSync -VSync
-	xrandr --verbose --newmode "2560x1050x49.93"  146.000000  2560 2608 2640 2720  1050 1053 1057 1075  +HSync -VSync
+	xrandr --verbose --newmode "2560x1050x49.93" 146.000000 2560 2608 2640 2720 1050 1053 1057 1075 +HSync -VSync
 	xrandr --verbose --addmode HDMI-1 "2560x1050x49.93"
 
 	#umc 2560 1050 75 --rbt
@@ -30,73 +29,68 @@ sh_setdevboy()
 	umc 2560 1080 50 -d
 	# 2560x1080x50.00 @ 111.300kHz
 	#Modeline "2560x1080x50.00"  391.776000  2560 2760 3040 3520  1080 1082 1084 1113  -HSync +VSync doublescan
-	xrandr --verbose --newmode "2560x1080x50.00"  391.776000  2560 2760 3040 3520  1080 1082 1084 1113  -HSync +VSync doublescan
+	xrandr --verbose --newmode "2560x1080x50.00" 391.776000 2560 2760 3040 3520 1080 1082 1084 1113 -HSync +VSync doublescan
 	xrandr --verbose --addmode HDMI-1 "2560x1080x50.00"
 }
 
-sh_setrand()
-{
+sh_setrand() {
 	#output='VGA-1'
 	#output='DVI-1'
 	output='HDMI-1'
 	#output=$(xrandr | grep " connected " | awk '{ print$1 }') 							#conectado
-#	output=($(xrandr | grep "connected " | awk '{ print$1 }'))        				#todos
-#	mapfile -t output < "$(xrandr | grep "connected " | awk '{ print$1 }')"       #todos
+	#	output=($(xrandr | grep "connected " | awk '{ print$1 }'))        				#todos
+	#	mapfile -t output < "$(xrandr | grep "connected " | awk '{ print$1 }')"       #todos
 	hmode=(2560 1920 1680)
- 	vmode=(1080 1080 1050)
+	vmode=(1080 1080 1050)
 	refresh=(33 44 60)
 	ncounter=0
 	arr=()
-   sep='\xe2\x94\x82'
+	sep='\xe2\x94\x82'
 
-	for y in "${output[@]}"
-	do
+	for y in "${output[@]}"; do
 		nc=0
-		for x in "${hmode[@]}"
-		do
+		for x in "${hmode[@]}"; do
 			#arr+=("$x 44" "$output")
-   	  	arr[((n++))]="$x ${vmode[$nc]} ${refresh[$nc]}"
-#	    	arr[((n++))]=$(printf "%-7s$sep%-30s" "${output[$nc]}" "$(cvt "${hmode[nc]}" "${vmode[nc]}" "${refresh[$nc]}")")
-	    	arr[((n++))]=$(printf "%-7s$sep%-30s" "$y" "$(cvt "${hmode[nc]}" "${vmode[nc]}" "${refresh[$nc]}")")
-   	  	((n++))
-	     	((nc++))
+			arr[((n++))]="$x ${vmode[$nc]} ${refresh[$nc]}"
+			#	    	arr[((n++))]=$(printf "%-7s$sep%-30s" "${output[$nc]}" "$(cvt "${hmode[nc]}" "${vmode[nc]}" "${refresh[$nc]}")")
+			arr[((n++))]=$(printf "%-7s$sep%-30s" "$y" "$(cvt "${hmode[nc]}" "${vmode[nc]}" "${refresh[$nc]}")")
+			((n++))
+			((nc++))
 		done
 	done
 
-	while :
-   do
-  	nchoice=$(dialog													\
-  				--backtitle	"Chili resolution" 					\
-  				--title		"Chili resolution" 					\
-            --menu		'\nChoose resolution for add:'	\
-            0 0 13                                     	\
-         	"${arr[@]}" 2>&1 >/dev/tty)
+	while :; do
+		nchoice=$(dialog \
+			--backtitle "Chili resolution" \
+			--title "Chili resolution" \
+			--menu '\nChoose resolution for add:' \
+			0 0 13 \
+			"${arr[@]}" 2>&1 >/dev/tty)
 
-   	nExit=$?
-   	if (( nExit )); then
-   		exit
-   	fi
-#		modeline=$(cvt "${hmode[ncounter]}" "${vmode[ncounter]}" | grep Modeline | sed 's/Modeline //')
-#		mode=$(echo "${modeline}" | awk '{print $1}')
+		nExit=$?
+		if ((nExit)); then
+			exit
+		fi
+		#		modeline=$(cvt "${hmode[ncounter]}" "${vmode[ncounter]}" | grep Modeline | sed 's/Modeline //')
+		#		mode=$(echo "${modeline}" | awk '{print $1}')
 
-#		umc="Modeline “2560x1080x53.92” 162.500000 2560 2608 2640 2720 1080 1083 1087 1108 +HSync -VSync"
-#		modeline=$(echo "$umc" | grep Modeline | sed 's/Modeline //')
+		#		umc="Modeline “2560x1080x53.92” 162.500000 2560 2608 2640 2720 1080 1083 1087 1108 +HSync -VSync"
+		#		modeline=$(echo "$umc" | grep Modeline | sed 's/Modeline //')
 
 		echo "$nchoice"
 		modeline=$(cvt -v "$nchoice" | grep Modeline | sed 's/Modeline //')
 		mode=$(echo "${modeline}" | awk '{print $1}')
-   	printf '%s\n' "$modeline"
+		printf '%s\n' "$modeline"
 		printf '%s\n' "$mode"
 		xrandr --verbose --newmode "$modeline"
 		xrandr --verbose --addmode "$output" "$mode"
-		(( ncounter++ ))
+		((ncounter++))
 		inkey 5
 	done
 }
 
-main()
-{
-#	sh_setdevboy
+main() {
+	#	sh_setdevboy
 	sh_setrand
 }
 

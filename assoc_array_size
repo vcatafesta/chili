@@ -2,13 +2,11 @@
 
 # Função que retorna o tamanho do array associativo
 assoc_array_size() {
-    local -n arr=$1 # Cria uma referência para o array associativo passado como argumento
-    echo "${#arr[@]}" # Retorna o tamanho do array
+	local -n arr=$1   # Cria uma referência para o array associativo passado como argumento
+	echo "${#arr[@]}" # Retorna o tamanho do array
 }
 
 # Exemplo de uso
-declare -A frutas=( ["maçã"]="vermelha" ["banana"]="amarela" ["laranja"]="laranja" ["abacaxi"]="amarelo")
+declare -A frutas=(["maçã"]="vermelha" ["banana"]="amarela" ["laranja"]="laranja" ["abacaxi"]="amarelo")
 tamanho=$(assoc_array_size "frutas")
 echo "O array associativo tem tamanho $tamanho"
-
-

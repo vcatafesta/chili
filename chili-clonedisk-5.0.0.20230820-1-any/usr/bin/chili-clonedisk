@@ -659,7 +659,7 @@ sh_checkDependencies() {
 		echo "===================================================="
 		echo "${yellow}             $(gettext "IMPOSSÍVEL CONTINUAR")"
 		echo "${black}$(gettext "Este script precisa dos comandos listados acima")"
-      echo "${black}$(gettext "Instale-os e/ou verifique se eles estão em seu") ${red}\$PATH${reset}"
+		echo "${black}$(gettext "Instale-os e/ou verifique se eles estão em seu") ${red}\$PATH${reset}"
 		echo "===================================================="
 		die $(gettext "Abortando...")
 	fi

@@ -12,6 +12,6 @@
 SECONDS=$((${1:-1} * 60))
 
 for i in $(seq $SECONDS -1 1); do
-    dunstify -r "98435" "Timer:" "$(date -d"@$i" -u +%H:%M:%S)"
-    sleep 1
+	dunstify -r "98435" "Timer:" "$(date -d"@$i" -u +%H:%M:%S)"
+	sleep 1
 done

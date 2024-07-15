@@ -6,7 +6,7 @@
 #   	  patrick.largey@nazeman.org
 #		 www.nazeman.org
 #
-# Licence : GNU GPL 
+# Licence : GNU GPL
 #
 # Copyright (C) Nazeman
 #
@@ -20,10 +20,9 @@
 #			  Gnome-utils (gdialog)
 #
 filesall=""
-while [ $# -gt 0 ]
-	do
-		files=`echo "$1" | sed 's/ /\?/g'`
-		filesall="$files $filesall"
-		shift
-	done
-gedit $filesall&
+while [ $# -gt 0 ]; do
+	files=$(echo "$1" | sed 's/ /\?/g')
+	filesall="$files $filesall"
+	shift
+done
+gedit $filesall &

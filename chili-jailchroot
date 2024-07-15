@@ -69,12 +69,12 @@ light_magenta=$(tput setaf 13)
 light_cyan=$(tput setaf 14)
 bright_white=$(tput setaf 15)
 
-function print_cyan   { printf "${cyan}=> %s${reset}\n" "$1"; }
-function print_red    { printf "${red}=> %s${reset}\n" "$1"; }
+function print_cyan { printf "${cyan}=> %s${reset}\n" "$1"; }
+function print_red { printf "${red}=> %s${reset}\n" "$1"; }
 function print_yellow { printf "${yellow}=> %s${reset}\n" "$1"; }
-function print_green  {	printf "${green}=> %s${reset}\n" "$1"; }
-function print_black  { printf "${black}=> %s${reset}\n" "$1"; }
-function print_blue   { printf "${light_blue}=> %s${reset}\n" "$1"; }
+function print_green { printf "${green}=> %s${reset}\n" "$1"; }
+function print_black { printf "${black}=> %s${reset}\n" "$1"; }
+function print_blue { printf "${light_blue}=> %s${reset}\n" "$1"; }
 
 # Função para criar diretórios da chroot jail
 function create_chroot_directories {
@@ -85,14 +85,14 @@ function create_chroot_directories {
 	done
 
 	pushd "$CHROOT" >/dev/null
-		print_red "Definindo permissões para a pasta tmp"
-		chmod 1777 tmp || return 1
-		print_cyan "Criando links simbólicos"
-		ln -sf usr/bin bin || return 1
-		ln -sf usr/sbin sbin || return 1
-		ln -sf usr/lib lib || return 1
-		ln -sf usr/lib64 lib64 || return 1
-		ln -sf /dev/null dev/null || return 1
+	print_red "Definindo permissões para a pasta tmp"
+	chmod 1777 tmp || return 1
+	print_cyan "Criando links simbólicos"
+	ln -sf usr/bin bin || return 1
+	ln -sf usr/sbin sbin || return 1
+	ln -sf usr/lib lib || return 1
+	ln -sf usr/lib64 lib64 || return 1
+	ln -sf /dev/null dev/null || return 1
 	popd >/dev/null
 
 	print_red "Retirando a permissão de escrita do diretório $CHROOT"
@@ -152,15 +152,15 @@ function create_chroot_shell {
 # Função para criar arquivos /etc/group e /etc/passwd
 function create_group_and_passwd_files {
 	if ! grep -q root: "$CHROOT/etc/group"; then
-		grep root: /etc/group     >>"$CHROOT/etc/group"  || return 1
+		grep root: /etc/group >>"$CHROOT/etc/group" || return 1
 	fi
 	if ! grep -q "$user": "$CHROOT/etc/group"; then
-		grep "$user": /etc/group  >>"$CHROOT/etc/group"  || return 1
+		grep "$user": /etc/group >>"$CHROOT/etc/group" || return 1
 	fi
-	if ! grep -q root: "$CHROOT/etc/passwd" ; then
-		grep root: /etc/passwd    >>"$CHROOT/etc/passwd" || return 1
+	if ! grep -q root: "$CHROOT/etc/passwd"; then
+		grep root: /etc/passwd >>"$CHROOT/etc/passwd" || return 1
 	fi
-	if ! grep -q "$user": "$CHROOT/etc/passwd" ; then
+	if ! grep -q "$user": "$CHROOT/etc/passwd"; then
 		grep "$user": /etc/passwd >>"$CHROOT/etc/passwd" || return 1
 	fi
 }
@@ -215,7 +215,7 @@ function create_etc_profile {
 
 function create_etc_bash_bashrc {
 	print_red "Criando $CHROOT/etc/bash.bashrc"
-echo '#!/usr/bin/bash
+	echo '#!/usr/bin/bash
 # /etc/bash.bashrc
 
 append_path() {
@@ -394,8 +394,8 @@ fi
 # Outras configurações e comandos personalizados podem ser adicionados
 eval $(dircolors -b /etc/.dircolors)
 ' >"$CHROOT/etc/bash.bashrc" || return 1
-cp -f "$CHROOT/etc/bash.bashrc" "$CHROOT/home/$user/.bashrc" || return 1
-cp -f "$CHROOT/etc/bash.bashrc" "$CHROOT/root/.bashrc" || return 1
+	cp -f "$CHROOT/etc/bash.bashrc" "$CHROOT/home/$user/.bashrc" || return 1
+	cp -f "$CHROOT/etc/bash.bashrc" "$CHROOT/root/.bashrc" || return 1
 }
 
 # Função principal do script

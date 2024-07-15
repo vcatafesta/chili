@@ -3,48 +3,48 @@
 
 # Função para definir as cores usando tput
 definir_cores() {
-    cor_vermelho=$(tput setaf 1)
-    cor_verde=$(tput setaf 2)
-    cor_magenta=$(tput setaf 5)
-    cor_reset=$(tput sgr0)
+	cor_vermelho=$(tput setaf 1)
+	cor_verde=$(tput setaf 2)
+	cor_magenta=$(tput setaf 5)
+	cor_reset=$(tput sgr0)
 }
 
 # Função para exibir informações de uso do script
 usage() {
-    echo "Uso: $0 [-v|--verbose] [diretório] [padrão]"
+	echo "Uso: $0 [-v|--verbose] [diretório] [padrão]"
 }
 
 # Função para mostrar a lista de arquivos que contêm a string ou correspondem ao cabeçalho
 mostrar_resultados() {
-    diretorio="$1"
-    padrao="$2"
-    
-    # Utiliza o comando 'find' para encontrar todos os arquivos no diretório fornecido
-    # A opção '-type f,d,l' indica que estamos procurando por arquivos, diretórios e links simbólicos
-    find_output=$(find "$diretorio" -type f,d,l -exec file {} + 2>/dev/null | grep -iE "($padrao)" | cut -d: -f1)
+	diretorio="$1"
+	padrao="$2"
 
-    # Armazena o maior comprimento encontrado na variável "maior_comprimento"
-    maior_comprimento=0
-    while IFS= read -r arquivo; do
-        comprimento_arquivo=${#arquivo}
-        if [ $comprimento_arquivo -gt $maior_comprimento ]; then
-            maior_comprimento=$comprimento_arquivo
-        fi
-    done <<< "$find_output"
+	# Utiliza o comando 'find' para encontrar todos os arquivos no diretório fornecido
+	# A opção '-type f,d,l' indica que estamos procurando por arquivos, diretórios e links simbólicos
+	find_output=$(find "$diretorio" -type f,d,l -exec file {} + 2>/dev/null | grep -iE "($padrao)" | cut -d: -f1)
 
-    # Exibe o resultado na tela com cores e alinhamento
-    if [ -n "$find_output" ]; then
-        echo "${cor_verde}Arquivos correspondentes ao padrão '$padrao':${cor_reset}"
-        while IFS= read -r arquivo; do
-            while IFS= read -r linha_com_numero; do
-                linha_numero=$(echo "$linha_com_numero" | cut -d: -f1)
-                linha_conteudo=$(echo "$linha_com_numero" | cut -d: -f2-)
-                printf "${cor_magenta}%s${cor_reset}:${cor_verde}%-${maior_comprimento}s${cor_reset}:${linha_conteudo}\n" "$arquivo" "$linha_numero"
-            done < <(grep -n "$padrao" "$arquivo" 2>/dev/null)
-        done <<< "$find_output" | sed "s/\.\///" # Remove o "./" do início do caminho do arquivo
-    else
-        echo "${cor_vermelho}Nenhum arquivo encontrado correspondente ao padrão '$padrao' em '$diretorio'.${cor_reset}"
-    fi
+	# Armazena o maior comprimento encontrado na variável "maior_comprimento"
+	maior_comprimento=0
+	while IFS= read -r arquivo; do
+		comprimento_arquivo=${#arquivo}
+		if [ $comprimento_arquivo -gt $maior_comprimento ]; then
+			maior_comprimento=$comprimento_arquivo
+		fi
+	done <<<"$find_output"
+
+	# Exibe o resultado na tela com cores e alinhamento
+	if [ -n "$find_output" ]; then
+		echo "${cor_verde}Arquivos correspondentes ao padrão '$padrao':${cor_reset}"
+		while IFS= read -r arquivo; do
+			while IFS= read -r linha_com_numero; do
+				linha_numero=$(echo "$linha_com_numero" | cut -d: -f1)
+				linha_conteudo=$(echo "$linha_com_numero" | cut -d: -f2-)
+				printf "${cor_magenta}%s${cor_reset}:${cor_verde}%-${maior_comprimento}s${cor_reset}:${linha_conteudo}\n" "$arquivo" "$linha_numero"
+			done < <(grep -n "$padrao" "$arquivo" 2>/dev/null)
+		done <<<"$find_output" | sed "s/\.\///" # Remove o "./" do início do caminho do arquivo
+	else
+		echo "${cor_vermelho}Nenhum arquivo encontrado correspondente ao padrão '$padrao' em '$diretorio'.${cor_reset}"
+	fi
 }
 
 # Definir as cores
@@ -52,15 +52,15 @@ definir_cores
 
 # Verifica se a string de busca foi fornecida
 if [ -z "$1" ]; then
-    # Se nenhuma string de busca foi fornecida, exibe a mensagem de uso padrão
-    usage
-    exit 1
+	# Se nenhuma string de busca foi fornecida, exibe a mensagem de uso padrão
+	usage
+	exit 1
 fi
 
 # Verifica se a opção -v ou --verbose foi fornecida
 if [ "$1" == "-v" ] || [ "$1" == "--verbose" ]; then
-    verbose=1
-    shift
+	verbose=1
+	shift
 fi
 
 # Restante dos argumentos após a string de busca é o diretório
@@ -69,10 +69,8 @@ padrao="$1"
 
 # Mostra a mensagem de início da busca, se a opção -v ou --verbose estiver presente
 if [ "$verbose" == "1" ]; then
-    echo "Procurando por padrão: '$padrao' ..."
+	echo "Procurando por padrão: '$padrao' ..."
 fi
 
 # Mostra os arquivos que correspondem à string de busca
 mostrar_resultados "$diretorio" "$padrao"
-
-

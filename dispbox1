@@ -13,26 +13,26 @@ tput cup $linha $col
 
 # Imprime o quadro com base nas coordenadas, largura e altura
 for ((i = 0; i < altura; i++)); do
-    if [ $i -eq 0 ]; then
-        echo -n "┌"
-        for ((j = 1; j < nmaxlen - 1; j++)); do
-            echo -n "─"
-        done
-        echo "┐"
-    elif [ $i -eq $((altura - 1)) ]; then
-        echo -n "└"
-        for ((j = 1; j < nmaxlen - 1; j++)); do
-            echo -n "─"
-        done
-        echo "┘"
-    else
-        echo -n "│"
-        for ((j = 1; j < nmaxlen - 1; j++)); do
-            echo -n " "
-        done
-        echo "│"
-    fi
-    ((++linha))
+	if [ $i -eq 0 ]; then
+		echo -n "┌"
+		for ((j = 1; j < nmaxlen - 1; j++)); do
+			echo -n "─"
+		done
+		echo "┐"
+	elif [ $i -eq $((altura - 1)) ]; then
+		echo -n "└"
+		for ((j = 1; j < nmaxlen - 1; j++)); do
+			echo -n "─"
+		done
+		echo "┘"
+	else
+		echo -n "│"
+		for ((j = 1; j < nmaxlen - 1; j++)); do
+			echo -n " "
+		done
+		echo "│"
+	fi
+	((++linha))
 	tput cup $linha $col
 done
 

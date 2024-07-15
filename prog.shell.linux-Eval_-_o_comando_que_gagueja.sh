@@ -24,17 +24,12 @@ echo {8..2..2}
 
 echo 'Maior=10; Menor=02; Passo=2;'
 echo 'echo {$Maior..$Menor..$Passo}'
-Maior=10; Menor=02; Passo=2;
+Maior=10
+Menor=02
+Passo=2
 echo {$Maior..$Menor..$Passo}
 # result: {10..2..2}
 
 echo 'eval echo {$Maior..$Menor..$Passo}'
 eval echo {$Maior..$Menor..$Passo}
 #result 10 08 06 04 02
-
-
-
-
-
-
-

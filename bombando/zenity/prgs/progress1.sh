@@ -13,15 +13,14 @@ cp -ur /diretorio/origem /diretorio/destino &
 
 # O while a seguir sera executado caso haja algo a baixar
 # e enquanto persistir o processo em background ($!)
-[ $TotArqIni -eq $TotArqFim ] || while ps aux | grep -q $!
-do
+[ $TotArqIni -eq $TotArqFim ] || while ps aux | grep -q $!; do
 	Atual=$(du -sb ~/diretorio/destino | cut -f1)
-	Baixei=$(($Atual-$TotArqIni))
-	echo "# $((Baixei/1000)) de $((VouBaixar/1000)) Kbytes copiados"
+	Baixei=$(($Atual - $TotArqIni))
+	echo "# $((Baixei / 1000)) de $((VouBaixar / 1000)) Kbytes copiados"
 	echo $((Baixei * 100 / VouBaixar))
 	sleep 1
 done | zenity --progress \
-    --auto-close         \
-    --auto-kill          \
-    --title="Atualização"\
-    --text="Atualizando..."
+	--auto-close \
+	--auto-kill \
+	--title="Atualização" \
+	--text="Atualizando..."

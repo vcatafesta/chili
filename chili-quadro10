@@ -2,33 +2,32 @@
 
 # Função para posicionar o cursor
 function posicionar_cursor {
-  printf "\e[${2};${1}H"
+	printf "\e[${2};${1}H"
 }
 
 # Variáveis do tabuleiro
 tamanho_casa=5
 
 # Loop para desenhar o tabuleiro
-for ((i=0; i<8; i++)); do
-  for ((j=0; j<8; j++)); do
-    # Calcula a posição atual do quadrado
-    pos_x=$((j * tamanho_casa + 1))
-    pos_y=$((i * tamanho_casa + 1))
+for ((i = 0; i < 8; i++)); do
+	for ((j = 0; j < 8; j++)); do
+		# Calcula a posição atual do quadrado
+		pos_x=$((j * tamanho_casa + 1))
+		pos_y=$((i * tamanho_casa + 1))
 
-    # Define a cor do quadrado
-    if (( (i + j) % 2 == 0 )); then
-      cor="\e[47m"  # Fundo branco
-    else
-      cor="\e[40m"  # Fundo preto
-    fi
+		# Define a cor do quadrado
+		if (((i + j) % 2 == 0)); then
+			cor="\e[47m" # Fundo branco
+		else
+			cor="\e[40m" # Fundo preto
+		fi
 
-    # Posiciona o cursor e imprime o quadrado
-    posicionar_cursor $pos_x $pos_y
-    printf "${cor}      \e[0m"
-  done
+		# Posiciona o cursor e imprime o quadrado
+		posicionar_cursor $pos_x $pos_y
+		printf "${cor}      \e[0m"
+	done
 done
 
 # Pula uma linha no final
 posicionar_cursor 1 $((8 * tamanho_casa + 2))
 printf "\n"
-

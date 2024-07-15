@@ -4,8 +4,8 @@ SERVERNAME=$1
 PORT=$2
 PARAMS=""
 
-print_help(){
-cat << EOF
+print_help() {
+	cat <<EOF
   Script that fetches SSL certificate information from remote server and prints out certificate fields.
   Can be used for certificate expiration date monitoring.
 
@@ -29,26 +29,25 @@ cat << EOF
   --all         - Full certificate information (the same as without any parameters)
   --help        - This help
 EOF
-exit 0
+	exit 0
 }
 
-expires_in(){
-    EXP_DATE=$( 
-    echo "" | openssl s_client -connect ${SERVERNAME}:${PORT} 2>/dev/null \
-    | sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' \
-    | openssl x509 -in - -enddate \
-    | sed '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/d' \
-    | sed 's/notAfter=//' 
-)
-    DAYS_LEFT=$(( ($(date -d "$EXP_DATE" +%s) - $(date -d "now" +%s) ) / 86400 ))
-    echo $DAYS_LEFT days
-    exit
+expires_in() {
+	EXP_DATE=$(
+		echo "" | openssl s_client -connect ${SERVERNAME}:${PORT} 2>/dev/null |
+			sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' |
+			openssl x509 -in - -enddate |
+			sed '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/d' |
+			sed 's/notAfter=//'
+	)
+	DAYS_LEFT=$((($(date -d "$EXP_DATE" +%s) - $(date -d "now" +%s)) / 86400))
+	echo $DAYS_LEFT days
+	exit
 }
 
 shift 2
-while [ "$1" != "" ]
-do
-    case "$1" in
+while [ "$1" != "" ]; do
+	case "$1" in
 	--issuer) PARAMS+="-issuer " ;;
 	--subject) PARAMS+="-subject " ;;
 	--serial) PARAMS+="-serial " ;;
@@ -65,13 +64,13 @@ do
 	--help) print_help ;;
 	--expires-in) expires_in ;;
 	*) ;;
-    esac
-    shift
+	esac
+	shift
 done
 
 PARAMS=${PARAMS:-"-text "}
 
-echo "" | openssl s_client -connect ${SERVERNAME}:${PORT} 2>/dev/null \
-| sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' \
-| openssl x509 -in - $PARAMS \
-| sed '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/d'
+echo "" | openssl s_client -connect ${SERVERNAME}:${PORT} 2>/dev/null |
+	sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' |
+	openssl x509 -in - $PARAMS |
+	sed '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/d'

@@ -60,14 +60,14 @@ COL=$((COLUMNS - 8))
 SET_COL="\\033[${COL}G" # at the $COL char
 CURS_ZERO="\\033[0G"
 
-mirrors_tier1(){
+mirrors_tier1() {
 	mirrors+=(["repo-fi.voidlinux.org"]='https://repo-fi.voidlinux.org/')
 	mirrors+=(["mirrors.servercentral.com"]='https://mirrors.servercentral.com/voidlinux/')
 	mirrors+=(["repo-us.voidlinux.org"]='https://repo-us.voidlinux.org/')
 	mirrors+=(["repo-de.voidlinux.org"]='https://repo-de.voidlinux.org/')
 }
 
-mirrors_asia(){
+mirrors_asia() {
 	mirrors+=(['mirror.ps.kz']='https://mirror.ps.kz/voidlinux/')
 	mirrors+=(['mirrors.bfsu.edu.cn']='https://mirrors.bfsu.edu.cn/voidlinux/')
 	mirrors+=(['mirrors.cnnic.cn']='https://mirrors.cnnic.cn/voidlinux/')
@@ -77,18 +77,18 @@ mirrors_asia(){
 	mirrors+=(['void.webconverger.org']='https://void.webconverger.org/')
 }
 
-mirrors_au(){
+mirrors_au() {
 	mirrors+=(['mirror.aarnet.edu.au']='https://mirror.aarnet.edu.au/pub/voidlinux/')
 	mirrors+=(['ftp.swin.edu.au']='https://ftp.swin.edu.au/voidlinux/')
 }
 
-mirrors_br(){
+mirrors_br() {
 	mirrors+=(['voidlinux.com.br']='https://voidlinux.com.br/repo/')
 	mirrors+=(['void.chililinux.com']='http://void.chililinux.com/voidlinux/')
 	mirrors+=(['void.chilios.com.br']='http://void.chilios.com.br/voidlinux/')
 }
 
-mirrors_eu(){
+mirrors_eu() {
 	mirrors+=(['void.cijber.net']='https://void.cijber.net/')
 	mirrors+=(['ftp.dk.xemacs.org']='http://ftp.dk.xemacs.org/voidlinux/')
 	mirrors+=(['mirrors.dotsrc.org']='https://mirrors.dotsrc.org/voidlinux/')
@@ -102,25 +102,32 @@ mirrors_eu(){
 	mirrors+=(['mirror.puzzle.ch']='https://mirror.puzzle.ch/voidlinux/')
 }
 
-mirrors_usa(){
+mirrors_usa() {
 	mirrors+=(['mirror.vofr.net']='https://mirror.vofr.net/voidlinux/')
 	mirrors+=(['mirror2.sandyriver.net']='https://mirror2.sandyriver.net/pub/voidlinux/')
 	mirrors+=(['mirror.puzzle.ch']='https://mirror.puzzle.ch/voidlinux/')
 }
 
 setvarcolors() {
-	reset=$(tput sgr0);			green=$(tput setaf 2);	red=$(tput setaf 124);
-	pink=$(tput setaf 129);		bold=$(tput bold);		blue=$(tput setaf 33);
-	yellow=$(tput setaf 136);	cyan=$(tput setaf 37);	orange=$(tput setaf 166);
-   white=$(tput setaf 15);    violet=$(tput setaf 61);
-#  purple=$(tput setaf 125);
+	reset=$(tput sgr0)
+	green=$(tput setaf 2)
+	red=$(tput setaf 124)
+	pink=$(tput setaf 129)
+	bold=$(tput bold)
+	blue=$(tput setaf 33)
+	yellow=$(tput setaf 136)
+	cyan=$(tput setaf 37)
+	orange=$(tput setaf 166)
+	white=$(tput setaf 15)
+	violet=$(tput setaf 61)
+	#  purple=$(tput setaf 125);
 }
 
 unsetvarcolors() {
-	reset=''	green=''	red='' pink='' bold='' blue='' yellow='' cyan='' orange='' white='' violet=''
+	reset='' green='' red='' pink='' bold='' blue='' yellow='' cyan='' orange='' white='' violet=''
 	#purple=''
 	NORMAL='' SUCCESS='' WARNING='' FAILURE='' BRACKET='' CURS_ZERO='' SUCCESS_PREFIX=''
-   SET_COL='' SUCCESS_SUFFIX='' WAIT_PREFIX='' WAIT_SUFFIX='' WARNING_PREFIX='' WARNING_SUFFIX=''
+	SET_COL='' SUCCESS_SUFFIX='' WAIT_PREFIX='' WAIT_SUFFIX='' WARNING_PREFIX='' WARNING_SUFFIX=''
 }
 
 sh_val() {
@@ -160,7 +167,7 @@ log_prefix() {
 	SUCCESS="${green}"  # Success is green
 	WARNING="${yellow}" # Warnings are yellow
 	FAILURE="${red}"    # Failures are red
-	BRACKET="${blue}" # Brackets are blue
+	BRACKET="${blue}"   # Brackets are blue
 	BMPREFIX="     "
 	DOTPREFIX="  ${blue}::${reset} "
 	SUCCESS_PREFIX="${SUCCESS}  *  ${NORMAL}"
@@ -254,71 +261,71 @@ tolower() {
 }
 
 erro() {
-   local msg=$1
-   shift
-   printf "%s\n" "$(DOT)${bold}${yellow}$msg${reset}" >&2
-   return
+	local msg=$1
+	shift
+	printf "%s\n" "$(DOT)${bold}${yellow}$msg${reset}" >&2
+	return
 }
 
 write() {
 	local msg=$1
 	shift
 	printf "%s" "$msg"
-   return
+	return
 }
 
 writeln() {
 	local msg=$1
 	shift
 	printf "%s\n" "$msg"
-   return
+	return
 }
 
 msg() {
-   if ! ((quiet)); then
-      local msg=$1
-      shift
-      printf "%-75s\n" "$(DOT)${bold}${green}$msg${reset}"
-   fi
-   return
+	if ! ((quiet)); then
+		local msg=$1
+		shift
+		printf "%-75s\n" "$(DOT)${bold}${green}$msg${reset}"
+	fi
+	return
 }
 
 msgr() {
-   if ! ((quiet)); then
-      local msg=$1
-      shift
+	if ! ((quiet)); then
+		local msg=$1
+		shift
 		COLS=$(tput cols)
 		#printf "%*s\n" $[COLS/2] "${green} -> $msg${reset}"
-      printf "%s\n" "${green} -> $msg${reset}"
-   fi
-   return
+		printf "%s\n" "${green} -> $msg${reset}"
+	fi
+	return
 }
 
 msgl() {
-   if ! ((quiet)); then
-      local msg=$1
-      shift
+	if ! ((quiet)); then
+		local msg=$1
+		shift
 		COLS=$(tput cols)
-      printf "%-*s" $[COLS/2] "${DOT}$msg"
-   fi
-   return
+		printf "%-*s" $((COLS / 2)) "${DOT}$msg"
+	fi
+	return
 }
 
 DOT() {
-   printf "%s" "${blue}:: ${reset}"
+	printf "%s" "${blue}:: ${reset}"
 }
 
-die()
-{
-   local msg=$1; shift
-   msg "${red}$msg" "$@" >&2
-   exit 1
+die() {
+	local msg=$1
+	shift
+	msg "${red}$msg" "$@" >&2
+	exit 1
 }
 
 replicate() {
 	local Var
-	printf -v Var %"$2s" " "  #  Coloca em $Var $1 espaços
-	echo "${Var// /$1}"       #  Troca os espaços pelo caractere escolhido
+	printf -v Var %"$2s" " " #  Coloca em $Var $1 espaços
+	echo "${Var// /$1}"      #  Troca os espaços pelo caractere escolhido
 }
 
 padr() {
@@ -329,7 +336,7 @@ padr() {
 		COLS=$(tput cols)
 		char='='
 	fi
-	printf "%*s\n" $COLS "$texto" |sed "s/ /$char/g"
+	printf "%*s\n" $COLS "$texto" | sed "s/ /$char/g"
 }
 
 padl() {
@@ -340,7 +347,7 @@ padl() {
 		COLS=$(tput cols)
 		char='='
 	fi
-	printf "%-*s\n" $COLS "$texto" |sed "s/ /$char/g"
+	printf "%-*s\n" $COLS "$texto" | sed "s/ /$char/g"
 }
 
 padc() {
@@ -358,7 +365,7 @@ search_geo() {
 	local oldquiet=$quiet
 	local geo=$(geoiplookup "$frepo" | head -1 | sed 's/^.*: //')
 
-	if ! (( quiet )); then
+	if ! ((quiet)); then
 		replicate '=' 100
 	fi
 	quiet=0
@@ -367,7 +374,7 @@ search_geo() {
 	quiet=$oldquiet
 }
 
-print_script()	{
+print_script() {
 	if ! ((quiet)); then
 		local contador=1
 		local chash=''
@@ -385,14 +392,14 @@ print_script()	{
 		writeln '############################################################################'
 
 		for list in "${Sorted[@]}"; do
-		   ctime=$( cut -d, -f1 <<< "$list")
-		   mirror=$( cut -d, -f2 <<< "$list")
+			ctime=$(cut -d, -f1 <<<"$list")
+			mirror=$(cut -d, -f2 <<<"$list")
 			writeln "# top $contador - result: $ctime"
 			if ((contador > 1)); then
 				chash='#'
 			fi
 			writeln "${chash}repository=${mirror}current"
-			if [[ $mirror = 'http://void.chililinux.com/voidlinux/' || $mirror = 'http://void.chilios.com.br/voidlinux/' ]] ; then
+			if [[ $mirror = 'http://void.chililinux.com/voidlinux/' || $mirror = 'http://void.chilios.com.br/voidlinux/' ]]; then
 				writeln "${chash}repository=${mirror}extras"
 			fi
 			writeln "${chash}repository=${mirror}current/nonfree"
@@ -406,7 +413,7 @@ print_script()	{
 	fi
 }
 
-write_script()	{
+write_script() {
 	if ((auto)); then
 		local cfile='/etc/xbps.d/00-repository-main.conf'
 		local contador=1
@@ -414,9 +421,9 @@ write_script()	{
 
 		printf "\n%s\n" "${red}writing results to $cfile"
 		[[ -d '/etc/xbps.d/' ]] || mkdir -p '/etc/xbps.d/'
-		[[ -e "$cfile"       ]] && mv "$cfile" "$cfile.old"
+		[[ -e "$cfile" ]] && mv "$cfile" "$cfile.old"
 
-		: >| "$cfile"
+		: >|"$cfile"
 		{
 			echo "# $cfile"
 			echo '############################################################################'
@@ -426,26 +433,26 @@ write_script()	{
 			echo '# https://chililinux.com'
 			echo "# on date: $(date)"
 			echo '############################################################################'
-		} >> "$cfile"
+		} >>"$cfile"
 
 		for list in "${Sorted[@]}"; do
-		   ctime=$( cut -d, -f1 <<< "$list")
-		   mirror=$( cut -d, -f2 <<< "$list")
-		   geo=$( cut -d, -f3- <<< "$list")
-			echo '' 															>> "$cfile"
-			echo "# top $contador - ($geo) - result: $ctime"	>> "$cfile"
+			ctime=$(cut -d, -f1 <<<"$list")
+			mirror=$(cut -d, -f2 <<<"$list")
+			geo=$(cut -d, -f3- <<<"$list")
+			echo '' >>"$cfile"
+			echo "# top $contador - ($geo) - result: $ctime" >>"$cfile"
 			if ((contador > 1)); then
 				chash='#'
 			fi
 			{
 				echo "${chash}repository=${mirror}current"
-				if [[ $mirror = 'http://void.chililinux.com/voidlinux/' || $mirror = 'http://void.chilios.com.br/voidlinux/' ]] ; then
+				if [[ $mirror = 'http://void.chililinux.com/voidlinux/' || $mirror = 'http://void.chilios.com.br/voidlinux/' ]]; then
 					echo "${chash}repository=${mirror}extras"
 				fi
 				echo "${chash}repository=${mirror}current/nonfree"
 				echo "${chash}repository=${mirror}current/multilib"
 				echo "${chash}repository=${mirror}current/multilib/nonfree"
-			} >> "$cfile"
+			} >>"$cfile"
 			((++contador))
 		done
 	fi
@@ -457,11 +464,11 @@ print_top_mirror() {
 		padl "TOP_10" 100 '='
 
 		for list in "${Sorted[@]}"; do
-		   ctime=$(  cut -d, -f1  <<< "$list")
-		   mirror=$( cut -d, -f2  <<< "$list")
-		   geo=$(    cut -d, -f3- <<< "$list")
+			ctime=$(cut -d, -f1 <<<"$list")
+			mirror=$(cut -d, -f2 <<<"$list")
+			geo=$(cut -d, -f3- <<<"$list")
 			printf "%4d %-20s %-65s %-s\n" "$contador" "$geo" "$mirror" "${green}$ctime${reset}"
-			if (( contador > 9 )); then
+			if ((contador > 9)); then
 				return
 			fi
 			((++contador))
@@ -476,22 +483,21 @@ main_test_mirror() {
 	contador=1
 
 	sh_checknet "${URL_GOOGLE}" || return 1
-	for repo in "${!mirrors[@]}"
-	do
+	for repo in "${!mirrors[@]}"; do
 		filerepo=${mirrors[$repo]}
 		geo=$(geoiplookup "$repo" | head -1 | sed 's/^.*: //')
-		if ! (( typetest )); then 	# ping
+		if ! ((typetest)); then # ping
 			msgl "Testing (ICMP) for ${orange}$repo${reset} ($geo)"
-#			ping=$(ping -c3 "$repo" | tail -1| awk '{print $4}' | cut -d '/' -f 2 | bc -l)
+			#			ping=$(ping -c3 "$repo" | tail -1| awk '{print $4}' | cut -d '/' -f 2 | bc -l)
 			ping=$(ping -qnAc3 "$repo" | tail -1 | awk -F'/' '{print $5}')
-	else
+		else
 			msgl "Testing (HTTP) for ${orange}$repo${reset} ($geo)"
 			ping=$(curl -s -w '%{time_total}\n' -o /dev/null "$filerepo/current/x86_64-repodata")
 		fi
 		msgr "${pink}Average time: ${red}$ping${reset}"
 
 		aHits+=("$ping,$filerepo,$geo")
-		if (( $(bc <<< "$ping<$fping") )); then
+		if (($(bc <<<"$ping<$fping"))); then
 			frepo="$repo"
 			fping="$ping"
 		fi
@@ -508,10 +514,10 @@ main_test_mirror() {
 }
 
 sh_version() {
-   printf "%s\n" "${bold}${cyan}${0##*/} v${_VERSION_}${reset}"
+	printf "%s\n" "${bold}${cyan}${0##*/} v${_VERSION_}${reset}"
 }
 
-sh_sorted_array(){
+sh_sorted_array() {
 	readarray -t Sorted < <(sort -n < <(printf "%s\n" "${aHits[@]}"))
 }
 
@@ -522,67 +528,66 @@ check_deps() {
 	for d in "${DEPENDENCIES[@]}"; do
 		[[ -z $(command -v "$d") ]] && { missing+=("$d") && errorFound=1 && printf "%s\n" "${red}ERRO${reset}: não encontrei o comando ${orange}'$d'${reset}"; }
 	done
-   #[[ ${#missing[@]} -ne 0 ]]
-   if ((errorFound)); then
-      erro "#### IMPOSSIBLE TO CONTINUE ####"
-      msg "This script needs the commands listed above" >&2
-      msg "Install them and/or make sure they are in your \$PATH" >&2
-      exit 1
-   fi
+	#[[ ${#missing[@]} -ne 0 ]]
+	if ((errorFound)); then
+		erro "#### IMPOSSIBLE TO CONTINUE ####"
+		msg "This script needs the commands listed above" >&2
+		msg "Install them and/or make sure they are in your \$PATH" >&2
+		exit 1
+	fi
 }
 
 conf() {
 	read -r -p "$1 [Y/n]"
-	[[ ${REPLY^} == ""  ]] && return $true
+	[[ ${REPLY^} == "" ]] && return $true
 	[[ ${REPLY^} == "Y" ]] && return $true
-	[[ ${REPLY^} == N   ]] && return $false
+	[[ ${REPLY^} == N ]] && return $false
 	die "ERR: answer must be Y or N"
 }
 
-sh_selfupdate()
-{
+sh_selfupdate() {
 	echo
-   conf "Update ${APP_LOCAL} from internet?"
-   LAUTO=$?
+	conf "Update ${APP_LOCAL} from internet?"
+	LAUTO=$?
 
-   if (( LAUTO )); then
-      local link="$URL_GITHUB"
-      local tmp_dir="/tmp/chili"
+	if ((LAUTO)); then
+		local link="$URL_GITHUB"
+		local tmp_dir="/tmp/chili"
 
-      #internet?
+		#internet?
 		sh_checknet "${URL_GITHUB}" || return 1
 
-      log_msg "Ok, let's do it..."
-      [[ -d "${tmp_dir}" ]] || mkdir -p "${tmp_dir}"
-      pushd "${tmp_dir}" >/dev/null 2>&- || return 1
+		log_msg "Ok, let's do it..."
+		[[ -d "${tmp_dir}" ]] || mkdir -p "${tmp_dir}"
+		pushd "${tmp_dir}" >/dev/null 2>&- || return 1
 
-      log_info_msg "${cyan}Clonando $link"
-      #Ok, Puxe o arquivo do repositorio agora!
-      curl --insecure --silent --remote-name "${link}"
-      evaluate_retval
+		log_info_msg "${cyan}Clonando $link"
+		#Ok, Puxe o arquivo do repositorio agora!
+		curl --insecure --silent --remote-name "${link}"
+		evaluate_retval
 		popd >/dev/null 2>&- || return
 
-      log_info_msg "${cyan}Setting permissions and copying file"
-      chmod +x "${tmp_dir}/${APP_REMOTE}"
-      evaluate_retval
+		log_info_msg "${cyan}Setting permissions and copying file"
+		chmod +x "${tmp_dir}/${APP_REMOTE}"
+		evaluate_retval
 
-      log_info_msg "${cyan}Copying file ${yellow}${APP_REMOTE} ${red}to ${yellow}${0}"
-      mv "$0" "$0.old"
-      cp -apf "${tmp_dir}/${APP_REMOTE}" "$0"
-      evaluate_retval
+		log_info_msg "${cyan}Copying file ${yellow}${APP_REMOTE} ${red}to ${yellow}${0}"
+		mv "$0" "$0.old"
+		cp -apf "${tmp_dir}/${APP_REMOTE}" "$0"
+		evaluate_retval
 
-      log_info_msg "${cyan}Removing temporary files"
-      [[ -d "${tmp_dir}" ]] && rm -r "${tmp_dir}"
-      evaluate_retval
-      log_info_msg "${violet}${0} updated successfully, enjoy!"
-      evaluate_retval
-      exit 0
-   fi
-   return 1
+		log_info_msg "${cyan}Removing temporary files"
+		[[ -d "${tmp_dir}" ]] && rm -r "${tmp_dir}"
+		evaluate_retval
+		log_info_msg "${violet}${0} updated successfully, enjoy!"
+		evaluate_retval
+		exit 0
+	fi
+	return 1
 }
 
 sh_usage() {
-   cat <<EOF
+	cat <<EOF
 ${white}chili-testmirror v$_VERSION_${reset}
 ${orange}usage: chili-testmirror [options] ${reset}
 
@@ -601,69 +606,69 @@ EOF
 init() {
 	#while :; do
 	while test $# -gt 0; do
-      case $1 in
-	      -h | -H | --help)
-	         sh_usage
-	         exit $(($# ? 0 : 1))
-	         ;;
-	      -V | --version)
-	         sh_version
-	         exit $(($# ? 0 : 1))
-	         ;;
-	      -n | --nocolor)
-	         unsetvarcolors
-	         ;;
-	      -q | --quiet)
-	         quiet=1
-	         ;;
-	      -a | --auto)
-	         auto=1
-				;;
-	      -l | --all)
-				mirrors_asia
-				mirrors_au
-				mirrors_eu
-				mirrors_usa
-	         ;;
-	      -p | -P | --ping)
-				nping=1
-				typetest=0
-				appexec+=('main_test_mirror')
-#				main_test_mirror
-#	         exit $(($# ? 0 : 1))
-	         ;;
-	      -c | -C | --curl)
-				ncurl=1
-				typetest=1
-				appexec+=('main_test_mirror')
-#				main_test_mirror
-#	         exit $(($# ? 0 : 1))
-	         ;;
-	      -u | -U | --update)
-				update=1
-				appexec+=('sh_selfupdate')
-#				sh_selfupdate
-#	         exit $(($# ? 0 : 1))
-	         ;;
-	      *) die "operação não suportada: $1 (use -h for help)" ;;
-      esac
-      shift
-   done
+		case $1 in
+		-h | -H | --help)
+			sh_usage
+			exit $(($# ? 0 : 1))
+			;;
+		-V | --version)
+			sh_version
+			exit $(($# ? 0 : 1))
+			;;
+		-n | --nocolor)
+			unsetvarcolors
+			;;
+		-q | --quiet)
+			quiet=1
+			;;
+		-a | --auto)
+			auto=1
+			;;
+		-l | --all)
+			mirrors_asia
+			mirrors_au
+			mirrors_eu
+			mirrors_usa
+			;;
+		-p | -P | --ping)
+			nping=1
+			typetest=0
+			appexec+=('main_test_mirror')
+			#				main_test_mirror
+			#	         exit $(($# ? 0 : 1))
+			;;
+		-c | -C | --curl)
+			ncurl=1
+			typetest=1
+			appexec+=('main_test_mirror')
+			#				main_test_mirror
+			#	         exit $(($# ? 0 : 1))
+			;;
+		-u | -U | --update)
+			update=1
+			appexec+=('sh_selfupdate')
+			#				sh_selfupdate
+			#	         exit $(($# ? 0 : 1))
+			;;
+		*) die "operação não suportada: $1 (use -h for help)" ;;
+		esac
+		shift
+	done
 }
 setvarcolors
 log_prefix
 check_deps
 [[ -z $1 ]] && {
-   sh_usage
-   exit $(($# ? 0 : 1))
+	sh_usage
+	exit $(($# ? 0 : 1))
 }
 mirrors_tier1
 mirrors_br
 init "$@"
 
 # sanity checks
-case $(( update+nping+ncurl )) in
-      0) die 'no operation specified (use -h for help)' ;;
-   [^1]) die 'only one operation may be used at a time' ;;
+case $((update + nping + ncurl)) in
+0) die 'no operation specified (use -h for help)' ;;
+[^1]) die 'only one operation may be used at a time' ;;
 esac
 for x in "${appexec[@]}"; do $x; done

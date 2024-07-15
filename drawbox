@@ -2,122 +2,148 @@
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 
 function DrawBox1() {
-    string="$*";
-    tamanho=${#string}
-    tput setaf 4; printf "\e(0\x6c\e(B"
-    for i in $(seq $tamanho)
-        do printf "\e(0\x71\e(B"
-    done
-    printf "\e(0\x6b\e(B\n"; tput sgr0;
-    tput setaf 4; printf "\e(0\x78\e(B"
-    tput setaf 1; tput bold; echo -n $string; tput sgr0
-    tput setaf 4; printf "\e(0\x78\e(B\n"; tput sgr0;
-    tput setaf 4; printf "\e(0\x6d\e(B"
-    for i in $(seq $tamanho)
-        do printf "\e(0\x71\e(B"
-    done
-    printf "\e(0\x6a\e(B\n"; tput sgr0;
+	string="$*"
+	tamanho=${#string}
+	tput setaf 4
+	printf "\e(0\x6c\e(B"
+	for i in $(seq $tamanho); do
+		printf "\e(0\x71\e(B"
+	done
+	printf "\e(0\x6b\e(B\n"
+	tput sgr0
+	tput setaf 4
+	printf "\e(0\x78\e(B"
+	tput setaf 1
+	tput bold
+	echo -n $string
+	tput sgr0
+	tput setaf 4
+	printf "\e(0\x78\e(B\n"
+	tput sgr0
+	tput setaf 4
+	printf "\e(0\x6d\e(B"
+	for i in $(seq $tamanho); do
+		printf "\e(0\x71\e(B"
+	done
+	printf "\e(0\x6a\e(B\n"
+	tput sgr0
 }
 
 function DrawBox() {
-    string="$*";
-    tamanho=${#string}
-    tput setaf 4; printf "\e(0\x6c\e(B"
-    printf -v linha "%${tamanho}s" ' '
-    printf -v traco "\e(0\x71\e(B"
-    echo -n ${linha// /$traco}
-    printf "\e(0\x6b\e(B\n"; tput sgr0;
-    tput setaf 4; printf "\e(0\x78\e(B"
-    tput setaf 1; tput bold; echo -n $string; tput sgr0
-    tput setaf 4; printf "\e(0\x78\e(B\n"; tput sgr0;
-    tput setaf 4; printf "\e(0\x6d\e(B"
-    printf -v linha "%${tamanho}s" ' '
-    printf -v traco "\e(0\x71\e(B"
-    echo -n ${linha// /$traco}
-    printf "\e(0\x6a\e(B\n"; tput sgr0;
+	string="$*"
+	tamanho=${#string}
+	tput setaf 4
+	printf "\e(0\x6c\e(B"
+	printf -v linha "%${tamanho}s" ' '
+	printf -v traco "\e(0\x71\e(B"
+	echo -n ${linha// /$traco}
+	printf "\e(0\x6b\e(B\n"
+	tput sgr0
+	tput setaf 4
+	printf "\e(0\x78\e(B"
+	tput setaf 1
+	tput bold
+	echo -n $string
+	tput sgr0
+	tput setaf 4
+	printf "\e(0\x78\e(B\n"
+	tput sgr0
+	tput setaf 4
+	printf "\e(0\x6d\e(B"
+	printf -v linha "%${tamanho}s" ' '
+	printf -v traco "\e(0\x71\e(B"
+	echo -n ${linha// /$traco}
+	printf "\e(0\x6a\e(B\n"
+	tput sgr0
 }
 
 function TracaLinha() {
-    local row=$1
-    local col=$2
-    local lastcol="$(tput cols)"
-    local padding=$((lastcol - $col))
-    local Tamanho=${3:-$padding}
-    local Traco Linha
+	local row=$1
+	local col=$2
+	local lastcol="$(tput cols)"
+	local padding=$((lastcol - $col))
+	local Tamanho=${3:-$padding}
+	local Traco Linha
 
-    printf -v Linha "%${Tamanho}s" ' '
-    printf -v Traco "\e(0\x71\e(B"
-    tput cup $row $col
-    echo ${Linha// /$Traco}
+	printf -v Linha "%${Tamanho}s" ' '
+	printf -v Traco "\e(0\x71\e(B"
+	tput cup $row $col
+	echo ${Linha// /$Traco}
 }
 
 function padr() {
-   texto=$1
-   COLS=$2
-   char=$3
-   if test $# -eq 1; then
-      COLS=$(tput cols)
-      char='='
-   fi
-   printf "%*s\n" $COLS "$texto" |sed "s/ /$char/g"
+	texto=$1
+	COLS=$2
+	char=$3
+	if test $# -eq 1; then
+		COLS=$(tput cols)
+		char='='
+	fi
+	printf "%*s\n" $COLS "$texto" | sed "s/ /$char/g"
 }
 
 function padl() {
-   texto=$1
-   COLS=$2
-   char=$3
-   if test $# -eq 1; then
-      COLS=$(tput cols)
-      char='='
-   fi
-   printf "%-*s\n" $COLS "$texto" |sed "s/ /$char/g"
+	texto=$1
+	COLS=$2
+	char=$3
+	if test $# -eq 1; then
+		COLS=$(tput cols)
+		char='='
+	fi
+	printf "%-*s\n" $COLS "$texto" | sed "s/ /$char/g"
 }
 
 padc() {
-   texto=$1
-   COLS=$2
-   char=$3
-   if test $# -eq 1; then
-      COLS=$(tput cols)
-      char='='
-   fi
-   printf "%*s\n" $(((${#texto} + $COLS) / 2)) "$texto" | sed "s/ /$char/g"
+	texto=$1
+	COLS=$2
+	char=$3
+	if test $# -eq 1; then
+		COLS=$(tput cols)
+		char='='
+	fi
+	printf "%*s\n" $(((${#texto} + $COLS) / 2)) "$texto" | sed "s/ /$char/g"
 }
 
 function replleft() {
-    local str="$1"
-    local nlenstr="${#str}"
-    local nsize=${2:-$nlenstr}
-    local char=${3:-'#'}
-    local padding=$((nsize-nlenstr))
-    local value
+	local str="$1"
+	local nlenstr="${#str}"
+	local nsize=${2:-$nlenstr}
+	local char=${3:-'#'}
+	local padding=$((nsize - nlenstr))
+	local value
 
-#   printf -v value "%${nsize}s" "$str"; printf "%s\n" "${value// /$char}"
-    if [[ $char = ' ' ]]; then
-        printf "%${padding}s" ; : "${value// /$char}"; echo $_$str
-    else
-        printf -v value "%${padding}s" ; : "${value// /$char}"; echo $_$str
-    fi
+	#   printf -v value "%${nsize}s" "$str"; printf "%s\n" "${value// /$char}"
+	if [[ $char = ' ' ]]; then
+		printf "%${padding}s"
+		: "${value// /$char}"
+		echo $_$str
+	else
+		printf -v value "%${padding}s"
+		: "${value// /$char}"
+		echo $_$str
+	fi
 }
 
 function replright() {
-    local str="$1"
-    local nlenstr=${#str}
-    local nsize=${2:-$nlenstr}
-    local char=${3:-'#'}
-    local padding=$((nsize-nlenstr))
-    local value
+	local str="$1"
+	local nlenstr=${#str}
+	local nsize=${2:-$nlenstr}
+	local char=${3:-'#'}
+	local padding=$((nsize - nlenstr))
+	local value
 
-#   printf -v value "%-${nsize}s" "$str"; printf "%s\n" "${value// /$char}"
-    printf -v value "%${padding}s" ; : "${value// /$char}"; echo $str$_
+	#   printf -v value "%-${nsize}s" "$str"; printf "%s\n" "${value// /$char}"
+	printf -v value "%${padding}s"
+	: "${value// /$char}"
+	echo $str$_
 }
 
 function replicate() {
-    local char="${1:-"#"}"
-    local nsize="${2:-"$(tput cols)"}"
-    local line
+	local char="${1:-"#"}"
+	local nsize="${2:-"$(tput cols)"}"
+	local line
 
-    printf -v line "%*s" "$nsize" && echo "${line// /"$char"}"
+	printf -v line "%*s" "$nsize" && echo "${line// /"$char"}"
 }
 
 clear
@@ -153,6 +179,7 @@ replright "TESTE DE STRING" 20 '*'
 replright 123,45 20
 tam=20
 echo '---------1---------2---------3---------4---------5---------6---------7---------8'
-eval printf \'#%.0s\' {1..$tam}; echo
+eval printf \'#%.0s\' {1..$tam}
+echo
 echo '---------1---------2---------3---------4---------5---------6---------7---------8'
 eval "printf '*%.0s' {1..$tam}"

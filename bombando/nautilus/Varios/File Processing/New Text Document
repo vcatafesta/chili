@@ -1,5 +1,5 @@
 #!/bin/sh
-# 
+#
 # Add a new text file in the current directory.
 #
 # Distributed under the terms of GNU GPL version 2 or later
@@ -33,7 +33,7 @@ debug() {
 }
 
 # This gets the current directory. It is "space-space" as it replaces %20 with spaces
-Current_Dir="`echo "$NAUTILUS_SCRIPT_CURRENT_URI" | sed -e 's/^file:\/\///' -e 's/%20/\ /g'`"
+Current_Dir="$(echo "$NAUTILUS_SCRIPT_CURRENT_URI" | sed -e 's/^file:\/\///' -e 's/%20/\ /g')"
 
 # Added 2003-12-08 Dexter Ang
 if [ $Current_Dir == "x-nautilus-desktop:///" ]; then
@@ -44,7 +44,7 @@ debug "Current_Dir = $Current_Dir"
 
 if [ $ASK_MODE == "1" ]; then
 	debug "In Ask Mode"
-	New_Document="`gdialog --title "New Filename" --inputbox "Enter a new filename" 200 100 2>&1`"
+	New_Document="$(gdialog --title "New Filename" --inputbox "Enter a new filename" 200 100 2>&1)"
 	if [ $? -ne "0" ]; then
 		debug "Canceled"
 		exit 1
@@ -58,15 +58,15 @@ debug "New_Document = $New_Document"
 COUNT=1
 
 # If file doens't exist, touch it
-if ! [ -a "$Current_Dir/$New_Document.txt" ] ; then
-  touch "$Current_Dir/$New_Document.txt"
+if ! [ -a "$Current_Dir/$New_Document.txt" ]; then
+	touch "$Current_Dir/$New_Document.txt"
 # else, go loop until you get a number that works!
 else
-  while ! [ "$retry" ] ; do
-    let $((COUNT++))
-    if ! [ -a "$Current_Dir/$New_Document($COUNT).txt" ] ; then
-        touch "$Current_Dir/$New_Document($COUNT).txt"
-	retry=1
-    fi
-  done
+	while ! [ "$retry" ]; do
+		let $((COUNT++))
+		if ! [ -a "$Current_Dir/$New_Document($COUNT).txt" ]; then
+			touch "$Current_Dir/$New_Document($COUNT).txt"
+			retry=1
+		fi
+	done
 fi

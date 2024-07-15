@@ -121,8 +121,8 @@ for i in "${idioma[@]}"; do
 						echo "msgstr \"$translation\""
 					} | tee -a $file_po
 				else
-					echo "$line" >> $file_po
-					echo "msgstr \"$translation\"" >> $file_po
+					echo "$line" >>$file_po
+					echo "msgstr \"$translation\"" >>$file_po
 				fi
 				continue
 			fi
@@ -130,15 +130,15 @@ for i in "${idioma[@]}"; do
 		if ! ((quiet)); then
 			echo "${black}$line${reset}"
 		fi
-		echo "$line" >> $file_po
+		echo "$line" >>$file_po
 	done <<<"$(<"$temp_po")"
-#	sed -i 's|"\.$|\."|g' $i.po
-#	sed -i 's|"\.|"|g' $i.po
-#	sed -i 's|»|"|g' $i.po
-#	sed -i 's|«|"|g' $i.po
-#	sed -i 's|„|"|g' $i.po
-#	sed -i 's|“|"|g' $i.po
-#	sed -i 's|„“|""|g' $i.po
+	#	sed -i 's|"\.$|\."|g' $i.po
+	#	sed -i 's|"\.|"|g' $i.po
+	#	sed -i 's|»|"|g' $i.po
+	#	sed -i 's|«|"|g' $i.po
+	#	sed -i 's|„|"|g' $i.po
+	#	sed -i 's|“|"|g' $i.po
+	#	sed -i 's|„“|""|g' $i.po
 
 	cp $file_po $temp_po
 	mkdir -p usr/share/locale/$i/LC_MESSAGES/

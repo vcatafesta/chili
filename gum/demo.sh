@@ -5,30 +5,38 @@ NAME=$(gum input --placeholder "What is your name?")
 
 echo -e "Well, it is nice to meet you, $(gum style --foreground 212 "$NAME")."
 
-sleep 2; clear
+sleep 2
+clear
 
 echo -e "Can you tell me a $(gum style --italic --foreground 99 'secret')?\n"
 
-gum write --placeholder "I'll keep it to myself, I promise!" > /dev/null # we keep the secret to ourselves
+gum write --placeholder "I'll keep it to myself, I promise!" >/dev/null # we keep the secret to ourselves
 
-clear; echo "What should I do with this information?"; sleep 1
+clear
+echo "What should I do with this information?"
+sleep 1
 
-READ="Read"; THINK="Think"; DISCARD="Discard"
+READ="Read"
+THINK="Think"
+DISCARD="Discard"
 ACTIONS=$(gum choose --cursor-prefix "[ ] " --selected-prefix "[✓] " --no-limit "$READ" "$THINK" "$DISCARD")
 
-clear; echo "One moment, please."
+clear
+echo "One moment, please."
 
-grep -q "$READ" <<< "$ACTIONS" && gum spin -s line --title "Reading the secret..." -- sleep 1
-grep -q "$THINK" <<< "$ACTIONS" && gum spin -s pulse --title "Thinking about your secret..." -- sleep 1
-grep -q "$DISCARD" <<< "$ACTIONS" && gum spin -s monkey --title " Discarding your secret..." -- sleep 2
+grep -q "$READ" <<<"$ACTIONS" && gum spin -s line --title "Reading the secret..." -- sleep 1
+grep -q "$THINK" <<<"$ACTIONS" && gum spin -s pulse --title "Thinking about your secret..." -- sleep 1
+grep -q "$DISCARD" <<<"$ACTIONS" && gum spin -s monkey --title " Discarding your secret..." -- sleep 2
 
-sleep 1; clear
+sleep 1
+clear
 
 echo "What's your favorite $(gum style --foreground 212 "Gum") flavor?"
 GUM=$(echo -e "Cherry\nGrape\nLime\nOrange" | gum filter)
 echo "I'll keep that in mind!"
 
-sleep 1; clear
+sleep 1
+clear
 
 echo "Do you like $(gum style --foreground "#04B575" "Bubble Gum?")"
 sleep 1

@@ -86,8 +86,8 @@ function sh_main() {
 	if [[ -e /etc/locale.conf ]]; then
 		for lc in "${alang[@]}"; do
 			# Obtém os valores atuais de LANG e LANGUAGE do arquivo /etc/locale.conf
-#			current_lang=$(grep '^LANG=' /etc/locale.conf | cut -d'=' -f2)
-#			current_language=$(grep '^LANGUAGE=' /etc/locale.conf | cut -d'=' -f2)
+			#			current_lang=$(grep '^LANG=' /etc/locale.conf | cut -d'=' -f2)
+			#			current_language=$(grep '^LANGUAGE=' /etc/locale.conf | cut -d'=' -f2)
 			current_lang=$(grep "^$lc=" /etc/locale.conf | cut -d'=' -f2)
 
 			# Verifica se os valores atuais são diferentes dos valores que seriam configurados
@@ -166,4 +166,3 @@ else
 fi
 sh_usage
 printf "${RED}ERROR:${RESET} Forneça o parâmetro da linguagem desejada.\n"
-

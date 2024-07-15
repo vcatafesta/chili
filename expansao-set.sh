@@ -19,5 +19,3 @@ echo ${@: -5:2}
 
 echo 'echo ${@: -5:-3} #FAIL, usado somente em string, NOT array ou parametros'
 echo ${@: -5:-3} #fail serve somente em string, not array ou parametros
-
-

@@ -8,51 +8,51 @@ function conf() {
 }
 
 function sh_setvarcolors() {
-    # does the terminal support true-color?
-    if [[ -n "$(command -v "tput")" ]]; then
-        #tput setaf 127 | cat -v  #capturar saida
-        reset=$(tput sgr0)
-        rst=$(tput sgr0)
-        bold=$(tput bold)
-        underline=$(tput smul)
-        nounderline=$(tput rmul)
-        reverse=$(tput rev)
+	# does the terminal support true-color?
+	if [[ -n "$(command -v "tput")" ]]; then
+		#tput setaf 127 | cat -v  #capturar saida
+		reset=$(tput sgr0)
+		rst=$(tput sgr0)
+		bold=$(tput bold)
+		underline=$(tput smul)
+		nounderline=$(tput rmul)
+		reverse=$(tput rev)
 
-        black=$(tput bold)$(tput setaf 0)
-        red=$(tput bold)$(tput setaf 196)
-        green=$(tput bold)$(tput setaf 2)
-        yellow=$(tput bold)$(tput setaf 3)
-        #       blue=$(tput setaf 4)
-        blue=$(tput setaf 27)
-        magenta=$(tput setaf 5)
-        cyan=$(tput setaf 6)
-        white=$(tput setaf 7)
-        gray=$(tput setaf 8)
-        light_red=$(tput setaf 9)
-        light_green=$(tput setaf 10)
-        light_yellow=$(tput setaf 11)
-        light_blue=$(tput setaf 12)
-        light_magenta=$(tput setaf 13)
-        light_cyan=$(tput setaf 14)
-        light_white=$(tput setaf 15)
-        orange=$(tput setaf 202)
-        purple=$(tput setaf 125)
-        violet=$(tput setaf 61)
+		black=$(tput bold)$(tput setaf 0)
+		red=$(tput bold)$(tput setaf 196)
+		green=$(tput bold)$(tput setaf 2)
+		yellow=$(tput bold)$(tput setaf 3)
+		#       blue=$(tput setaf 4)
+		blue=$(tput setaf 27)
+		magenta=$(tput setaf 5)
+		cyan=$(tput setaf 6)
+		white=$(tput setaf 7)
+		gray=$(tput setaf 8)
+		light_red=$(tput setaf 9)
+		light_green=$(tput setaf 10)
+		light_yellow=$(tput setaf 11)
+		light_blue=$(tput setaf 12)
+		light_magenta=$(tput setaf 13)
+		light_cyan=$(tput setaf 14)
+		light_white=$(tput setaf 15)
+		orange=$(tput setaf 202)
+		purple=$(tput setaf 125)
+		violet=$(tput setaf 61)
 
-        # Definir cores de fundo
-        preto=$(tput setab 0)
-        vermelho=$(tput setab 196)
-        verde=$(tput setab 2)
-        amarelo=$(tput setab 3)
-        azul=$(tput setab 20)
-        roxo=$(tput setab 5)
-        ciano=$(tput setab 6)
-        branca="${black}$(tput setab 7)"
-        cinza=$(tput setab 8)
-        laranja=$(tput setab 202)
-        roxa=$(tput setab 125)
-        violeta=$(tput setab 61)
-    else
+		# Definir cores de fundo
+		preto=$(tput setab 0)
+		vermelho=$(tput setab 196)
+		verde=$(tput setab 2)
+		amarelo=$(tput setab 3)
+		azul=$(tput setab 20)
+		roxo=$(tput setab 5)
+		ciano=$(tput setab 6)
+		branca="${black}$(tput setab 7)"
+		cinza=$(tput setab 8)
+		laranja=$(tput setab 202)
+		roxa=$(tput setab 125)
+		violeta=$(tput setab 61)
+	else
 		bold=''
 		reset="\e[0m"
 		blue="\e[1;34m"
@@ -154,28 +154,28 @@ if [[ $# -eq 0 ]]; then
 fi
 
 function sh_parted() {
-    local error=0
+	local error=0
 
 	sd="$1"
 	if ! smartctl -Hi "$sd"; then
-	    error=1
-    fi
-    if fdisk -l "$sd"; then
-        if ((error)); then
-    		echo "====================================================${reset}"
-	    	echo "${cyan}AVISO! disco $sd ${red}NÃO PASSOU ${cyan}no teste de SMART!${reset}"
-		    echo "====================================================${reset}"
+		error=1
+	fi
+	if fdisk -l "$sd"; then
+		if ((error)); then
+			echo "====================================================${reset}"
+			echo "${cyan}AVISO! disco $sd ${red}NÃO PASSOU ${cyan}no teste de SMART!${reset}"
+			echo "====================================================${reset}"
 		fi
-    	echo -e "${yellow}AVISO, CUIDADO, tudo será apagado!!"
-    	if conf "Continuar com o particionamento?"; then
-    		parted --script "$sd" -- \
-    			mklabel gpt \
-	    		mkpart primary fat32 1MiB 3MiB set 1 bios on name 1 BIOS \
-	    		mkpart primary fat32 3MiB 128MiB set 2 esp on name 2 EFI \
-	    		mkpart primary ext4 128MiB 100% name 3 ROOT \
-	    		align-check optimal 1
-		   	parted --script "$sd" -- print
-    	fi
+		echo -e "${yellow}AVISO, CUIDADO, tudo será apagado!!"
+		if conf "Continuar com o particionamento?"; then
+			parted --script "$sd" -- \
+				mklabel gpt \
+				mkpart primary fat32 1MiB 3MiB set 1 bios on name 1 BIOS \
+				mkpart primary fat32 3MiB 128MiB set 2 esp on name 2 EFI \
+				mkpart primary ext4 128MiB 100% name 3 ROOT \
+				align-check optimal 1
+			parted --script "$sd" -- print
+		fi
 	fi
 }
 

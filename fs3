@@ -3,35 +3,35 @@
 
 # Função para definir as cores usando tput
 definir_cores() {
-    cor_vermelho=$(tput setaf 1)
-    cor_verde=$(tput setaf 2)
-    cor_magenta=$(tput setaf 5)
-    cor_reset=$(tput sgr0)
+	cor_vermelho=$(tput setaf 1)
+	cor_verde=$(tput setaf 2)
+	cor_magenta=$(tput setaf 5)
+	cor_reset=$(tput sgr0)
 }
 
 # Função para exibir informações de uso do script
 usage() {
-    echo "Uso: $0 [opção] [diretório] [padrão]"
-    echo "Opção:"
-    echo "  -s PADRÃO  Procurar PADRÃO em qualquer arquivo, incluindo binários e cabeçalhos"
+	echo "Uso: $0 [opção] [diretório] [padrão]"
+	echo "Opção:"
+	echo "  -s PADRÃO  Procurar PADRÃO em qualquer arquivo, incluindo binários e cabeçalhos"
 }
 
 # Função para mostrar a lista de arquivos que contêm a string ou correspondem ao cabeçalho
 mostrar_resultados() {
-    diretorio="$1"
-    padrao="$2"
-    
-    # Utiliza o comando 'find' para encontrar todos os arquivos no diretório fornecido
-    # A opção '-type f,d,l' indica que estamos procurando por arquivos, diretórios e links simbólicos
-    find_output=$(find "$diretorio" -type f,d,l -exec file {} + | grep -iE "($padrao)" | cut -d: -f1)
+	diretorio="$1"
+	padrao="$2"
 
-    # Exibe o resultado na tela com cores
-    if [ -n "$find_output" ]; then
-        echo "${cor_verde}Arquivos correspondentes ao padrão '$padrao':${cor_reset}"
-        echo "$find_output" | sed "s/\.\///" # Remove o "./" do início do caminho do arquivo
-    else
-        echo "${cor_vermelho}Nenhum arquivo encontrado correspondente ao padrão '$padrao' em '$diretorio'.${cor_reset}"
-    fi
+	# Utiliza o comando 'find' para encontrar todos os arquivos no diretório fornecido
+	# A opção '-type f,d,l' indica que estamos procurando por arquivos, diretórios e links simbólicos
+	find_output=$(find "$diretorio" -type f,d,l -exec file {} + | grep -iE "($padrao)" | cut -d: -f1)
+
+	# Exibe o resultado na tela com cores
+	if [ -n "$find_output" ]; then
+		echo "${cor_verde}Arquivos correspondentes ao padrão '$padrao':${cor_reset}"
+		echo "$find_output" | sed "s/\.\///" # Remove o "./" do início do caminho do arquivo
+	else
+		echo "${cor_vermelho}Nenhum arquivo encontrado correspondente ao padrão '$padrao' em '$diretorio'.${cor_reset}"
+	fi
 }
 
 # Definir as cores
@@ -42,48 +42,47 @@ opcao_s=0
 
 # Faz o parsing das opções usando getopts
 while getopts ":s:" opcao; do
-    case "$opcao" in
-        s)
-            opcao_s=1
-            padrao="$OPTARG"
-            ;;
-        \?)
-            echo "Opção inválida: -$OPTARG" >&2
-            usage
-            exit 1
-            ;;
-        :)
-            echo "A opção -$OPTARG requer um argumento." >&2
-            usage
-            exit 1
-            ;;
-    esac
+	case "$opcao" in
+	s)
+		opcao_s=1
+		padrao="$OPTARG"
+		;;
+	\?)
+		echo "Opção inválida: -$OPTARG" >&2
+		usage
+		exit 1
+		;;
+	:)
+		echo "A opção -$OPTARG requer um argumento." >&2
+		usage
+		exit 1
+		;;
+	esac
 done
 
 # Verifica se foi fornecida a opção -s
 if [ $opcao_s -eq 1 ]; then
-    # Restante dos argumentos após as opções são o diretório e o padrão de busca
-    shift $((OPTIND - 1))
-    diretorio="$1"
-    padrao="$2"
+	# Restante dos argumentos após as opções são o diretório e o padrão de busca
+	shift $((OPTIND - 1))
+	diretorio="$1"
+	padrao="$2"
 
-    # Verifica se o diretório foi fornecido
-    if [ -z "$diretorio" ]; then
-        diretorio="$PWD"
-    fi
+	# Verifica se o diretório foi fornecido
+	if [ -z "$diretorio" ]; then
+		diretorio="$PWD"
+	fi
 
-    # Verifica se o diretório existe
-    if [ ! -d "$diretorio" ]; then
-        echo "O diretório '$diretorio' não existe." >&2
-        usage
-        exit 1
-    fi
+	# Verifica se o diretório existe
+	if [ ! -d "$diretorio" ]; then
+		echo "O diretório '$diretorio' não existe." >&2
+		usage
+		exit 1
+	fi
 
-    # Mostra os arquivos que correspondem ao padrão
-    mostrar_resultados "$diretorio" "$padrao"
+	# Mostra os arquivos que correspondem ao padrão
+	mostrar_resultados "$diretorio" "$padrao"
 else
-    # Se nenhuma opção foi fornecida, exibe a mensagem de uso padrão
-    usage
-    exit 1
+	# Se nenhuma opção foi fornecida, exibe a mensagem de uso padrão
+	usage
+	exit 1
 fi
-

@@ -7,18 +7,18 @@ file=$1
 shift
 
 function DiaExtenso() {
-  case $1 in
-  Sun) echo "Domingo" ;;
-  Mon) echo "Segunda-feira" ;;
-  Tue) echo "Terça-feira" ;;
-  Wed) echo "Quarta-feira" ;;
-  Thu) echo "Quinta-feira" ;;
-  Fri) echo "Sexta-feira" ;;
-  Sat) echo "Sábado" ;;
-  esac
+	case $1 in
+	Sun) echo "Domingo" ;;
+	Mon) echo "Segunda-feira" ;;
+	Tue) echo "Terça-feira" ;;
+	Wed) echo "Quarta-feira" ;;
+	Thu) echo "Quinta-feira" ;;
+	Fri) echo "Sexta-feira" ;;
+	Sat) echo "Sábado" ;;
+	esac
 }
 sh_linecount() {
-  awk 'END {print NR}' "$1"
+	awk 'END {print NR}' "$1"
 }
 
 curl --compressed --insecure -s --url "$SITE" --output "$arquivoresult"
@@ -49,7 +49,7 @@ diasemanasorteio=$(DiaExtenso "$diasemanasorteio")
 diasemanaproxsorteio=$(DiaExtenso "$diasemanaproxsorteio")
 
 if ((numGanhadoresSena == 0)); then
-  numGanhadoresSena="ACUMULADA"
+	numGanhadoresSena="ACUMULADA"
 fi
 
 qtdemeusjogos=$(sh_linecount "$file")
@@ -216,41 +216,41 @@ declare -a alineA alineB
 declare -a ahitsB ahitsB
 contador=1
 while read -r line; do
-  hits=0
-  for i in $listaDezenas; do
-    # marca os numeros acertados com a cor vermelha
-    if grep -qo "$i" <<<"$line"; then
-      ((++hits))
-      line=$(sed "s/$i/\<b\>\<font color=red\>$i\<\/font\>\<\/b\>/g" <<<"$line")
-    fi
-  done
-  if ((hits > 0)); then
-    acontadorA+=($contador)
-    alineA+=("$line")
-    ahitsA+=($hits)
-    #		echo "<td align='center'>$contador</td><td align='center'>$line</td><td align='center'><b>$hits</b></td>"
-    #		echo "<tr>"
-  else
-    acontadorB+=($contador)
-    alineB+=("$line")
-    ahitsB+=($hits)
-    #		echo "<td align='center'>$contador</td><td align='center'><del>$line</del></td><td align='center'> 0</td>"
-    #	  	echo "<tr>"
-  fi
-  #  ((hits == 0)) && echo "<td align='center'>$contador</td><td align='center'>$line</td><td align='center'> 0</td>"
-  #  ((hits == 0)) && echo "<td align='center'>$contador</td><td align='center'>$line</td><td align='center'> 0</td>" || {
-  #    echo " <td align='center'><b>$hits</b></td>" }
-  ((++contador))
+	hits=0
+	for i in $listaDezenas; do
+		# marca os numeros acertados com a cor vermelha
+		if grep -qo "$i" <<<"$line"; then
+			((++hits))
+			line=$(sed "s/$i/\<b\>\<font color=red\>$i\<\/font\>\<\/b\>/g" <<<"$line")
+		fi
+	done
+	if ((hits > 0)); then
+		acontadorA+=($contador)
+		alineA+=("$line")
+		ahitsA+=($hits)
+		#		echo "<td align='center'>$contador</td><td align='center'>$line</td><td align='center'><b>$hits</b></td>"
+		#		echo "<tr>"
+	else
+		acontadorB+=($contador)
+		alineB+=("$line")
+		ahitsB+=($hits)
+		#		echo "<td align='center'>$contador</td><td align='center'><del>$line</del></td><td align='center'> 0</td>"
+		#	  	echo "<tr>"
+	fi
+	#  ((hits == 0)) && echo "<td align='center'>$contador</td><td align='center'>$line</td><td align='center'> 0</td>"
+	#  ((hits == 0)) && echo "<td align='center'>$contador</td><td align='center'>$line</td><td align='center'> 0</td>" || {
+	#    echo " <td align='center'><b>$hits</b></td>" }
+	((++contador))
 done <"$file"
 
 #readarray -t ahitsA < <(sort < <(printf '%s\n' "${ahitsA[@]}"))
 
 for n in "${!ahitsA[@]}"; do
-  contador=${acontadorA[$n]}
-  line=${alineA[$n]}
-  hits=${ahitsA[$n]}
-  echo "<td align='center'>$contador</td><td align='center'>$line</td><td align='center'><b>$hits</b></td>"
-  echo "<tr>"
+	contador=${acontadorA[$n]}
+	line=${alineA[$n]}
+	hits=${ahitsA[$n]}
+	echo "<td align='center'>$contador</td><td align='center'>$line</td><td align='center'><b>$hits</b></td>"
+	echo "<tr>"
 done
 
 echo "</table>
@@ -262,11 +262,11 @@ echo "</table>
     </tr>
 "
 for n in "${!ahitsB[@]}"; do
-  contador=${acontadorB[$n]}
-  line=${alineB[$n]}
-  hits=${ahitsB[$n]}
-  echo "<td align='center'>$contador</td><td align='center'><del>$line</del></td><td align='center'> 0</td>"
-  echo "<tr>"
+	contador=${acontadorB[$n]}
+	line=${alineB[$n]}
+	hits=${ahitsB[$n]}
+	echo "<td align='center'>$contador</td><td align='center'><del>$line</del></td><td align='center'> 0</td>"
+	echo "<tr>"
 done
 
 echo "</table>

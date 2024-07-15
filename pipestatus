@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-tput sgr0; # reset colors
-bold=$(tput bold);
-reset=$(tput sgr0);
-red=$(tput setaf 124);
-yellow=$(tput setaf 136);
-pink=$(tput setaf 129);
+tput sgr0 # reset colors
+bold=$(tput bold)
+reset=$(tput sgr0)
+red=$(tput setaf 124)
+yellow=$(tput setaf 136)
+pink=$(tput setaf 129)
 
 export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 set -x
@@ -13,7 +13,7 @@ set -e
 
 sh_romeu() {
 	if efivar --list 2>&1; then
-	   return 0
+		return 0
 	fi | tee -i -a "filelog.log" >/dev/tty8
 	return 1
 }
@@ -21,11 +21,11 @@ sh_romeu() {
 sh_bootefi() {
 	efivar --list 2>&1 | tee -i -a 'filelog.log' >/dev/tty8
 	RetCode=("${PIPESTATUS[@]}")
-	echo ${PIPESTATUS[0]}, ${PIPESTATUS[1]}					#efivar,tee
-	grep alguma.máquina.exemplo.com /etc/hosts  2>&1
-	echo ${PIPESTATUS[0]}, ${PIPESTATUS[1]}					#grep,null
-#	return ${PIPESTATUS[0]}											#echo
-	return ${RetCode[0]}												#efivar
+	echo ${PIPESTATUS[0]}, ${PIPESTATUS[1]} #efivar,tee
+	grep alguma.máquina.exemplo.com /etc/hosts 2>&1
+	echo ${PIPESTATUS[0]}, ${PIPESTATUS[1]} #grep,null
+	#	return ${PIPESTATUS[0]}											#echo
+	return ${RetCode[0]} #efivar
 
 }
 
@@ -42,4 +42,3 @@ if true | false | true; then echo SUCCESS; else echo FAIL; fi
 if false | true | true; then echo SUCCESS; else echo FAIL; fi
 if true | true | false; then echo SUCCESS; else echo FAIL; fi
 if true | true | true; then echo SUCCESS; else echo FAIL; fi
-

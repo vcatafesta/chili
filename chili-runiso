@@ -40,7 +40,7 @@ run_image() {
 			local ovmf_code='/usr/share/edk2-ovmf/x64/OVMF_CODE.fd'
 		fi
 		qemu_options+=(
-#			'-drive' "if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=on"
+			#			'-drive' "if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=on"
 			'-drive' "if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=off"
 			'-drive' "if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd"
 			'-global' "driver=cfi.pflash01,property=secure,value=${secure_boot}"
@@ -61,35 +61,35 @@ run_image() {
 		)
 	fi
 
-#        -device ide-hd,drive=disk1,bootindex=1 \
-#        -boot order=d,menu=on,reboot-timeout=5000 \
-#        -device "scsi-${mediatype%rom},bus=scsi0.0,drive=${mediatype}0" \
-#			-device ide-hd,drive=disk1,bootindex=1 \
+	#        -device ide-hd,drive=disk1,bootindex=1 \
+	#        -boot order=d,menu=on,reboot-timeout=5000 \
+	#        -device "scsi-${mediatype%rom},bus=scsi0.0,drive=${mediatype}0" \
+	#			-device ide-hd,drive=disk1,bootindex=1 \
 	sudo qemu-system-x86_64 \
-		  -drive file=$image,if=none,id=disk1 \
-        -no-fd-bootchk     \
-        -m "size=8128,slots=0,maxmem=$((8128*1024*1024))" \
-        -k br-abnt2 \
-        -hda /archlive/qemu/hda.img \
-        -hdb /archlive/qemu/hdb.img \
-        -hdc /archlive/qemu/hdc.img \
-        -hdd /archlive/qemu/hdd.img \
-        -name archiso,process=archiso_0 \
-        -device virtio-scsi-pci,id=scsi0 \
-        -device "scsi-${mediatype%rom},bus=scsi0.0,drive=${mediatype}0" \
-        -drive "id=${mediatype}0,if=none,format=raw,media=${mediatype/hd/disk},read-only=on,file=${image}" \
-        -display "${display}" \
-        -vga std \
-        -audiodev pa,id=snd0,server=localhost \
-        -device ich9-intel-hda \
-        -device hda-output,audiodev=snd0 \
-        -device virtio-net-pci,romfile=,netdev=net0 -netdev user,id=net0,hostfwd=tcp::60022-:22 \
-        -machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0 \
-        -global ICH9-LPC.disable_s3=1 \
-         -smp 36 \
-         -enable-kvm \
-        "${qemu_options[@]}" \
-        -serial stdio
+		-drive file=$image,if=none,id=disk1 \
+		-no-fd-bootchk \
+		-m "size=8128,slots=0,maxmem=$((8128 * 1024 * 1024))" \
+		-k br-abnt2 \
+		-hda /archlive/qemu/hda.img \
+		-hdb /archlive/qemu/hdb.img \
+		-hdc /archlive/qemu/hdc.img \
+		-hdd /archlive/qemu/hdd.img \
+		-name archiso,process=archiso_0 \
+		-device virtio-scsi-pci,id=scsi0 \
+		-device "scsi-${mediatype%rom},bus=scsi0.0,drive=${mediatype}0" \
+		-drive "id=${mediatype}0,if=none,format=raw,media=${mediatype/hd/disk},read-only=on,file=${image}" \
+		-display "${display}" \
+		-vga std \
+		-audiodev pa,id=snd0,server=localhost \
+		-device ich9-intel-hda \
+		-device hda-output,audiodev=snd0 \
+		-device virtio-net-pci,romfile=,netdev=net0 -netdev user,id=net0,hostfwd=tcp::60022-:22 \
+		-machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0 \
+		-global ICH9-LPC.disable_s3=1 \
+		-smp 36 \
+		-enable-kvm \
+		"${qemu_options[@]}" \
+		-serial stdio
 
 }
 #		  -no-reboot
@@ -110,19 +110,28 @@ qemu_options=()
 working_dir="$(mktemp -dt run_archiso.XXXXXXXXXX)"
 trap cleanup_working_dir EXIT
 
-if (( ${#@} > 0 )); then
+if ((${#@} > 0)); then
 	while getopts 'abc:dhi:suv' flag; do
 		case "$flag" in
-			a)	accessibility='on';;
-			b)	boot_type='bios';;
-			c)	oddimage="$OPTARG";;
-			d)	mediatype='hd';;
-			h)	print_help;exit 0;;
-			i)	image="$OPTARG";;
-			u)	boot_type='uefi';;
-			s)	secure_boot='on';;
-			v)	display='none'; qemu_options+=(-vnc 'vnc=0.0.0.0:0,vnc=[::]:0');;
-			*)	printf '%s\n' "Error: Wrong option. Try 'run_archiso -h'."; exit 1;;
+		a) accessibility='on' ;;
+		b) boot_type='bios' ;;
+		c) oddimage="$OPTARG" ;;
+		d) mediatype='hd' ;;
+		h)
+			print_help
+			exit 0
+			;;
+		i) image="$OPTARG" ;;
+		u) boot_type='uefi' ;;
+		s) secure_boot='on' ;;
+		v)
+			display='none'
+			qemu_options+=(-vnc 'vnc=0.0.0.0:0,vnc=[::]:0')
+			;;
+		*)
+			printf '%s\n' "Error: Wrong option. Try 'run_archiso -h'."
+			exit 1
+			;;
 		esac
 	done
 else

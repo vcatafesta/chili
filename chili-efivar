@@ -46,5 +46,3 @@ else
 	printf "chili-efivar: error listing variables: Function not implemented\n"
 	printf "chili-efivar: EFI variables are not supported on this system.\n"
 fi
-
-

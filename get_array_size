@@ -2,13 +2,11 @@
 
 # Define a função para retornar o tamanho do array
 get_array_size() {
-    local arr=("$@")  # Converte os argumentos em um array local
-    echo "${#arr[@]}" # Retorna o tamanho do array
+	local arr=("$@")  # Converte os argumentos em um array local
+	echo "${#arr[@]}" # Retorna o tamanho do array
 }
 
 # Exemplo de uso
 my_array=(1 2 3 4 5)
 size=$(get_array_size "${my_array[@]}")
 echo "O tamanho do array é $size"
-
-

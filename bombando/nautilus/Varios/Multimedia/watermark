@@ -9,24 +9,22 @@
 # Absolute Location of the Watermark file
 WM="/home/hajo/data/Pics/Var/watermark.gif"
 
-if [ ! -n "$1" ]
-then
-  zenity --error --text "Please select Pics to be watermarked!"
-  exit $E_BADARGS
+if [ ! -n "$1" ]; then
+	zenity --error --text "Please select Pics to be watermarked!"
+	exit $E_BADARGS
 fi
 
 typeset -i CNT=1
 typeset -i CUR=0
 
 (
- for pic in "$@"
-  do
-    echo "#Watermarking $pic"
+	for pic in "$@"; do
+		echo "#Watermarking $pic"
 
-    composite -gravity SouthEast "$WM" "$pic" "$pic"
+		composite -gravity SouthEast "$WM" "$pic" "$pic"
 
-    CUR=$CNT*100/$#
-    echo $CUR
-    CNT=$CNT+1
-    done
+		CUR=$CNT*100/$#
+		echo $CUR
+		CNT=$CNT+1
+	done
 ) | zenity --progress --auto-close --percentage=0

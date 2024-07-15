@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-grep b <<< 'banana da terra'
+grep b <<<'banana da terra'
 echo banana | grep b
 
-read <<< "$BASHPID $$" # mesmo shell
+read <<<"$BASHPID $$" # mesmo shell
 echo $REPLY
 
-cat <<< "$BASHPID $$" # outro shell?
+cat <<<"$BASHPID $$" # outro shell?

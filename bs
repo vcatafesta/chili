@@ -53,7 +53,8 @@ function sh_getstyle {
 	'
 }
 function with_cat {
-	HTML=$(cat <<-EOF
+	HTML=$(
+		cat <<-EOF
 			   <html>
 			   <head>
 			   <meta charset="UTF-8">
@@ -74,12 +75,12 @@ function with_cat {
 			   <script src="./script.js"></script>
 			   </body>
 			   </html>
-	EOF
+		EOF
 	)
 }
 
 function with_read {
-#	read -d $'' -r HTML <<-EOF
+	#	read -d $'' -r HTML <<-EOF
 	read -d $'' -ra HTML <<-EOF
 		   <html>
 		   <head>

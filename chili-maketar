@@ -36,7 +36,7 @@ readonly _VERSION_="1.0.0-20230728"
 readonly DEPENDENCIES=(pigz tar tput sed)
 
 function sh_diahora {
-#	DIAHORA=$(date +"%d%m%Y-%T" | sed 's/://g')
+	#	DIAHORA=$(date +"%d%m%Y-%T" | sed 's/://g')
 	DIAHORA=$(date +"%d%m%Y-%H:%M" | sed 's/://g')
 	printf "%s\n" "$DIAHORA"
 }

@@ -48,5 +48,5 @@ function getresult {
 	echo 10
 }
 
-echo `getresult`
+echo $(getresult)
 echo $(getresult)

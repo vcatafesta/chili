@@ -9,20 +9,19 @@ desktop_files="$global_launchers $local_launchers"
 
 # categorias
 cats=('Acessórios'
-		'Configurações'
-		'Desenvolvimento'
-		'Educação'
-		'Escritório'
-		'Gráficos'
-		'Internet e Redes'
-		'Jogos'
-		'Multimedia'
-		'Sistema'
-		'Outros'
+	'Configurações'
+	'Desenvolvimento'
+	'Educação'
+	'Escritório'
+	'Gráficos'
+	'Internet e Redes'
+	'Jogos'
+	'Multimedia'
+	'Sistema'
+	'Outros'
 )
 
-sh_desktop_files()
-{
+sh_desktop_files() {
 	awk '
 		/^(Name=|Comment=)/ {print NR" "$0}
 	' $desktop_files

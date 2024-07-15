@@ -36,8 +36,8 @@
 DELAY=$(gdialog --title "Slideshow Properties" --inputbox "Enter Delay (Seconds)" 20 50 0 2>&1) || exit
 DELAY=1
 if [ $DELAY -eq 0 ]; then
-  feh --title "Slideshow" -rFx -S name $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS
+	feh --title "Slideshow" -rFx -S name $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS
 else
-  feh --title "Slideshow" -rFx -S name -D $DELAY
-  $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS
+	feh --title "Slideshow" -rFx -S name -D $DELAY
+	$NAUTILUS_SCRIPT_SELECTED_FILE_PATHS
 fi

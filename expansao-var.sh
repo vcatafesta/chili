@@ -4,17 +4,21 @@
 # uso: ./expansao-var.sh ivo "viu vovó"
 
 echo 'Usando $*'
-Parm=1; for i in $*; { echo Parâmetro $((Parm++)) -- $i; }
+Parm=1
+for i in $*; do echo Parâmetro $((Parm++)) -- $i; done
 echo "========================="
 
 echo 'Usando $@'
-Parm=1; for i in $@; { echo Parâmetro $((Parm++)) -- $i; }
+Parm=1
+for i in $@; do echo Parâmetro $((Parm++)) -- $i; done
 echo "========================="
 
 echo 'Usando "$*"'
-Parm=1; for i in "$*"; { echo Parâmetro $((Parm++)) -- $i; }
+Parm=1
+for i in "$*"; do echo Parâmetro $((Parm++)) -- $i; done
 echo "========================="
 
 echo 'Usando "$@"'
-Parm=1; for i in "$@"; { echo Parâmetro $((Parm++)) -- $i; }
+Parm=1
+for i in "$@"; do echo Parâmetro $((Parm++)) -- $i; done
 echo "========================="

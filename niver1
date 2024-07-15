@@ -5,17 +5,17 @@ idade_limites=(20 30 40 50 60 70)
 animais=("urubu" "águia" "papagaio" "lobo" "pombo" "pessoa idosa")
 
 # Loop através de cada limite de idade
-for ((i=0; i<${#idade_limites[@]}; i++)); do
-    # Definir os limites de idade atual e anterior
-    idade_atual=${idade_limites[$i]}
-    idade_anterior=$((i==0 ? 0 : idade_limites[$i-1]))
+for ((i = 0; i < ${#idade_limites[@]}; i++)); do
+	# Definir os limites de idade atual e anterior
+	idade_atual=${idade_limites[$i]}
+	idade_anterior=$((i == 0 ? 0 : idade_limites[$i - 1]))
 
-    # Verificar se a idade atual está dentro do intervalo atual
-    if (( i == ${#idade_limites[@]}-1 )); then
-        # Se a idade atual for maior do que o último limite, exibir mensagem genérica para as pessoas idosas
-        [[ $i -eq 0 ]] && echo "Até ${idade_atual}: Bebê aprendendo a andar!" || echo "Dos ${idade_anterior} aos ${idade_atual}: ${animais[$i]}, ${animais[$i]}!"
-    else
-        # Se a idade atual estiver dentro do intervalo, exibir a mensagem correspondente ao animal
-        [[ $i -eq 0 ]] && echo "Até ${idade_atual}: Bebê aprendendo a andar!" || echo "Dos ${idade_anterior} aos ${idade_atual}: ${animais[$i]}, ${animais[$i]}!"
-    fi
+	# Verificar se a idade atual está dentro do intervalo atual
+	if ((i == ${#idade_limites[@]} - 1)); then
+		# Se a idade atual for maior do que o último limite, exibir mensagem genérica para as pessoas idosas
+		[[ $i -eq 0 ]] && echo "Até ${idade_atual}: Bebê aprendendo a andar!" || echo "Dos ${idade_anterior} aos ${idade_atual}: ${animais[$i]}, ${animais[$i]}!"
+	else
+		# Se a idade atual estiver dentro do intervalo, exibir a mensagem correspondente ao animal
+		[[ $i -eq 0 ]] && echo "Até ${idade_atual}: Bebê aprendendo a andar!" || echo "Dos ${idade_anterior} aos ${idade_atual}: ${animais[$i]}, ${animais[$i]}!"
+	fi
 done

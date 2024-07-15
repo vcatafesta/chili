@@ -3,18 +3,16 @@
 # echo $(lenarray "${Var[@]}")
 # echo $(lenarray "$Var")
 
-lenarray()
-{
+lenarray() {
 	local new=($1)
 	echo "${#new[@]}"
 }
 
-lenarraystr()
-{
+lenarraystr() {
 	local new=$1
 	local count=0
 
-	read -ra ADDR <<< "$new"
+	read -ra ADDR <<<"$new"
 	echo "${#ADDR[@]}"
 }
 

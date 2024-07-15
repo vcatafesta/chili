@@ -25,24 +25,23 @@
 #arr[0]='1,2,3,4,5'
 
 echo Begin
-mapfile -t arr < temp.csv
+mapfile -t arr <temp.csv
 nlen=${#arr[*]}
 
-for((i=0; i<nlen; i++))
-{
+for ((i = 0; i < nlen; i++)); do
 	resto=${arr[i]}
-#	campo7="${resto##*,}" ; echo $campo7 ; resto="${resto%,*}"; #echo $resto
-#	campo6="${resto##*,}" ; echo $campo6 ; resto="${resto%,*}"; #echo $resto
-#	campo5="${resto##*,}" ; echo $campo5 ; resto="${resto%,*}"; #echo $resto
-#	campo4="${resto##*,}" ; echo $campo4 ; resto="${resto%,*}"; #echo $resto
-#	campo3="${resto##*,}" ; echo $campo3 ; resto="${resto%,*}"; #echo $resto
-#	campo2="${resto##*,}" ; echo $campo2 ; resto="${resto%,*}"; #echo $resto
-#	campo1="${resto##*,}" ; echo $campo1 ; resto="${resto%,*}"; #echo $resto
-	for((x=7; x>=1; x--))
-	{
-		campo="${resto##*,}" ; resto="${resto%,*}"
-	}
-}
+	#	campo7="${resto##*,}" ; echo $campo7 ; resto="${resto%,*}"; #echo $resto
+	#	campo6="${resto##*,}" ; echo $campo6 ; resto="${resto%,*}"; #echo $resto
+	#	campo5="${resto##*,}" ; echo $campo5 ; resto="${resto%,*}"; #echo $resto
+	#	campo4="${resto##*,}" ; echo $campo4 ; resto="${resto%,*}"; #echo $resto
+	#	campo3="${resto##*,}" ; echo $campo3 ; resto="${resto%,*}"; #echo $resto
+	#	campo2="${resto##*,}" ; echo $campo2 ; resto="${resto%,*}"; #echo $resto
+	#	campo1="${resto##*,}" ; echo $campo1 ; resto="${resto%,*}"; #echo $resto
+	for ((x = 7; x >= 1; x--)); do
+		campo="${resto##*,}"
+		resto="${resto%,*}"
+	done
+done
 echo End
 #awk -F',' '{print $1}' <<< "${arr[0]}"
 #awk -F',' '{print $2}' <<< "${arr[0]}"

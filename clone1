@@ -4,8 +4,8 @@
 
 # Verifica se o usuário tem privilégios de root
 if [[ $EUID -ne 0 ]]; then
-   echo "Este script deve ser executado como root"
-   exit 1
+	echo "Este script deve ser executado como root"
+	exit 1
 fi
 
 # Cria uma janela de diálogo usando o yad para obter os nomes dos dispositivos
@@ -14,31 +14,29 @@ dispositivo_destino=$(yad --title="Clonador de Disco" --text="Digite o nome do d
 
 # Verifica se os dispositivos existem
 if [ ! -e $dispositivo_origem ]; then
-    yad --title="Clonador de Disco" --text="O dispositivo de origem não existe" --button="OK:0"
-    exit 1
+	yad --title="Clonador de Disco" --text="O dispositivo de origem não existe" --button="OK:0"
+	exit 1
 fi
 
 if [ ! -e $dispositivo_destino ]; then
-    yad --title="Clonador de Disco" --text="O dispositivo de destino não existe" --button="OK:0"
-    exit 1
+	yad --title="Clonador de Disco" --text="O dispositivo de destino não existe" --button="OK:0"
+	exit 1
 fi
 
 # Pergunta ao usuário se ele tem certeza que deseja prosseguir
 if ! yad --title="Clonador de Disco" --text="Você tem certeza que deseja clonar $dispositivo_origem para $dispositivo_destino?" --button="Sim:0" --button="Não:1" --timeout=10 --timeout-indicator=top; then
-    # Se o usuário não responder dentro de 10 segundos, cancela a clonagem
-    yad --title="Clonador de Disco" --text="Clonagem cancelada pelo usuário" --button="OK:0"
-    exit 1
+	# Se o usuário não responder dentro de 10 segundos, cancela a clonagem
+	yad --title="Clonador de Disco" --text="Clonagem cancelada pelo usuário" --button="OK:0"
+	exit 1
 fi
 
 # Inicia o processo de clonagem
 yad --title="Clonador de Disco" --text="Clonando disco..." --progress --pulsate --auto-close &
-pid=$!  # Obtém o PID do processo em segundo plano
+pid=$! # Obtém o PID do processo em segundo plano
 
-dd if=$dispositivo_origem of=$dispositivo_destino bs=4M status=none  # Executa a clonagem
+dd if=$dispositivo_origem of=$dispositivo_destino bs=4M status=none # Executa a clonagem
 
-kill $pid  # Fecha a janela de progresso
+kill $pid # Fecha a janela de progresso
 
 # Exibe uma mensagem informando que a clonagem foi concluída
 yad --title="Clonador de Disco" --text="Clonagem concluída." --button="OK:0"
-
-

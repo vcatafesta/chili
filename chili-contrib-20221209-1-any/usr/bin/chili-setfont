@@ -29,14 +29,13 @@
 _VERSION_='2.44.20220727'
 DEPENDENCIES=(dialog setfont tput)
 
-sh_setfont()
-{
+sh_setfont() {
 	local dirfonts1='/usr/share/consolefonts'
 	local dirfonts2='/usr/share/kbd/consolefonts'
-   local array
+	local array
 	local fonts
-   local n=0
-   local font
+	local n=0
+	local font
 
 	xglob="$*"
 	if test $# -lt 1; then
@@ -44,92 +43,98 @@ sh_setfont()
 	fi
 
 	pushd "$dirfonts1" &>/dev/null || die "ERRO: no access $dirfonts1"
-   fonts+="$(echo $xglob)"
+	fonts+="$(echo $xglob)"
 	popd &>/dev/null || return 1
 
 	pushd "$dirfonts2" &>/dev/null || msg "ERRO: no access $dirfonts2"
 	fonts+="$(echo $xglob)"
 	popd &>/dev/null || return 1
 
-  if [[ ${#fonts[*]} -eq 0 ]] ; then
+	if [[ ${#fonts[*]} -eq 0 ]]; then
 		die "no fonts found in:\n$dirfonts1\n$dirfonts2"
-  fi
+	fi
 
-   for i in ${fonts[*]}
-	do
-      array[((n++))]="$i"
-      array[((n++))]="$i"
-   done
+	for i in ${fonts[*]}; do
+		array[((n++))]="$i"
+		array[((n++))]="$i"
+	done
 
-   while :
-   do
-	font=$(dialog 															\
-				--backtitle "Chili Linux setfont v$_VERSION_"	\
-				--title "Chili Linux setfont v$_VERSION_"			\
-            --menu "Escolha uma fonte:"							\
-            0 0 14 														\
-            "${array[@]}" 2>&1 >/dev/tty)
+	while :; do
+		font=$(dialog \
+			--backtitle "Chili Linux setfont v$_VERSION_" \
+			--title "Chili Linux setfont v$_VERSION_" \
+			--menu "Escolha uma fonte:" \
+			0 0 14 \
+			"${array[@]}" 2>&1 >/dev/tty)
 
-      if [[ $? -eq 1 ]]; then
+		if [[ $? -eq 1 ]]; then
 			exit
-      fi
-      echo -e "Fonte escolhida: $font"
-      setfont "$font"
-   done
+		fi
+		echo -e "Fonte escolhida: $font"
+		setfont "$font"
+	done
 }
 
-setvarcolors()
-{
-   if tput setaf 1 &> /dev/null; then
-      #tput setaf 127 | cat -v  #capturar saida
-      tput sgr0; bold=$(tput bold); reset=$(tput sgr0); red=$(tput setaf 1);
-      green=$(tput setaf 2); yellow=$(tput bold)$(tput setaf 3); orange=$(tput setaf 3);
-      #blue=$(tput setaf 4); pink=$(tput setaf 5); black=$(tput setaf 0);
-      #cyan=$(tput setaf 6); white=$(tput setaf 7);
-      #purple=$(tput setaf 125); violet=$(tput setaf 61);
-   else
-      bold=''; reset="\e[0m"; green="\e[1;32m"; red="\e[1;31m"; yellow="\e[1;33m"; orange="\e[1;33m";
-#     pink="\033[35;1m"; black="\e[1;30m";violet="\e[1;35m"; white="\e[1;37m";blue="\e[1;34m";
-#     cyan="\e[1;36m"; purple="\e[1;35m";
-   fi
+setvarcolors() {
+	if tput setaf 1 &>/dev/null; then
+		#tput setaf 127 | cat -v  #capturar saida
+		tput sgr0
+		bold=$(tput bold)
+		reset=$(tput sgr0)
+		red=$(tput setaf 1)
+		green=$(tput setaf 2)
+		yellow=$(tput bold)$(tput setaf 3)
+		orange=$(tput setaf 3)
+		#blue=$(tput setaf 4); pink=$(tput setaf 5); black=$(tput setaf 0);
+		#cyan=$(tput setaf 6); white=$(tput setaf 7);
+		#purple=$(tput setaf 125); violet=$(tput setaf 61);
+	else
+		bold=''
+		reset="\e[0m"
+		green="\e[1;32m"
+		red="\e[1;31m"
+		yellow="\e[1;33m"
+		orange="\e[1;33m"
+		#     pink="\033[35;1m"; black="\e[1;30m";violet="\e[1;35m"; white="\e[1;37m";blue="\e[1;34m";
+		#     cyan="\e[1;36m"; purple="\e[1;35m";
+	fi
 }
 
-die()
-{
-	local msg=$1; shift
+die() {
+	local msg=$1
+	shift
 	printf '%s\n' ":: ${bold}${red}$msg${reset}" >&2
 	exit 1
 }
 
-msg()
-{
-   local msg=$1; shift
-   printf '%s\n' ":: ${bold}${green}$msg${reset}" >&2
-   return
+msg() {
+	local msg=$1
+	shift
+	printf '%s\n' ":: ${bold}${green}$msg${reset}" >&2
+	return
 }
 
-erro()
-{
-   local msg=$1; shift
-   printf '%s\n' ":: ${bold}${yellow}$msg${reset}" >&2
-   return
+erro() {
+	local msg=$1
+	shift
+	printf '%s\n' ":: ${bold}${yellow}$msg${reset}" >&2
+	return
 }
 
-check_deps()
-{
-   local errorFound=0
-   declare -a missing
+check_deps() {
+	local errorFound=0
+	declare -a missing
 
-   for d in "${DEPENDENCIES[@]}" ; {
-      [[ -z $(command -v "$d") ]] && missing+=("$d") && errorFound=1 && printf '%s\n' "${red}ERRO${reset}: não encontrei o comando ${orange}'$d'${reset}"
-   }
-   #[[ ${#missing[@]} -ne 0 ]]
-   if (( errorFound )); then
-      erro "#### IMPOSSÍVEL CONTINUAR ####"
-      msg "Esse script precisa dos comandos listados acima" >&2
-      msg "Instale-os e/ou verifique se estão no seu \$PATH" >&2
-      exit 1
-   fi
+	for d in "${DEPENDENCIES[@]}"; do
+		[[ -z $(command -v "$d") ]] && missing+=("$d") && errorFound=1 && printf '%s\n' "${red}ERRO${reset}: não encontrei o comando ${orange}'$d'${reset}"
+	done
+	#[[ ${#missing[@]} -ne 0 ]]
+	if ((errorFound)); then
+		erro "#### IMPOSSÍVEL CONTINUAR ####"
+		msg "Esse script precisa dos comandos listados acima" >&2
+		msg "Instale-os e/ou verifique se estão no seu \$PATH" >&2
+		exit 1
+	fi
 }
 
 setvarcolors

@@ -2,6 +2,4 @@
 
 sudo find . -type f | parallel -j+0 'if file "{}" | grep -q "Audio file" && file "{}" | grep -q "MPEG"; then echo "{}"; fi'
 cat listagem.lst | parallel -j 4 wget {}
-parallel -j 4 wget {} < listagem.lst
-
-
+parallel -j 4 wget {} <listagem.lst

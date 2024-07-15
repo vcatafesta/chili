@@ -62,7 +62,7 @@ function sh_configvar {
 	declare -g Empate=0
 	declare -g Cols=$(tput cols)
 	declare -g Lines=$(tput lines)
-	declare -g Col0=$(((Cols-46)/2))
+	declare -g Col0=$(((Cols - 46) / 2))
 	declare -g emoji=0
 	declare -ga board
 }
@@ -82,13 +82,13 @@ function sh_checkDependencies {
 	declare -a missing
 
 	for d in "${DEPENDENCIES[@]}"; do
-		[[ -n $(command -v "$d") ]] && { :; } || { \
+		[[ -n $(command -v "$d") ]] && { :; } || {
 			printf "%s\n" "${red}ERROR${reset}: Could not find command ${cyan}'$d'${reset} -> install package '${PACKAGEDEP[$d]}'"
 			missing+=("$d")
 			errorFound=1
 		}
 	done
-	if (( errorFound )); then
+	if ((errorFound)); then
 		echo "${yellow}---------------IMPOSSIBLE TO CONTINUE---------------"
 		echo "${black}This script needs the commands listed above"
 		echo "Install them and/or make sure they are in your \$PATH"
@@ -98,14 +98,14 @@ function sh_checkDependencies {
 }
 
 function sh_getLocale {
-   local lc
+	local lc
 
-   LC_DEFAULT="${Alanguage[pt_BR]}"
-   LOCALE="pt_BR"
-   if lc=$(grep _ <(locale -a) | head -1 | cut -c1-5); then
-      LOCALE="$lc"
-      LC_DEFAULT="${Alanguage[$lc]}"
-   fi
+	LC_DEFAULT="${Alanguage[pt_BR]}"
+	LOCALE="pt_BR"
+	if lc=$(grep _ <(locale -a) | head -1 | cut -c1-5); then
+		LOCALE="$lc"
+		LC_DEFAULT="${Alanguage[$lc]}"
+	fi
 }
 
 function sh_setLanguage {
@@ -116,49 +116,49 @@ function sh_setLanguage {
 			"fr_FR"
 			"es_ES"
 			"it_IT")'
-	'StrYou=("Você GANHOU!"
+		'StrYou=("Você GANHOU!"
 			"You WON!"
 			"Du HASTGEWONNEN!"
 			"Tu as GAGNÉ!"
 			"¡GANASTE!"
 			"Hai VINTO!")'
-	'StrPc=("Computador GANHOU!"
+		'StrPc=("Computador GANHOU!"
 			"Computer WINS!"
 			"Computer GEWINNT!"
 			"L''ordinateur GAGNE !"
 			"¡La computadora GANA!"
 			"Il computer VINCE!")'
-	'StrTie=("EMPATE"
+		'StrTie=("EMPATE"
 			"A TIE"
 			"EINE KRAWATTE"
 			"UNE CRAVATE"
 			"UN LAZO"
 			"UNA CRAVATTA")'
-	'StrLe=("Informe a sua jogada (1-9): "
+		'StrLe=("Informe a sua jogada (1-9): "
 			"Enter your move (1-9): "
 			"Geben Sie Ihren Zug ein (1-9): "
 			"Entrez votre coup (1-9): "
 			"Ingrese su movimiento (1-9): "
 			"Inserisci la tua mossa (1-9): ")'
-	'StrEr1=("Nesta posicao ja existe um -> "
+		'StrEr1=("Nesta posicao ja existe um -> "
 			"In this position there is already a -> "
 			"An dieser Stelle steht bereits ein -> "
 			"Dans cette position, il y a déjà un -> "
 			"En esta posición ya hay un -> "
 			"In questa posizione c''è già un -> ")'
-	'StrEr2=("Posição inválida!"
+		'StrEr2=("Posição inválida!"
 			"Invalid position!"
 			"Ungültige Position!"
 			"Position invalide!"
 			"¡Posición no válida!"
 			"Posizione non valida!")'
-	'StrFim=("Deseja continuar (S/n)?"
+		'StrFim=("Deseja continuar (S/n)?"
 			"Do you want to continue (Y/n)?"
 			"Möchten Sie fortfahren (J/n)?"
 			"Voulez-vous continuer (O/n)?"
 			"¿Quieres continuar (T/n)?"
 			"Vuoi continuare (S/n)?")'
-	'StrTty=("O tamanho mínimo da janela deve ser 17 linhas e 30 colunas"
+		'StrTty=("O tamanho mínimo da janela deve ser 17 linhas e 30 colunas"
 			"Minimum window size must be 17 rows and 30 columns"
 			"Die Mindestfenstergröße muss 17 Zeilen und 30 Spalten betragen"
 			"La taille minimale de la fenêtre doit être de 17 lignes et 30 colonnes"
@@ -169,7 +169,7 @@ function sh_setLanguage {
 }
 
 function sh_setvarcolors {
-   if [ -n "$(command -v "tput")" ]; then
+	if [ -n "$(command -v "tput")" ]; then
 		bold=$(tput bold)
 		reset=$(tput sgr0)
 		white="${bold}$(tput setaf 7)"
@@ -181,11 +181,11 @@ function sh_setvarcolors {
 		orange=$(tput setaf 3)
 		pink=$(tput setaf 5)
 		blue=$(tput setaf 4)
-		purple=$(tput setaf 125);
-		violet=$(tput setaf 61);
-   else
-      sh_unsetvarcolors
-   fi
+		purple=$(tput setaf 125)
+		violet=$(tput setaf 61)
+	else
+		sh_unsetvarcolors
+	fi
 }
 
 function sh_unsetvarcolors {
@@ -204,13 +204,11 @@ function EraseLine {
 	tput el
 }
 
-
 function replicate {
 	local Var
 	printf -v Var %$2s " "
 	echo ${Var// /$1}
 }
-
 
 function status {
 	local linha="$1"
@@ -227,17 +225,17 @@ function status {
 
 	# Imprimir a quantidade variável de caracteres Unicode com cores e posição definidas
 	printf "${posicao}${cor_branco}${cor_azul}"
-	for ((i=1; i<=quantidade; i++)); {
-#	  printf "\u2588"
-	  printf " "
-	}
+	for ((i = 1; i <= quantidade; i++)); do
+		#	  printf "\u2588"
+		printf " "
+	done
 	PrintCenter "$linha" "$texto" "$color"
 	printf "${redefinir}"
 }
 
 # Função para posicionar o cursor
 function SetPos {
-  printf "\e[${1};${2}H"
+	printf "\e[${1};${2}H"
 }
 
 function SetPos1 {
@@ -262,8 +260,8 @@ function PrintCenter {
 	local text="$2"
 	local color="$3"
 	local largura_terminal=$(tput cols)
-	local	posicao_inicial=$(( ($largura_terminal - ${#text}) / 2 ))
-	local	posicao_final=$(( $posicao_inicial + ${#text}))
+	local posicao_inicial=$((($largura_terminal - ${#text}) / 2))
+	local posicao_final=$(($posicao_inicial + ${#text}))
 
 	if [[ -n color ]]; then
 		PrintPos "$nrow" "$posicao_inicial" "${color}$text${reset}"
@@ -277,17 +275,17 @@ function display_scoreboard {
 	EraseLine 21 0
 	if [ "$1" = E ]; then
 		((++Empate))
-		PrintPos 17 $(( Col0 + 29 )) "$yellow$Empate$reset"	# Printando Placar
+		PrintPos 17 $((Col0 + 29)) "$yellow$Empate$reset" # Printando Placar
 		PrintPos 22 "$Col0" "$yellow${StrEmp[LC_DEFAULT]}$reset"
 	else
 		((++Ganhei))
-		PrintPos 17 $(( Col0 + 40 )) "$red$Ganhei$reset"		# Printando Placar
+		PrintPos 17 $((Col0 + 40)) "$red$Ganhei$reset" # Printando Placar
 		PrintPos 22 "$Col0" "$red${StrGan[LC_DEFAULT]}$reset"
 		case "$2" in
-			L)  for j in {1..3}; 	{ Jogar "$i$j" X; };;
-			C)	 for j in {1..3}; 	{ Jogar "$j$i" X; };;
-			D1) for i in 11 22 33;	{ Jogar "$i" X;   };;
-			*)  for i in 13 22 31;	{ Jogar "$i" X;   };;
+		L) for j in {1..3}; do Jogar "$i$j" X; done ;;
+		C) for j in {1..3}; do Jogar "$j$i" X; done ;;
+		D1) for i in 11 22 33; do Jogar "$i" X; done ;;
+		*) for i in 13 22 31; do Jogar "$i" X; done ;;
 		esac
 	fi
 }
@@ -295,19 +293,19 @@ function display_scoreboard {
 function populate_board {
 	board=()
 
-	for i in {0..8}; {
+	for i in {0..8}; do
 		board+=('   ')
-	}
+	done
 }
 
 # Função para exibir o tabuleiro
 function display_board {
 	local nMaxCol=$(MaxCol)
 	local nMaxRow=$(MaxRow)
-	local nCenterCol=$(( $nMaxCol/2 ))
-	local nCenterRow=$(( $nMaxRow/2 ))
+	local nCenterCol=$(($nMaxCol / 2))
+	local nCenterRow=$(($nMaxRow / 2))
 	local cline=
-	local nPos_ini=$(( ($nMaxCol - 13) / 2))
+	local nPos_ini=$((($nMaxCol - 13) / 2))
 
 	clear
 	status 0 0 $nMaxCol "Macrosoft JogoDaVelha.sh for Linux | $(date +"%H:%M %p")"
@@ -322,44 +320,53 @@ function display_board {
 	StrIni[7]='└───┴───┴───┘'
 	StrIni[8]='  7   8   9'
 
-   for i in {0..8}; {
-   	PrintPos $(( nCenterRow-4 + i )) "$nPos_ini" "${StrIni[i]}"
-   	[ "${board[i]}" = ' O ' ] && cLine+="│${green}${board[i]}${reset}" || cLine+="│${red}${board[i]}${reset}"
-   	[ $i -eq 2 ] && { PrintPos $(( nCenterRow-2 )) "$nPos_ini" "$cLine"; cLine= ; }
-   	[ $i -eq 5 ] && { PrintPos $(( nCenterRow+0 )) "$nPos_ini" "$cLine"; cLine= ; }
-   	[ $i -eq 8 ] && { PrintPos $(( nCenterRow+2 )) "$nPos_ini" "$cLine"; cLine= ; }
-   }
+	for i in {0..8}; do
+		PrintPos $((nCenterRow - 4 + i)) "$nPos_ini" "${StrIni[i]}"
+		[ "${board[i]}" = ' O ' ] && cLine+="│${green}${board[i]}${reset}" || cLine+="│${red}${board[i]}${reset}"
+		[ $i -eq 2 ] && {
+			PrintPos $((nCenterRow - 2)) "$nPos_ini" "$cLine"
+			cLine=
+		}
+		[ $i -eq 5 ] && {
+			PrintPos $((nCenterRow + 0)) "$nPos_ini" "$cLine"
+			cLine=
+		}
+		[ $i -eq 8 ] && {
+			PrintPos $((nCenterRow + 2)) "$nPos_ini" "$cLine"
+			cLine=
+		}
+	done
 }
 
 # Função para verificar se alguém venceu
 function check_win {
 	local -a win_conditions=("0 1 2" "3 4 5" "6 7 8" "0 3 6" "1 4 7" "2 5 8" "0 4 8" "2 4 6")
 
-	for condition in "${win_conditions[@]}"; {
+	for condition in "${win_conditions[@]}"; do
 		local positions=($condition)
 		local pos1=${positions[0]}
 		local pos2=${positions[1]}
 		local pos3=${positions[2]}
 
 		if [[ ${board[$pos1]} == " O " && ${board[$pos2]} == " O " && ${board[$pos3]} == " O " ]]; then
-#			PrintCenter $(($(MaxRow)/2+7)) "${StrYou[LC_DEFAULT]}" "$green"
-			status $(( $(MaxRow)-1 )) 0 $(MaxCol) "${StrYou[LC_DEFAULT]}" "$green"
+			#			PrintCenter $(($(MaxRow)/2+7)) "${StrYou[LC_DEFAULT]}" "$green"
+			status $(($(MaxRow) - 1)) 0 $(MaxCol) "${StrYou[LC_DEFAULT]}" "$green"
 			return 1
 		elif [[ ${board[$pos1]} == " X " && ${board[$pos2]} == " X " && ${board[$pos3]} == " X " ]]; then
-			PrintCenter $(($(MaxRow)/2+7)) "${StrPc[LC_DEFAULT]}" "$red"
+			PrintCenter $(($(MaxRow) / 2 + 7)) "${StrPc[LC_DEFAULT]}" "$red"
 			return 1
 		fi
-	}
+	done
 }
 
 # Função para verificar se o jogo empatou
 function check_draw {
 	local -a filled_positions=()
-	for i in "${board[@]}"; {
+	for i in "${board[@]}"; do
 		[[ -n "$i" ]] && filled_positions+=($i)
-	}
+	done
 	if [[ ${#filled_positions[@]} -eq ${#board[@]} ]]; then
-		PrintCenter $(($(MaxRow)/2+7)) "${StrTie[LC_DEFAULT]}" "$yellow"
+		PrintCenter $(($(MaxRow) / 2 + 7)) "${StrTie[LC_DEFAULT]}" "$yellow"
 		return 1
 	fi
 }
@@ -367,21 +374,21 @@ function check_draw {
 # Função para a jogada do computador
 function computer_move {
 	local empty_positions=()
-	for i in "${!board[@]}"; {
+	for i in "${!board[@]}"; do
 		if [[ ${board[$i]} == "   " ]]; then
 			empty_positions+=($i)
 		fi
-	}
+	done
 
 	if [[ ${#empty_positions[@]} -eq 0 ]]; then
-		PrintCenter $(($(MaxRow)/2+7)) "Não há posições disponíveis. O jogo empatou!"
+		PrintCenter $(($(MaxRow) / 2 + 7)) "Não há posições disponíveis. O jogo empatou!"
 		return 1
-    fi
+	fi
 
-    local random_index=$(( RANDOM % ${#empty_positions[@]} ))
-    local position=${empty_positions[$random_index]}
-    local index=$((position))
-    board[$index]=" X "
+	local random_index=$((RANDOM % ${#empty_positions[@]}))
+	local position=${empty_positions[$random_index]}
+	local index=$((position))
+	board[$index]=" X "
 }
 
 #Playing
@@ -393,7 +400,7 @@ function Playing {
 			display_board
 
 			# Jogada do jogador
-			PrintCenter $(($(MaxRow)/2+6)) "${StrLe[LC_DEFAULT]}" "$black"
+			PrintCenter $(($(MaxRow) / 2 + 6)) "${StrLe[LC_DEFAULT]}" "$black"
 			read -r player_move
 
 			if [[ $player_move =~ ^[1-9]$ ]]; then
@@ -401,12 +408,12 @@ function Playing {
 				if [[ ${board[$index]} == "   " ]]; then
 					board[$index]=" O "
 				else
-					PrintCenter $(($(MaxRow)/2+7)) "${StrEr1[LC_DEFAULT]}${board[index]}" "$red"
+					PrintCenter $(($(MaxRow) / 2 + 7)) "${StrEr1[LC_DEFAULT]}${board[index]}" "$red"
 					sleep 1
 					continue
 				fi
 			else
-				PrintCenter $(($(MaxRow)/2+7)) "${StrEr2[LC_DEFAULT]}" "$red"
+				PrintCenter $(($(MaxRow) / 2 + 7)) "${StrEr2[LC_DEFAULT]}" "$red"
 				sleep 1
 				continue
 			fi
@@ -420,7 +427,7 @@ function Playing {
 			if ! check_win; then break; fi
 			if ! check_draw; then break; fi
 		done
-		PrintCenter $(($(MaxRow)/2+6)) "${StrFim[LC_DEFAULT]}" "$cyan" "$pink"
+		PrintCenter $(($(MaxRow) / 2 + 6)) "${StrFim[LC_DEFAULT]}" "$cyan" "$pink"
 		read -r
 		[ "${REPLY^}" == N ] && exit
 	done
@@ -434,21 +441,41 @@ sh_setLanguage
 sh_checktty
 
 if ! opts=$(getopt -o l:Vnhe --long language:,version,nocolor,help,emoji -n "${0##*/}" -- "$@"); then
-   sh_usage
-   exit 0
+	sh_usage
+	exit 0
 fi
 eval set -- "$opts"
 while true; do
-   case "$1" in
-      -l|--language) LC_DEFAULT="$2"; shift 2 ;;
-      -e|--emoji)    emoji=1; shift;;
-      -n|--nocolor)  sh_unsetvarcolors; shift;;
-      -V|--version)  sh_version; exit 0;;
-      -h|--help)     sh_usage; exit 0;;
-		--) shift; break ;;
-		*) echo "Invalid option"; exit 1 ;;
-   esac
+	case "$1" in
+	-l | --language)
+		LC_DEFAULT="$2"
+		shift 2
+		;;
+	-e | --emoji)
+		emoji=1
+		shift
+		;;
+	-n | --nocolor)
+		sh_unsetvarcolors
+		shift
+		;;
+	-V | --version)
+		sh_version
+		exit 0
+		;;
+	-h | --help)
+		sh_usage
+		exit 0
+		;;
+	--)
+		shift
+		break
+		;;
+	*)
+		echo "Invalid option"
+		exit 1
+		;;
+	esac
 done
-
 
 Playing

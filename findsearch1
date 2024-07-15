@@ -2,72 +2,72 @@
 
 # Função para definir as cores usando tput
 definir_cores() {
-    cor_vermelho=$(tput setaf 1)
-    cor_verde=$(tput setaf 2)
-    cor_magenta=$(tput setaf 5)
-    cor_reset=$(tput sgr0)
+	cor_vermelho=$(tput setaf 1)
+	cor_verde=$(tput setaf 2)
+	cor_magenta=$(tput setaf 5)
+	cor_reset=$(tput sgr0)
 }
 
 # Função para mostrar o conteúdo do cabeçalho de arquivos binários
 mostrar_conteudo_cabecalho() {
-    arquivo="$1"
-    tipo_cabecalho="$2"
-    cabecalho=$(xxd -l 16 -p "$arquivo")
-    echo "Cabeçalho do arquivo '$arquivo' (primeiros 16 bytes em hexadecimal):"
-    echo "$cabecalho"
+	arquivo="$1"
+	tipo_cabecalho="$2"
+	cabecalho=$(xxd -l 16 -p "$arquivo")
+	echo "Cabeçalho do arquivo '$arquivo' (primeiros 16 bytes em hexadecimal):"
+	echo "$cabecalho"
 }
 
 # Verifica se o número de argumentos é válido
 if [ "$#" -eq 0 ]; then
-    echo "Uso: $0 [opções] [diretório] string"
-    echo "Opções:"
-    echo "  -c, --conteudo TIPO    Mostrar o conteúdo do cabeçalho de arquivos binários com o TIPO especificado"
-    exit 1
+	echo "Uso: $0 [opções] [diretório] string"
+	echo "Opções:"
+	echo "  -c, --conteudo TIPO    Mostrar o conteúdo do cabeçalho de arquivos binários com o TIPO especificado"
+	exit 1
 fi
 
 # Verifica se a opção "-c" ou "--conteudo" foi especificada
 if [[ "$1" == "-c" || "$1" == "--conteudo" ]]; then
-    # Verifica se o número de argumentos é válido para a opção "-c" ou "--conteudo"
-    if [ "$#" -ne 4 ]; then
-        echo "Uso: $0 --conteudo TIPO [diretório] string"
-        exit 1
-    fi
+	# Verifica se o número de argumentos é válido para a opção "-c" ou "--conteudo"
+	if [ "$#" -ne 4 ]; then
+		echo "Uso: $0 --conteudo TIPO [diretório] string"
+		exit 1
+	fi
 
-    tipo_cabecalho="$2"
-    arquivo="$3"
+	tipo_cabecalho="$2"
+	arquivo="$3"
 
-    # Verifica se o arquivo existe
-    if [ ! -f "$arquivo" ]; then
-        echo "O arquivo '$arquivo' não existe."
-        exit 1
-    fi
+	# Verifica se o arquivo existe
+	if [ ! -f "$arquivo" ]; then
+		echo "O arquivo '$arquivo' não existe."
+		exit 1
+	fi
 
-    # Mostrar o conteúdo do cabeçalho do arquivo binário
-    mostrar_conteudo_cabecalho "$arquivo" "$tipo_cabecalho"
+	# Mostrar o conteúdo do cabeçalho do arquivo binário
+	mostrar_conteudo_cabecalho "$arquivo" "$tipo_cabecalho"
 
-    exit 0
+	exit 0
 fi
 
 # Verifica se o primeiro argumento é um diretório válido
 if [ -d "$1" ]; then
-    diretorio="$1"
-    shift 1
+	diretorio="$1"
+	shift 1
 else
-    diretorio="$PWD"
+	diretorio="$PWD"
 fi
 
 # Verifica se o diretório existe
 if [ ! -d "$diretorio" ]; then
-    echo "O diretório '$diretorio' não existe."
-    exit 1
+	echo "O diretório '$diretorio' não existe."
+	exit 1
 fi
 
 # Verifica se a string de pesquisa foi fornecida
 if [ "$#" -ne 1 ]; then
-    echo "Uso: $0 [opções] [diretório] string"
-    echo "Opções:"
-    echo "  -c, --conteudo TIPO    Mostrar o conteúdo do cabeçalho de arquivos binários com o TIPO especificado"
-    exit 1
+	echo "Uso: $0 [opções] [diretório] string"
+	echo "Opções:"
+	echo "  -c, --conteudo TIPO    Mostrar o conteúdo do cabeçalho de arquivos binários com o TIPO especificado"
+	exit 1
 fi
 
 string="$1"
@@ -86,8 +86,8 @@ grep_output=$(find "$diretorio" -type f -exec grep -Hn "$string" {} + 2>/dev/nul
 
 # Exibe o resultado na tela com cores
 if [ -n "$grep_output" ]; then
-    echo "${cor_verde}Arquivos que contêm a string '$string':${cor_reset}"
-    echo "$grep_output" | sed -E "s/(${string}.*):/${cor_magenta}\1${cor_reset}/" | sed "s/:\([0-9]\+\):/:${cor_verde}\1${cor_reset}/"
+	echo "${cor_verde}Arquivos que contêm a string '$string':${cor_reset}"
+	echo "$grep_output" | sed -E "s/(${string}.*):/${cor_magenta}\1${cor_reset}/" | sed "s/:\([0-9]\+\):/:${cor_verde}\1${cor_reset}/"
 else
-    echo "${cor_vermelho}Nenhum arquivo encontrado com a string '$string' em '$diretorio'.${cor_reset}"
+	echo "${cor_vermelho}Nenhum arquivo encontrado com a string '$string' em '$diretorio'.${cor_reset}"
 fi

@@ -29,66 +29,55 @@ n=13
 coSize=0
 
 while :; do
-    createCanvas
+	createCanvas
 
-    force=$(floatMultiplication $gravity $(floatDivision $angle $len))
+	force=$(floatMultiplication $gravity $(floatDivision $angle $len))
 
-    angleA=$(floatMultiplication -1 $force)
-    angleV=$(floatAddition $angleA $angleV)
-    angle=$(floatAddition $angle $angleV)
-    angleV=$(floatMultiplication $angleV 0.99)
+	angleA=$(floatMultiplication -1 $force)
+	angleV=$(floatAddition $angleA $angleV)
+	angle=$(floatAddition $angle $angleV)
+	angleV=$(floatMultiplication $angleV 0.99)
 
-    bobX=$(floatAddition $(floatMultiplication $len $(sine $angle)) $originX)
-    bobY=$(floatAddition $(floatMultiplication $len $(cosine $angle)) $originY)
+	bobX=$(floatAddition $(floatMultiplication $len $(sine $angle)) $originX)
+	bobY=$(floatAddition $(floatMultiplication $len $(cosine $angle)) $originY)
 
-    drawLine $originX $originY $(floatToInt $bobX) $(floatToInt $bobY) '@'
+	drawLine $originX $originY $(floatToInt $bobX) $(floatToInt $bobY) '@'
 
-    yco+=($(floatToInt $bobX))
-    xco+=($(floatToInt $bobY))
-    coSize=$(($coSize + 1))
+	yco+=($(floatToInt $bobX))
+	xco+=($(floatToInt $bobY))
+	coSize=$(($coSize + 1))
 
-    if [[ $coSize -ge $n ]]
-    then
-        xco=("${xco[@]:1}")
-        yco=("${yco[@]:1}")
-        coSize=$n
-    fi
+	if [[ $coSize -ge $n ]]; then
+		xco=("${xco[@]:1}")
+		yco=("${yco[@]:1}")
+		coSize=$n
+	fi
 
-    for ((i=0;i<$coSize;i++)); do   
-        if((i==0))
-        then
-            drawPointCustom ${xco[$i]} ${yco[$i]} ';' 
-        elif((i==1))
-        then
-            drawPointCustom ${xco[$i]} ${yco[$i]} '~'
-        elif((i==2))
-        then
-            drawPointCustom ${xco[$i]} ${yco[$i]} '~'
-        elif((i==3))
-        then
-            drawPointCustom ${xco[$i]} ${yco[$i]} '^'
-        elif((i==4))
-        then
-            drawPointCustom ${xco[$i]} ${yco[$i]} '^'
-        elif((i==5))
-        then
-            drawPointCustom ${xco[$i]} ${yco[$i]} 'o'
-        elif((i==6))
-        then
-            drawPointCustom ${xco[$i]} ${yco[$i]} '%'
-        elif((i==7))
-        then
-            drawPointCustom ${xco[$i]} ${yco[$i]} '$'
-        elif((i==8))
-        then
-            drawPointCustom ${xco[$i]} ${yco[$i]} '&'
-        elif((i==9))
-        then
-            drawPointCustom ${xco[$i]} ${yco[$i]} '@'
-        fi 
-    done
-    drawCircle $(floatToInt $bobX) $(floatToInt $bobY) 3 'o'
+	for ((i = 0; i < $coSize; i++)); do
+		if ((i == 0)); then
+			drawPointCustom ${xco[$i]} ${yco[$i]} ';'
+		elif ((i == 1)); then
+			drawPointCustom ${xco[$i]} ${yco[$i]} '~'
+		elif ((i == 2)); then
+			drawPointCustom ${xco[$i]} ${yco[$i]} '~'
+		elif ((i == 3)); then
+			drawPointCustom ${xco[$i]} ${yco[$i]} '^'
+		elif ((i == 4)); then
+			drawPointCustom ${xco[$i]} ${yco[$i]} '^'
+		elif ((i == 5)); then
+			drawPointCustom ${xco[$i]} ${yco[$i]} 'o'
+		elif ((i == 6)); then
+			drawPointCustom ${xco[$i]} ${yco[$i]} '%'
+		elif ((i == 7)); then
+			drawPointCustom ${xco[$i]} ${yco[$i]} '$'
+		elif ((i == 8)); then
+			drawPointCustom ${xco[$i]} ${yco[$i]} '&'
+		elif ((i == 9)); then
+			drawPointCustom ${xco[$i]} ${yco[$i]} '@'
+		fi
+	done
+	drawCircle $(floatToInt $bobX) $(floatToInt $bobY) 3 'o'
 
-    drawCanvas
-    moveCursorToBegining
+	drawCanvas
+	moveCursorToBegining
 done

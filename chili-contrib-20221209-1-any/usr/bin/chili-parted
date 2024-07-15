@@ -1,34 +1,32 @@
 #!/usr/bin/env bash
 
-conf()
-{
-   read -p "$1 [Y/n]"
-   [[ ${REPLY^} == "" ]] && return 0
-   [[ ${REPLY^} == N ]]  && return 1 || return 0
+conf() {
+	read -p "$1 [Y/n]"
+	[[ ${REPLY^} == "" ]] && return 0
+	[[ ${REPLY^} == N ]] && return 1 || return 0
 }
 
-chili-image()
-{
+chili-image() {
 	# https://www.qemu.org/2021/08/22/fuse-blkexport/
 	qemu-img create -f raw foo.img 20G
-	parted -s foo.img 		\
-    	'mklabel msdos' 		\
-    	'mkpart primary ext4 2048s 100%'
+	parted -s foo.img \
+		'mklabel msdos' \
+		'mkpart primary ext4 2048s 100%'
 	qemu-img convert -p -f raw -O qcow2 foo.img foo.qcow2 && rm foo.img
- 	file foo.qcow2
+	file foo.qcow2
 	sudo kpartx -l foo.qcow2
 
-#	qemu-storage-daemon \
-#    --blockdev node-name=prot-node,driver=file,filename=foo.qcow2 \
-#    --blockdev node-name=fmt-node,driver=qcow2,file=prot-node \
-#    --export \
-#    type=fuse,id=exp0,node-name=fmt-node,mountpoint=foo.qcow2,writable=on \
-#    &
+	#	qemu-storage-daemon \
+	#    --blockdev node-name=prot-node,driver=file,filename=foo.qcow2 \
+	#    --blockdev node-name=fmt-node,driver=qcow2,file=prot-node \
+	#    --export \
+	#    type=fuse,id=exp0,node-name=fmt-node,mountpoint=foo.qcow2,writable=on \
+	#    &
 	qemu-storage-daemon \
-  		--blockdev node-name=prot-node,driver=file,filename=foo.qcow2 \
-  		--blockdev node-name=fmt-node,driver=qcow2,file=prot-node \
-  		--export \
-  		type=fuse,id=exp0,node-name=fmt-node,mountpoint=mount-point,writable=on
+		--blockdev node-name=prot-node,driver=file,filename=foo.qcow2 \
+		--blockdev node-name=fmt-node,driver=qcow2,file=prot-node \
+		--export \
+		type=fuse,id=exp0,node-name=fmt-node,mountpoint=mount-point,writable=on
 
 	file foo.qcow2
 	sudo kpartx -av foo.qcow2
@@ -36,8 +34,7 @@ chili-image()
 	cfdisk foo.qcow2
 }
 
-chili-mapdevice()
-{
+chili-mapdevice() {
 	#sudo mknod -m 0777 /dev/sr0 b 7 10
 	#sudo mknod -m 0777 /dev/sr0 b 7 20
 	# losetup -P /dev/sr0 $1
@@ -52,10 +49,9 @@ chili-mapdevice()
 	# losetup --detach /dev/loop0
 }
 
-chili-setup-img()
-{
+chili-setup-img() {
 	qemu-img create foo.img -f raw 20G
-   qemu-img info foo.img
+	qemu-img info foo.img
 	losetup --find --show foo.img
 	#kpartx -av foo.img # mapear
 	#kpartx -d foo.img  #delete
@@ -64,7 +60,7 @@ chili-setup-img()
 if [[ $# -eq 0 ]]; then
 	printf '%s\n' "Usage:"
 	printf '%s\n' "	chili-parted /dev/sdX"
-	exit 1;
+	exit 1
 fi
 
 #sd=$1
@@ -87,12 +83,12 @@ sd="$1"
 fdisk -l $sd
 echo
 echo "AVISO, CUIDADO, tudo será apagado!!"
-if conf "Continuar com o particionamento?" ; then
-	parted --script "$sd" -- 															\
-		mklabel gpt             					 									\
-	   mkpart primary fat32      1MiB 3MiB   set 1 bios on name 1 BIOS  	\
-	   mkpart primary fat32      3MiB 128MiB set 2 esp  on name 2 EFI   	\
-	   mkpart primary ext4       128MiB 100%               name 3 ROOT  	\
-	   align-check optimal 1
-		parted --script "$sd" -- print
+if conf "Continuar com o particionamento?"; then
+	parted --script "$sd" -- \
+		mklabel gpt \
+		mkpart primary fat32 1MiB 3MiB set 1 bios on name 1 BIOS \
+		mkpart primary fat32 3MiB 128MiB set 2 esp on name 2 EFI \
+		mkpart primary ext4 128MiB 100% name 3 ROOT \
+		align-check optimal 1
+	parted --script "$sd" -- print
 fi

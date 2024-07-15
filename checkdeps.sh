@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-sh_checkdepstype1()
-{
+sh_checkdepstype1() {
 	declare -A deps
 	deps[banana]=fruta-populares
 	deps[laranja]=fruta-citricas
@@ -19,8 +18,7 @@ sh_checkdepstype1()
 	exit 0
 }
 
-sh_checkdepstype2()
-{
+sh_checkdepstype2() {
 	declare -a deps=('banana' 'laranja' 'abacate' 'dialog')
 	declare -a missing
 

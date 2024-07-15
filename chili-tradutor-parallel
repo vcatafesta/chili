@@ -138,7 +138,7 @@ export -f processar_idioma
 # Usando parallel para processar os idiomas em paralelo
 parallel --jobs 50% processar_idioma {} "$1" ::: "${idiomas[@]}"
 
-:<<'comment'
+: <<'comment'
 # Loop através dos idiomas usando coproc para processamento paralelo
 for lang in "${idiomas[@]}"; do
 #	coproc processar_idioma "$lang" "$1"

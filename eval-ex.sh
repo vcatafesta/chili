@@ -2,17 +2,17 @@
 barra=\|
 
 echo '# ls $barra wc -l  			#fail'
-ls $barra wc -l  						#fail
+ls $barra wc -l #fail
 
 echo '# eval ls $barra wc -l  	#OK - resolve primeiro a variável para depois executar o comando'
-eval ls $barra wc -l  				#OK - resolve primeiro a variável para depois executar o comando
+eval ls $barra wc -l #OK - resolve primeiro a variável para depois executar o comando
 
 echo '# num=5'
 echo '# echo {1..$num}				#fail'
 echo '# eval echo {1..$num}		#OK'
 num=5
-echo {1..$num}							#fail
-eval echo {1..$num}					#OK
+echo {1..$num}      #fail
+eval echo {1..$num} #OK
 
 data_hoje="date"
 data_param="+%s"
@@ -23,7 +23,9 @@ eval echo '$data_hoje' '$data_param'
 echo
 echo 'c="echo"; a1="olá"; a2="mundo"'
 echo 'eval $c $a1 $a2'
-c="echo"; a1="olá"; a2="mundo"
+c="echo"
+a1="olá"
+a2="mundo"
 eval $c $a1 $a2
 
 echo
@@ -33,7 +35,7 @@ Cd="cd Desktop"
 eval $Cd
 
 echo
-cat > department.txt << 'EOF'
+cat >department.txt <<'EOF'
 CSE
 EEE
 ETE
@@ -50,7 +52,8 @@ eval $mycommand
 rm department.txt
 
 echo
-x=5; y=15
+x=5
+y=15
 # A primeira variável de comando é usada para atribuir o comando `expr` para adicionar os valores de $x e $y
 calculo="$(expr $x + $y)"
 # A segunda variável de comando é usada para atribuir o comando `echo`

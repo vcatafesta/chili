@@ -31,12 +31,15 @@ while true; do
 			read estudante
 
 			case "${estudante^^}" in
-			S) valor_com_desconto=$((valor_passagem / 2))
+			S)
+				valor_com_desconto=$((valor_passagem / 2))
 				printf "${GREEN}Passagem de estudante - preço com desconto: R$%d,%02d${RESET}\n" $((valor_com_desconto / 100)) $((valor_com_desconto % 100))
 				;;
-			N)	printf "${YELLOW}Passagem normal - preço: R$%d,%02d${RESET}\n" $((valor_passagem / 100)) $((valor_passagem % 100))
+			N)
+				printf "${YELLOW}Passagem normal - preço: R$%d,%02d${RESET}\n" $((valor_passagem / 100)) $((valor_passagem % 100))
 				;;
-			*)	echo -e "${RED}Opção inválida. Digite 's' para sim ou 'n' para não.${RESET}"
+			*)
+				echo -e "${RED}Opção inválida. Digite 's' para sim ou 'n' para não.${RESET}"
 				;;
 			esac
 		fi
