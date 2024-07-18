@@ -1745,7 +1745,7 @@ mkl() {
     fi
     log_msg "Criando arquivo Lua ${cyan}'$prg'${reset} on $PWD"
     cat >"$prg" <<"EOF"
-#!/usr/bin/env lua 
+#!/usr/bin/env lua
 
 EOF
     sudo chmod +x $prg
@@ -1802,19 +1802,25 @@ makebash() {
 ##############################################################################
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
-export TEXTDOMAIN=chili-makebash
+export TEXTDOMAIN=$prg
 
 #debug
-export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
+export PS4='\${red}\${0##*/}\${green}[\$FUNCNAME]\${pink}[\$LINENO]\${reset}'
 #set -x
 #set -e
 shopt -s extglob
 
 #system
-readonly APP="${0##*/}"
-readonly _VERSION_='1.0.0-20240416'
-readonly distro=$(uname -n)
-readonly DEPENDENCIES=(grep)
+declare APP="\${0##*/}"
+declare _VERSION_="1.0.0-$(date +'%Y%m%d')"
+declare distro="\$(uname -n)"
+declare DEPENDENCIES=(grep)
+source /usr/share/fetch/core.sh
+
+function MostraErro {
+  echo "erro: \${red}\$1\${reset} => comando: \${cyan}'\$2'\${reset} => result=\${yellow}\$3\${reset}"
+}
+trap 'MostraErro "\$APP[\$FUNCNAME][\$LINENO]" "\$BASH_COMMAND" "\$?"; exit 1' ERR
 
 EOF
 	sudo chmod +x $prg
