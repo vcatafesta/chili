@@ -43,7 +43,7 @@ shopt -s extglob
 readonly APP="bash"
 readonly _VERSION_='1.0.0-20240713 - 11:26'
 readonly distro=voidlinux
-readonly DEPENDENCIES=(grep)
+readonly DEPENDENCIES=(grep sed wget makepkg)
 
 if mkdir -p /tmp/bigcontrolcenter-base-install; then
 	cd /tmp/bigcontrolcenter-base-install || exit 1
