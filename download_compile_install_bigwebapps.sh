@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
 #  download_compile_install_bigwebapps.sh
@@ -66,6 +67,15 @@ if mkdir -p /tmp/biglinux-config-install; then
 	cd /tmp/biglinux-config-install || exit 1
 	[[ -e PKGBUILD ]] && rm PKGBUILD
 	if wget https://raw.githubusercontent.com/vcatafesta/biglinux-config/main/pkgbuild/PKGBUILD; then
+		sed -i 's|url="https://github.com/biglinux/$pkgname"|url="https://github.com/vcatafesta/$pkgname"|'g PKGBUILD
+		makepkg --force --install --clean --cleanbuild --syncdeps --noconfirm || exit 1
+	fi
+fi
+
+if mkdir -p /tmp/auto-tweaks-browser-install; then
+	cd /tmp/auto-tweaks-browser-install || exit 1
+	[[ -e PKGBUILD ]] && rm PKGBUILD
+	if wget https://raw.githubusercontent.com/vcatafesta/auto-tweaks-browser/main/pkgbuild/PKGBUILD; then
 		sed -i 's|url="https://github.com/biglinux/$pkgname"|url="https://github.com/vcatafesta/$pkgname"|'g PKGBUILD
 		makepkg --force --install --clean --cleanbuild --syncdeps --noconfirm || exit 1
 	fi

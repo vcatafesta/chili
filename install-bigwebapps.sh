@@ -1,4 +1,5 @@
 #!/bin/sh
+# -*- coding: utf-8 -*-
 
 #sh <(curl -s -L https://raw.githubusercontent.com/vcatafesta/chili/main/install-bigwebapps.sh)
 #sh <(wget -q -O - https://raw.githubusercontent.com/vcatafesta/chili/main/install-bigwebapps.sh)

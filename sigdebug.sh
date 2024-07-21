@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
-
-#  big-change-desktop-files.sh
-#  Created: 2024/07/08 - 14:35
-#  Altered: 2024/07/16 - 10:32
+#
+#  sidebug.sh
+#  Created: 2024/07/17 - 20:12
+#  Altered: 2024/07/19 - 10:04
 #
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -29,11 +28,36 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 #  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##############################################################################
+#export LANGUAGE=pt_BR
+export TEXTDOMAINDIR=/usr/share/locale
+export TEXTDOMAIN=chili-makebash
 
-for i in /usr/share/applications/big*.desktop; do
-	if sed -i '/^Categories=/ {/Biglinux;/! s/$/Biglinux;/}' "$i"; then
-		echo $i
-	fi
-done
+#debug
+export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset}'
+#set -x
+#set -e
+shopt -s extglob
 
+#system
+APP="${0##*/}"
+_VERSION_='1.0.0-20240719'
+distro=chililinux
+DEPENDENCIES=(grep)
+source /usr/share/fetch/core.sh
+
+function MostraErro {
+	read -r -p "${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
+}
+
+function GeraErro {
+	echo == Passou por aqui --
+	ls xpto		# erro aqui, mas mas podemos usar o return para status do erro
+#	return 0	# Se não usarmos o return, o status da função é o do seu último comando, senão o do return
+}
+
+#trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
+trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?";' DEBUG
+GeraErro
+echo Alô | grep Olá
+echo == Uma linha após o erro ==
 
