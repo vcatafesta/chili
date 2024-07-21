@@ -74,7 +74,8 @@ run_chroot() {
 
 _exit() {
 	_dialog --yesno "Exit installation?" 8 50 && {
-		clear; exit 0
+		clear
+		exit 0
 	}
 }
 
@@ -121,11 +122,11 @@ must be created. This partition will be used as 'EFI System Partition' with '/bo
 menu_keymap() {
 	local _keymaps="$(find /usr/share/keymaps/ -type f -iname "*.map.gz" -printf "%f\n" | sed 's|.map.gz||g' | sort)"
 	local _KEYMAPS=
-	
+
 	for f in ${_keymaps}; do
 		_KEYMAPS="${_KEYMAPS} ${f} -"
 	done
-	keymap_var=$(_dialog --menu "Select your keymap" 0 50 0 ${_KEYMAPS}) || return 1	
+	keymap_var=$(_dialog --menu "Select your keymap" 0 50 0 ${_KEYMAPS}) || return 1
 	return 0
 }
 
@@ -145,7 +146,7 @@ menu_timezone() {
 	done
 	location=$(_dialog --menu "Select your location" 0 50 0 ${_locations}) || return 1
 
-	timezone_var=$area/$location	
+	timezone_var=$area/$location
 	return 0
 }
 
@@ -156,7 +157,7 @@ menu_hostname() {
 	else
 		_preset=$hostname_var
 	fi
-	hostname_var=$(_dialog --inputbox "Enter hostname:" 0 50 $_preset) || return 1	
+	hostname_var=$(_dialog --inputbox "Enter hostname:" 0 50 $_preset) || return 1
 	return 0
 }
 
@@ -179,7 +180,7 @@ menu_rootpasswd() {
 		else
 			break
 		fi
-	done	
+	done
 	return 0
 }
 
@@ -213,14 +214,14 @@ menu_useraccount() {
 		done
 	else
 		return
-	fi	
+	fi
 	return 0
 }
 
 setup_efi_partition() {
 	local efimenu
 	format_efi=0
-	
+
 	if [ "$(showefi)" ]; then
 		for e in $(showefi); do
 			efimenu="$efimenu $e $(get_partition_size $e)"
@@ -242,7 +243,7 @@ setup_efi_partition() {
 setup_root_partition() {
 	local partmenu
 	formatrootpartition=0
-	
+
 	# select partition to install venom
 	for p in $(showpartition); do
 		partmenu="$partmenu $p size:$(get_partition_size $p),fstype:$(get_partition_fstype $p)"
@@ -254,7 +255,7 @@ setup_root_partition() {
 	else
 		formatrootpartition=1
 	fi
-	
+
 	if [ "$formatrootpartition" = 1 ]; then
 		filesystem_var=$(_dialog_choose_fs) || return 1
 	else
@@ -266,7 +267,7 @@ setup_root_partition() {
 setup_swap_partition() {
 	local swapmenu
 	format_swap=0
-	
+
 	if [ "$(showswap)" ]; then
 		_dialog --yesno "Swap partition found, do you want to use it?" $YESNOSIZE
 		if [ $? = 0 ]; then
@@ -291,9 +292,9 @@ setup_swap_partition() {
 setup_other_partition() {
 	local donepart="$partition_var"
 	local donemountpoint="/"
-	
+
 	unset allotherpartitions
-	
+
 	while true; do
 		unset partmenu mountpoint otherpart otherpartfs
 		otherpartformat=0
@@ -305,7 +306,7 @@ setup_other_partition() {
 		[ "$partmenu" ] || break
 		_dialog --yesno "Do you want to setup another partition?" $YESNOSIZE || break
 		otherpart=$(_dialog --menu "Choose partition" 0 60 0 ${partmenu}) || return 1
-		
+
 		while true; do
 			mountpoint=$(_dialog --inputbox "Enter mount point" 0 60 /) || return 1
 			if echo $donemountpoint | tr ' ' '\n' | grep -qx $mountpoint; then
@@ -314,13 +315,13 @@ setup_other_partition() {
 				break
 			fi
 		done
-		
+
 		if [ "$(get_partition_fstype $otherpart)" != "none" ]; then
 			_dialog --yesno "Do you want to format $otherpart?" $YESNOSIZE && otherpartformat=yes
 		else
 			otherpartformat=yes
 		fi
-		
+
 		if [ "$otherpartformat" = "yes" ]; then
 			otherpartfs=$(_dialog_choose_fs) || return 1
 		else
@@ -343,7 +344,7 @@ menu_partition() {
 	local dd
 	local parttool
 	local disk_part
-	
+
 	print_partitioning_tips
 
 	_dialog --yesno "Modify disk partition?" $YESNOSIZE
@@ -355,7 +356,7 @@ menu_partition() {
 		disk_part=$(_dialog --menu "Choose disk to modify partition" 0 50 0 ${dd}) || return 1
 		$parttool $disk_part || return 1
 	fi
-	
+
 	# check if partition is created
 	[ "$(showpartition)" ] || {
 		_dialog --msgbox "No partition found\nPlease create partition first" 7 50
@@ -377,7 +378,7 @@ menu_bootloader() {
 	local d
 	local dd
 	local dsize
-	
+
 	_dialog --yesno "Do you want install grub bootloader?" $YESNOSIZE
 	if [ $? = 0 ]; then
 		for d in $(showdisk); do
@@ -386,14 +387,14 @@ menu_bootloader() {
 		grub_var=$(_dialog --menu "Choose disk to install grub" 0 50 0 ${dd}) || return 1
 	else
 		grub_var=SKIP
-	fi	
+	fi
 	return 0
 }
 
 menu_locale() {
 	local locales
 	local _locale
-	
+
 	if [ -f "/etc/locales" ]; then
 		locales=$(grep "UTF-8" /etc/locales | awk '{print $1}' | sed 's/^#//;s/\.UTF-8//')
 		for l in $locales; do
@@ -403,8 +404,8 @@ menu_locale() {
 	else
 		locale_var=SKIP
 	fi
-		
-	clock_var=$(_dialog --menu "Select time" 0 50 0 UTC - localtime -) || return 1	
+
+	clock_var=$(_dialog --menu "Select time" 0 50 0 UTC - localtime -) || return 1
 	return 0
 }
 
@@ -427,7 +428,7 @@ Grub      : $grub_var
 
 check_settings() {
 	local notset
-	
+
 	[ "$keymap_var" ] || notset="Keyboard"
 	[ "$partition_var" ] || notset="$notset Partition"
 	[ "$timezone_var" ] || notset="$notset Timezone"
@@ -436,7 +437,7 @@ check_settings() {
 	[ "$rootpasswd" ] || notset="$notset RootPassword"
 	[ "$grub_var" ] || notset="$notset Bootloader"
 	[ "$clock_var" ] || notset="$notset Locale"
-	
+
 	if [ "$notset" ]; then
 		notset=$(echo $notset | tr ' ' '\n')
 		_dialog --title "  This options is not set  " --msgbox "$notset" 0 0
@@ -467,25 +468,33 @@ check_disk() {
 install_now() {
 	check_settings || return 1
 	check_disk || return 1
-	
+
 	umount -R $VENOMROOT
 	#mountpoint -q $VENOMROOT/boot/efi && umount $VENOMROOT/boot/efi
 	#mountpoint -q $VENOMROOT && umount $VENOMROOT
-	
+
 	_dialog --yesno "Continue with installation?" $YESNOSIZE || return 1
-	
+
 	# format root partition
 	if [ "$formatrootpartition" = 1 ]; then
 		print_info "Formatting partition $partition_var to $filesystem_var"
 		case $filesystem_var in
-			ext4|ext3|ext2) mkfs.$filesystem_var -F -L Venom $partition_var &>/dev/null
-			      PKGKEEP+=" e2fsprogs" ;;
-			xfs) mkfs.xfs -f -m crc=0 -L Venom $partition_var &>/dev/null
-			       PKGKEEP+=" xfsprogs" ;;
-			reiserfs) mkreiserfs -q -l Venom $partition_var &>/dev/null
-			       PKGKEEP+=" reiserfsprogs" ;;
-			btrfs) mkfs.btrfs -f -L Venom $partition_var &>/dev/null
-			       PKGKEEP+=" btrfs-progs" ;;
+		ext4 | ext3 | ext2)
+			mkfs.$filesystem_var -F -L Venom $partition_var &>/dev/null
+			PKGKEEP+=" e2fsprogs"
+			;;
+		xfs)
+			mkfs.xfs -f -m crc=0 -L Venom $partition_var &>/dev/null
+			PKGKEEP+=" xfsprogs"
+			;;
+		reiserfs)
+			mkreiserfs -q -l Venom $partition_var &>/dev/null
+			PKGKEEP+=" reiserfsprogs"
+			;;
+		btrfs)
+			mkfs.btrfs -f -L Venom $partition_var &>/dev/null
+			PKGKEEP+=" btrfs-progs"
+			;;
 		esac
 		if [ $? != 0 ]; then
 			print_error_msg "Failed create '$filesystem_var' filesystem on '$partition_var'"
@@ -500,18 +509,18 @@ install_now() {
 		fi
 		PKGKEEP+=" grub-efi"
 	fi
-	
+
 	# make swap
 	if [ "$format_swap" = 1 ] && [ "$swap_var" ]; then
 		print_info "Formatting partition $swap_var to swap"
 		mkswap $swap_var &>/dev/null || print_error_msg "Failed create 'swap' on '$swap_var'"
 	fi
-	
+
 	rm -fr $VENOMROOT
 	mkdir -p $VENOMROOT
 
 	mount $partition_var $VENOMROOT || print_error_msg "Error mount '$partition_var'"
-	
+
 	# make partition for other partition
 	if [ "$allotherpartitions" ]; then
 		for p in $allotherpartitions; do
@@ -519,14 +528,22 @@ install_now() {
 				if [ "$vformat" = yes ]; then
 					print_info "Formatting partition $vdev to $vfs"
 					case $vfs in
-						ext4|ext3|ext2) mkfs.$vfs -F $vdev &>/dev/null
-							  PKGKEEP+=" e2fsprogs" ;;
-						xfs) mkfs.xfs -f -m crc=0 $vdev &>/dev/null
-							   PKGKEEP+=" xfsprogs" ;;
-						reiserfs) mkreiserfs -q $vdev &>/dev/null
-							   PKGKEEP+=" reiserfsprogs" ;;
-						btrfs) mkfs.btrfs -f $vdev &>/dev/null
-							   PKGKEEP+=" btrfs-progs" ;;
+					ext4 | ext3 | ext2)
+						mkfs.$vfs -F $vdev &>/dev/null
+						PKGKEEP+=" e2fsprogs"
+						;;
+					xfs)
+						mkfs.xfs -f -m crc=0 $vdev &>/dev/null
+						PKGKEEP+=" xfsprogs"
+						;;
+					reiserfs)
+						mkreiserfs -q $vdev &>/dev/null
+						PKGKEEP+=" reiserfsprogs"
+						;;
+					btrfs)
+						mkfs.btrfs -f $vdev &>/dev/null
+						PKGKEEP+=" btrfs-progs"
+						;;
 					esac
 					if [ $? != 0 ]; then
 						print_error_msg "Failed create '$vfs' filesystem on '$vdev'"
@@ -547,12 +564,12 @@ install_now() {
 
 	totalsfs=$(unsquashfs -l $ROOTSFS | wc -l)
 	countsfs=0
-	
-	( unsquashfs -f -i -d $VENOMROOT $ROOTSFS | sed "s:$VENOMROOT::" | while read -r line; do
-		countsfs=$(( countsfs + 1 ))
-		echo " $(( 100*countsfs/totalsfs ))% $line"
-	done ) | _dialog --progressbox "unsquash filesystem to $partition_var..." 20 70
-	
+
+	(unsquashfs -f -i -d $VENOMROOT $ROOTSFS | sed "s:$VENOMROOT::" | while read -r line; do
+		countsfs=$((countsfs + 1))
+		echo " $((100 * countsfs / totalsfs))% $line"
+	done) | _dialog --progressbox "unsquash filesystem to $partition_var..." 20 70
+
 	if [ -f /root/post-install.sh ]; then
 		print_info "Running post-install script..."
 		VIROOTFS=$VIROOTFS VENOMROOTFS=$VENOMROOTFS sh /root/post-install.sh &>/null
@@ -563,7 +580,7 @@ install_now() {
 	elif [ -x $VENOMROOT/etc/rc.d/network ]; then
 		network=network
 	fi
-	
+
 	if [ -x $VENOMROOT/etc/rc.d/lxdm ]; then
 		dm=lxdm
 	elif [ -x $VENOMROOT/etc/rc.d/lightdm ]; then
@@ -588,60 +605,60 @@ install_now() {
 			fi
 		fi
 	done
-	
+
 	# hostname
-	echo "$hostname_var" > $VENOMROOT/etc/hostname
-	
+	echo "$hostname_var" >$VENOMROOT/etc/hostname
+
 	# hardware clock
 	sed "s;#HARDWARECLOCK=.*;HARDWARECLOCK=\"$clock_var\";" -i $VENOMROOT/etc/rc.conf
-	
+
 	# timezone
 	sed "s;#TIMEZONE=.*;TIMEZONE=\"$timezone_var\";" -i $VENOMROOT/etc/rc.conf
-	
+
 	# keymap
 	sed "s;#KEYMAP=.*;KEYMAP=\"$keymap_var\";" -i $VENOMROOT/etc/rc.conf
-	
+
 	# daemons
 	sed "s;#DAEMONS=.*;DAEMONS=\"$dd\";" -i $VENOMROOT/etc/rc.conf
 
 	# fstab
 	print_info "Setup fstab..."
-	echo "# <device> <dir> <type> <options> <dump> <fsck>" > $VENOMROOT/etc/fstab
-	echo "UUID=$(blkid -o value -s UUID "$partition_var") / $filesystem_var defaults 1 1" >> $VENOMROOT/etc/fstab
+	echo "# <device> <dir> <type> <options> <dump> <fsck>" >$VENOMROOT/etc/fstab
+	echo "UUID=$(blkid -o value -s UUID "$partition_var") / $filesystem_var defaults 1 1" >>$VENOMROOT/etc/fstab
 
 	if [ "$EFI_SYSTEM" = 1 ]; then
-		echo "UUID=$(blkid -o value -s UUID "$efi_var") /boot/efi vfat defaults 0 2" >> $VENOMROOT/etc/fstab
+		echo "UUID=$(blkid -o value -s UUID "$efi_var") /boot/efi vfat defaults 0 2" >>$VENOMROOT/etc/fstab
 	fi
 
 	if [ "$swap_var" != SKIP ]; then
-		echo "UUID=$(blkid -o value -s UUID "$swap_var") swap swap pri=1 0 0" >> $VENOMROOT/etc/fstab
+		echo "UUID=$(blkid -o value -s UUID "$swap_var") swap swap pri=1 0 0" >>$VENOMROOT/etc/fstab
 	fi
-	
+
 	if [ "$allotherpartitions" ]; then
 		for p in $allotherpartitions; do
 			echo $p | while IFS=: read -r vdev vmount vfs vformat; do
-				echo "UUID=$(blkid -o value -s UUID $vdev) $vmount $vfs defaults 0 0" >> $VENOMROOT/etc/fstab
+				echo "UUID=$(blkid -o value -s UUID $vdev) $vmount $vfs defaults 0 0" >>$VENOMROOT/etc/fstab
 			done
 		done
 	fi
-	
+
 	print_info "Creating user ($user_var)..."
 	useradd -R $VENOMROOT -m -G users,wheel,audio,video -s /bin/bash $user_var || print_error_msg "Error configure user '$user_var'"
 	print_info "Setting user password ($user_var)..."
 	echo "$user_var:$passwd" | chpasswd -R $VENOMROOT -c SHA512 || print_error_msg "Error setting user password"
 	print_info "Setting root password..."
 	echo "root:$rootpasswd" | chpasswd -R $VENOMROOT -c SHA512 || print_error_msg "Error setting root password"
-	
+
 	if [ "$locale_var" != "SKIP" ]; then
 		print_info "Generating locales (${locale_var}.UTF-8)..."
 		sed "s/#$locale_var/$locale_var/" -i $VENOMROOT/etc/locales
-		echo "LANG=$locale_var.UTF-8" > $VENOMROOT/etc/locale.conf
+		echo "LANG=$locale_var.UTF-8" >$VENOMROOT/etc/locale.conf
 		run_chroot genlocales &>/dev/null
 	fi
-	
+
 	print_info "Generating initramfs..."
 	run_chroot mkinitramfs &>/dev/null || print_error_msg "Error generating initramfs"
-	
+
 	if [ "$grub_var" != SKIP ]; then
 		if [ "$EFI_SYSTEM" = 1 ]; then
 			print_info "Installing grub (EFI)..."
@@ -653,7 +670,7 @@ install_now() {
 		print_info "Generating grub config..."
 		run_chroot grub-mkconfig -o /boot/grub/grub.cfg &>/dev/null || print_error_msg "Error generating grub config"
 	fi
-	
+
 	if [ $(type -p startxfce4) ]; then
 		SSN=$(type -p startxfce4)
 	elif [ $(type -p mate-session) ]; then
@@ -668,17 +685,17 @@ install_now() {
 		sed -e "s,.*session.*=.*,session=$SSN," -i $VENOMROOT/etc/lxdm/lxdm.conf
 		#sed -e "s,.*autologin.*=.*,autologin=$USER," -i $VENOMROOT/etc/lxdm/lxdm.conf
 	fi
-	
+
 	#print_info "Resolve temporary packages..."
 	#scratch deplist $(cat $LISTPKG) $PKGKEEP linux linux-lts | awk '{print $2}' >> $PKGSTRIP
 	#scratch installed | awk '{print $1}' >> $PKGINISO
-	
+
 	#for i in $(grep -Fxv -f $PKGSTRIP $PKGINISO); do
 	#	[ "$i" ] || continue
 	#	print_info "Removing temporary packages ($i)..."
 	#	run_chroot pkgdel $i &>/dev/null
 	#done
-	
+
 	#mountpoint -q $VENOMROOT/boot/efi && umount $VENOMROOT/boot/efi
 	#mountpoint -q $VENOMROOT && umount $VENOMROOT
 	umount -R $VENOMROOT
@@ -692,36 +709,36 @@ Set necessary options before start the installation \n"
 	if [ -z $DEFITEM ]; then
 		DEFITEM=Keyboard
 	fi
-	
+
 	mainmenu=$(_dialog --default-item $DEFITEM \
-			--cancel-label "Exit" \
-			--title "  Venom Linux installer $([ "$EFI_SYSTEM" = 1 ] && echo '- UEFI') " \
-			--menu "$MAINMSG" 0 70 0 \
-			"Keyboard" "Set Keyboard" \
-			"Partition" "Partition disk" \
-			"Timezone" "Set timezone" \
-			"Hostname" "Set hostname" \
-			"Locale" "Set locale" \
-			"UserAccount" "Set user account" \
-			"RootPassword" "Set root password" \
-			"Bootloader" "Set grub partition" \
-			"Settings" "View saved settings" \
-			"Install" "Install Venom" \
-			"Exit" "Exit installation")
-			
+		--cancel-label "Exit" \
+		--title "  Venom Linux installer $([ "$EFI_SYSTEM" = 1 ] && echo '- UEFI') " \
+		--menu "$MAINMSG" 0 70 0 \
+		"Keyboard" "Set Keyboard" \
+		"Partition" "Partition disk" \
+		"Timezone" "Set timezone" \
+		"Hostname" "Set hostname" \
+		"Locale" "Set locale" \
+		"UserAccount" "Set user account" \
+		"RootPassword" "Set root password" \
+		"Bootloader" "Set grub partition" \
+		"Settings" "View saved settings" \
+		"Install" "Install Venom" \
+		"Exit" "Exit installation")
+
 	if [ $? = 0 ]; then
-		case $mainmenu in 
-		 	    Keyboard) menu_keymap      && [ "$keymap_var" ]    && DEFITEM=Partition    ;;
-			   Partition) menu_partition   && [ "$partition_var" ] && DEFITEM=Timezone     ;;
-			    Timezone) menu_timezone    && [ "$timezone_var" ]  && DEFITEM=Hostname     ;;
-			    Hostname) menu_hostname    && [ "$hostname_var" ]  && DEFITEM=Locale       ;;
-			      Locale) menu_locale      && [ "$locale_var" ]    && DEFITEM=UserAccount  ;;
-			 UserAccount) menu_useraccount && [ "$user_var" ]      && DEFITEM=RootPassword ;;
-			RootPassword) menu_rootpasswd  && [ "$rootpasswd" ]    && DEFITEM=Bootloader   ;;
-			  Bootloader) menu_bootloader  && [ "$grub_var" ]      && DEFITEM=Settings     ;;
-			    Settings) view_settings    && DEFITEM=Install ;;
-			     Install) install_now && DEFITEM=Exit ;;
-			        Exit) _exit ;;
+		case $mainmenu in
+		Keyboard) menu_keymap && [ "$keymap_var" ] && DEFITEM=Partition ;;
+		Partition) menu_partition && [ "$partition_var" ] && DEFITEM=Timezone ;;
+		Timezone) menu_timezone && [ "$timezone_var" ] && DEFITEM=Hostname ;;
+		Hostname) menu_hostname && [ "$hostname_var" ] && DEFITEM=Locale ;;
+		Locale) menu_locale && [ "$locale_var" ] && DEFITEM=UserAccount ;;
+		UserAccount) menu_useraccount && [ "$user_var" ] && DEFITEM=RootPassword ;;
+		RootPassword) menu_rootpasswd && [ "$rootpasswd" ] && DEFITEM=Bootloader ;;
+		Bootloader) menu_bootloader && [ "$grub_var" ] && DEFITEM=Settings ;;
+		Settings) view_settings && DEFITEM=Install ;;
+		Install) install_now && DEFITEM=Exit ;;
+		Exit) _exit ;;
 		esac
 	else
 		_exit
@@ -753,7 +770,7 @@ fi
 
 [ -f "$ROOTSFS" ] || {
 	echo "squashed filesystem '$ROOTSFS' not found!"
-	exit  1
+	exit 1
 }
 
 VENOMROOT="/tmp/venominstall"
