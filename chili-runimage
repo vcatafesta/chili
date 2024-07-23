@@ -63,7 +63,7 @@ readonly _VERSION_='1.5.01-20240214'
 readonly DEPENDENCIES=('tput' 'printf' 'qemu-system-x86_64' 'gettext')
 readonly PACKAGEDEP=([tput]='ncurses' [printf]='coreutils' [qemu - system - x86_64]='qemu' [gettext]='gettext')
 readonly iface_bridge='br0'
-declare xmem='4G'
+declare xmem='16G'
 #declare audioserver='pulseaudio'
 #declare videodevice='virtio-vga'
 declare audioserver='alsa'
