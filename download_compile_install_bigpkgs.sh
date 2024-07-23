@@ -98,7 +98,7 @@ for pkg in "${aPackages[@]}"; do
 			if ! makepkg --force --install --clean --cleanbuild --syncdeps --noconfirm; then
 				mapfile -t aPacknames <<<"$(find /tmp/$pkg-install -iname "$pkg-*pkg.tar*")"
 				for pkginstall in "${aPacknames[@]}"; do
-					sudo pacman -U $pkginstall --overwrite \*
+					sudo pacman -U $pkginstall --noconfirm --overwrite \*
 				done
 			fi
 		fi
