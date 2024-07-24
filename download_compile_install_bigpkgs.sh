@@ -95,10 +95,10 @@ for pkg in "${aPackages[@]}"; do
 		[[ -e PKGBUILD ]] && rm PKGBUILD
 		if wget https://raw.githubusercontent.com/vcatafesta/$pkg/main/pkgbuild/PKGBUILD; then
 			sed -i 's|url="https://github.com/biglinux/$pkgname"|url="https://github.com/vcatafesta/$pkgname"|'g PKGBUILD
-			if ! makepkg --force --install --clean --cleanbuild --syncdeps --noconfirm; then
+			if makepkg -sdd --force --clean; then
 				mapfile -t aPacknames <<<"$(find /tmp/$pkg-install -iname "$pkg-*pkg.tar*")"
 				for pkginstall in "${aPacknames[@]}"; do
-					sudo pacman -U $pkginstall --noconfirm --overwrite \*
+					sudo pacman -Udd $pkginstall --noconfirm --overwrite \*
 				done
 			fi
 		fi
