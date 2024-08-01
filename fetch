@@ -2,16 +2,16 @@
 #shellcheck disable=SC2034,SC2015,SC2154,SC2140,SC2016,SC2153,SC2068,SC2155,SC2059
 #shellcheck source=/dev/null
 
-# 	fetch - search, install, create, remove, upgrade packages compatible with:
-# 	Chili GNU/Linux - https://github.com/vcatafesta/ChiliOS
+# fetch - search, install, create, remove, upgrade packages compatible with:
+# Chili GNU/Linux - https://github.com/vcatafesta/ChiliOS
 #	Chili GNU/Linux - https://chililinux.com
 #	Chili GNU/Linux - https://chilios.com.br
-# 	MazonOS GNU/Linux - https://mazonos.com
+# MazonOS GNU/Linux - https://mazonos.com
 #
-# 	Created: 2019/04/05
-# 	Altered: 2024/03/31
+# Created: 2019/04/05
+# Altered: 2024/08/01
 #
-# 	Copyright (c) 2019-2024, Vilmar Catafesta <vcatafesta@gmail.com>
+# Copyright (c) 2019-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
 # 	fetch uses quite a few external programs during its execution. You
 # 	need to have at least the following installed for makepkg to function:
 #  	awk, bsdtar (libarchive), bzip2, coreutils, fakeroot, file, find (findutils),
@@ -40,7 +39,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob
 
 # Import lib
-readonly _VERSION_="3.5.20240331"
+readonly _VERSION_="3.6.20240801"
 #LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 #[[ -f "${LIBRARY}/core.sh" ]] && source "${LIBRARY}/core.sh"
 SYSCONFDIR=${SYSCONFDIR:-'/etc/fetch'}
@@ -56,6 +55,7 @@ declare -gi njobs_alien=5
 
 sh_setEnvironment() {
 	sh_setvarcolors
+	sh_setLogPrefix
 	export LC_ALL=C
 	export LANG=C
 	readonly DEPENDENCIES=(which find tar zstd curl sed sort grep cat awk tput stat tee lynx numfmt gettext parallel)
@@ -274,31 +274,6 @@ function confno() {
 	[[ ${REPLY^} == N ]] && return 0 || return 1
 }
 
-#function die() {
-#	local msg=$1
-#	[[ $# -ge 2 ]] && evaluate_retval 1
-#	shift
-#	printf "%-75s\n" "$(DOT)${bold}${red}${msg}${reset}" >&2
-#	exit 1
-#}
-
-function die() {
-	local msg=$1
-	local retval="${PIPESTATUS[0]}"
-	local pcount=$#
-
-	((pcount >= 2)) && {
-		retval=$2
-		#		shift
-	}
-	if [[ $retval -eq 0 ]]; then
-		printf " %b %s\\n" "${TICK}" "${msg}"
-	else
-		printf " %b %s\\n" "${CROSS}" "${msg}"
-		exit 1
-	fi
-}
-
 sh_setLogPrefix() {
 	COL_NC='\e[0m' # No Color
 	COL_LIGHT_GREEN='\e[1;32m'
@@ -478,11 +453,39 @@ function info() {
 }
 export -f info
 
+#function die() {
+#	local msg=$1
+#	[[ $# -ge 2 ]] && evaluate_retval 1
+#	shift
+#	printf "%-75s\n" "$(DOT)${bold}${red}${msg}${reset}" >&2
+#	exit 1
+#}
+
+function die() {
+	local msg=$1
+	local retval="${PIPESTATUS[0]}"
+	local pcount=$#
+
+	((pcount >= 2)) && {
+		retval=$2
+		#		shift
+	}
+	if [[ $retval -eq 0 ]]; then
+		printf " %b %s\\n" "${TICK}" "${msg}"
+	else
+		printf " %b %s\\n" "${CROSS}" "${msg}"
+		exit 1
+	fi
+}
+
 function sh_checkroot() {
+	local msg="$1"
 	local str="root user check"
+
 	if [[ "$(id -u)" != "0" ]]; then
 		((verbose >= 2)) && log_msg $true "${str} - $USER"
-		die "${red} error: you cannot perform this operation unless you are root."
+		echo -e "${white}$msg"
+		die "${red}error: you cannot perform this operation unless you are root." 1
 	fi
 	((verbose >= 2)) && log_msg $false "${str}"
 	return 0
@@ -603,7 +606,9 @@ function sh_unsetvarcolors() {
 }
 
 function sh_touchconf() {
-	[[ -d "${SYSCONFDIR}" ]] || mkdir -p "${SYSCONFDIR}" >/dev/null 2>&-
+	sh_checkroot "The configuration file '/etc/fetch/fetch.conf' is required"
+	[[ ! -d "${SYSCONFDIR}" ]] ||	mkdir -p "${SYSCONFDIR}" >/dev/null 2>&-
+
 	cat >"$SYSCONFDIR/fetch.conf" <<-'_EOF_'
 		######################################################################
 		# Generated with fetch    - https://chililinux.com
@@ -1111,7 +1116,7 @@ function sh_listpkgdisp() {
 		if ((LALL)); then
 			mapfile -t public_pkg < <(awk -F$SEP '{print '"$AWK_CUT"'}' "$file_list_package")
 		else
-			die "${red}error${reset}: nenhum alvo definido (use -h para obter ajuda)"
+			die "${red}error${reset}: nenhum alvo definido (use -h para obter ajuda)" 1
 		fi
 	else
 		for x in ${public_ListSearch[@]}; do
@@ -4369,18 +4374,6 @@ parsestdin() {
 	#done < <(cat "$@")
 }
 
-sh_setvarcolors
-
-[[ -z "${1-}" ]] && die "no operation specified (use -h for help)"
-[[ "$1" = @(-H|-h|help|-help|--help) ]] && {
-	usage
-	exit $(($# ? 0 : 1))
-}
-[[ "$1" = @(-V|-v|version|-version|--version) ]] && {
-	logo
-	exit $(($# ? 0 : 1))
-}
-
 function cleanup() {
 	echo
 	echo "Interrupt signal received"
@@ -4404,6 +4397,18 @@ sh_setLanguage() {
 }
 
 sh_setEnvironment
+[[ -z "${1-}" ]] && {
+	die "no operation specified (use -h for help)" 1
+}
+[[ "$1" = @(-H|-h|help|-help|--help) ]] && {
+	usage
+	exit $(($# ? 0 : 1))
+}
+[[ "$1" = @(-V|-v|version|-version|--version) ]] && {
+	logo
+	exit $(($# ? 0 : 1))
+}
+
 checkDependencies
 #sh_checkroot "$@"
 sh_checkdir
