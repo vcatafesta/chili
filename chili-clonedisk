@@ -320,15 +320,43 @@ sh_checkdisk() {
 	return $nchoice
 }
 
-sh_disk_info() {
+sh_part_info() {
 	unset ARRAY_DSK_{DISKS,DEVICES,SIZE,TRAN,MODEL,LABEL,SERIAL,PTTYPE,FSTYPE}
 	local {NAME,PATH,SIZE,TRAN,MODEL,LABEL,SERIAL,PTTYPE,FSTYPE}_
 	declare -gA AARRAY_DSK_DEVICES=()
+	declare -gA AARRAY_DSK_PARTITIONS=()
 
 	while read -r line; do
 		eval "${line//=/_=}"
 		ARRAY_DSK_DISKS+=("$NAME_")
 		ARRAY_DSK_DEVICES+=("$PATH_")
+		ARRAY_DSK_PARTITIONS+=("$PATH_")
+		ARRAY_DSK_SIZE+=("$SIZE_")
+		ARRAY_DSK_TRAN+=("${TRAN_:-${TYPE_}}")
+		ARRAY_DSK_MODEL+=("${MODEL_:-${TYPE_} device}")
+		ARRAY_DSK_LABEL+=("${LABEL_:-""}")
+		ARRAY_DSK_SERIAL+=("${SERIAL_:-""}")
+		ARRAY_DSK_PTTYPE+=("${PTTYPE_:-""}")
+		ARRAY_DSK_FSTYPE+=("${FSTYPE_:-none}")
+		AARRAY_DSK_DEVICES+=(["$PATH_"]="$NAME_|$SIZE_|${TRAN_:-${TYPE_}}|${MODEL_:-${TYPE_} device}|${LABEL_:-""}|${SERIAL_:-""}|${PTTYPE_:-""}|${FSTYPE_:-"none"}")
+	done < <(lsblk -PAo TYPE,NAME,PATH,SIZE,TRAN,MODEL,LABEL,SERIAL,PTTYPE | grep -P 'TYPE="(part|loop|lvm)"' | sort -k5,5 -k2,2)
+	#done < <(lsblk -PAo TYPE,NAME,PATH,SIZE,TRAN,MODEL,LABEL,SERIAL | grep -P 'TYPE="(disk)"' | sort -k5,5 -k2,2)
+	#done < <(lsblk -Pao TYPE,NAME,PATH,SIZE,TRAN,MODEL | grep -P 'TYPE="(disk)')
+	#done < <(lsblk -Pao TYPE,NAME,PATH,SIZE,TRAN,MODEL | grep disk)
+	#declare -p ARRAY_DSK_{DISKS,DEVICES,SIZE,TRAN,MODEL}
+}
+
+sh_disk_info() {
+	unset ARRAY_DSK_{DISKS,DEVICES,SIZE,TRAN,MODEL,LABEL,SERIAL,PTTYPE,FSTYPE}
+	local {NAME,PATH,SIZE,TRAN,MODEL,LABEL,SERIAL,PTTYPE,FSTYPE}_
+	declare -gA AARRAY_DSK_DEVICES=()
+	declare -gA AARRAY_DSK_PARTITIONS=()
+
+	while read -r line; do
+		eval "${line//=/_=}"
+		ARRAY_DSK_DISKS+=("$NAME_")
+		ARRAY_DSK_DEVICES+=("$PATH_")
+		ARRAY_DSK_PARTITIONS+=("$PATH_")
 		ARRAY_DSK_SIZE+=("$SIZE_")
 		ARRAY_DSK_TRAN+=("${TRAN_:-${TYPE_}}")
 		ARRAY_DSK_MODEL+=("${MODEL_:-${TYPE_} device}")
@@ -519,6 +547,72 @@ ${RED}${cmsg_disco_destino[LC_DEFAULT]}: $DEVICE_DESTINATION | $SIZE_DESTINATION
 	return $nchoice
 }
 
+sh_choose_source_partition() {
+	local source="$1"
+
+	while true; do
+		sh_part_info
+		local array=()
+		local i
+		local n=0
+		local nc=0
+		local result
+		local nlen=0
+
+		for i in "${ARRAY_DSK_PARTITIONS[@]}"; do
+			array[n++]="$i"
+			if ((nlen < ${#i})); then
+				nlen=${#i}
+			fi
+			array[n++]=$(printf "$sep%-6s$sep%6s$sep%-6s$sep%-25s$sep%-30s" \
+				"${ARRAY_DSK_TRAN[$nc]}" \
+				"${ARRAY_DSK_SIZE[$nc]}" \
+				"${ARRAY_DSK_PTTYPE[$nc]}" \
+				"${ARRAY_DSK_LABEL[$nc]}" \
+				"${ARRAY_DSK_MODEL[$nc]}")
+			((nc++))
+		done
+		((nlen += 6))
+		sd=$(${DIALOG} \
+			--default-item "$sd" \
+			--backtitle "$ccabec" \
+			--clear \
+			--title "$(gettext "PARTIÇÃO DE $source")" \
+			--ok-label "${cmsg_Select[$LC_DEFAULT]}" \
+			--cancel-label "${cmsg_Sair[$LC_DEFAULT]}" \
+			--colors \
+			--extra-button --extra-label "${cmsg_info_disco[$LC_DEFAULT]}" \
+			--menu "${cmsg_LABEL[$LC_DEFAULT]}\n\n\
+$(printf "%${nlen}s$sep%-6s$sep%6s$sep%-6s$sep%-25s$sep%-30s" "DEVICE" "TRAN" "SIZE" "PTTYPE" "LABEL" "MODEL")" \
+			0 0 25 "${array[@]}" 2>&1 >/dev/tty)
+
+		exit_status=$?
+		case $exit_status in
+		"$D_ESC" | "$D_CANCEL")
+			exit 0
+			;;
+		3)
+
+			result0=$(smartctl -Hi "$sd")
+			result=$(fdisk -l "$sd")
+			message=$(printf "\n\n%s\n\n%s" "$result0" "$result")
+			display_result "$cmsg_disco_origem" \
+				"${BOLD}${RED}${REVERSE}Info disk : $sd${RESET}" \
+				"${BOLD}${WHITE}$message"
+			continue
+			;;
+		esac
+
+		if [ -n "$sd" ]; then
+			DEVICE_SOURCE="$sd"
+			MODEL_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_MODEL")"
+			SIZE_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_SIZE")"
+			sh_choose_destination_disk
+		fi
+	done
+}
+
+
 sh_confclone() {
 	if conf "${cwarning[$LC_DEFAULT]}" \
 		"\n${cmsg_todos_os_dados_serao_perdidos[$LC_DEFAULT]}\n\n" \
@@ -677,6 +771,40 @@ $(gettext "Caso contrário, você não poderá usar as ferramentas de partição
 	fi
 }
 
+sh_choose_clone_type() {
+  while true; do
+    clone_type=$(${DIALOG} \
+      --stdout \
+      --keep-tite \
+      --aspect 20 \
+      --clear \
+      --default-item "$LC_DEFAULT" \
+      --backtitle "$ccabec" \
+      --colors \
+      --clear \
+      --title "Choose Type" \
+			--ok-label "${cmsg_Select[$LC_DEFAULT]}" \
+			--cancel-label "${cmsg_Sair[$LC_DEFAULT]}" \
+      --menu "\n$(gettext "Escolha o tipo de clone"):" \
+      0 80 0 \
+      0 "$(gettext "Clonar Disco para Disco")" \
+      1 "$(gettext "Clonar Partição para Partição")" \
+      2 "$(gettext "Clonar Imagem Disco para Partição")" \
+      3 "$(gettext "Gravar ISO para Disco")")
+
+		exit_status=$?
+		case $exit_status in
+		"$D_ESC" | "$D_CANCEL")
+			exit 0
+			;;
+		esac
+    case $clone_type in
+    0) sh_choose_source_disk;;
+    1) sh_choose_source_partition "ORIGEM";;
+    esac
+  done
+}
+
 sh_configure
 sh_getLocale
 sh_Language
@@ -709,4 +837,5 @@ done
 sh_checkDependencies "${DEPENDENCIES[*]}"
 sh_checkroot "$@"
 #init "$@"
+sh_choose_clone_type
 sh_choose_source_disk
