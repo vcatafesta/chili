@@ -1577,8 +1577,8 @@ function gpush() {
 			git branch
 			return 1
 		fi
-		return 0
 	fi
+	return 0
 }
 export -f gpush
 
