@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+if [ "$1" = "stable" ];then
+  branch=stable
+elif [ "$1" = "testing" ];then
+  branch=testing
+else
+  echo "Branch não reconhecido, escolha entre testing ou stable"
+  exit 1
+fi
+
+# Branch Atual
+atualBranch=$(git status | grep -i 'on branch' | awk '{print $3}')
+
+# Branch a ser Criado
+newBranch=$1-$(date +%Y-%m-%d_%H-%M)
+
+# Criar novo Branch localmente
+git checkout -b $newBranch
+
+# Enviar novo Branch para GitHub
+git push --set-upstream origin $newBranch
+
+# Voltando ao Branch anterior a criação do novo Branch
+git checkout $atualBranch
+
+
+
+
