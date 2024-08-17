@@ -4,7 +4,7 @@
 
 #bash -c "help declare"
 #echo "blacklist sbridge" >> /etc/modprobe.d/blacklist.conf
-export XDG_RUNTIME_DIR ; XDG_RUNTIME_DIR=/run/user/$(id -g)
+#export XDG_RUNTIME_DIR ; XDG_RUNTIME_DIR=/run/user/$(id -g)
 #HISTIGNORE='+([a-z])'
 #HISTIGNORE=$'*([\t ])+([-%+,./0-9\:@A-Z_a-z])*([\t ])'
 #export TMPDIR=/tmp
@@ -74,8 +74,10 @@ export -f pathremove pathprepend pathappend
 
 function sh_bashrc_configure() {
 
-    alias sc="sudo sftp -P 65002 u356719782@185.211.7.40:/home/u356719782/domains/chililinux.com/public_html/packages/core/"
-    alias hs="sudo ssh -X -p 65002 u356719782@185.211.7.40"
+#    alias sc="sudo sftp -P 65002 u356719782@185.211.7.40:/home/u356719782/domains/chililinux.com/public_html/packages/core/"
+#    alias hs="sudo ssh -X -p 65002 u356719782@185.211.7.40"
+    alias hs="sudo ssh -X -p 65002 u537062342@154.49.247.66"
+		alias sc="sudo sftp -P 65002 u537062342@154.49.247.66:/home/u537062342/domains/chililinux.com/public_html/packages/core/"
     alias hpb="sudo ssh -X -p 2222 root@vcatafesta.ddns.net"
 
 	# Definir a variável de controle para restaurar a formatação original
@@ -957,28 +959,35 @@ EOF
 
 #qemu-system-x86_64 -monitor stdio -smp "$(nproc)" -k pt-br -machine accel=kvm -m 4096 -cdrom "$1" -hda "/home/vcatafesta/.aqemu/Linux_2.6_HDA.img" -boot once=d,menu=off -net nic -net user -rtc base=localtime -name "runcdrom"
 chili-qemurunfile() {
+	declare -a qemu_options=()
+
 	if test $# -ge 1; then
-		[[ -f "$1" ]] || { echo "Imagem $1 não encontrada!"; return; }
-		sudo qemu-system-x86_64 \
-			-monitor stdio \
-			-no-fd-bootchk \
-			-machine accel=kvm \
-			-cpu host \
-			-smp "$(nproc)" \
-			-m 8G \
-			-k pt-br \
-			-drive file=${1},if=none,id=disk1,format=raw \
-			-device ide-hd,drive=disk1,bootindex=1 \
-			-drive file=/archlive/qemu/hda.img,format=raw \
-			-name "chili-qemurunfile $*",process=archiso_0 \
-			-device virtio-scsi-pci,id=scsi0 \
-			-netdev user,id=net0 \
-			-device e1000,netdev=net0 \
-			-audiodev alsa,id=snd0 \
-			-device ich9-intel-hda \
-			-device hda-output,audiodev=snd0 \
-			-global ICH9-LPC.disable_s3=1 \
-			-machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0
+		[[ -e "$1" ]] || { echo "Imagem/Device $1 não encontrada!"; return; }
+#		[[ -r "$1" ]] || { echo "Imagem/Device $1 sem permissão de leitura!"; return; }
+		qemu_options+=(-monitor stdio)
+		qemu_options+=(-no-fd-bootchk)
+		qemu_options+=(-machine accel=kvm)
+		qemu_options+=(-cpu host)
+		qemu_options+=(-smp "$(nproc)")
+		qemu_options+=(-m 8G)
+		qemu_options+=(-k pt-br)
+		qemu_options+=(-drive file=${1},if=none,id=disk1,format=raw)
+		qemu_options+=(-device ide-hd,drive=disk1,bootindex=1)
+		qemu_options+=(-drive file=/archlive/qemu/hda.img,format=raw)
+		qemu_options+=(-name "chili-qemurunfile $*",process=archiso_0)
+		qemu_options+=(-device virtio-scsi-pci,id=scsi0)
+		qemu_options+=(-netdev user,id=net0)
+		qemu_options+=(-device e1000,netdev=net0)
+#		qemu_options+=(-audiodev pa,id=snd0)
+#		qemu_options+=(-audiodev pipewire,id=snd0)
+		qemu_options+=(-audiodev alsa,id=snd0)
+#        qemu_options+=(-device hda-duplex,audiodev=snd0,mixer=off)
+#        qemu_options+=(-rtc base=localtime,clock=host)
+        qemu_options+=(-device ich9-intel-hda)
+		qemu_options+=(-device hda-output,audiodev=snd0)
+#		qemu_options+=(-global ICH9-LPC.disable_s3=1)
+		qemu_options+=(-machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0)
+		sudo qemu-system-x86_64 "${qemu_options[@]}"
 	else
 		cat <<EOF
 usage:
@@ -988,10 +997,22 @@ EOF
 	fi
 }
 
+#    qemu_options+=(-device hda-duplex,audiodev=snd0,mixer=off)
+#    qemu_options+=(-rtc base=localtime,clock=host)
+#    qemu_options+=(-device ich9-intel-hda)
+#    qemu_options+=(-device hda-output,audiodev=snd0)
+#    qemu_options+=(-global ICH9-LPC.disable_s3=1)
+#    qemu_options+=(-machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0)
+#    qemu_options+=(-serial stdio)
+#
+#
+#
+#
 #			-drive file=~/archlive/qemu/hdb.img,format=raw \
 #			-drive file=~/archlive/qemu/hdc.img,format=raw \
 #			-drive file=~/archlive/qemu/hdd.img,format=raw \
 #			-name 'Chili' \
+#			-audiodev alsa,id=snd0 \
 #		-audiodev pa,id=snd0,server=localhost \
 #		-vga qxl \
 #       -display curses    \
@@ -1426,26 +1447,225 @@ function gbare() {
 }
 export -f gbare
 
-function gpush() {
-	local cabec="$1"  # ex: weblib.sh: sh_webapp_backup - Erro ao fazer o backup
+function grmbranch() {
+	local str="$*"
+	local branch="$1"
 	local red=$(tput bold)$(tput setaf 196)
 	local cyan=$(tput setaf 6)
 	local reset=$(tput sgr0)
 
-	log_wait_msg "${red}Iniciando git push ${reset}"
+	if test $# -eq 0; then
+		echo "uso: ${cyan}gmbranch <branch> [--remote]${reset}"
+		echo "     ${cyan}gmbranch testing-2024-08-16_21-08 --remote${reset} #remover do remoto também"
+		echo "     ${cyan}gmbranch testing-2024-08-16_21-08${reset}          #remove somente local"
+		echo "branchs locais:"
+		git branch
+		return 1
+	fi
+
+	if [[ -z "$branch" ]] ;then
+		echo "${red}error: Deu ruim para o branch ${yellow}'${branch}'${red}, não é valido'${reset}"
+		git branch
+	  return 1
+	fi
+	# Remover um branch local:
+	# git branch -d "$branch"
+
+	if [[ $str =~ '--remote' ]]; then
+		# Remover um branch remoto:
+		git push origin --delete "$branch"
+	fi
+	# Se você deseja forçar a remoção de um branch que ainda não foi mesclado, use:
+	git branch -D "$branch"
+
+	#limpar as referências locais para branches remotos excluídos
+	git fetch --prune
+	git branch
+	return $?
+}
+export -f grmbranch
+
+function gmerge() {
+	local branch="$1"
+	local cabec="$2"		# ex: weblib.sh: sh_webapp_backup - Erro ao fazer o backup
+	local red=$(tput bold)$(tput setaf 196)
+	local cyan=$(tput setaf 6)
+	local reset=$(tput sgr0)
+	local commit
+
+	if test $# -eq 0; then
+		echo "uso: ${cyan}gmerge <branch>${reset}"
+		echo "     ${cyan}gmerge testing-2024-08-16_21-08${reset}  #mescla com main local"
+		echo "branchs locais:"
+		git branch
+		return 1
+	fi
+
+	if [[ -z "$branch" ]] ;then
+		echo "${red}error: Deu ruim para o branch ${yellow}'${branch}'${red}, não é valido'${reset}"
+		git branch
+	  return 1
+	fi
+
+	log_wait_msg "${red}Iniciando git commit no branch ${yellow}'main' ${reset}"
+	#alterne para ele:
+	git checkout main
 	#export GIT_CURL_VERBOSE=1
 	sudo git config --global http.postBuffer 524288000
 	sudo git config credential.helper store
-	#	sudo git add .
+	#Faça as alterações desejadas nos arquivos e, em seguida, adicione-as e comite-as:
+	git add -A
+	if [[ -z "$cabec" ]]; then
+		commit="$(date) Vilmar Catafesta (vcatafesta@gmail.com)"
+	else
+		commit="$cabec"
+	fi
+	git commit -m "$commit"
+
+	#Envie as alterações do main para o repositório remoto:
+	git push origin main
+
+	# Mude para o branch ${branch}
+	git checkout "$branch"
+
+	#Para trazer as alterações que você acabou de fazer no main para o branch ${branch}, execute:
+	git merge main
+
+	#Se houver conflitos durante o merge, o Git solicitará que você resolva esses conflitos.
+	# Edite os arquivos conflitantes, marque-os como resolvidos e finalize o merge:
+	git add -A
+	git commit -m "$commit"
+
+	#Envie o branch atualizado para o repositório remoto
+	git push origin "$branch"
+
+	#Por fim, verifique que ambos os branches foram enviados corretamente ao repositório remoto:
+	git status
+
+	#voltar ao branch main
+	git checkout main
+	return $?
+}
+export -f gmerge
+
+function gpush() {
+	local branch="$1"		# ex: weblib.sh: sh_webapp_backup - Erro ao fazer o backup
+	local cabec="$2"		# ex: weblib.sh: sh_webapp_backup - Erro ao fazer o backup
+	local red=$(tput bold)$(tput setaf 196)
+	local cyan=$(tput setaf 6)
+	local reset=$(tput sgr0)
+	local mainbranch="$(getbranch)"
+
+	log_wait_msg "${red}Iniciando git push ${reset}"
+	#export GIT_CURL_VERBOSE=1
+	git checkout "$mainbranch"
+	sudo git config --global http.postBuffer 524288000
+	sudo git config credential.helper store
 	git add -A
 	if [[ -z "$cabec" ]]; then
 		git commit -m "$(date) Vilmar Catafesta (vcatafesta@gmail.com)"
 	else
 		git commit -m "$cabec"
 	fi
-	git push --force
+	#Atualize o branch main com o remoto:
+	#Envie as alterações comprometidas no branch main para o repositório remot
+	git pull origin "$mainbranch"
+
+	if [[ -n "$branch" ]]; then
+#		gitbranch "$branch"
+		if ! gbranch "$branch"; then
+			git branch
+			return 1
+		fi
+		return 0
+	fi
 }
 export -f gpush
+
+function gaddupstream() {
+	local remote="$1"
+
+	if test $# -eq 0; then
+		echo "uso: ${cyan}gaddupstream <repositorio>${reset}"
+		echo "     ${cyan}gaddupstream https://github.com/biglinux/big-store${reset}"
+		echo "branchs locais:"
+		git remote -v
+		return 1
+	fi
+	git remote add upstream $remote
+	git remote -v
+}
+export -f gaddupstream
+
+function grmupstream() {
+	local remote="$1"
+
+	if test $# -eq 0; then
+		echo "uso: ${cyan}grmupstream <repositorio>${reset}"
+		echo "     ${cyan}grmupstream https://github.com/biglinux/big-store${reset}"
+		echo "branchs locais:"
+		git remote -v
+		return 1
+	fi
+	git remote remove upstream
+	git remote -v
+}
+export -f grmupstream
+
+function gpullupstream() {
+	local remote="$1"
+
+	if test $# -eq 0; then
+		echo "uso: ${cyan}gpullupstream <repositorio>${reset}"
+		echo "     ${cyan}gpullupstream https://github.com/biglinux/big-store${reset}"
+		echo "branchs locais:"
+		git remote -v
+		return 1
+	fi
+	git checkout main
+	#Adicionar o repositório upstream (se ainda não foi adicionado)
+	git remote add upstream $remote
+	#Buscar as mudanças do upstream
+	git fetch upstream
+	#Mesclar as mudanças do upstream no seu branch local
+	git checkout main
+	git merge upstream/main
+	#Atualizar o repositório remoto (opcional)
+	#Depois de atualizar o seu branch local, você pode querer enviar essas mudanças para o seu repositório remoto no GitHub:
+	git push origin main
+	git remote -v
+}
+export -f gpullupstream
+
+function getbranch() {
+	local branch
+	# Check if 'main' branch exists
+	if git rev-parse --verify origin/main >/dev/null 2>&1; then
+		branch="main"
+	elif git rev-parse --verify origin/master >/dev/null 2>&1; then
+		branch="master"
+	fi
+	echo "$branch"
+}
+export -f getbranch
+
+function gbranch() {
+	local branch="$1"
+
+	if [[ ! "$branch" =~ ^(stable|testing)$ ]] ;then
+		echo "${red}error: Deu ruim para o branch ${yellow}'${branch}'${red}, não é valido, escolha entre ${yellow}'testing' ou 'stable'${reset}"
+		git branch
+	  return 1
+	fi
+	atualBranch=$(git status | grep -i 'on branch' | awk '{print $3}')	# Branch Atual
+	newBranch=$1-$(date +%Y-%m-%d_%H-%M)																# Branch a ser Criado
+	git checkout -b $newBranch																					# Criar novo Branch localmente
+	git rebase main  																										# Atualize o novo branch:
+	git push --set-upstream origin $newBranch														# Enviar novo Branch para GitHub
+	git push origin $newBranch																					# Faça o push do novo branch:
+	git checkout $atualBranch																						# Voltando ao Branch anterior a criação do novo Branch
+}
+export -f gbranch
 
 function gto() {
 	log_wait_msg "${red}Mudando para ${reset}: $1"
@@ -1771,6 +1991,7 @@ makebash() {
 	log_msg "Criando script bash ${cyan}'$prg'${reset} on $PWD"
 	cat >"$prg" <<-EOF
 #!/usr/bin/env bash
+# -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
 #  $prg
