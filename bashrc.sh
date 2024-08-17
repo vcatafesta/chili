@@ -1559,8 +1559,8 @@ function gpush() {
 	log_wait_msg "${red}Iniciando git push in ${yellow}${mainbranch}'${reset}"
 	#export GIT_CURL_VERBOSE=1
 	git checkout "$mainbranch"
-	sudo git config --global http.postBuffer 524288000
-	sudo git config credential.helper store
+	git config --global http.postBuffer 524288000
+	git config credential.helper store
 	git add -A
 	if [[ -z "$cabec" ]]; then
 		git commit -m "$(date) Vilmar Catafesta (vcatafesta@gmail.com)"
