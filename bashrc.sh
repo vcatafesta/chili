@@ -1548,6 +1548,29 @@ function gmerge() {
 }
 export -f gmerge
 
+function gcommit() {
+	local cabec="$1"		# ex: weblib.sh: sh_webapp_backup - Erro ao fazer o backup
+	local red=$(tput bold)$(tput setaf 196)
+	local cyan=$(tput setaf 6)
+	local reset=$(tput sgr0)
+	local mainbranch="$(getbranch)"
+
+	log_wait_msg "${red}Iniciando commit in ${yellow}${mainbranch}'${reset}"
+	#export GIT_CURL_VERBOSE=1
+	git checkout "$mainbranch"
+	git config --global http.postBuffer 524288000
+	git config credential.helper store
+	git add -A
+	if [[ -z "$cabec" ]]; then
+		git commit -m "$(date) Vilmar Catafesta (vcatafesta@gmail.com)"
+	else
+		git commit -m "$cabec"
+	fi
+	git log origin/$mainbranch..$mainbranch
+	return 0
+}
+export -f gcommit
+
 function gpush() {
 	local branch="$1"		# ex: weblib.sh: sh_webapp_backup - Erro ao fazer o backup
 	local cabec="$2"		# ex: weblib.sh: sh_webapp_backup - Erro ao fazer o backup
@@ -1561,16 +1584,16 @@ function gpush() {
 	git checkout "$mainbranch"
 	git config --global http.postBuffer 524288000
 	git config credential.helper store
+
+	#Atualize o branch main com o remoto:
+	#Envie as alterações comprometidas no branch main para o repositório remot
+	git pull origin "$mainbranch"
 	git add -A
 	if [[ -z "$cabec" ]]; then
 		git commit -m "$(date) Vilmar Catafesta (vcatafesta@gmail.com)"
 	else
 		git commit -m "$cabec"
 	fi
-	#Atualize o branch main com o remoto:
-	#Envie as alterações comprometidas no branch main para o repositório remot
-	git pull origin "$mainbranch"
-
 	if [[ -n "$branch" ]]; then
 #		gitbranch "$branch"
 		if ! gbranch "$branch"; then
@@ -1578,9 +1601,12 @@ function gpush() {
 			return 1
 		fi
 	fi
+	git push origin --force
+	git log origin/$mainbranch..$mainbranch
 	return 0
 }
 export -f gpush
+
 
 function gaddupstream() {
 	local remote="$1"
@@ -1674,8 +1700,26 @@ function gto() {
 export -f gto
 
 gclean() {
+	# Faça um backup do branch atual
+	git branch backup_branch
+  # Crie um novo branch a partir do atual, mas sem histórico de commits
+	git checkout --orphan new_branch
+	# Adicione todos os arquivos ao staging area
+	git add .
+	# Faça o commit dos arquivos com uma mensagem de confirmação
+	git commit -m "Initial commit"
+	# Exclua o branch antigo (opcional, se você deseja substituir o branch atual)
+	git branch -D main  # ou master, conforme o nome do branch atual
+	# Renomeie o novo branch para o nome do branch original
+	git branch -m new_branch main  # ou master, conforme o nome do branch original
+	# Faça push do novo branch para o remoto e sobrescreva o histórico remoto
+	git push --force origin main  # ou master
+}
+export -f gclean
+
+gcleanOLD() {
 	#Execute o seguinte comando para fazer backup do seu branch atual:
-	sudo git branch backup_branch
+	 git branch backup_branch
 	#Execute o seguinte comando para criar um novo branch a partir do atual, mas sem nenhum histórico de commits:
 	sudo git checkout --orphan new_branch
 	#Agora, todos os arquivos do projeto aparecerão como "untracked". Adicione todos eles ao staging area com o comando:
@@ -1685,7 +1729,171 @@ gclean() {
 	#Finalmente, sobrescreva o branch atual com o novo branch criado:
 	sudo git branch -M new_branch
 }
-export -f gclean
+export -f gcleanOLD
+
+function gcleanOLD3() {
+	local repo="$1"
+	local commit="$2"
+	local repo_name
+
+	repo_name=$(basename "$repo")
+	git clone --depth 1 --branch main --shallow-submodules --no-tags "$repo" "$repo_name-$commit"
+	cd "$repo_name-$commit" || return
+	git checkout "$commit"
+	git checkout --orphan new-master "$commit"
+	git commit -m "Snapshot até a data desejada"
+	git rebase --onto new-main "$commit" main
+	git branch -D main
+	git branch -m main
+}
+
+function gcleanOLD2() {
+	local repo="$1"
+	local commit="$2"
+	local repo_name
+
+	repo_name=$(basename "$repo")
+	#Clonar até o Commit Específico:
+	git clone "$repo" "$repo_name-$commit"
+	#Acesse a pasta do repositório clonado:
+	cd "$repo_name-$commit" || return
+	#Crie um novo branch temporário a partir do commit desejado:
+	git checkout -b temp_branch "$commmit"
+	#Criar um Novo Repositório com Histórico Limitado:
+	#Crie um novo repositório com um histórico limitado até o commit específico:
+	git checkout --orphan new-main
+	git commit -m "Snapshot até o commit específico"
+	git rebase --onto new-main "$commit" main
+	git branch -D main
+	git branch -m main
+}
+
+function gcleanOLD4() {
+	local repo="$1"
+	local commit="$2"
+	local repo_name
+
+	repo_name=$(basename "$repo")
+	#Clonar até o Commit Específico:
+	git clone "$repo" "$repo_name-$commit"
+	#Acesse a pasta do repositório clonado:
+	cd "$repo_name-$commit" || return
+	# Vá para o branch principal (ou o branch que você deseja modificar)
+	git checkout main
+	git status
+	# Execute o comando para remover os commits posteriores e ajustar o branch
+	git reset --hard "$commit"
+	# WARNING - Atualize o repositório remoto (se já existir um repositório remoto)
+	#git push origin main --force
+}
+
+function ginit() {
+  local your_repository_name="$1"
+
+  # Verifique se o argumento foi fornecido
+  if [ $# -eq 0 ]; then
+    echo "Uso: ${cyan}ginit <repositorio>${reset}"
+    return 1
+  fi
+
+  # Defina seu nome de usuário GitHub e token pessoal
+  local GITHUB_USER="vcatafesta"  # Use o nome de usuário do GitHub
+  local GITHUB_TOKEN="SEU TOKEN AQUI"
+
+  # Defina o nome do repositório
+  local REPO_NAME="$your_repository_name"
+
+  # Verifique se o diretório já existe
+  if [ -d "$REPO_NAME" ]; then
+		log_err "${red}O diretório ${yellow}'$REPO_NAME' ${red}já existe. Escolha um nome diferente.${reset}"
+    return 1
+  fi
+
+  # Verifique se o repositório já existe no GitHub
+	local check_response
+  check_response=$(curl -s -o /tmp/github_check_response.txt -w "%{http_code}" -u "$GITHUB_USER:$GITHUB_TOKEN" \
+    https://api.github.com/repos/$GITHUB_USER/$REPO_NAME)
+
+  if [ "$check_response" -eq 200 ]; then
+    cat /tmp/github_check_response.txt
+    log_err "${red}O repositório ${yellow}'$REPO_NAME' ${red}já existe no GitHub. Escolha um nome diferente.${reset}"
+    return 1
+  fi
+
+  # Crie o repositório local
+  mkdir "$REPO_NAME" || { echo "Falha ao criar o diretório '$REPO_NAME'"; return 1; }
+  cd "$REPO_NAME" || { echo "Falha ao acessar o diretório '$REPO_NAME'"; return 1; }
+
+  # Inicialize o repositório Git
+  git init || { echo "Falha ao inicializar o repositório Git"; return 1; }
+
+  # Crie o repositório no GitHub usando a API
+  local response
+  response=$(curl -s -o /tmp/github_response.txt -w "%{http_code}" -u "$GITHUB_USER:$GITHUB_TOKEN" \
+    -X POST https://api.github.com/user/repos \
+    -d "{\"name\":\"$REPO_NAME\"}")
+
+  # Verifique a resposta da API
+  if [ "$response" -ne 201 ];then
+    log_err "${red}Falha ao criar o repositório no GitHub. Código de status: ${yellow}$response${reset}"
+    cat /tmp/github_response.txt
+    return 1
+  fi
+
+  # Crie um commit inicial e faça o push para o GitHub
+  echo "# $REPO_NAME" > README.md
+  git add README.md || { echo "Falha ao adicionar o README.md"; return 1; }
+  git commit -m "Initial commit" || { echo "Falha ao criar o commit inicial"; return 1; }
+  git branch -M main || { echo "Falha ao renomear a branch para 'main'"; return 1; }
+  git remote add origin "https://$GITHUB_USER:$GITHUB_TOKEN@github.com/$GITHUB_USER/$REPO_NAME.git" || { echo "Falha ao adicionar o repositório remoto"; return 1; }
+  git push -u origin main || { echo "Falha ao fazer o push para o GitHub"; return 1; }
+  log_msg "${green}Repositório ${yellow}${REPO_NAME} ${cyan}local ${reset}e no ${cyan}GitHub ${green}criado com sucesso!${reset}"
+}
+export -f ginit
+
+function gremove() {
+  local your_repository_name="$1"
+
+  if [ $# -eq 0 ]; then
+    echo "uso: ${cyan}gremove <repositorio>${reset} # remove repositorio local e origin/remote"
+    return 1
+  fi
+
+  # Defina seu nome de usuário GitHub e token pessoal
+  local GITHUB_USER="vcatafesta"
+  local GITHUB_TOKEN="SEU TOKEN AQUI"
+
+  # Defina o nome do repositório
+  local REPO_NAME="$your_repository_name"
+
+  echo "Usuário GitHub: $GITHUB_USER"
+  echo "Nome do Repositório: $REPO_NAME"
+
+  # Remova o repositório no GitHub usando a API
+  local response
+  response=$(curl -s -w "%{http_code}" -u "$GITHUB_USER:$GITHUB_TOKEN" -X DELETE "https://api.github.com/repos/$GITHUB_USER/$REPO_NAME")
+
+  # Extraia o código de status da resposta
+  local http_code="${response: -3}"  # Pega os últimos 3 caracteres (código de status HTTP)
+  local response_body="${response%$http_code}"  # Remove o código de status da resposta
+
+  # Verifique o código de status HTTP retornado
+  if [ "$http_code" -eq 204 ]; then
+    log_msg "${green}Repositório no GitHub ${yellow}'$REPO_NAME' ${green}removido com sucesso.${reset}"
+    # Verifique se o repositório local existe e o remova
+    if [ -d "$REPO_NAME" ]; then
+      rm -rf "$REPO_NAME" > /dev/null 2>&1
+      log_msg "${green}Repositório local ${yellow}'$REPO_NAME' ${reset}removido."
+    else
+      log_err "${red}Repositório local ${yellow}'$REPO_NAME' ${reset}não encontrado."
+    fi
+  else
+    log_err "${red}error: Falha ao remover o repositório no GitHub. Código de status: ${yellow}$http_code${reset}"
+    log_err "Resposta completa: ${cyan}$response_body${reset}"
+    log_err "${red}hint: Verifique se o nome do usuário ${yellow}'$GITHUB_USER' ${red}e o repositório ${yellow}'$REPO_NAME' ${red}estão corretos e se o token tem permissões administrativas.${reset}"
+  fi
+}
+export -f gremove
 
 cpd() {
 	TITLE='Copiando...'
@@ -3420,62 +3628,6 @@ chili-conf-tty8() {
 	sudo usermod -aG tty $USER
 	sudo chmod g+rw /dev/tty8
 	groups
-}
-
-function gcommitOLD() {
-	local repo="$1"
-	local commit="$2"
-	local repo_name
-
-	repo_name=$(basename "$repo")
-	git clone --depth 1 --branch main --shallow-submodules --no-tags "$repo" "$repo_name-$commit"
-	cd "$repo_name-$commit" || return
-	git checkout "$commit"
-	git checkout --orphan new-master "$commit"
-	git commit -m "Snapshot até a data desejada"
-	git rebase --onto new-main "$commit" main
-	git branch -D main
-	git branch -m main
-}
-
-function gcommitOLD2() {
-	local repo="$1"
-	local commit="$2"
-	local repo_name
-
-	repo_name=$(basename "$repo")
-	#Clonar até o Commit Específico:
-	git clone "$repo" "$repo_name-$commit"
-	#Acesse a pasta do repositório clonado:
-	cd "$repo_name-$commit" || return
-	#Crie um novo branch temporário a partir do commit desejado:
-	git checkout -b temp_branch "$commmit"
-	#Criar um Novo Repositório com Histórico Limitado:
-	#Crie um novo repositório com um histórico limitado até o commit específico:
-	git checkout --orphan new-main
-	git commit -m "Snapshot até o commit específico"
-	git rebase --onto new-main "$commit" main
-	git branch -D main
-	git branch -m main
-}
-
-function gcommit() {
-	local repo="$1"
-	local commit="$2"
-	local repo_name
-
-	repo_name=$(basename "$repo")
-	#Clonar até o Commit Específico:
-	git clone "$repo" "$repo_name-$commit"
-	#Acesse a pasta do repositório clonado:
-	cd "$repo_name-$commit" || return
-	# Vá para o branch principal (ou o branch que você deseja modificar)
-	git checkout main
-	git status
-	# Execute o comando para remover os commits posteriores e ajustar o branch
-	git reset --hard "$commit"
-	# WARNING - Atualize o repositório remoto (se já existir um repositório remoto)
-	#git push origin main --force
 }
 
 function cpc() {
