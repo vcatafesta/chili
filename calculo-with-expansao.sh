@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  download_compile_install_bigpkgs.sh
-#  Created: 2024/07/22 - 22:33
-#  Altered: 2024/07/22 - 22:33
+#  calculo-with-expansao.sh
+#  Created: 2024/08/18 - 21:41
+#  Altered: 2024/08/18 - 21:41
 #
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -31,7 +31,7 @@
 ##############################################################################
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
-export TEXTDOMAIN=download_compile_install_bigpkgs.sh
+export TEXTDOMAIN=calculo-with-expansao.sh
 
 # Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
@@ -72,36 +72,21 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="1.0.0-20240722"
+declare _VERSION_="1.0.0-20240818"
 declare distro="$(uname -n)"
-declare pkg
-declare -a DEPENDENCIES=(grep sed wget makepkg)
-declare -a aPackages=(
-	'bigcontrolcenter-base'
-	'biglinux-webapps'
-	'biglinux-config'
-	'auto-tweaks-browser'
-	'big-store'
-	'calamares-biglinux'
-)
+declare DEPENDENCIES=(tput)
+source /usr/share/fetch/core.sh
 
 function MostraErro {
 	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
 }
-#trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
+trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
 
-for pkg in "${aPackages[@]}"; do
-	if mkdir -p /tmp/$pkg-install; then
-		cd /tmp/$pkg-install || exit 1
-		[[ -e PKGBUILD ]] && rm PKGBUILD
-		if wget https://raw.githubusercontent.com/vcatafesta/$pkg/main/pkgbuild/PKGBUILD; then
-			sed -i 's|url="https://github.com/biglinux/$pkgname"|url="https://github.com/vcatafesta/$pkgname"|'g PKGBUILD
-			if makepkg -sdd --force --clean; then
-				mapfile -t aPacknames <<<"$(find /tmp/$pkg-install -iname "$pkg-*pkg.tar*")"
-				for pkginstall in "${aPacknames[@]}"; do
-					sudo pacman -U $pkginstall --noconfirm --overwrite \*
-				done
-			fi
-		fi
-	fi
-done
+nume=1234
+deno=7
+prec=5
+
+echo $((nume / deno))
+echo $((nume * 10 ** prec / deno))
+: $((nume * 10 ** prec / deno))
+echo ${_::-prec}.${_: -prec}
