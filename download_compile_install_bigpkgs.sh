@@ -92,12 +92,16 @@ function MostraErro {
 
 for pkg in "${aPackages[@]}"; do
 	if mkdir -p /tmp/$pkg-install; then
-		cd /tmp/$pkg-install || exit 1
+		cd /tmp/$pkg-install || continue
 		[[ -e PKGBUILD ]] && rm PKGBUILD
 		if wget https://raw.githubusercontent.com/vcatafesta/$pkg/main/pkgbuild/PKGBUILD; then
 			sed -i 's|url="https://github.com/biglinux/$pkgname"|url="https://github.com/vcatafesta/$pkgname"|'g PKGBUILD
 			if makepkg -sdd --force --clean; then
-				mapfile -t aPacknames <<<"$(find /tmp/$pkg-install -iname "$pkg-*pkg.tar*")"
+#				mapfile -t aPacknames <<<"$(find /tmp/$pkg-install -iname "$pkg-*pkg.tar*")"
+				# Encontre arquivos que correspondem ao padrão e armazene o nome do mais recente
+				latest_file=$(find /tmp/$pkg-install -iname "$pkg-*pkg.tar*" -type f -printf '%T+ %p\n' | sort -r | head -n 1 | cut -d' ' -f2-)
+				# Armazene o nome do arquivo em uma array se desejar
+				mapfile -t aPacknames <<< "$latest_file"
 				for pkginstall in "${aPacknames[@]}"; do
 					sudo pacman -U $pkginstall --noconfirm --overwrite \*
 				done
