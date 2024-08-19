@@ -76,36 +76,60 @@ declare _VERSION_="1.0.0-20240722"
 declare distro="$(uname -n)"
 declare pkg
 declare -a DEPENDENCIES=(grep sed wget makepkg)
-declare -a aPackages=(
-	'bigcontrolcenter-base'
-	'biglinux-webapps'
-	'biglinux-config'
-	'auto-tweaks-browser'
-	'big-store'
-	'calamares-biglinux'
-)
+declare -a aPackages
 
 function MostraErro {
 	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
 }
 #trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
 
-for pkg in "${aPackages[@]}"; do
-	if mkdir -p /tmp/$pkg-install; then
-		cd /tmp/$pkg-install || continue
-		[[ -e PKGBUILD ]] && rm PKGBUILD
-		if wget https://raw.githubusercontent.com/vcatafesta/$pkg/main/pkgbuild/PKGBUILD; then
-			sed -i 's|url="https://github.com/biglinux/$pkgname"|url="https://github.com/vcatafesta/$pkgname"|'g PKGBUILD
-			if makepkg -sdd --force --clean; then
-#				mapfile -t aPacknames <<<"$(find /tmp/$pkg-install -iname "$pkg-*pkg.tar*")"
-				# Encontre arquivos que correspondem ao padrão e armazene o nome do mais recente
-				latest_file=$(find /tmp/$pkg-install -iname "$pkg-*pkg.tar*" -type f -printf '%T+ %p\n' | sort -r | head -n 1 | cut -d' ' -f2-)
-				# Armazene o nome do arquivo em uma array se desejar
-				mapfile -t aPacknames <<< "$latest_file"
-				for pkginstall in "${aPacknames[@]}"; do
-					sudo pacman -U $pkginstall --noconfirm --overwrite \*
-				done
+function sh_makepkg() {
+	local pkg_to_make=("$@")
+	# Defina as URLs base
+	local old_url_base="https://github.com/biglinux/"
+	local new_url_base="https://github.com/vcatafesta/"
+
+	if [[ -z "$pkg_to_make" ]]; then
+		aPackages=(
+			'bigcontrolcenter-base'
+			'biglinux-webapps'
+			'biglinux-config'
+			'auto-tweaks-browser'
+			'big-store'
+			'calamares-biglinux'
+		)
+	else
+		# Adiciona os pacotes passados como parâmetros
+		aPackages=("${pkg_to_make[@]}")
+	fi
+
+	for pkg in "${aPackages[@]}"; do
+		if mkdir -p /tmp/$pkg-install; then
+			cd /tmp/$pkg-install || continue
+			[[ -e PKGBUILD ]] && rm PKGBUILD
+			if wget https://raw.githubusercontent.com/vcatafesta/$pkg/main/pkgbuild/PKGBUILD; then
+				#			sed -i 's|url="https://github.com/biglinux/$pkgname"|url="https://github.com/vcatafesta/$pkgname"|'g PKGBUILD
+				# Verifique se o arquivo PKGBUILD contém a definição de pkgname
+				if grep -q '^pkgname=' PKGBUILD; then
+					# Extraia o valor de pkgname
+					pkgname=$(grep '^pkgname=' PKGBUILD | cut -d'=' -f2 | tr -d '"')
+					# Substitua a linha inteira que contém a URL
+					sed -i -e "s|url=.*|url=\"$new_url_base$pkgname\"|" PKGBUILD
+				fi
+				if makepkg -sdd --force --clean; then
+					#				mapfile -t aPacknames <<<"$(find /tmp/$pkg-install -iname "$pkg-*pkg.tar*")"
+					# Encontre arquivos que correspondem ao padrão e armazene o nome do mais recente
+					latest_file=$(find /tmp/$pkg-install -iname "$pkg-*pkg.tar*" -type f -printf '%T+ %p\n' | sort -r | head -n 1 | cut -d' ' -f2-)
+					# Armazene o nome do arquivo em uma array se desejar
+					mapfile -t aPacknames <<<"$latest_file"
+					for pkginstall in "${aPacknames[@]}"; do
+						sudo pacman -U $pkginstall --noconfirm --overwrite \*
+					done
+				fi
 			fi
 		fi
-	fi
-done
+	done
+}
+export -f sh_makepkg
+
+sh_makepkg "$@"
