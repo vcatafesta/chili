@@ -82,6 +82,49 @@ MostraErro() {
 }
 trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
 
-cd /github/ChiliOS/packages/core/testing/x86_64/ || exit 1
-sudo repo-add chili-testing.db.tar.gz ./*.zst
+#cd /github/ChiliOS/packages/core/testing/x86_64/ || exit 1
+#sudo repo-add chili-testing.db.tar.gz ./*.zst
+
+branch='testing'
+secret_PORT='65002'
+secret_USER='u537062342@154.49.247.66'
+secret_IP='154.49.247.66'
+secret_PATH='/home/u537062342/public_html/repo'
+
+# Determine the database name based on the branch type
+if [ "$branch" == "testing" ]; then
+	db_name="chili-testing"
+elif [ "$branch" == "stable" ]; then
+	db_name="chili-stable"
+else
+	echo "Error: Unknown branch type: $branch"
+	exit 1
+fi
+
+repo-add -n -R $db_name.db.tar.gz *.pkg.tar.zst
+ssh-keyscan -t rsa -p 65002 154.49.247.66 | sudo tee -a /root/.ssh/known_hosts
+rsync --progress -Cravzp --rsh='ssh -l u537062342 -p 65002' $PWD/ ${secret_USER}:${secret_PATH}/${branch,,}/x86_64/
+
+## Upload the package files
+#for i in *.zst; do
+#	pkgname=$(basename $i)
+#	if rsync -vapz -e "ssh -p ${secret_PORT}" $i ${secret_USER}:${secret_PATH}/${branch,,}/x86_64/; then
+#		echo "✅ Pacote $pkgname enviado com sucesso para o repositório $branch"
+#	else
+#		exit
+#		echo "❌ Falha ao enviar o pacote $pkgname para o repositório $branch"
+#	fi
+#done
+#for i in *.sig *.md5; do
+#	rsync -vapz -e "ssh -p ${secret_PORT}" $i ${secret_USER}@${secret_IP}:${secret_PATH}/${branch,,}/x86_64/
+#done
+
+#ssh -v "$secret_USER" -p "$secret_PORT" << EOF
+#set -x
+#cd $secret_PATH/${branch,,}/x86_64
+#repo-add -n -R $db_name.db.tar.gz *.pkg.tar.zst
+#exit_code=\$?
+#echo "Comando repo-add concluído com código de saída: \$exit_code"
+#exit \$exit_code
+#EOF
 

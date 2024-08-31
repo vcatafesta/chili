@@ -90,7 +90,7 @@ function yesno() {
 	while ! $sair_do_menu; do
 		for i in "${!itens[@]}"; do
 			local item="${itens[i]}"
-			local padding=$((tamanho_maximo - ${#item} -2))
+			local padding=$((tamanho_maximo - ${#item} - 2))
 			[[ -n "${aCorItemMenu[i]}" ]] && color="${aCorItemMenu[i]}"
 			if [[ $i -eq $selecionado ]]; then
 				item_formatado="${reverse}${color}►${item^^}◄%${padding}s${reset}"
