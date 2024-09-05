@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  make-repo-testing.sh
-#  Created: 2024/08/21 - 19:07
-#  Altered: 2024/08/21 - 19:07
+#  wagner
+#  Created: 2024/09/03 - 19:05
+#  Altered: 2024/09/03 - 19:05
 #
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -31,7 +31,7 @@
 ##############################################################################
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
-export TEXTDOMAIN=make-testing.sh
+export TEXTDOMAIN=wagner
 
 # Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
@@ -72,60 +72,26 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="1.0.0-20240821"
+declare _VERSION_="1.0.0-20240903"
 declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput)
 source /usr/share/fetch/core.sh
 
 MostraErro() {
-  echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
+	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
 }
 trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
 
-#cd /github/ChiliOS/packages/core/testing/x86_64/ || exit 1
-#sudo repo-add chili-testing.db.tar.gz ./*.zst
 
-branch='testing'
-secret_PORT='65002'
-secret_USER='u537062342@154.49.247.66'
-secret_IP='154.49.247.66'
-secret_PATH='/home/u537062342/public_html/repo'
-
-# Determine the database name based on the branch type
-if [ "$branch" == "testing" ]; then
-	db_name="chili-testing"
-elif [ "$branch" == "stable" ]; then
-	db_name="chili-stable"
-else
-	echo "Error: Unknown branch type: $branch"
-	exit 1
-fi
-
-cd /github/ChiliOS/packages/core/testing/x86_64 || exit 1
-repo-add -n -R $db_name.db.tar.gz *.pkg.tar.zst
-ssh-keyscan -t rsa -p 65002 154.49.247.66 | sudo tee -a /root/.ssh/known_hosts
-rsync --progress -Cravzp --rsh='ssh -l u537062342 -p 65002' $PWD/ ${secret_USER}:${secret_PATH}/${branch,,}/x86_64/
-
-## Upload the package files
-#for i in *.zst; do
-#	pkgname=$(basename $i)
-#	if rsync -vapz -e "ssh -p ${secret_PORT}" $i ${secret_USER}:${secret_PATH}/${branch,,}/x86_64/; then
-#		echo "✅ Pacote $pkgname enviado com sucesso para o repositório $branch"
-#	else
-#		exit
-#		echo "❌ Falha ao enviar o pacote $pkgname para o repositório $branch"
-#	fi
-#done
-#for i in *.sig *.md5; do
-#	rsync -vapz -e "ssh -p ${secret_PORT}" $i ${secret_USER}@${secret_IP}:${secret_PATH}/${branch,,}/x86_64/
-#done
-
-#ssh -v "$secret_USER" -p "$secret_PORT" << EOF
-#set -x
-#cd $secret_PATH/${branch,,}/x86_64
-#repo-add -n -R $db_name.db.tar.gz *.pkg.tar.zst
-#exit_code=\$?
-#echo "Comando repo-add concluído com código de saída: \$exit_code"
-#exit \$exit_code
-#EOF
+#remote_USER="$USER"
+remote_USER="u537062342"
+remote_PORT='65002'
+remote_PATH="/home/${remote_USER}/tmp"
+remote_HOST='154.49.247.66'
+#ssh-keyscan -t rsa -p ${remote_PORT} ${remote_HOST} | sudo tee -a /home/${remote_USER}/.ssh/known_hosts
+mkdir -p /home/${remote_USER}/.ssh/
+ssh-keyscan -t rsa -p ${remote_PORT} ${remote_HOST} >> /home/${remote_USER}/.ssh/known_hosts
+#rsync --progress -Cravzp --rsh='ssh -v -l u537062342 -p 65002' ${PWD}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
+#rsync --progress -Cravzp --rsh='ssh -l u537062342 -p 65002' ${PWD}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
+rsync --progress -Cravzp -e 'ssh -p 65002' ${PWD}/ u537062342@154.49.247.66:/home/u537062342/tmp/
 
