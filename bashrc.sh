@@ -16,28 +16,34 @@ export SBCL_HOME=/usr/lib/sbcl
 #IFS=$' \t\n'
 SAVEIFS=$IFS
 LIBRARY=${LIBRARY:-'/usr/share/fetch'}
-source /usr/lib/lsb/init-functions
 source "$LIBRARY"/core.sh
+source /usr/lib/lsb/init-functions
+
+sh_checkcommand() {
+	local cmd="$1"
+	command -v "$1" >/dev/null 2>&-
+	return $?
+}
 
 have() {
 	unset -v have
 	# Completions for system administrator commands are installed as well in
 	# case completion is attempted via `sudo command ...'.
 	PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin type $1 &>/dev/null &&
-	have="yes"
+		have="yes"
 }
 
 append_path() {
 	case ":$PATH:" in
 	*:"$1":*) ;;
-	*)PATH="${PATH:+$PATH:}$1";;
+	*) PATH="${PATH:+$PATH:}$1" ;;
 	esac
 }
 
 appendpath() {
 	case ":$PATH:" in
 	*:"$1":*) ;;
-	*) PATH="${PATH:+$PATH:}$1";;
+	*) PATH="${PATH:+$PATH:}$1" ;;
 	esac
 }
 
@@ -68,7 +74,8 @@ export -f pathremove pathprepend pathappend
 sh_bashrc_configure() {
 	#alias sc="sudo sftp -P 65002 u356719782@185.211.7.40:/home/u356719782/domains/chililinux.com/public_html/packages/core/"
 	#alias hs="sudo ssh -X -p 65002 u356719782@185.211.7.40"
-	alias hs="sudo ssh -X -p 65002 u537062342@154.49.247.66"
+	alias hsx="ssh -X -p 65002 u537062342@154.49.247.66"
+	alias hs="ssh -X -p 65002 u537062342@154.49.247.66"
 	alias sc="sudo sftp -P 65002 u537062342@154.49.247.66:/home/u537062342/domains/chililinux.com/public_html/packages/core/"
 	alias hpb="sudo ssh -X -p 2222 root@vcatafesta.ddns.net"
 
@@ -174,14 +181,17 @@ sh_bashrc_configure() {
 	alias ls="ls -CF -h --color=auto --group-directories-first"
 	alias dirm="ls -h -ls -Sr --color=auto"
 	#alias dir="ls -la -c --color=auto"
-	#alias dir="exa -la -g --icons --color=auto"
-	#alias dir="exa --long --header --git --all --icons"
-	alias dir="exa -all --long --modified --group"
-	alias dir="ls -CF -la -h --color=auto --group-directories-first"
-	alias dir="exa -all --long --modified --group --icons --color=auto"
+	if sh_checkcommand exa; then
+		#alias dir="exa -la -g --icons --color=auto"
+		#alias dir="exa --long --header --git --all --icons"
+		#alias dir="exa -all --long --modified --group"
+		alias dir="exa -all --long --modified --group --icons --color=auto"
+	else
+		alias dir="ls -CF -la -h --color=auto --group-directories-first"
+	fi
 	alias l=dir
 	alias dirt="la -h -ls -Sr -rt --color=auto"
-#	alias dir="ls -h -ls -X --color=auto"
+	#	alias dir="ls -h -ls -X --color=auto"
 	alias ed=nano
 	alias ED=nano
 	alias copy=cp
@@ -201,16 +211,16 @@ sh_bashrc_configure() {
 	alias CD=cd
 	#alias ddel1="rm -fvR"
 	#alias ddel2="find -iname $1 -type d | xargs rm -fvR"
-#	alias mmv="mv -f /diretorio01/{.*,*} /diretorio0/"
+	#	alias mmv="mv -f /diretorio01/{.*,*} /diretorio0/"
 	alias fdisk="fdisk -l"
 	alias ouvindo="netstat -anp | grep :69"
 	alias ouvindo="netstat -anp | grep :"
 	alias listen="netstat -anp | grep :"
-#	alias portas="sockstat | grep ."
-#	alias portas="nmap -p- localhost | grep ."
-#	alias portas="nmap -v \$1"
-#	alias portas="nmap --scan-delay 3s 172.31.255.2 -p 80,22"
-#	alias portas="nmap -v localhost"
+	#	alias portas="sockstat | grep ."
+	#	alias portas="nmap -p- localhost | grep ."
+	#	alias portas="nmap -v \$1"
+	#	alias portas="nmap --scan-delay 3s 172.31.255.2 -p 80,22"
+	#	alias portas="nmap -v localhost"
 	alias portas="sudo nmap -sS -p- localhost | grep ."
 	alias portas1="sudo lsof -i | grep ."
 	alias port="sudo sockstat | grep ."
@@ -247,19 +257,19 @@ sh_bashrc_configure() {
 	alias .1='cd ..'
 	alias .2='cd ../..'
 	alias .3='cd ../../..'
-#	alias pacman="pacman -S --overwrite \*" # sudo pacman -S --overwrite "*"
+	#	alias pacman="pacman -S --overwrite \*" # sudo pacman -S --overwrite "*"
 	alias start=sr
 	alias stop=st
 	alias restart="systemctl restart"
 	alias status="systemctl status"
-#	alias reload="systemctl reload"
+	#	alias reload="systemctl reload"
 	alias disable="systemctl disable"
 	alias enable="systemctl enable"
 	alias ativo="systemctl is-enabled"
 	alias nm-ativo="systemctl --type=service"
-#	alias reload="systemctl daemon-reload"
-#	alias jornal="journalctl -xe"
-#	alias jornal="journalctl -b -p err"
+	#	alias reload="systemctl daemon-reload"
+	#	alias jornal="journalctl -xe"
+	#	alias jornal="journalctl -b -p err"
 	alias jornal="journalctl -p 0..3 -xb"
 	alias jornalclear="sudo journalctl --rotate; journalctl --vacuum-time=1s"
 	#
@@ -319,20 +329,20 @@ sh_bashrc_configure() {
 	#CXXFLAGS="${CFLAGS}"
 
 	CHOST="x86_64-pc-linux-gnu"
-#	CFLAGS="-march=native -02 -pipe"
-#	CFLAGS="-march=pentium3 -02 -pipe"
-#	CFLAGS="-march=ahtlon64 -03 -pipe"
-#	CFLAGS="-march=generic -02 -pipe"
-#	Core i3/i5/i7 and Xeon E3/E5/E7 *V2
-#	CFLAGS="-march=ivybridge -O2 -pipe"
-#	Pentium
-#	CFLAGS="-O2 -march=pentium-m -pipe"
-#	CFLAGS="-march=ivybridge -mno-avx -mno-aes -mno-rdrnd -O2 -pipe"
-#	CFLAGS="-march=ivybridge -mno-avx -mno-aes -mno-rdrnd -O3 -pipe -fomit-frame-pointer"
-#	CFLAGS="-mtune=intel -O2 -pipe -fomit-frame-pointer"
-#	CFLAGS="-mtune=generic -O3 -pipe -fomit-frame-pointer"
-#	CFLAGS="-march=x86-64 -02 -pipe"
-#	CXXFLAGS="${CFLAGS}"
+	#	CFLAGS="-march=native -02 -pipe"
+	#	CFLAGS="-march=pentium3 -02 -pipe"
+	#	CFLAGS="-march=ahtlon64 -03 -pipe"
+	#	CFLAGS="-march=generic -02 -pipe"
+	#	Core i3/i5/i7 and Xeon E3/E5/E7 *V2
+	#	CFLAGS="-march=ivybridge -O2 -pipe"
+	#	Pentium
+	#	CFLAGS="-O2 -march=pentium-m -pipe"
+	#	CFLAGS="-march=ivybridge -mno-avx -mno-aes -mno-rdrnd -O2 -pipe"
+	#	CFLAGS="-march=ivybridge -mno-avx -mno-aes -mno-rdrnd -O3 -pipe -fomit-frame-pointer"
+	#	CFLAGS="-mtune=intel -O2 -pipe -fomit-frame-pointer"
+	#	CFLAGS="-mtune=generic -O3 -pipe -fomit-frame-pointer"
+	#	CFLAGS="-march=x86-64 -02 -pipe"
+	#	CXXFLAGS="${CFLAGS}"
 	W1="-Wunused-local-typedefs"
 	W2="-Wunused-but-set-variable"
 	W3="-Wunused-function"
@@ -344,13 +354,13 @@ sh_bashrc_configure() {
 	W9="-Wno-unused-but-set-variable"
 	W10="-Wno-unused-function"
 	W11="-Wno-parentheses"
-#	W12="-Werror=maybe-uninitialized"
+	#	W12="-Werror=maybe-uninitialized"
 	W12="-Wmaybe-uninitialized"
 	W0="-mtune=generic -fPIC -Os -pipe -fomit-frame-pointer"
 
-#	CFLAGS="${W0} ${W1} ${W2} ${W3} ${W4} ${W5} ${W6} ${W7} ${W8} ${W9} ${W10} ${W11} ${W12}"
-#	CXXFLAGS="${W0} ${W1} ${W2} ${W3} ${W5} ${W6} ${W7} ${W8} ${W9}"
-#	export CHOST CFLAGS CXXFLAGS
+	#	CFLAGS="${W0} ${W1} ${W2} ${W3} ${W4} ${W5} ${W6} ${W7} ${W8} ${W9} ${W10} ${W11} ${W12}"
+	#	CXXFLAGS="${W0} ${W1} ${W2} ${W3} ${W5} ${W6} ${W7} ${W8} ${W9}"
+	#	export CHOST CFLAGS CXXFLAGS
 
 	#gcc -c -Q -march=native --help=target
 	#gcc -### -march=native /usr/include/stdlib.h
@@ -403,6 +413,21 @@ sh_bashrc_configure() {
 	alias ddel="find -name $1 | xargs rm -fvR"
 }
 
+function debug() {
+	whiptail \
+		--fb \
+		--clear \
+		--backtitle "[debug]$0" \
+		--title "[debug]$0" \
+		--yesno "${*}\n" \
+		0 40
+	result="$?"
+	if ((result)); then
+		exit "$result"
+	fi
+	return "$result"
+}
+
 # Function to run upon exit of shell.
 _exit() {
 	echo -e "${BRed}Hasta la vista, baby${NC}"
@@ -420,22 +445,29 @@ get_exit_status() {
 }
 
 as_root() {
-	if   [ $EUID = 0 ];        then $*
-	elif [ -x /usr/bin/sudo ]; then sudo $*
-	else                            su -c \\"$*\\"
+	if [ $EUID = 0 ]; then
+		$*
+	elif [ -x /usr/bin/sudo ]; then
+		sudo $*
+	else
+		su -c \\"$*\\"
 	fi
 }
 export -f as_root
 
-has()			{ command -v "$1" >/dev/null; }
-chili-count-extension() {	ls | cut -sf2- -d. | sort | uniq -c ; }
-chili-count-vogal() { local word="$1"; tr '[:upper:]' '[:lower:]' <<< "$word" | grep -o '[aeiou]' | sort | uniq -c ; }
+#zerobyte() { for f in "${1[@]}"; do	echo >"$f";	done; }; export -f zerobyte
+has() { command -v "$1" >/dev/null; }
+chili-count-extension() { ls | cut -sf2- -d. | sort | uniq -c; }
+chili-count-vogal() {
+	local word="$1"
+	tr '[:upper:]' '[:lower:]' <<<"$word" | grep -o '[aeiou]' | sort | uniq -c
+}
 #xdel()   { find . -name "*$1*" | xargs rm -fv ; }
-ddel2()   { find . -iname $1 -print0 | xargs rm --verbose; }
+ddel2() { find . -iname $1 -print0 | xargs rm --verbose; }
 tolower() { find . -name "*$1*" | while read; do mv "$REPLY" "${REPLY,,}"; done; }
 toupper() { find . -name "*$1*" | while read; do mv "$REPLY" "${REPLY^^}"; done; }
-path()    { echo -e "${PATH//:/\\n}"; }
-load()    { source $1; }
+path() { echo -e "${PATH//:/\\n}"; }
+load() { source $1; }
 rdel() {
 	find . -iname "$1" -exec rm -f {} +
 }
@@ -449,7 +481,7 @@ chili-toSpaceFixer() {
 	find . -name "*$1*" | while read; do
 		novo_nome="${REPLY// /_}"
 		mv "$REPLY" "$novo_nome"
-	done;
+	done
 }
 export -f chili-toSpaceFixer
 alias toSpaceFixer=chili-toSpaceFixer
@@ -484,8 +516,8 @@ xdel() {
 		find_command+=" -mmin -${intervalo}"
 	fi
 
-#	local format_string="\033[1;32m%TY-%Tm-%Td %TH:%TM:%TS\033[0m \033[1;34m%p\033[0m\n"
-#	find_command+=" -printf \"$format_string\" | sort"
+	#	local format_string="\033[1;32m%TY-%Tm-%Td %TH:%TM:%TS\033[0m \033[1;34m%p\033[0m\n"
+	#	find_command+=" -printf \"$format_string\" | sort"
 
 	if [[ -n "$num_arquivos" ]]; then
 		find_command+=" | tail -n $num_arquivos"
@@ -505,8 +537,8 @@ xdel() {
 
 lsa() {
 	echo -n ${orange}
-#	ls -l | awk '/^-/ {print $9}'
-#	ls -la | grep -v "^d"
+	#	ls -l | awk '/^-/ {print $9}'
+	#	ls -la | grep -v "^d"
 	find . -type f -exec basename {} \;
 }
 
@@ -526,17 +558,17 @@ chili-session() {
 }
 
 setkeyboardX() {
-#	local _session=$(loginctl show-session "$XDG_SESSION_ID" -p Type --value)
+	#	local _session=$(loginctl show-session "$XDG_SESSION_ID" -p Type --value)
 	local _session="$XDG_SESSION_TYPE"
 	echo "Desktop: $XDG_CURRENT_DESKTOP"
 	echo "Session: $_session"
 
 	case $_session in
-		x11) setxkbmap -model abnt2 -layout br -variant abnt2 ;;
-		wayland) sudo localectl set-x11-keymap br abnt2 ;;
+	x11) setxkbmap -model abnt2 -layout br -variant abnt2 ;;
+	wayland) sudo localectl set-x11-keymap br abnt2 ;;
 	esac
-#	sudo setxkbmap -query
-#	sudo setxkbmap -print -verbose 10
+	#	sudo setxkbmap -query
+	#	sudo setxkbmap -print -verbose 10
 	localectl status
 }
 
@@ -644,7 +676,10 @@ chili-filehoracerta() {
 export -f chili-filehoracerta
 alias filehoracerta=chili-filehoracerta
 
-horacerta() {	sudo ntpd -q -g; 	sudo hwclock --systohc; }
+horacerta() {
+	sudo ntpd -q -g
+	sudo hwclock --systohc
+}
 export -f horacerta
 
 GREP_OPTIONS() { GREP_OPTIONS='--color=auto'; }
@@ -714,27 +749,46 @@ modo() {
 }
 export -f modo
 
-sshsemsenha() {
-	USUARIO=${USER}
-#	SERV="10.0.0.72"
-	SERV=$1
-	echo $1
+chili-sshsemsenha() {
+	local host="$1"
+	local usuario="$2"
+	local port="$3"
+	local red=$(tput bold)$(tput setaf 196)
+	local cyan=$(tput setaf 6)
+	local yellow=$(tput bold)$(tput setaf 3)
+	local reset=$(tput sgr0)
+
+	if test $# -eq 0; then
+		echo "uso: ${cyan}sshsemsenha ${red}<host> ${yellow}[usuario] [porta]${reset}"
+		echo "     ${cyan}sshsemsenha ${red}154.49.247.66 ${yellow}u537062342 65002${reset}"
+		return 1
+	fi
+
+	[[ -z "$host" ]] && {
+		echo "     ${cyan}sshsemsenha ${red}154.49.247.66 ${yellow}u537062342 65002${reset}"
+		return 1
+	}
+	[[ -z "$usuario" ]] && usuario="$USER"
+	[[ -z "$port" ]] && port='22'
 
 	ssh-keygen -t rsa
-#	scp /home/$USER/.ssh/id_rsa.pub $USER@$SERV:/tmp
-#	scp ~/.ssh/id_rsa.pub $USUARIOR@$SERV:/tmp
-#	ssh $USUARIO@$SERV
-#	cat /tmp/id_rsa.pub >> ~/.ssh/authorized_keys
-	ssh-copy-id -p 22 -f -i ~/.ssh/id_rsa.pub $SERV
+	#	scp /home/$USER/.ssh/id_rsa.pub $USER@$SERV:/tmp
+	#	scp ~/.ssh/id_rsa.pub $USUARIOR@$SERV:/tmp
+	#	ssh $USUARIO@$SERV
+	#	cat /tmp/id_rsa.pub >> ~/.ssh/authorized_keys
+
+	#	ssh-copy-id -p 22 -f -i ~/.ssh/id_rsa.pub ${host}
+	ssh-copy-id -i ~/.ssh/id_rsa.pub -p ${port} ${usuario}@${host}
 }
-export -f sshsemsenha
+export -f chili-sshsemsenha
+alias sshsemsenha=chili-sshsemsenha
 
 sshsemsenhahs() {
-	USUARIO=u356719782
-	REMOTO=185.211.7.40
+	USUARIO=u537062342
+	REMOTO=154.49.247.66
 	echo $1
 
-#	ssh-keygen -t rsa
+	#	ssh-keygen -t rsa
 	ssh-copy-id -p 65002 -f -i ~/.ssh/id_rsa.pub $USUARIO@$REMOTO
 }
 
@@ -955,28 +1009,31 @@ EOF
 }
 
 frfloppy() {
-    if test $# -ge 1; then
-        IMG="$1"
-        [[ -f "$IMG" ]] || { echo "Imagem $IMG não encontrada!"; return; }
-        sudo qemu-system-i386 \
-            -drive file=$IMG,format=raw,index=0,if=floppy
-			-drive file=/archlive/qemu/hda.img,format=raw \
+	if test $# -ge 1; then
+		IMG="$1"
+		[[ -f "$IMG" ]] || {
+			echo "Imagem $IMG não encontrada!"
+			return
+		}
+		sudo qemu-system-i386 \
+			-drive file=$IMG,format=raw,index=0,if=floppy
+		-drive file=/archlive/qemu/hda.img,format=raw \
 			-name frfloppy,process=archiso_0 \
 			-device virtio-scsi-pci,id=scsi0 \
-            -machine accel=kvm \
-            -cpu host \
-            -smp "$(nproc)" \
-            -m 4G \
-            -machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0 \
-            "${qemu_options[@]}" \
-            -serial stdio
-    else
-        cat <<EOF
+			-machine accel=kvm \
+			-cpu host \
+			-smp "$(nproc)" \
+			-m 4G \
+			-machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0 \
+			"${qemu_options[@]}" \
+			-serial stdio
+	else
+		cat <<EOF
 usage:
    frfloppy file.img
    frfloppy file.qcow2
 EOF
-    fi
+	fi
 }
 
 #qemu-system-x86_64 -monitor stdio -smp "$(nproc)" -k pt-br -machine accel=kvm -m 4096 -cdrom "$1" -hda "/home/vcatafesta/.aqemu/Linux_2.6_HDA.img" -boot once=d,menu=off -net nic -net user -rtc base=localtime -name "runcdrom"
@@ -984,8 +1041,11 @@ chili-qemurunfile() {
 	declare -a qemu_options=()
 
 	if test $# -ge 1; then
-		[[ -e "$1" ]] || { echo "Imagem/Device $1 não encontrada!"; return; }
-#		[[ -r "$1" ]] || { echo "Imagem/Device $1 sem permissão de leitura!"; return; }
+		[[ -e "$1" ]] || {
+			echo "Imagem/Device $1 não encontrada!"
+			return
+		}
+		#		[[ -r "$1" ]] || { echo "Imagem/Device $1 sem permissão de leitura!"; return; }
 		qemu_options+=(-monitor stdio)
 		qemu_options+=(-no-fd-bootchk)
 		qemu_options+=(-machine accel=kvm)
@@ -1000,14 +1060,14 @@ chili-qemurunfile() {
 		qemu_options+=(-device virtio-scsi-pci,id=scsi0)
 		qemu_options+=(-netdev user,id=net0)
 		qemu_options+=(-device e1000,netdev=net0)
-#		qemu_options+=(-audiodev pa,id=snd0)
-#		qemu_options+=(-audiodev pipewire,id=snd0)
+		#		qemu_options+=(-audiodev pa,id=snd0)
+		#		qemu_options+=(-audiodev pipewire,id=snd0)
 		qemu_options+=(-audiodev alsa,id=snd0)
-#        qemu_options+=(-device hda-duplex,audiodev=snd0,mixer=off)
-#        qemu_options+=(-rtc base=localtime,clock=host)
-        qemu_options+=(-device ich9-intel-hda)
+		#        qemu_options+=(-device hda-duplex,audiodev=snd0,mixer=off)
+		#        qemu_options+=(-rtc base=localtime,clock=host)
+		qemu_options+=(-device ich9-intel-hda)
 		qemu_options+=(-device hda-output,audiodev=snd0)
-#		qemu_options+=(-global ICH9-LPC.disable_s3=1)
+		#		qemu_options+=(-global ICH9-LPC.disable_s3=1)
 		qemu_options+=(-machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0)
 		sudo qemu-system-x86_64 "${qemu_options[@]}"
 	else
@@ -1052,7 +1112,10 @@ filerun() { chili-qemurunfile $@; }
 fr() { chili-qemurunfile "$@"; }
 fru() { chili-qemurunuefi $@; }
 frr() { chili-qemurunimg $@; }
-fileinfo() { for i in "${@}"; do qemu-img info $i; echo; done; }
+fileinfo() { for i in "${@}"; do
+	qemu-img info $i
+	echo
+done; }
 export -f fr
 export -f chili-qemurunfile
 
@@ -1088,7 +1151,6 @@ usage:
 EOF
 	fi
 }
-
 
 frc() {
 	if test $# -ge 1; then
@@ -1244,12 +1306,12 @@ criartap() {
 	brctl addif br0 tap0
 	brctl show
 	ifconfig br0 up
-#	ifconfig br0 10.7.7.66/24
+	#	ifconfig br0 10.7.7.66/24
 	ip link show
 }
 
 criartapOLD() {
-#	apt-get install uml-utilities
+	#	apt-get install uml-utilities
 	#criar ponte
 	modprobe tun
 	tunctl -t tap0
@@ -1257,7 +1319,7 @@ criartapOLD() {
 	ifconfig enp6s0 0.0.0.0 promisc up
 	brctl addbr br0
 	brctl addif br0 tap0
-#	brctl addif br0 enp3s0
+	#	brctl addif br0 enp3s0
 	brctl show
 	ifconfig br0 up
 	ifconfig br0 10.7.7.66/24
@@ -1278,7 +1340,7 @@ chili-videoultrahd() {
 }
 
 tms() {
-#	sudo journalctl -f
+	#	sudo journalctl -f
 	sudo dmesg -w -T -x
 }
 
@@ -1472,10 +1534,10 @@ grmbranch() {
 		return 1
 	fi
 
-	if [[ -z "$branch" ]] ;then
+	if [[ -z "$branch" ]]; then
 		echo "${red}error: Deu ruim para o branch ${yellow}'${branch}'${red}, não é valido'${reset}"
 		git branch
-	  return 1
+		return 1
 	fi
 	# Remover um branch local:
 	# git branch -d "$branch"
@@ -1496,7 +1558,7 @@ export -f grmbranch
 
 gmerge() {
 	local branch="$1"
-	local cabec="$2"		# ex: weblib.sh: sh_webapp_backup - Erro ao fazer o backup
+	local cabec="$2" # ex: weblib.sh: sh_webapp_backup - Erro ao fazer o backup
 	local red=$(tput bold)$(tput setaf 196)
 	local cyan=$(tput setaf 6)
 	local reset=$(tput sgr0)
@@ -1510,29 +1572,29 @@ gmerge() {
 		return 1
 	fi
 
-	if [[ -z "$branch" ]] ;then
+	if [[ -z "$branch" ]]; then
 		echo "${red}error: Deu ruim para o branch ${yellow}'${branch}'${red}, não é valido'${reset}"
 		git branch
-	  return 1
+		return 1
 	fi
 
 	# Verificar se o branch local já existe
 	if git show-ref --quiet refs/heads/$branch; then
-	  echo "Branch local '$branch_name' já existe."
+		echo "Branch local '$branch_name' já existe."
 	else
-	  echo "Branch local '$branch_name' não existe. Criando..."
-	  git checkout -b $branch
-	  echo "Branch '$branch_name' criado e alterado para o novo branch."
+		echo "Branch local '$branch_name' não existe. Criando..."
+		git checkout -b $branch
+		echo "Branch '$branch_name' criado e alterado para o novo branch."
 	fi
 
-#	# Verificar se o branch remoto já existe
-#	if git ls-remote --heads origin $branch | grep -q 'refs/heads/'$branch; then
-#	  echo "Branch remoto '$branch' já existe."
-#	else
-#	  echo "Branch remoto '$branch' não existe. Enviando o novo branch para o remoto..."
-#	  git push origin $branch_name
-#	  echo "Branch '$branch' enviado para o remoto."
-#	fi
+	#	# Verificar se o branch remoto já existe
+	#	if git ls-remote --heads origin $branch | grep -q 'refs/heads/'$branch; then
+	#	  echo "Branch remoto '$branch' já existe."
+	#	else
+	#	  echo "Branch remoto '$branch' não existe. Enviando o novo branch para o remoto..."
+	#	  git push origin $branch_name
+	#	  echo "Branch '$branch' enviado para o remoto."
+	#	fi
 
 	log_wait_msg "${red}Iniciando git commit no branch ${yellow}'main' ${reset}"
 	#alterne para ele:
@@ -1576,7 +1638,7 @@ gmerge() {
 export -f gmerge
 
 gcommit() {
-	local cabec="$1"		# ex: weblib.sh: sh_webapp_backup - Erro ao fazer o backup
+	local cabec="$1" # ex: weblib.sh: sh_webapp_backup - Erro ao fazer o backup
 	local red=$(tput bold)$(tput setaf 196)
 	local cyan=$(tput setaf 6)
 	local reset=$(tput sgr0)
@@ -1612,8 +1674,8 @@ gpull() {
 export -f gpull
 
 gpush() {
-	local branch="$1"		# ex: weblib.sh: sh_webapp_backup - Erro ao fazer o backup
-	local cabec="$2"		# ex: weblib.sh: sh_webapp_backup - Erro ao fazer o backup
+	local branch="$1" # ex: weblib.sh: sh_webapp_backup - Erro ao fazer o backup
+	local cabec="$2"  # ex: weblib.sh: sh_webapp_backup - Erro ao fazer o backup
 	local red=$(tput bold)$(tput setaf 196)
 	local cyan=$(tput setaf 6)
 	local reset=$(tput sgr0)
@@ -1625,7 +1687,7 @@ gpush() {
 	git config --global http.postBuffer 524288000
 	git config credential.helper store
 
-#	git pull origin "$mainbranch"
+	#	git pull origin "$mainbranch"
 	git add -A
 	if [[ -z "$cabec" ]]; then
 		git commit -m "$(date) Vilmar Catafesta (vcatafesta@gmail.com)"
@@ -1633,7 +1695,7 @@ gpush() {
 		git commit -m "$cabec"
 	fi
 	if [[ -n "$branch" ]]; then
-#		gitbranch "$branch"
+		#		gitbranch "$branch"
 		if ! gbranch "$branch"; then
 			git branch
 			return 1
@@ -1737,18 +1799,18 @@ gbranch() {
 	local reset=$(tput sgr0)
 	local mainbranch="$(getbranch)"
 
-	if [[ ! "$branch" =~ ^(stable|testing)$ ]] ;then
+	if [[ ! "$branch" =~ ^(stable|testing)$ ]]; then
 		echo "${red}error: Deu ruim para o branch ${yellow}'${branch}'${red}, não é valido, escolha entre ${yellow}'testing' ou 'stable'${reset}"
 		git branch
-	  return 1
+		return 1
 	fi
-	atualBranch=$(git status | grep -i 'on branch' | awk '{print $3}')	# Branch Atual
-	newBranch=$1-$(date +%Y-%m-%d_%H-%M)																# Branch a ser Criado
-	git checkout -b $newBranch																					# Criar novo Branch localmente
-	git rebase $mainbranch  																						# Atualize o novo branch:b
-	git push --set-upstream origin $newBranch														# Enviar novo Branch para cGitHub
-	git push origin $newBranch																					# Faça o push do novo branch:
-	git checkout $atualBranch																						# Voltando ao Branch anterior a criação do novo Branch
+	atualBranch=$(git status | grep -i 'on branch' | awk '{print $3}') # Branch Atual
+	newBranch=$1-$(date +%Y-%m-%d_%H-%M)                               # Branch a ser Criado
+	git checkout -b $newBranch                                         # Criar novo Branch localmente
+	git rebase $mainbranch                                             # Atualize o novo branch:b
+	git push --set-upstream origin $newBranch                          # Enviar novo Branch para cGitHub
+	git push origin $newBranch                                         # Faça o push do novo branch:
+	git checkout $atualBranch                                          # Voltando ao Branch anterior a criação do novo Branch
 }
 export -f gbranch
 
@@ -1770,28 +1832,28 @@ gclean() {
 	local reset=$(tput sgr0)
 	local mainbranch="$(getbranch)"
 
-  if [[ $# -eq 0 ]] || [[ "$clean" != '--confirm' ]] ; then
-    echo "Uso: ${cyan}gclean --confirm${reset}"
-    return 1
-  fi
+	if [[ $# -eq 0 ]] || [[ "$clean" != '--confirm' ]]; then
+		echo "Uso: ${cyan}gclean --confirm${reset}"
+		return 1
+	fi
 
 	log_msg "${yellow}$clean ${red}checado. ${black}Prosseguindo com a limpeza no branch atual${reset}"
 	log_msg "Faça um backup do branch atual"
 	git branch backup_branch
-  log_msg "Crie um novo branch a partir do atual, mas sem histórico de commits"
+	log_msg "Crie um novo branch a partir do atual, mas sem histórico de commits"
 	git checkout --orphan new_branch
 	log_msg "Adicione todos os arquivos ao staging area"
 	git add .
 	log_msg "Faça o commit dos arquivos com uma mensagem de confirmação"
 	git commit -m "Restart commit"
 	log_msg "Exclua o branch antigo (opcional, se você deseja substituir o branch atual)"
-	git branch -D $mainbranch  # ou master, conforme o nome do branch atual
+	git branch -D $mainbranch # ou master, conforme o nome do branch atual
 	log_msg "Renomeie o novo branch para o nome do branch original"
-	git branch -m new_branch main  # ou master, conforme o nome do branch original
+	git branch -m new_branch main # ou master, conforme o nome do branch original
 	log_msg "Faça push do novo branch para o remoto e sobrescreva o histórico remoto"
-	git push --force origin $mainbranch  # ou master
+	git push --force origin $mainbranch # ou master
 	log_msg "Exclua o branch de backup"
-  git branch -D backup_branch
+	git branch -D backup_branch
 	echo
 	log_msg "${green}Feito! #####################################################################${reset}"
 	git log
@@ -1800,128 +1862,186 @@ gclean() {
 }
 export -f gclean
 
+gclean_branch_local_and_remote() {
+	local clean="$1"
+	local red=$(tput bold)$(tput setaf 196)
+	local cyan=$(tput setaf 6)
+	local reset=$(tput sgr0)
+	local mainbranch="$(getbranch)"
+
+	if [[ $# -eq 0 ]] || [[ "$clean" != '--confirm' ]]; then
+		echo "Apaga todos os branchs locais e remoto (exceto $mainbranch)"
+		echo "Uso: ${cyan}gclean_branch_local_and_remote --confirm${reset}"
+		return 1
+	fi
+	log_msg "${yellow}$clean ${red}checado. ${black}Prosseguindo com a limpeza nos branchs (exceto $mainbranch) ${reset}"
+	git checkout "$mainbranch"
+	log_msg "Apagar todos os branches locais (exceto $mainbranch)"
+	git branch | grep -v "$mainbranch" | xargs git branch -D
+	log_msg "Apagar todos os branches remotos no origin (exceto $mainbranch)"
+	git branch -r | grep -v "origin/$mainbranch" | sed 's/origin\///' | xargs -I {} git push origin --delete {}
+	log_msg "Sincronizar com o origin:"
+	git fetch --prune
+	log_msg "${green}Feito! #####################################################################${reset}"
+	git branch
+	log_msg "${green}Feito! #####################################################################${reset}"
+}
+export -f gclean_branch_local_and_remote
+
 gettokengithub() {
-	echo "$(< $HOME/GITHUB_TOKEN)"
+	local cfiletoken="$HOME/.GITHUB_TOKEN"
+	if [[ ! -e "$cfiletoken" ]]; then
+		die "$red" "Erro: Não foi possível ler o arquivo $cfiletoken"
+	fi
+	# echo "$(<$cfiletoken)"      # pega tudo
+	# sed -n '1p' "$cfiletoken"   # pega 1st linha
+	#	sed -n '2p' "$cfiletoken" # pega 2st linha
+	#	sed -n "/^vcatafesta=/s/.*=//p" "$cfiletoken"
+	sed -n "/^vcatafesta=/ { s/.*=//; p; q }" "$cfiletoken"
 }
 export -f gettokengithub
 
 ginit() {
-  local your_repository_name="$1"
+	local your_repository_name="$1"
 	local red=$(tput bold)$(tput setaf 196)
 	local cyan=$(tput setaf 6)
 	local reset=$(tput sgr0)
 	local mainbranch="$(getbranch)"
 
-  # Verifique se o argumento foi fornecido
-  if [ $# -eq 0 ]; then
-    echo "Uso: ${cyan}ginit <repositorio>${reset}"
-    return 1
-  fi
+	# Verifique se o argumento foi fornecido
+	if [ $# -eq 0 ]; then
+		echo "Uso: ${cyan}ginit <repositorio>${reset}"
+		return 1
+	fi
 
-  # Defina seu nome de usuário GitHub e token pessoal
-  local GITHUB_USER="vcatafesta"  # Use o nome de usuário do GitHub
-  local GITHUB_TOKEN="$(gettokengithub)"
+	# Defina seu nome de usuário GitHub e token pessoal
+	local GITHUB_USER="vcatafesta" # Use o nome de usuário do GitHub
+	local GITHUB_TOKEN="$(gettokengithub)"
 
-  # Defina o nome do repositório
-  local REPO_NAME="$your_repository_name"
+	# Defina o nome do repositório
+	local REPO_NAME="$your_repository_name"
 
-  # Verifique se o diretório já existe
-  if [ -d "$REPO_NAME" ]; then
+	# Verifique se o diretório já existe
+	if [ -d "$REPO_NAME" ]; then
 		log_err "${red}O diretório ${yellow}'$REPO_NAME' ${red}já existe. Escolha um nome diferente.${reset}"
-    return 1
-  fi
+		return 1
+	fi
 
-  # Verifique se o repositório já existe no GitHub
+	# Verifique se o repositório já existe no GitHub
 	local check_response
-  check_response=$(curl -s -o /tmp/github_check_response.txt -w "%{http_code}" -u "$GITHUB_USER:$GITHUB_TOKEN" \
-    https://api.github.com/repos/$GITHUB_USER/$REPO_NAME)
+	check_response=$(curl -s -o /tmp/github_check_response.txt -w "%{http_code}" -u "$GITHUB_USER:$GITHUB_TOKEN" \
+		https://api.github.com/repos/$GITHUB_USER/$REPO_NAME)
 
-  if [ "$check_response" -eq 200 ]; then
-    cat /tmp/github_check_response.txt
-    log_err "${red}O repositório ${yellow}'$REPO_NAME' ${red}já existe no GitHub. Escolha um nome diferente.${reset}"
-    return 1
-  fi
+	if [ "$check_response" -eq 200 ]; then
+		cat /tmp/github_check_response.txt
+		log_err "${red}O repositório ${yellow}'$REPO_NAME' ${red}já existe no GitHub. Escolha um nome diferente.${reset}"
+		return 1
+	fi
 
-  # Crie o repositório local
-  mkdir "$REPO_NAME" || { echo "Falha ao criar o diretório '$REPO_NAME'"; return 1; }
-  cd "$REPO_NAME" || { echo "Falha ao acessar o diretório '$REPO_NAME'"; return 1; }
+	# Crie o repositório local
+	mkdir "$REPO_NAME" || {
+		echo "Falha ao criar o diretório '$REPO_NAME'"
+		return 1
+	}
+	cd "$REPO_NAME" || {
+		echo "Falha ao acessar o diretório '$REPO_NAME'"
+		return 1
+	}
 
-  # Inicialize o repositório Git
-  git init || { echo "Falha ao inicializar o repositório Git"; return 1; }
+	# Inicialize o repositório Git
+	git init || {
+		echo "Falha ao inicializar o repositório Git"
+		return 1
+	}
 
-  # Crie o repositório no GitHub usando a API
-  local response
-  response=$(curl -s -o /tmp/github_response.txt -w "%{http_code}" -u "$GITHUB_USER:$GITHUB_TOKEN" \
-    -X POST https://api.github.com/user/repos \
-    -d "{\"name\":\"$REPO_NAME\"}")
+	# Crie o repositório no GitHub usando a API
+	local response
+	response=$(curl -s -o /tmp/github_response.txt -w "%{http_code}" -u "$GITHUB_USER:$GITHUB_TOKEN" \
+		-X POST https://api.github.com/user/repos \
+		-d "{\"name\":\"$REPO_NAME\"}")
 
-  # Verifique a resposta da API
-  if [ "$response" -ne 201 ];then
-    log_err "${red}Falha ao criar o repositório no GitHub. Código de status: ${yellow}$response${reset}"
-    cat /tmp/github_response.txt
-    return 1
-  fi
+	# Verifique a resposta da API
+	if [ "$response" -ne 201 ]; then
+		log_err "${red}Falha ao criar o repositório no GitHub. Código de status: ${yellow}$response${reset}"
+		cat /tmp/github_response.txt
+		return 1
+	fi
 
-  # Crie um commit inicial e faça o push para o GitHub
-  echo "# $REPO_NAME" > README.md
-  git add README.md || { echo "Falha ao adicionar o README.md"; return 1; }
-  git commit -m "Initial commit" || { echo "Falha ao criar o commit inicial"; return 1; }
-  git branch -M main || { echo "Falha ao renomear a branch para 'main'"; return 1; }
-  git remote add origin "https://$GITHUB_USER:$GITHUB_TOKEN@github.com/$GITHUB_USER/$REPO_NAME.git" || { echo "Falha ao adicionar o repositório remoto"; return 1; }
-  git push -u origin main || { echo "Falha ao fazer o push para o GitHub"; return 1; }
-  log_msg "${green}Repositório ${yellow}${REPO_NAME} ${cyan}local ${reset}e no ${cyan}GitHub ${green}criado com sucesso!${reset}"
+	# Crie um commit inicial e faça o push para o GitHub
+	echo "# $REPO_NAME" >README.md
+	git add README.md || {
+		echo "Falha ao adicionar o README.md"
+		return 1
+	}
+	git commit -m "Initial commit" || {
+		echo "Falha ao criar o commit inicial"
+		return 1
+	}
+	git branch -M main || {
+		echo "Falha ao renomear a branch para 'main'"
+		return 1
+	}
+	git remote add origin "https://$GITHUB_USER:$GITHUB_TOKEN@github.com/$GITHUB_USER/$REPO_NAME.git" || {
+		echo "Falha ao adicionar o repositório remoto"
+		return 1
+	}
+	git push -u origin main || {
+		echo "Falha ao fazer o push para o GitHub"
+		return 1
+	}
+	log_msg "${green}Repositório ${yellow}${REPO_NAME} ${cyan}local ${reset}e no ${cyan}GitHub ${green}criado com sucesso!${reset}"
 }
 export -f ginit
 
 gremove() {
-  local your_repository_name="$1"
-  local delete_local="$2"
+	local your_repository_name="$1"
+	local delete_local="$2"
 	local red=$(tput bold)$(tput setaf 196)
 	local cyan=$(tput setaf 6)
 	local reset=$(tput sgr0)
 	local mainbranch="$(getbranch)"
 
-  if [ $# -eq 0 ]; then
-    echo "uso: ${cyan}gremove <repositorio>${reset} 				# remove repositorio origin/remote"
-    echo "uso: ${cyan}gremove <repositorio> --local${reset} # remove repositorio local e origin/remote"
-    return 1
-  fi
+	if [ $# -eq 0 ]; then
+		echo "uso: ${cyan}gremove <repositorio>${reset} 				# remove repositorio origin/remote"
+		echo "uso: ${cyan}gremove <repositorio> --local${reset} # remove repositorio local e origin/remote"
+		return 1
+	fi
 
-  # Defina seu nome de usuário GitHub e token pessoal
-  local GITHUB_USER="vcatafesta"
-  local GITHUB_TOKEN="$(gettokengithub)"
+	# Defina seu nome de usuário GitHub e token pessoal
+	local GITHUB_USER="vcatafesta"
+	local GITHUB_TOKEN="$(gettokengithub)"
 
-  # Defina o nome do repositório
-  local REPO_NAME="$your_repository_name"
+	# Defina o nome do repositório
+	local REPO_NAME="$your_repository_name"
 
-  echo "Usuário GitHub: $GITHUB_USER"
-  echo "Nome do Repositório: $REPO_NAME"
+	echo "Usuário GitHub: $GITHUB_USER"
+	echo "Nome do Repositório: $REPO_NAME"
 
-  # Remova o repositório no GitHub usando a API
-  local response
-  response=$(curl -s -w "%{http_code}" -u "$GITHUB_USER:$GITHUB_TOKEN" -X DELETE "https://api.github.com/repos/$GITHUB_USER/$REPO_NAME")
+	# Remova o repositório no GitHub usando a API
+	local response
+	response=$(curl -s -w "%{http_code}" -u "$GITHUB_USER:$GITHUB_TOKEN" -X DELETE "https://api.github.com/repos/$GITHUB_USER/$REPO_NAME")
 
-  # Extraia o código de status da resposta
-  local http_code="${response: -3}"  # Pega os últimos 3 caracteres (código de status HTTP)
-  local response_body="${response%$http_code}"  # Remove o código de status da resposta
+	# Extraia o código de status da resposta
+	local http_code="${response: -3}"            # Pega os últimos 3 caracteres (código de status HTTP)
+	local response_body="${response%$http_code}" # Remove o código de status da resposta
 
-  # Verifique o código de status HTTP retornado
-  if [ "$http_code" -eq 204 ]; then
-    log_msg "${green}Repositório no GitHub ${yellow}'$REPO_NAME' ${green}removido com sucesso.${reset}"
-    # Verifique se o repositório local existe e o remova
+	# Verifique o código de status HTTP retornado
+	if [ "$http_code" -eq 204 ]; then
+		log_msg "${green}Repositório no GitHub ${yellow}'$REPO_NAME' ${green}removido com sucesso.${reset}"
+		# Verifique se o repositório local existe e o remova
 		if [ -n "$delete_local" ]; then
-	    if [ -d "$REPO_NAME" ]; then
-  	    rm -rf "$REPO_NAME" > /dev/null 2>&1
-    	  log_msg "${green}Repositório local ${yellow}'$REPO_NAME' ${reset}removido."
-	    else
-  	    log_err "${red}Repositório local ${yellow}'$REPO_NAME' ${reset}não encontrado."
-    	fi
-    fi
-  else
-    log_err "${red}error: Falha ao remover o repositório no GitHub. Código de status: ${yellow}$http_code${reset}"
-    log_err "Resposta completa: ${cyan}$response_body${reset}"
-    log_err "${red}hint: Verifique se o nome do usuário ${yellow}'$GITHUB_USER' ${red}e o repositório ${yellow}'$REPO_NAME' ${red}estão corretos e se o token tem permissões administrativas.${reset}"
-  fi
+			if [ -d "$REPO_NAME" ]; then
+				rm -rf "$REPO_NAME" >/dev/null 2>&1
+				log_msg "${green}Repositório local ${yellow}'$REPO_NAME' ${reset}removido."
+			else
+				log_err "${red}Repositório local ${yellow}'$REPO_NAME' ${reset}não encontrado."
+			fi
+		fi
+	else
+		log_err "${red}error: Falha ao remover o repositório no GitHub. Código de status: ${yellow}$http_code${reset}"
+		log_err "Resposta completa: ${cyan}$response_body${reset}"
+		log_err "${red}hint: Verifique se o nome do usuário ${yellow}'$GITHUB_USER' ${red}e o repositório ${yellow}'$REPO_NAME' ${red}estão corretos e se o token tem permissões administrativas.${reset}"
+	fi
 }
 export -f gremove
 
@@ -1935,8 +2055,8 @@ gclone_all_repo_from_organization() {
 	local mainbranch="$(getbranch)"
 
 	if [ -z "$ORG_NAME" ]; then
-	  echo "Uso: gclone_all_repo_from_organization <organization_name>"
-	  return 1
+		echo "Uso: gclone_all_repo_from_organization <organization_name>"
+		return 1
 	fi
 
 	# Crie o diretório de destino se não existir
@@ -1944,232 +2064,143 @@ gclone_all_repo_from_organization() {
 	cd "$DEST_DIR" || return
 
 	page=1
-	while : ; do
-	  echo "Obtendo repositórios da página $page..."
-	  # Obtendo a resposta da API
-	  response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-	                    -H "Accept: application/vnd.github.v3+json" \
-	                    "https://api.github.com/orgs/$ORG_NAME/repos?per_page=100&page=$page")
+	while :; do
+		echo "Obtendo repositórios da página $page..."
+		# Obtendo a resposta da API
+		response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+			-H "Accept: application/vnd.github.v3+json" \
+			"https://api.github.com/orgs/$ORG_NAME/repos?per_page=100&page=$page")
 
-	  # Verifique se a resposta está vazia
-	  if [ -z "$response" ]; then
-	    echo "Nenhuma resposta recebida. Verifique a conexão com a API ou o token de acesso."
-	    return 1
-	  fi
+		# Verifique se a resposta está vazia
+		if [ -z "$response" ]; then
+			echo "Nenhuma resposta recebida. Verifique a conexão com a API ou o token de acesso."
+			return 1
+		fi
 
-	  # Verifique se a resposta é um JSON válido
-	  if ! echo "$response" | jq . > /dev/null 2>&1; then
-	    echo "Resposta não é um JSON válido. Verifique a saída da API."
-	    echo "Resposta: $response"
-	    return 1
-	  fi
+		# Verifique se a resposta é um JSON válido
+		if ! echo "$response" | jq . >/dev/null 2>&1; then
+			echo "Resposta não é um JSON válido. Verifique a saída da API."
+			echo "Resposta: $response"
+			return 1
+		fi
 
-	  # Extraia URLs de clonagem
-	  repos=$(echo "$response" | jq -r '.[].clone_url')
+		# Extraia URLs de clonagem
+		repos=$(echo "$response" | jq -r '.[].clone_url')
 
-	  # Verifique se há URLs para clonar
-	  if [ -z "$repos" ]; then
-	    echo "Nenhum repositório encontrado na página $page. Finalizando."
-	    break
-	  fi
+		# Verifique se há URLs para clonar
+		if [ -z "$repos" ]; then
+			echo "Nenhum repositório encontrado na página $page. Finalizando."
+			break
+		fi
 
-	  # Clone cada repositório
-	  for repo in $repos; do
-	    echo "Clonando $repo..."
+		# Clone cada repositório
+		for repo in $repos; do
+			echo "Clonando $repo..."
 			git clone "$repo"
-	  done
-	  page=$((page + 1))
+		done
+		page=$((page + 1))
 	done
 }
 export -f gclone_all_repo_from_organization
 
-gcreate_all_repo_into_github() {
-  local ORIGINAL_REPO_USER="$1"  # Usuário do repositório original (upstream)
-  local GITHUB_USER="vcatafesta"
-  local GITHUB_TOKEN="$(gettokengithub)"
-  local DEST_DIR="$PWD"  # Diretório onde os repositórios estão clonados
-	local red=$(tput bold)$(tput setaf 196)
-	local cyan=$(tput setaf 6)
-	local reset=$(tput sgr0)
-	local mainbranch="$(getbranch)"
-
-  # Verifique se o argumento foi fornecido
-  if [ $# -eq 0 ]; then
-    echo "Uso: ${cyan}gcreate_all_repo_into_github <original_github_repo_user>${reset}"
-    echo "     ${cyan}gcreate_all_repo_into_github biglinux${reset}"
-    echo "     ${cyan}gcreate_all_repo_into_github BigLinux-Package-Build${reset}"
-    return 1
-  fi
-
-  if [ -z "$DEST_DIR" ]; then
-    echo "Defina DEST_DIR para o diretório onde os repositórios foram clonados."
-    return 1
-  fi
-
-  # Navegue até o diretório de destino
-  cd "$DEST_DIR" || return 1
-
-  # Obtenha a lista de repositórios clonados
-  for repo_dir in */; do
-    # Remove a barra final e obtenha o nome do repositório
-    repo_name=$(basename "${repo_dir%%/}")
-
-    echo "Processando repositório: $repo_name"
-
-    cd "$repo_dir" || continue
-
-    # Verifique se o repositório já existe no GitHub
-    response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                      -H "Accept: application/vnd.github.v3+json" \
-                      "https://api.github.com/repos/$GITHUB_USER/$repo_name/forks")
-
-    if echo "$response" | grep -q '"Not Found"'; then
-      # Crie o repositório no GitHub usando a API
-      response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                        -H "Accept: application/vnd.github.v3+json" \
-                        -X POST \
-                        -d "{\"name\":\"$repo_name\",\"private\":false}" \
-                        "https://api.github.com/user/repos")
-
-      # Verifique se o repositório foi criado com sucesso
-      http_code=$(echo "$response" | jq -r '.id // empty')
-
-      if [ -n "$http_code" ]; then
-        echo "Repositório no GitHub '$repo_name' criado com sucesso."
-      else
-        echo "Falha ao criar o repositório no GitHub '$repo_name'."
-        echo "Resposta: $response"
-        cd ..
-        continue
-      fi
-    else
-      echo "Repositório '$repo_name' já existe no GitHub."
-    fi
-
-    # Configure o remote 'origin' e 'upstream'
-    remote_url="https://$GITHUB_USER:$GITHUB_TOKEN@github.com/$GITHUB_USER/$repo_name.git"
-    upstream_url="https://github.com/$ORIGINAL_REPO_USER/$repo_name.git"
-
-    # Adicione ou atualize o remote 'origin' com a URL correta
-    git remote set-url origin "$remote_url"
-    echo "Remote 'origin' atualizado para o repositório '$repo_name'."
-
-    # Adicione o remote 'upstream' com a URL do repositório original se não estiver configurado
-    if ! git remote get-url upstream &>/dev/null; then
-      git remote add upstream "$upstream_url"
-      echo "Remote 'upstream' adicionado para o repositório '$repo_name'."
-    fi
-
-    # Faça o push de todos os branches
-    git push --all origin
-
-    # Faça o push de todas as tags
-    git push --tags origin
-
-    # Retorne ao diretório anterior
-    cd ..
-  done
-}
-export -f gcreate_all_repo_into_github
-
 gfork_repo_into_github() {
-  # Defina variáveis
-  local ORIGINAL_REPO_USER="$1"		# Usuário do repositório original (upstream)
-  local repo="$2"									# repo para clonear --all para todos
-  local GITHUB_USER="vcatafesta"  # teu user no github
- 	local GITHUB_TOKEN="$(gettokengithub)"
-  local DEST_DIR="$PWD"						# Diretório onde os repositórios serão clonados
+	# Defina variáveis
+	local ORIGINAL_REPO_USER="$1"  # Usuário do repositório original (upstream)
+	local repo="$2"                # repo para clonear --all para todos
+	local GITHUB_USER="vcatafesta" # teu user no github
+	local GITHUB_TOKEN="$(gettokengithub)"
+	local DEST_DIR="$PWD" # Diretório onde os repositórios serão clonados
 	local red=$(tput bold)$(tput setaf 196)
 	local cyan=$(tput setaf 6)
 	local reset=$(tput sgr0)
 	local mainbranch="$(getbranch)"
 
-  # Verifique se o argumento foi fornecido
-  if [ $# -lt 2 ]; then
-    echo "Uso: ${cyan}gfork_repo_into_github <original_github_repo_user> <repo>|<--all>${reset}"
-    echo "     ${cyan}gfork_repo_into_github biglinux <repo>|<--all>${reset}"
-    echo "     ${cyan}gfork_repo_into_github BigLinux-Package-Build <repo>|<--all> ${reset}"
-    return 1
-  fi
+	# Verifique se o argumento foi fornecido
+	if [ $# -lt 2 ]; then
+		echo "Uso: ${cyan}gfork_repo_into_github <original_github_repo_user> <repo>|<--all>${reset}"
+		echo "     ${cyan}gfork_repo_into_github biglinux <repo>|<--all>${reset}"
+		echo "     ${cyan}gfork_repo_into_github BigLinux-Package-Build <repo>|<--all> ${reset}"
+		return 1
+	fi
 
-  if [ -z "$DEST_DIR" ]; then
-    echo "Defina DEST_DIR para o diretório onde os repositórios devem ser clonados."
-    return 1
-  fi
+	if [ -z "$DEST_DIR" ]; then
+		echo "Defina DEST_DIR para o diretório onde os repositórios devem ser clonados."
+		return 1
+	fi
 
-#  #Lista de repositórios a serem processados
-#  repos=(
-#    auto-hooks-archlinux
-#    auto-hooks-AUR
-#    auto-update-AUR
-#    big-releases
-#    build-iso
-#    build-iso-arm
-#    build-package
-#    build-package-archlinux
-#    build-package-ARM
-#    build-package-tmate
-#    distrobox-images
-#    manjaro-mirror
-#    simple-action-tester
-#    sync-fork
-#  )
+	#  #Lista de repositórios a serem processados
+	#  repos=(
+	#    auto-hooks-archlinux
+	#    auto-hooks-AUR
+	#    auto-update-AUR
+	#    big-releases
+	#    build-iso
+	#    build-iso-arm
+	#    build-package
+	#    build-package-archlinux
+	#    build-package-ARM
+	#    build-package-tmate
+	#    distrobox-images
+	#    manjaro-mirror
+	#    simple-action-tester
+	#    sync-fork
+	#  )
 
 	if [[ -z "$repo" ]] || [[ "$repo" = '--all' ]]; then
 		# Obtenha a lista de repositórios do usuário/organização
 		mapfile -t repos < <(curl -q -s -H "Authorization: token $GITHUB_TOKEN" \
-    	            -H "Accept: application/vnd.github.v3+json" \
-      	          "https://api.github.com/users/$ORIGINAL_REPO_USER/repos?per_page=100" | jq -r '.[].name')
+			-H "Accept: application/vnd.github.v3+json" \
+			"https://api.github.com/users/$ORIGINAL_REPO_USER/repos?per_page=100" | jq -r '.[].name')
 	else
 		repos=("$repo")
 	fi
 
 	for repo_name in "${repos[@]}"; do
-	  cd "$DEST_DIR"
-    echo "Criando fork do repositório: $repo_name"
+		cd "$DEST_DIR"
+		echo "Criando fork do repositório: $repo_name"
 
-    # Crie o fork no GitHub usando gh
-    fork_response=$(gh repo fork "$ORIGINAL_REPO_USER/$repo_name" --clone=false 2>&1)
-    if echo "$fork_response" | grep -q "already exists"; then
-      log_err "O repositório '$repo_name' já foi forkado."
-    else
-      # Verifique se o fork foi criado com sucesso
-      if [[ -z "$fork_response" ]]; then
-        log_msg "Fork do repositório '$repo_name' criado com sucesso."
-      else
-        log_err "Falha ao criar o fork para o repositório '$repo_name'."
-        log_err "Resposta: $fork_response"
-      fi
-    fi
+		# Crie o fork no GitHub usando gh
+		fork_response=$(gh repo fork "$ORIGINAL_REPO_USER/$repo_name" --clone=false 2>&1)
+		if echo "$fork_response" | grep -q "already exists"; then
+			log_err "O repositório '$repo_name' já foi forkado."
+		else
+			# Verifique se o fork foi criado com sucesso
+			if [[ -z "$fork_response" ]]; then
+				log_msg "Fork do repositório '$repo_name' criado com sucesso."
+			else
+				log_err "Falha ao criar o fork para o repositório '$repo_name'."
+				log_err "Resposta: $fork_response"
+			fi
+		fi
 
-    # Obtenha a URL do fork
-    fork_url=$(gh repo view "$GITHUB_USER/$repo_name" --json url -q ".url")
+		# Obtenha a URL do fork
+		fork_url=$(gh repo view "$GITHUB_USER/$repo_name" --json url -q ".url")
 
-    # Clone o repositório forkado
-    log_msg "Clonando repositório forkado: $repo_name"
-    git clone "$fork_url" "$repo_name"
-    cd "$repo_name" || continue
+		# Clone o repositório forkado
+		log_msg "Clonando repositório forkado: $repo_name"
+		git clone "$fork_url" "$repo_name"
+		cd "$repo_name" || continue
 
-    # Adicione o remote 'upstream' se ainda não existir
-    upstream_url="https://github.com/$ORIGINAL_REPO_USER/$repo_name.git"
-    if ! git remote get-url upstream &>/dev/null; then
-      git remote add upstream "$upstream_url"
-      log_msg "Remote 'upstream' adicionado para o repositório '$repo_name'."
-    fi
+		# Adicione o remote 'upstream' se ainda não existir
+		upstream_url="https://github.com/$ORIGINAL_REPO_USER/$repo_name.git"
+		if ! git remote get-url upstream &>/dev/null; then
+			git remote add upstream "$upstream_url"
+			log_msg "Remote 'upstream' adicionado para o repositório '$repo_name'."
+		fi
 
-    # Configure o remote 'origin' com a URL do fork
-    git remote set-url origin "$fork_url"
-    log_msg "Remote 'origin' configurado para o repositório '$repo_name'."
+		# Configure o remote 'origin' com a URL do fork
+		git remote set-url origin "$fork_url"
+		log_msg "Remote 'origin' configurado para o repositório '$repo_name'."
 
-    # Faça o push de todos os branches
-    git push --all origin
+		# Faça o push de todos os branches
+		git push --all origin
 
-    # Faça o push de todas as tags
-    git push --tags origin
+		# Faça o push de todas as tags
+		git push --tags origin
 
-    # Retorne ao diretório anterior
-    cd ..
-  done
+		# Retorne ao diretório anterior
+		cd ..
+	done
 }
 export -f gfork_repo_into_github
 
@@ -2184,8 +2215,8 @@ gremove_all_repo_into_github() {
 	local reset=$(tput sgr0)
 	local mainbranch="$(getbranch)"
 
-  echo "Usuário GitHub: $GITHUB_USER"
-  echo "Nome do Repositório: $REPO_NAME"
+	echo "Usuário GitHub: $GITHUB_USER"
+	echo "Nome do Repositório: $REPO_NAME"
 
 	# Para cada repositório no diretório
 	for REPO_NAME in */; do
@@ -2368,7 +2399,8 @@ inst() {
 
 build() {
 	export r="$PWD"
-	export srcdir=${PWD#/};	srcdir=/${srcdir%%/*}
+	export srcdir=${PWD#/}
+	srcdir=/${srcdir%%/*}
 	alias r='cd $r'
 	pkg=$(echo $PWD | sed 's/\// /g' | awk '{print $NF}' | sed 's/-/_/g' | sed 's/\(.*\)_/\1 /')
 	arr=($pkg)
@@ -2380,7 +2412,8 @@ build() {
 
 gen() {
 	export r="$PWD"
-	export srcdir="${PWD#/}"; srcdir="/${srcdir%%/*}"
+	export srcdir="${PWD#/}"
+	srcdir="/${srcdir%%/*}"
 	alias r='cd $r'
 	pkg=$(echo "$PWD" | sed 's/\// /g' | awk '{print $NF}' | sed 's/-/_/g' | sed 's/\(.*\)_/\1 /')
 	arr=($pkg)
@@ -2419,39 +2452,39 @@ mkpyenv() {
 	fi
 	python3 -m venv $1
 	source $1/bin/activate
-#	deactivate
+	#	deactivate
 }
 
 sh_setLogPrefix() {
-    COL_NC='\e[0m' # No Color
-    COL_LIGHT_GREEN='\e[1;32m'
-    COL_LIGHT_RED='\e[1;31m'
-    TICK="${white}[${COL_LIGHT_GREEN}✓${COL_NC}${white}]"
-    CROSS="${white}[${COL_LIGHT_RED}✗${COL_NC}${white}]"
-    INFO="[i]"
-    # shellcheck disable=SC2034
-    DONE="${COL_LIGHT_GREEN} done!${COL_NC}"
-    OVER="\\r\\033[K"
-    NORMAL="${reset}"
-    SUCCESS="${green}"
-    WARNING="${yellow}"
-    FAILURE="${red}"
-    INFO="${cyan}"
-    BRACKET="${blue}"
-    BMPREFIX="     "
-    DOTPREFIX="  ${blue}::${reset} "
-    #  SUCCESS_PREFIX="${SUCCESS}  ↑  ${NORMAL}"
-    SUCCESS_PREFIX=" $TICK "
-    SUCCESS_SUFFIX="${BRACKET}[${SUCCESS}  OK  ${BRACKET}]${NORMAL}"
-    #  FAILURE_PREFIX="${FAILURE}  ↓  ${NORMAL}"
-    FAILURE_PREFIX=" $CROSS "
-    FAILURE_SUFFIX="${BRACKET}[${FAILURE} FAIL ${BRACKET}]${NORMAL}"
-    WARNING_PREFIX="${WARNING}  W  ${NORMAL}"
-    WARNING_SUFFIX="${BRACKET}[${WARNING} WARN ${BRACKET}]${NORMAL}"
-    SKIP_PREFIX="${INFO}  S  ${NORMAL}"
-    SKIP_SUFFIX="${BRACKET}[${INFO} SKIP ${BRACKET}]${NORMAL}"
-    WAIT_PREFIX="${WARNING}  R  ${NORMAL}"
-    WAIT_SUFFIX="${BRACKET}[${WARNING} WAIT ${BRACKET}]${NORMAL}"
+	COL_NC='\e[0m' # No Color
+	COL_LIGHT_GREEN='\e[1;32m'
+	COL_LIGHT_RED='\e[1;31m'
+	TICK="${white}[${COL_LIGHT_GREEN}✓${COL_NC}${white}]"
+	CROSS="${white}[${COL_LIGHT_RED}✗${COL_NC}${white}]"
+	INFO="[i]"
+	# shellcheck disable=SC2034
+	DONE="${COL_LIGHT_GREEN} done!${COL_NC}"
+	OVER="\\r\\033[K"
+	NORMAL="${reset}"
+	SUCCESS="${green}"
+	WARNING="${yellow}"
+	FAILURE="${red}"
+	INFO="${cyan}"
+	BRACKET="${blue}"
+	BMPREFIX="     "
+	DOTPREFIX="  ${blue}::${reset} "
+	#  SUCCESS_PREFIX="${SUCCESS}  ↑  ${NORMAL}"
+	SUCCESS_PREFIX=" $TICK "
+	SUCCESS_SUFFIX="${BRACKET}[${SUCCESS}  OK  ${BRACKET}]${NORMAL}"
+	#  FAILURE_PREFIX="${FAILURE}  ↓  ${NORMAL}"
+	FAILURE_PREFIX=" $CROSS "
+	FAILURE_SUFFIX="${BRACKET}[${FAILURE} FAIL ${BRACKET}]${NORMAL}"
+	WARNING_PREFIX="${WARNING}  W  ${NORMAL}"
+	WARNING_SUFFIX="${BRACKET}[${WARNING} WARN ${BRACKET}]${NORMAL}"
+	SKIP_PREFIX="${INFO}  S  ${NORMAL}"
+	SKIP_SUFFIX="${BRACKET}[${INFO} SKIP ${BRACKET}]${NORMAL}"
+	WAIT_PREFIX="${WARNING}  R  ${NORMAL}"
+	WAIT_SUFFIX="${BRACKET}[${WARNING} WAIT ${BRACKET}]${NORMAL}"
 }
 
 log_msg() {
@@ -2463,24 +2496,24 @@ log_err() {
 }
 
 mkl() {
-    prg='script.lua'
-    if test $# -ge 1; then
-        prg="$1"
-        [[ -e "$prg" ]] && {
-            log_err "${red}error: ${reset}Arquivo ${cyan}'$1'${reset} já existe. Abortando..."
-            return
-        }
-    fi
-    log_msg "Criando arquivo Lua ${cyan}'$prg'${reset} on $PWD"
-    cat >"$prg" <<"EOF"
+	prg='script.lua'
+	if test $# -ge 1; then
+		prg="$1"
+		[[ -e "$prg" ]] && {
+			log_err "${red}error: ${reset}Arquivo ${cyan}'$1'${reset} já existe. Abortando..."
+			return
+		}
+	fi
+	log_msg "Criando arquivo Lua ${cyan}'$prg'${reset} on $PWD"
+	cat >"$prg" <<"EOF"
 #!/usr/bin/env lua
 
 EOF
-    sudo chmod +x $prg
-    #echo $(replicate '=' 80)
-    #cat $prg
-    #echo $(replicate '=' 80)
-    log_msg "Feito! arquivo ${cyan}'$prg' ${reset}criado on $PWD"
+	sudo chmod +x $prg
+	#echo $(replicate '=' 80)
+	#cat $prg
+	#echo $(replicate '=' 80)
+	log_msg "Feito! arquivo ${cyan}'$prg' ${reset}criado on $PWD"
 }
 
 makebash() {
@@ -2498,91 +2531,91 @@ makebash() {
 	fi
 	log_msg "Criando script bash ${cyan}'$prg'${reset} on $PWD"
 	cat >"$prg" <<-EOF
-#!/usr/bin/env bash
-# -*- coding: utf-8 -*-
-# shellcheck shell=bash disable=SC1091,SC2039,SC2166
-#
-#  $prg
-#  Created: $(date +'%Y/%m/%d') - $(date +'%H:%M')
-#  Altered: $(date +'%Y/%m/%d') - $(date +'%H:%M')
-#
-#  Copyright (c) $(date +'%Y')-$(date +'%Y'), Vilmar Catafesta <vcatafesta@gmail.com>
-#  All rights reserved.
-#
-#  Redistribution and use in source and binary forms, with or without
-#  modification, are permitted provided that the following conditions
-#  are met:
-#  1. Redistributions of source code must retain the above copyright
-#     notice, this list of conditions and the following disclaimer.
-#  2. Redistributions in binary form must reproduce the above copyright
-#     notice, this list of conditions and the following disclaimer in the
-#     documentation and/or other materials provided with the distribution.
-#
-#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-##############################################################################
-#export LANGUAGE=pt_BR
-export TEXTDOMAINDIR=/usr/share/locale
-export TEXTDOMAIN=$prg
+		#!/usr/bin/env bash
+		# -*- coding: utf-8 -*-
+		# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+		#
+		#  $prg
+		#  Created: $(date +'%Y/%m/%d') - $(date +'%H:%M')
+		#  Altered: $(date +'%Y/%m/%d') - $(date +'%H:%M')
+		#
+		#  Copyright (c) $(date +'%Y')-$(date +'%Y'), Vilmar Catafesta <vcatafesta@gmail.com>
+		#  All rights reserved.
+		#
+		#  Redistribution and use in source and binary forms, with or without
+		#  modification, are permitted provided that the following conditions
+		#  are met:
+		#  1. Redistributions of source code must retain the above copyright
+		#     notice, this list of conditions and the following disclaimer.
+		#  2. Redistributions in binary form must reproduce the above copyright
+		#     notice, this list of conditions and the following disclaimer in the
+		#     documentation and/or other materials provided with the distribution.
+		#
+		#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR $()AS IS'' AND ANY EXPRESS OR
+		#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+		#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+		#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+		#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+		#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+		#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+		#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+		#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+		#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+		##############################################################################
+		#export LANGUAGE=pt_BR
+		export TEXTDOMAINDIR=/usr/share/locale
+		export TEXTDOMAIN=$prg
 
-# Definir a variável de controle para restaurar a formatação original
-reset=\$(tput sgr0)
+		# Definir a variável de controle para restaurar a formatação original
+		reset=\$(tput sgr0)
 
-# Definir os estilos de texto como variáveis
-bold=\$(tput bold)
-underline=\$(tput smul)   # Início do sublinhado
-nounderline=\$(tput rmul) # Fim do sublinhado
-reverse=\$(tput rev)      # Inverte as cores de fundo e texto
+		# Definir os estilos de texto como variáveis
+		bold=\$(tput bold)
+		underline=\$(tput smul)   # Início do sublinhado
+		nounderline=\$(tput rmul) # Fim do sublinhado
+		reverse=\$(tput rev)      # Inverte as cores de fundo e texto
 
-# Definir as cores ANSI como variáveis
-black=\$(tput bold)\$(tput setaf 0)
-red=\$(tput bold)\$(tput setaf 196)
-green=\$(tput bold)\$(tput setaf 2)
-yellow=\$(tput bold)\$(tput setaf 3)
-blue=\$(tput setaf 4)
-pink=\$(tput setaf 5)
-magenta=\$(tput setaf 5)
-cyan=\$(tput setaf 6)
-white=\$(tput setaf 7)
-gray=\$(tput setaf 8)
-orange=\$(tput setaf 202)
-purple=\$(tput setaf 125)
-violet=\$(tput setaf 61)
-light_red=\$(tput setaf 9)
-light_green=\$(tput setaf 10)
-light_yellow=\$(tput setaf 11)
-light_blue=\$(tput setaf 12)
-light_magenta=\$(tput setaf 13)
-light_cyan=\$(tput setaf 14)
-bright_white=\$(tput setaf 15)
+		# Definir as cores ANSI como variáveis
+		black=\$(tput bold)\$(tput setaf 0)
+		red=\$(tput bold)\$(tput setaf 196)
+		green=\$(tput bold)\$(tput setaf 2)
+		yellow=\$(tput bold)\$(tput setaf 3)
+		blue=\$(tput setaf 4)
+		pink=\$(tput setaf 5)
+		magenta=\$(tput setaf 5)
+		cyan=\$(tput setaf 6)
+		white=\$(tput setaf 7)
+		gray=\$(tput setaf 8)
+		orange=\$(tput setaf 202)
+		purple=\$(tput setaf 125)
+		violet=\$(tput setaf 61)
+		light_red=\$(tput setaf 9)
+		light_green=\$(tput setaf 10)
+		light_yellow=\$(tput setaf 11)
+		light_blue=\$(tput setaf 12)
+		light_magenta=\$(tput setaf 13)
+		light_cyan=\$(tput setaf 14)
+		bright_white=\$(tput setaf 15)
 
-#debug
-export PS4='\${red}\${0##*/}\${green}[\$FUNCNAME]\${pink}[\$LINENO]\${reset}'
-#set -x
-#set -e
-shopt -s extglob
+		#debug
+		export PS4='\${red}\${0##*/}\${green}[\$FUNCNAME]\${pink}[\$LINENO]\${reset}'
+		#set -x
+		#set -e
+		shopt -s extglob
 
-#system
-declare APP="\${0##*/}"
-declare _VERSION_="1.0.0-$(date +'%Y%m%d')"
-declare distro="\$(uname -n)"
-declare DEPENDENCIES=(tput)
-source /usr/share/fetch/core.sh
+		#system
+		declare APP="\${0##*/}"
+		declare _VERSION_="1.0.0-$(date +'%Y%m%d')"
+		declare distro="\$(uname -n)"
+		declare DEPENDENCIES=(tput)
+		source /usr/share/fetch/core.sh
 
-MostraErro {
-  echo "erro: \${red}\$1\${reset} => comando: \${cyan}'\$2'\${reset} => result=\${yellow}\$3\${reset}"
-}
-trap 'MostraErro "\$APP[\$FUNCNAME][\$LINENO]" "\$BASH_COMMAND" "\$?"; exit 1' ERR
+		MostraErro() {
+		  echo "erro: \${red}\$1\${reset} => comando: \${cyan}'\$2'\${reset} => result=\${yellow}\$3\${reset}"
+		}
+		trap 'MostraErro "\$APP[\$FUNCNAME][\$LINENO]" "\$BASH_COMMAND" "\$?"; exit 1' ERR
 
-EOF
+	EOF
 	sudo chmod +x $prg
 	#echo $(replicate '=' 80)
 	#cat $prg
@@ -2601,81 +2634,81 @@ mkcobol() {
 	fi
 	log_msg "Aguarde, criando arquivo ${cyan}'$prg'${reset} on $PWD"
 	cat >"$prg" <<-'EOF'
-      *=================================================================
-      * Author    :
-      * Date      :
-      * Purpose   :
-      * Tectonics : cobc -x -j -O
-      *=================================================================
-      *>>SOURCE FORMAT FREE.
-       IDENTIFICATION DIVISION.
-        PROGRAM-ID.     YOUR-PROGRAM-NAME.
-        AUTHOR.         Vilmar Catafesta.
-        INSTALLATION.   Vilmar Catafesta.
-        DATE-WRITTEN.   05/12/2023.
-        DATE-COMPILED.  05/12/2023.
-      *
-      * PROJ DESC : SAMPLE COBOL PROGRAM TO DISPLAY EMPLOYEE
-      *              NAME in SPOOL.
-      *
-      *=================================================================
-       ENVIRONMENT DIVISION.
-        INPUT-OUTPUT SECTION.
-      *
-      *
-       DATA DIVISION.
-      *
-       FILE SECTION.
-      *
-       WORKING-STORAGE SECTION.
-      *
-       77 black         pic 9 value 0.
-       77 blue          pic 9 value 1.
-       77 green         pic 9 value 2.
-       77 cyan          pic 9 value 3.
-       77 red           pic 9 value 4.
-       77 magenta       pic 9 value 5.
-       77 brown         pic 9 value 6.
-       77 white         pic 9 value 7.
-       77 cinza         pic 9 value 8.
-       77 lightblue     pic 9 value 9.
-       77 ligthgreen    pic 99 value 10.
-       77 ligthcyan     pic 99 value 11.
-       77 ligthred      pic 99 value 12.
-       77 ligthmagenta  pic 99 value 13.
-       77 yellow        pic 99 value 14.
-       77 lightwhite    pic 99 value 15.
+		      *=================================================================
+		      * Author    :
+		      * Date      :
+		      * Purpose   :
+		      * Tectonics : cobc -x -j -O
+		      *=================================================================
+		      *>>SOURCE FORMAT FREE.
+		       IDENTIFICATION DIVISION.
+		        PROGRAM-ID.     YOUR-PROGRAM-NAME.
+		        AUTHOR.         Vilmar Catafesta.
+		        INSTALLATION.   Vilmar Catafesta.
+		        DATE-WRITTEN.   05/12/2023.
+		        DATE-COMPILED.  05/12/2023.
+		      *
+		      * PROJ DESC : SAMPLE COBOL PROGRAM TO DISPLAY EMPLOYEE
+		      *              NAME in SPOOL.
+		      *
+		      *=================================================================
+		       ENVIRONMENT DIVISION.
+		        INPUT-OUTPUT SECTION.
+		      *
+		      *
+		       DATA DIVISION.
+		      *
+		       FILE SECTION.
+		      *
+		       WORKING-STORAGE SECTION.
+		      *
+		       77 black         pic 9 value 0.
+		       77 blue          pic 9 value 1.
+		       77 green         pic 9 value 2.
+		       77 cyan          pic 9 value 3.
+		       77 red           pic 9 value 4.
+		       77 magenta       pic 9 value 5.
+		       77 brown         pic 9 value 6.
+		       77 white         pic 9 value 7.
+		       77 cinza         pic 9 value 8.
+		       77 lightblue     pic 9 value 9.
+		       77 ligthgreen    pic 99 value 10.
+		       77 ligthcyan     pic 99 value 11.
+		       77 ligthred      pic 99 value 12.
+		       77 ligthmagenta  pic 99 value 13.
+		       77 yellow        pic 99 value 14.
+		       77 lightwhite    pic 99 value 15.
 
-       01 NR1 PIC +ZZZ9.
-       01 NR2 PIC +9999.
-       01 NR3 PIC S9999.
-       01 WRK-DATA.
-           02 WRK-ANO PIC 9(04)  VALUE ZEROS.
-           02 WRK-MES PIC 9(02)  VALUE ZEROS.
-           02 WRK-DIA PIC 9(02)  VALUE ZEROS.
-      *
-      *
-       PROCEDURE DIVISION.
-      *
-       0100-main-logic.
-            display "Copyright (c) 2023 Vilmar Catafesta"
-                    " <vcatafesta@gmail.com>"
-            display "Hello World!"
-            perform main-procedure.
+		       01 NR1 PIC +ZZZ9.
+		       01 NR2 PIC +9999.
+		       01 NR3 PIC S9999.
+		       01 WRK-DATA.
+		           02 WRK-ANO PIC 9(04)  VALUE ZEROS.
+		           02 WRK-MES PIC 9(02)  VALUE ZEROS.
+		           02 WRK-DIA PIC 9(02)  VALUE ZEROS.
+		      *
+		      *
+		       PROCEDURE DIVISION.
+		      *
+		       0100-main-logic.
+		            display "Copyright (c) 2023 Vilmar Catafesta"
+		                    " <vcatafesta@gmail.com>"
+		            display "Hello World!"
+		            perform main-procedure.
 
-       main-procedure.
-           MOVE 2      TO NR1
-           MOVE 3      TO NR2
-           MOVE 2023   TO NR3
-           DISPLAY NR1
-           DISPLAY NR2
-           DISPLAY NR3
-           ACCEPT WRK-DATA FROM DATE YYYYMMDD.
-           DISPLAY 'DATA ' WRK-DIA ' DE ' WRK-MES ' DE ' WRK-ANO.
-           STOP RUN.
-       END PROGRAM YOUR-PROGRAM-NAME.
-EOF
-    log_msg "Feito! arquivo ${cyan}'$prg' ${reset}criado on $PWD"
+		       main-procedure.
+		           MOVE 2      TO NR1
+		           MOVE 3      TO NR2
+		           MOVE 2023   TO NR3
+		           DISPLAY NR1
+		           DISPLAY NR2
+		           DISPLAY NR3
+		           ACCEPT WRK-DATA FROM DATE YYYYMMDD.
+		           DISPLAY 'DATA ' WRK-DIA ' DE ' WRK-MES ' DE ' WRK-ANO.
+		           STOP RUN.
+		       END PROGRAM YOUR-PROGRAM-NAME.
+	EOF
+	log_msg "Feito! arquivo ${cyan}'$prg' ${reset}criado on $PWD"
 }
 
 mkcpp() { make_cpp_file "$@"; }
@@ -2703,7 +2736,7 @@ make_cpp_file() {
 		   #include <filesystem>
 		   #include <cstddef>   // std::size_t
 		   #include <valarray>  // std::valarray, std::slice
-   		   #include <sstream>   // std::stringstream
+		        #include <sstream>   // std::stringstream
 		   #include <string>
 		   #include <cctype>
 		   #include <array>
@@ -2799,7 +2832,7 @@ make_cpp_file() {
 		}
 
 	EOF
-    log_success_msg2 "Feito! ${cyan}'$prg' ${reset}criado on $PWD"
+	log_success_msg2 "Feito! ${cyan}'$prg' ${reset}criado on $PWD"
 }
 
 mkc() { make_c_file "$@"; }
@@ -3098,7 +3131,7 @@ chili-removeoldpkgchili() {
 		else
 			#cdir=${1:0:1}
 			pushd $cdir >/dev/null 2>&1 || return
-#			AllFilesPackages=$(ls -1 -- *.zst | grep ^$1)
+			#			AllFilesPackages=$(ls -1 -- *.zst | grep ^$1)
 			AllFilesPackages=$(grep ^$1 -- *.zst)
 		fi
 
@@ -3214,11 +3247,6 @@ renane() {
 	done
 }
 export -f renane
-
-zerobyte() {
-	for f in "${1[@]}"; do echo >"$f"; done
-}
-export -f zerobyte
 
 xwinserver() {
 	export LIBGL_ALWAYS_INDIRECT
@@ -3375,11 +3403,15 @@ fid() {
 	find . -iname "$filepath" -type f | wc -l
 }
 
-ff() {
+chili-ff() {
 	local filepath=$1
 	local num_arquivos=$2
 	local intervalo=$3
 	local resultado
+	local red=$(tput bold)$(tput setaf 196)
+	local cyan=$(tput setaf 6)
+	local green=$(tput bold)$(tput setaf 2)
+	local reset=$(tput sgr0)
 
 	if [ $# -eq 0 ]; then
 		filepath='*.*'
@@ -3408,6 +3440,95 @@ ff() {
 	echo "Intervalo de tempo (\$3): ${intervalo:-Todos} (minutos)"
 	echo "Uso: ${red}ff "*.c"${reset} or ${red}ff "*.c" 10 | xargs commando${reset} or ${red}ff "*.c" | xargs cp -v /tmp${reset}"
 }
+export -f chili-ff
+alias ff=chili-ff
+
+chili-ffc() {
+	local filepath="$1"
+	local destino="$2"
+	local num_arquivos="$3"
+	local intervalo="$4"
+	local resultado
+	local red=$(tput bold)$(tput setaf 196)
+	local green=$(tput bold)$(tput setaf 2)
+	local reset=$(tput sgr0)
+
+	is_regex() {
+		local param=$1
+		# Verifica se a string é um padrão globbing comum (por exemplo, "*.ext")
+		if [[ "$param" =~ ^\*?\.[[:alnum:]]+ ]] || [[ "$param" =~ ^\*\.\*$ ]]; then
+			return 1 # Não é uma regex, é um padrão globbing simples
+		fi
+
+		# Verifica se a string contém caracteres comuns de regex
+		if [[ "$param" =~ [[:punct:]] ]]; then
+			return 0 # Pode ser uma regex
+		else
+			return 1 # Provavelmente não é uma regex
+		fi
+	}
+
+	# Função para converter padrões em regex
+	convert_pattern_to_regex() {
+		local pattern="$1"
+		# Converte o padrão em uma expressão regular
+		# Substitui `*` por `.*`, `?` por `.`, e outras conversões
+		echo "$pattern" | sed -e 's/\./\\./g' -e 's/\*/.*/g' -e 's/\?/./g'
+	}
+
+	if [ -z "$filepath" ]; then
+		filepath='*.*'
+		# Converte o padrão para regex
+		#		filepath=$(convert_pattern_to_regex "$filepath")
+	fi
+
+	if is_regex "$filepath"; then
+		local find_command="sudo find . -type d -name .git -prune -o -type f -regextype posix-extended -regex '$filepath'"
+	else
+		local find_command="sudo find . -type d -name .git -prune -o -type f -iname '$filepath'"
+	fi
+
+	if [[ -n "$intervalo" ]]; then
+		find_command+=" -mmin -${intervalo}"
+	fi
+
+	local find_command_cp="$find_command"
+	local format_string="\033[1;32m%TY-%Tm-%Td %TH:%TM:%TS\033[0m \033[1;34m%p\033[0m\n"
+	local format_string_cp="%TY-%Tm-%Td %TH:%TM:%TS %p\n"
+	find_command+=" -printf \"$format_string\" | sort"
+	find_command_cp+=" -printf \"$format_string_cp\" | sort"
+
+	if [[ -n "$num_arquivos" ]]; then
+		find_command+=" | tail -n $num_arquivos"
+		find_command_cp+=" | tail -n $num_arquivos"
+	fi
+
+	resultado=$(eval "$find_command")
+	resultado_cp=$(eval "$find_command_cp")
+
+	echo "=== Resultado ==="
+	echo "$resultado" | nl
+
+	# Copiar arquivos para o destino, se fornecido
+	if [[ -n "$destino" ]]; then
+		echo "=== Copiando arquivos para: ${green}$destino${reset} ==="
+		# Extrai apenas o caminho dos arquivos e copia para o destino
+		echo "$resultado_cp" | awk '{print $NF}' | xargs -I {} cp -v "{}" "$destino/" | nl
+	fi
+
+	echo "=== Parâmetros informados ==="
+	echo "Searching              : ${green}($find_command)${reset}"
+	echo "Padrão             (\$1): ${filepath}"
+	echo "Diretório destino  (\$2): ${destino:-Nenhum}"
+	echo "Número de arquivos (\$3): ${num_arquivos:-Todos}"
+	echo "Intervalo de tempo (\$4): ${intervalo:-Todos} (minutos)"
+	echo "Uso: ${red}ffc *.txt /tmp ${reset}     ${cyan} #lista e copia"
+	echo "     ${red}ffc *.* ${reset}            ${cyan} #somente lista"
+	echo "     ${red}ffc '.*\.(zst|sig)$' /tmp ${reset}"
+	echo "     ${red}ffc '.*\.(zst|sig)$' /tmp 10 60${reset}"
+}
+export -f chili-ffc
+alias ffc=chili-ffc
 
 ffTesting() {
 	local filepath
@@ -3417,15 +3538,15 @@ ffTesting() {
 	local resultado
 
 	set -f # Desabilita temporariamente a expansão de caminhos
-#	filepath="${@:1:1}"
-#	num_arquivos="${@:2:1}"
-#	intervalo="${@:3:1}"
+	#	filepath="${@:1:1}"
+	#	num_arquivos="${@:2:1}"
+	#	intervalo="${@:3:1}"
 	filepath="${*:1:1}"
 	num_arquivos="${*:2:1}"
 	intervalo="${*:3:1}"
 
 	[[ $# -eq 0 ]] && filepath=('*.*')
-#	local find_command="sudo find . -type f,l -iname '${filepath[@]}' "
+	#	local find_command="sudo find . -type f,l -iname '${filepath[@]}' "
 	local find_command="sudo find . -type f,l -iname '${filepath[*]}' "
 	[[ -n "$intervalo" ]] && find_command+=" -mmin -${intervalo}"
 	find_command+=" -printf \"$format_string\" | sort"
@@ -3455,7 +3576,7 @@ ffOLD() {
 	echo "Uso: ${red}ff "*.c"${reset} or ${red}ff "*.c" | xargs commando${reset} or ${red}ff "*.c" | xargs cp -v /tmp${reset}"
 }
 
-ffe() {
+chili-ffe() {
 	[ "$1" ] || {
 		echo "Uso: ffe 'grep search'   | xargs comando"
 		echo "     ffe 'grep search"
@@ -3467,21 +3588,8 @@ ffe() {
 	#	sudo find . -type f,d,l -exec file {} + | grep -iE '(jpe?g|jpg|wav|mp3|MPEG)' | cut -d: -f1
 	sudo find . -type f,d,l -exec file {} + | grep -iE "($1)" | cut -d: -f1
 }
-
-ffs() {
-	[ "$1" ] || {
-		echo "Uso: ffs 'search' '*.doc' | xargs comando"
-		echo "     ffs 'def |function ' '*.prg'"
-		echo "     ffs '#include' '*.*'"
-		echo "     ffs 'search|search|texto' '*.txt' | xargs rm -fv"
-		echo "     ffs 'ELF|ASCII|MP4' '*.doc' | xargs cp -v /tmp"
-		return
-	}
-	#	sudo find . -type f -iname '*'"$2"'*' -exec grep --text -iE "($1)" {} +;
-	#	sudo grep -r --color=auto -n -iE "($1)" $2;
-	#	sudo find . -type d -name bcc-archived -prune -o -type f -iname '*'"$2"'*' -exec grep --color=auto -n -iE "($1)" {} +;
-	sudo find . -type d -name bcc-archived -prune -o -type f \( -iname '*'"$2"'*' -and ! -iname '*.pot' -and ! -iname '*.mo' -and ! -iname '*.po' \) -exec grep --color=auto -n -iE "($1)" {} +
-}
+export -f chili-ffe
+alias ffe=chili-ffe
 
 chili-fft() {
 	local num_arquivos=$1
@@ -3526,8 +3634,8 @@ chili-xcopyr() {
 		echo "        xcopyr $HOME/files/.  /lixo/archived"
 		return 1
 	fi
-#	local origem="${@:1:$#-1}" # Todos os parâmetros exceto o último são a origem
-#	local destino="${@: -1}"   # Último parâmetro é o destino
+	#	local origem="${@:1:$#-1}" # Todos os parâmetros exceto o último são a origem
+	#	local destino="${@: -1}"   # Último parâmetro é o destino
 	local origem="${*:1:$#-1}" # Todos os parâmetros exceto o último são a origem
 	local destino="${*: -1}"   # Último parâmetro é o destino
 	set -f                     #Desabilita temporariamente a expansão de caminhos
@@ -3549,8 +3657,8 @@ chili-xcopyc() {
 		echo "        xcopyc $HOME/files/.  /lixo/archived"
 		return 1
 	fi
-#	local origem="${@:1:$#-1}" # Todos os parâmetros exceto o último são a origem
-#	local destino="${@: -1}"   # Último parâmetro é o destino
+	#	local origem="${@:1:$#-1}" # Todos os parâmetros exceto o último são a origem
+	#	local destino="${@: -1}"   # Último parâmetro é o destino
 	local origem="${*:1:$#-1}" # Todos os parâmetros exceto o último são a origem
 	local destino="${*: -1}"   # Último parâmetro é o destino
 	set -f                     #Desabilita temporariamente a expansão de caminhos
@@ -3561,39 +3669,39 @@ export -f chili-xcopyc
 alias xcopyc=chili-xcopyc
 
 chili-ccp() {
-    local filepath="$1"
-    local diretorio_destino="$2"
-    local total_bytes=0
+	local filepath="$1"
+	local diretorio_destino="$2"
+	local total_bytes=0
 
-    if [ $# -eq 0 ]; then
-        echo "Uso: ccp <padrão_do_arquivo> <diretório_destino>"
-        return 1
-    fi
+	if [ $# -eq 0 ]; then
+		echo "Uso: ccp <padrão_do_arquivo> <diretório_destino>"
+		return 1
+	fi
 
-    if [ -z "$filepath" ]; then
-        filepath='*.*'
-    fi
+	if [ -z "$filepath" ]; then
+		filepath='*.*'
+	fi
 
-    local find_command="find . -type d -iname .git -prune -o -type f -iname '$filepath' -exec cp {} \"$diretorio_destino\" \\; -exec du -sb {} +"
-    local format_string="\033[1;32m%TY-%Tm-%Td %TH:%TM:%TS\033[0m \033[1;34m%p\033[0m\n"
-    find_command+=" -printf \"$format_string\""
-    resultado=$(eval "$find_command" 2>&1)
+	local find_command="find . -type d -iname .git -prune -o -type f -iname '$filepath' -exec cp {} \"$diretorio_destino\" \\; -exec du -sb {} +"
+	local format_string="\033[1;32m%TY-%Tm-%Td %TH:%TM:%TS\033[0m \033[1;34m%p\033[0m\n"
+	find_command+=" -printf \"$format_string\""
+	resultado=$(eval "$find_command" 2>&1)
 
-    while read -r line; do
-        if [[ $line =~ ^[0-9]+ ]]; then
-            total_bytes=$((total_bytes + ${BASH_REMATCH[0]}))
-        fi
-    done <<<"$resultado"
+	while read -r line; do
+		if [[ $line =~ ^[0-9]+ ]]; then
+			total_bytes=$((total_bytes + ${BASH_REMATCH[0]}))
+		fi
+	done <<<"$resultado"
 
-    total_human_readable=$(numfmt --to=iec --format='%3.f' $total_bytes)
+	total_human_readable=$(numfmt --to=iec --format='%3.f' $total_bytes)
 
-    echo "=== Resultado ==="
-    echo "$resultado" | grep -vE '^[0-9]+[[:space:]]+'
-    echo -e "=== Total Bytes Copiados === \033[1;31m$total_bytes bytes ($total_human_readable)\033[0m"
-    echo "=== Parâmetros informados ==="
-    echo -e "Padrão (\$1)               : \033[1;34m${filepath}\033[0m"
-    echo -e "Diretório de Destino (\$2) : \033[1;34m${diretorio_destino}\033[0m"
-    echo -e "Uso : \033[1;36mccp \"*.c\" /tmp\033[0m"
+	echo "=== Resultado ==="
+	echo "$resultado" | grep -vE '^[0-9]+[[:space:]]+'
+	echo -e "=== Total Bytes Copiados === \033[1;31m$total_bytes bytes ($total_human_readable)\033[0m"
+	echo "=== Parâmetros informados ==="
+	echo -e "Padrão (\$1)               : \033[1;34m${filepath}\033[0m"
+	echo -e "Diretório de Destino (\$2) : \033[1;34m${diretorio_destino}\033[0m"
+	echo -e "Uso : \033[1;36mccp \"*.c\" /tmp\033[0m"
 }
 export -f chili-ccp
 alias ccp=chili-ccp
@@ -3942,7 +4050,7 @@ chili-qemu-img-resize-raw() {
 		echo "	Após, execute 'e2fsck -f /dev/sdXn' primeiro."
 		echo "	por fim use 'resize2fs /dev/sdXn' para ajustar tamanho."
 	else
-	cat <<EOF
+		cat <<EOF
 usage:
 	chili-qemu-img-resize-raw <file.img> <size>
 	chili-qemu-img-resize-raw gnuzinho.img +5G
@@ -3952,44 +4060,234 @@ EOF
 export -f chili-qemu-img-resize-raw
 
 mkspkg() {
-    prg="$1"
-    if test $# -ge 1; then
-        [[ -d "$prg" ]] && {
-            log_err "${red}error: ${reset}Diretorio ${cyan}'$1'${reset} já existe. Abortando..."
-            return
-        }
-        [[ -e "spkgbuild" ]] && {
-            log_err "${red}error: ${reset}Arquivo ${cyan}'spkgbuild'${reset} já existe. Abortando..."
-            return
-        }
-    fi
-    pkg=$prg
-    directory="${PWD##*/}"
-    if ! [[ "$directory" = "$prg" ]]; then
-        log_msg "Aguarde, criando diretorio ${cyan}'$prg'${reset} on $PWD"
-        mkdir -p "$prg"
-    else
-        prg=$PWD
-    fi
-    log_msg "Aguarde, criando arquivo ${cyan}'spkgbuild'${reset} on $PWD"
-    cat >"$prg/spkgbuild" <<-EOF
-# description   : Text document format for short documents, articles, books and UNIX man pages
-# depends       :
+	prg="$1"
+	if test $# -ge 1; then
+		[[ -d "$prg" ]] && {
+			log_err "${red}error: ${reset}Diretorio ${cyan}'$1'${reset} já existe. Abortando..."
+			return
+		}
+		[[ -e "spkgbuild" ]] && {
+			log_err "${red}error: ${reset}Arquivo ${cyan}'spkgbuild'${reset} já existe. Abortando..."
+			return
+		}
+	fi
+	pkg=$prg
+	directory="${PWD##*/}"
+	if ! [[ "$directory" = "$prg" ]]; then
+		log_msg "Aguarde, criando diretorio ${cyan}'$prg'${reset} on $PWD"
+		mkdir -p "$prg"
+	else
+		prg=$PWD
+	fi
+	log_msg "Aguarde, criando arquivo ${cyan}'spkgbuild'${reset} on $PWD"
+	cat >"$prg/spkgbuild" <<-EOF
+		# description   : Text document format for short documents, articles, books and UNIX man pages
+		# depends       :
 
-name=$pkg
-version=1.0.0
-release=1
-source="https://github.com/asciidoc/\$name-py3/archive/\$version/\$name-py3-\$version.tar.gz"
+		name=$pkg
+		version=1.0.0
+		release=1
+		source="https://github.com/asciidoc/\$name-py3/archive/\$version/\$name-py3-\$version.tar.gz"
 
-build() {
-    cd \$name-\$version
-    ./configure \
-        --prefix=/usr \
-        --sysconfdir=/etc
-    make
-    make DESTDIR=\$PKG install
+		build() {
+		    cd \$name-\$version
+		    ./configure \
+		        --prefix=/usr \
+		        --sysconfdir=/etc
+		    make
+		    make DESTDIR=\$PKG install
+		}
+	EOF
+	log_msg "Feito! diretorio ${cyan}'$prg' ${reset}criado on $PWD"
+	log_msg "Feito! arquivo ${cyan} '$prg/spkgbuild' ${reset}criado on $PWD"
 }
-EOF
-    log_msg "Feito! diretorio ${cyan}'$prg' ${reset}criado on $PWD"
-    log_msg "Feito! arquivo ${cyan} '$prg/spkgbuild' ${reset}criado on $PWD"
+
+gcreate_all_repo_into_github() {
+	local ORIGINAL_REPO_USER="$1" # Usuário do repositório original (upstream)
+	local GITHUB_USER="vcatafesta"
+	local GITHUB_TOKEN="$(gettokengithub)"
+	local DEST_DIR="$PWD" # Diretório onde os repositórios estão clonados
+	local red=$(tput bold)$(tput setaf 196)
+	local cyan=$(tput setaf 6)
+	local reset=$(tput sgr0)
+	local mainbranch="$(getbranch)"
+
+	# Verifique se o argumento foi fornecido
+	if [ $# -eq 0 ]; then
+		echo "Uso: ${cyan}gcreate_all_repo_into_github <original_github_repo_user>${reset}"
+		echo "     ${cyan}gcreate_all_repo_into_github biglinux${reset}"
+		echo "     ${cyan}gcreate_all_repo_into_github BigLinux-Package-Build${reset}"
+		return 1
+	fi
+
+	if [ -z "$DEST_DIR" ]; then
+		echo "Defina DEST_DIR para o diretório onde os repositórios foram clonados."
+		return 1
+	fi
+
+	# Navegue até o diretório de destino
+	cd "$DEST_DIR" || return 1
+
+	# Obtenha a lista de repositórios clonados
+	for repo_dir in */; do
+		# Remove a barra final e obtenha o nome do repositório
+		repo_name=$(basename "${repo_dir%%/}")
+
+		echo "Processando repositório: $repo_name"
+
+		cd "$repo_dir" || continue
+
+		# Verifique se o repositório já existe no GitHub
+		response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+			-H "Accept: application/vnd.github.v3+json" \
+			"https://api.github.com/repos/$GITHUB_USER/$repo_name/forks")
+
+		if echo "$response" | grep -q '"Not Found"'; then
+			# Crie o repositório no GitHub usando a API
+			response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+				-H "Accept: application/vnd.github.v3+json" \
+				-X POST \
+				-d "{\"name\":\"$repo_name\",\"private\":false}" \
+				"https://api.github.com/user/repos")
+
+			# Verifique se o repositório foi criado com sucesso
+			http_code=$(echo "$response" | jq -r '.id // empty')
+
+			if [ -n "$http_code" ]; then
+				echo "Repositório no GitHub '$repo_name' criado com sucesso."
+			else
+				echo "Falha ao criar o repositório no GitHub '$repo_name'."
+				echo "Resposta: $response"
+				cd ..
+				continue
+			fi
+		else
+			echo "Repositório '$repo_name' já existe no GitHub."
+		fi
+
+		# Configure o remote 'origin' e 'upstream'
+		remote_url="https://$GITHUB_USER:$GITHUB_TOKEN@github.com/$GITHUB_USER/$repo_name.git"
+		upstream_url="https://github.com/$ORIGINAL_REPO_USER/$repo_name.git"
+
+		# Adicione ou atualize o remote 'origin' com a URL correta
+		git remote set-url origin "$remote_url"
+		echo "Remote 'origin' atualizado para o repositório '$repo_name'."
+
+		# Adicione o remote 'upstream' com a URL do repositório original se não estiver configurado
+		if ! git remote get-url upstream &>/dev/null; then
+			git remote add upstream "$upstream_url"
+			echo "Remote 'upstream' adicionado para o repositório '$repo_name'."
+		fi
+
+		# Faça o push de todos os branches
+		git push --all origin
+
+		# Faça o push de todas as tags
+		git push --tags origin
+
+		# Retorne ao diretório anterior
+		cd ..
+	done
 }
+export -f gcreate_all_repo_into_github
+
+gclone_repo_and_create_github() {
+	local REPO_URL="$1"
+	local ORG_NAME="$2"
+	local GITHUB_TOKEN="$(gettokengithub)"
+	local red=$(tput bold)$(tput setaf 196)
+	local cyan=$(tput setaf 6)
+	local reset=$(tput sgr0)
+	local mainbranch="$(getbranch)"
+	local API_URL
+	local USERNAME
+
+	if [[ -z "$REPO_URL" || -z "$ORG_NAME" ]]; then
+		echo "Uso: gclone_repo_and_create_github <repository_url> <organization_name>"
+		return 1
+	fi
+
+	local REPO_NAME=$(basename -s .git "$REPO_URL")
+
+	# Verificar se o usuário ou organização existe
+	USERNAME=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/users/$ORG_NAME" | jq -r .login)
+	if [[ "$USERNAME" == "null" ]]; then
+		echo "${red}Usuário ou organização $ORG_NAME não encontrado no GitHub.${reset}"
+		return 1
+	fi
+
+	# Clonando o repositório localmente
+	if git ls-remote "$REPO_URL" &>/dev/null; then
+		echo "${cyan}Repositório $REPO_NAME encontrado em $REPO_URL. Clonando localmente...${reset}"
+		git clone "$REPO_URL"
+		cd "$REPO_NAME" || return
+	else
+		echo "${red}Repositório $REPO_NAME não encontrado em $REPO_URL.${reset}"
+		return 1
+	fi
+
+	# Verificar o token
+	echo "${cyan}Verificando permissões do token GitHub...${reset}"
+	token_check=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user)
+	echo "Token verificado: $(echo "$token_check" | jq .login)"
+
+	if [[ -z "$(echo "$token_check" | jq .login)" ]]; then
+		echo "${red}Token inválido ou sem permissões necessárias.${reset}"
+		return 1
+	fi
+
+	# Verifica se o repositório será criado em uma organização ou em um usuário
+	if [[ "$ORG_NAME" == "$USERNAME" ]]; then
+		API_URL="https://api.github.com/user/repos"
+	else
+		API_URL="https://api.github.com/orgs/$ORG_NAME/repos"
+	fi
+
+	echo "${cyan}Criando repositório $REPO_NAME no GitHub...${reset}"
+	response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+		-H "Accept: application/vnd.github.v3+json" \
+		-d "{\"name\": \"$REPO_NAME\", \"private\": false}" \
+		"$API_URL")
+
+	#  echo "Resposta completa da API GitHub:"
+	#  echo "$response" | jq .
+
+	#  if echo "$response" | jq .errors >/dev/null 2>&1; then
+	#    echo "${red}Erro ao criar o repositório no GitHub: $(echo "$response" | jq .errors)${reset}"
+	#    return 1
+	#  fi
+
+	echo "${cyan}Repositório $REPO_NAME criado com sucesso no GitHub.${reset}"
+
+	# Atualizar URL do repositório remoto
+	echo "${cyan}Atualizando URL do repositório remoto...${reset}"
+	git remote set-url origin "https://github.com/$ORG_NAME/$REPO_NAME.git"
+
+	# Verificar a URL do repositório remoto
+	echo "${cyan}URL do repositório remoto atualizada para:${reset}"
+	git remote -v
+
+	# Definir a branch principal
+	mainbranch=$(git symbolic-ref --short HEAD)
+	if [[ -z "$mainbranch" ]]; then
+		echo "${red}Não foi possível determinar a branch principal.${reset}"
+		return 1
+	fi
+
+	# Adicionar e fazer commit dos arquivos
+	echo "${cyan}Adicionando arquivos e fazendo commit...${reset}"
+	git add .
+	git commit -m "Inicializando repositório com arquivos clonados"
+
+	# Empurrar o repositório para o GitHub
+	echo "${cyan}Empurrando o repositório local para o GitHub...${reset}"
+	if git push -u origin "$mainbranch"; then
+		echo "${cyan}Repositório empurrado com sucesso para o GitHub.${reset}"
+	else
+		echo "${red}Erro ao empurrar o repositório para o GitHub.${reset}"
+		return 1
+	fi
+
+	cd ..
+}
+export -f gclone_repo_and_create_github
