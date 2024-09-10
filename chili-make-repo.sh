@@ -4,7 +4,7 @@
 #
 #  chili-make-repo.sh
 #  Created: 2024/08/21 - 19:07
-#  Altered: qui 05 set 2024 18:09:18 -04
+#  Altered: seg 09 set 2024 23:55:23 -04
 #
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -72,7 +72,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="1.0.0-20240821"
+declare _VERSION_="1.0.1-20240909"
 declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput)
 source /usr/share/fetch/core.sh
@@ -164,7 +164,7 @@ if test $# -lt 2; then
 	echo "uso: ${cyan}${APP} <subdomain> <branch> [<local_dir>] ${reset}"
 	echo "     ${cyan}${APP} repo testing /github/ChiliOS/packages/core/testing/x86_64 ${reset}"
 	echo "     ${cyan}${APP} repo stable ${reset}"
-	echo "     ${cyan}${APP} repo elven /local/dos/pacotes ${reset}"
+	echo "     ${cyan}${APP} elven testing /local/dos/pacotes ${reset}"
 	exit 1
 fi
 
