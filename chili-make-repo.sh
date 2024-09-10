@@ -72,7 +72,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="1.0.1-20240909"
+declare _VERSION_="1.0.2-20240910"
 declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput)
 source /usr/share/fetch/core.sh
@@ -122,11 +122,17 @@ main() {
 		return 1
 	fi
 
+	if [[ "$remote_DOMAIN" == "repo" ]]; then
+		remote_prefix_db='chili'
+	else
+		remote_prefix_db="$remote_DOMAIN"
+	fi
+
 	# Determine the database name based on the branch type
 	if [ "$branch" == "testing" ]; then
-		db_name="${remote_DOMAIN}-testing"
+		db_name="${remote_prefix_db}-testing"
 	elif [ "$branch" == "stable" ]; then
-		db_name="${remote_DOMAIN}-stable"
+		db_name="${remote_prefix_db}-stable"
 	else
 		echo "${red}Error: Unknown branch type: $branch - valid: testing or stable"
 		return 1
