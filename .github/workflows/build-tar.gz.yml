@@ -14,6 +14,9 @@ on:
         required: false
         default: false
 
+  #  schedule:  # Executa automaticamente toda sexta-feira às 05:00
+  #    - cron: '0 5 * * 5'
+
   repository_dispatch: # Permite a execução através de eventos de webhook
     types:
       - webhook
