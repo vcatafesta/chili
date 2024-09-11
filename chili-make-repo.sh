@@ -4,7 +4,7 @@
 #
 #  chili-make-repo.sh
 #  Created: 2024/08/21 - 19:07
-#  Altered: seg 09 set 2024 23:55:23 -04
+#  Altered: ter 10 set 2024 23:35:37 -04
 #
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -72,7 +72,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="1.0.2-20240910"
+declare _VERSION_="1.0.3-20240911"
 declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput)
 source /usr/share/fetch/core.sh
