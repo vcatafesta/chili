@@ -149,11 +149,12 @@ main() {
 
 	remote_PATH="/home/${remote_USER}/domains/chililinux.com/public_html/${remote_DOMAIN}/${branch,,}/x86_64"
 	echo "subdomain : ${remote_DOMAIN}"
+	echo "db_name   : ${db_name}"
 	echo "branch    : ${branch}"
 	echo "localpath : ${local_PATH}"
 
 	cd ${local_PATH} || return 1
-	if repo-add -n -R $db_name.db.tar.gz *.pkg.tar.zst; then
+	if repo-add -n -R ${db_name}.db.tar.gz *.pkg.tar.zst; then
 		#mkdir -p /home/${remote_USER}/.ssh/
 		mkdir -p $HOME/.ssh/
 
