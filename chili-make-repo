@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  chili-make-repo.sh
+#  chili-make-repo
 #  Created: 2024/08/21 - 19:07
-#  Altered: ter 10 set 2024 23:35:37 -04
+#  Altered: seg 23 set 2024 18:55:33 -04
 #
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -139,7 +139,11 @@ main() {
 	fi
 
 	if [[ "$remote_DOMAIN" == "repo" ]]; then
-		local_PATH="/github/ChiliOS/packages/core/testing/x86_64"
+  	if [[ "$branch" == "testing" ]]; then
+	  	local_PATH="/github/ChiliOS/packages/core/testing/x86_64"
+  	elif [[ "$branch" == "stable" ]]; then
+	  	local_PATH="/github/ChiliOS/packages/core/stable/x86_64"
+	  fi
 	elif [[ -z "$local_PATH" ]]; then
 		local_PATH="$PWD"
 	elif [[ ! -d "$local_PATH" ]]; then
