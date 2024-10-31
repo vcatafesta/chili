@@ -4,7 +4,7 @@
 #
 #  chili-make-repo
 #  Created: 2024/08/21 - 19:07
-#  Altered: seg 23 set 2024 18:55:33 -04
+#  Altered: dom 27 out 2024 09:19:14 -04
 #
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -32,37 +32,9 @@
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
 export TEXTDOMAIN=chili-make-repo
-
-# Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
-
-# Definir os estilos de texto como variáveis
-bold=$(tput bold)
-underline=$(tput smul)   # Início do sublinhado
-nounderline=$(tput rmul) # Fim do sublinhado
-reverse=$(tput rev)      # Inverte as cores de fundo e texto
-
-# Definir as cores ANSI como variáveis
-black=$(tput bold)$(tput setaf 0)
-red=$(tput bold)$(tput setaf 196)
 green=$(tput bold)$(tput setaf 2)
-yellow=$(tput bold)$(tput setaf 3)
-blue=$(tput setaf 4)
 pink=$(tput setaf 5)
-magenta=$(tput setaf 5)
-cyan=$(tput setaf 6)
-white=$(tput setaf 7)
-gray=$(tput setaf 8)
-orange=$(tput setaf 202)
-purple=$(tput setaf 125)
-violet=$(tput setaf 61)
-light_red=$(tput setaf 9)
-light_green=$(tput setaf 10)
-light_yellow=$(tput setaf 11)
-light_blue=$(tput setaf 12)
-light_magenta=$(tput setaf 13)
-light_cyan=$(tput setaf 14)
-bright_white=$(tput setaf 15)
 
 #debug
 export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset}'
@@ -76,6 +48,39 @@ declare _VERSION_="1.0.3-20240911"
 declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput)
 source /usr/share/fetch/core.sh
+
+set_varcolors() {
+	# Definir a variável de controle para restaurar a formatação original
+	reset=$(tput sgr0)
+
+	# Definir os estilos de texto como variáveis
+	bold=$(tput bold)
+	underline=$(tput smul)   # Início do sublinhado
+	nounderline=$(tput rmul) # Fim do sublinhado
+	reverse=$(tput rev)      # Inverte as cores de fundo e texto
+
+	# Definir as cores ANSI como variáveis
+	black=$(tput bold)$(tput setaf 0)
+	red=$(tput bold)$(tput setaf 196)
+	green=$(tput bold)$(tput setaf 2)
+	yellow=$(tput bold)$(tput setaf 3)
+	blue=$(tput setaf 4)
+	pink=$(tput setaf 5)
+	magenta=$(tput setaf 5)
+	cyan=$(tput setaf 6)
+	white=$(tput setaf 7)
+	gray=$(tput setaf 8)
+	orange=$(tput setaf 202)
+	purple=$(tput setaf 125)
+	violet=$(tput setaf 61)
+	light_red=$(tput setaf 9)
+	light_green=$(tput setaf 10)
+	light_yellow=$(tput setaf 11)
+	light_blue=$(tput setaf 12)
+	light_magenta=$(tput setaf 13)
+	light_cyan=$(tput setaf 14)
+	bright_white=$(tput setaf 15)
+}
 
 MostraErro() {
 	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
@@ -108,14 +113,18 @@ exit \$exit_code
 EOF
 }
 
+sh_config() {
+	remote_USER="u537062342"
+	remote_PORT="65002"
+	remote_HOST="154.49.247.66"
+	FETCH_RE='-[^-]+[0-9]+[^.]*.pkg[^.]*.tar.zst$'
+	PKG_EXT='pkg.tar.zst'
+}
+
 main() {
 	remote_DOMAIN="$1"
 	branch="$2"
 	local_PATH="$3"
-
-	remote_USER="u537062342"
-	remote_PORT="65002"
-	remote_HOST="154.49.247.66"
 
 	if [[ ! "$remote_DOMAIN" =~ ^(repo|elven)$ ]]; then
 		echo "${red}Error: Unknown domain: $remote_DOMAIN - valid: ${yellow}'repo' ${red}or ${yellow}'elven' ${reset}"
@@ -133,17 +142,21 @@ main() {
 		db_name="${remote_prefix_db}-testing"
 	elif [ "$branch" == "stable" ]; then
 		db_name="${remote_prefix_db}-stable"
+	elif [ "$branch" == "extra" ]; then
+		db_name="${remote_prefix_db}-extra"
 	else
-		echo "${red}Error: Unknown branch type: $branch - valid: testing or stable"
+		echo "${red}Error: Unknown branch type: $branch - valid: testing, stable or extra"
 		return 1
 	fi
 
 	if [[ "$remote_DOMAIN" == "repo" ]]; then
-  	if [[ "$branch" == "testing" ]]; then
-	  	local_PATH="/github/ChiliOS/packages/core/testing/x86_64"
-  	elif [[ "$branch" == "stable" ]]; then
-	  	local_PATH="/github/ChiliOS/packages/core/stable/x86_64"
-	  fi
+		if [[ "$branch" == "testing" ]]; then
+			local_PATH="/github/ChiliOS/packages/core/testing/x86_64"
+		elif [[ "$branch" == "stable" ]]; then
+			local_PATH="/github/ChiliOS/packages/core/stable/x86_64"
+		elif [[ "$branch" == "extra" ]]; then
+			local_PATH="/github/ChiliOS/packages/core/extra/x86_64"
+		fi
 	elif [[ -z "$local_PATH" ]]; then
 		local_PATH="$PWD"
 	elif [[ ! -d "$local_PATH" ]]; then
@@ -152,31 +165,87 @@ main() {
 	fi
 
 	remote_PATH="/home/${remote_USER}/domains/chililinux.com/public_html/${remote_DOMAIN}/${branch,,}/x86_64"
-	echo "subdomain : ${remote_DOMAIN}"
-	echo "db_name   : ${db_name}"
-	echo "branch    : ${branch}"
-	echo "localpath : ${local_PATH}"
+	echo "subdomain  : ${remote_DOMAIN}"
+	echo "db_name    : ${db_name}"
+	echo "branch     : ${branch}"
+	echo "localpath  : ${local_PATH}"
+	echo "remotepath : ${remote_PATH}"
 
+	mkdir -p ${local_PATH}
 	cd ${local_PATH} || return 1
 	if repo-add -n -R ${db_name}.db.tar.gz *.pkg.tar.zst; then
 		#mkdir -p /home/${remote_USER}/.ssh/
 		mkdir -p $HOME/.ssh/
-
 		#ssh-keyscan -t rsa -p ${remote_PORT} ${remote_HOST} | sudo tee -a /home/${remote_USER}/.ssh/known_hosts
 		#ssh-keyscan -t rsa -p ${remote_PORT} ${remote_HOST} >> /home/${remote_USER}/.ssh/known_hosts
-		ssh-keyscan -t rsa -p ${remote_PORT} ${remote_HOST} >>$HOME/.ssh/known_hosts
-
 		#rsync --progress -Cravzp --rsh='ssh -l u537062342 -p 65002' ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
+		ssh-keyscan -t rsa -p ${remote_PORT} ${remote_HOST} >>$HOME/.ssh/known_hosts
 		rsync --progress -Cravzp -e 'ssh -p 65002' ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
 	fi
 }
 
-if test $# -lt 2; then
+sh_synchronize_remote_with_local() {
+	sh_config
+	[[ -z "$branch" ]] && branch="testing"
+	remote_DOMAIN="repo"
+	remote_PATH="/home/${remote_USER}/domains/chililinux.com/public_html/${remote_DOMAIN}/${branch,,}/x86_64"
+	local_PATH="/github/ChiliOS/packages/core/${branch,,}/x86_64"
+
+	echo "${cyan}Sincronizando repositório remoto com local - branch: $branch ${reset}"
+	echo "${cyan}Puxando do remoto para local ${reset}"
+	rsync --progress --delete -Craz -e 'ssh -p 65002' ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
+
+	AllOldPackages=$(find "$PWD" -type f -iname "*.$PKG_EXT" | sort -Vr | awk -F "$FETCH_RE" 'lista[$1]++')
+	for old in ${AllOldPackages[@]}; do
+		echo "Removing old package: [$((++count))] $old"
+		rm -fv "${old}" "${old}.sig" "${old}.md5" "${old}.sig.md5"
+	done
+
+	echo "${cyan}Criando Database (.db) localmente ${reset}"
+	repo-add -q -p -n -R chili-${branch}.db.tar.gz *.pkg.tar.zst
+	echo "${cyan}Empurrando para o remoto ${reset}"
+	rsync --progress --delete -Craz -e 'ssh -p 65002' ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
+  exit $(($# ? 0 : 1))
+}
+
+if test $# -lt 1; then
 	echo "uso: ${cyan}${APP} <subdomain> <branch> [<local_dir>] ${reset}"
 	echo "     ${cyan}${APP} repo testing /github/ChiliOS/packages/core/testing/x86_64 ${reset}"
 	echo "     ${cyan}${APP} repo stable ${reset}"
 	echo "     ${cyan}${APP} elven testing /local/dos/pacotes ${reset}"
+	echo "     ${cyan}${APP} -s        # sincronizar local com remoto (puxar/empurrar) ${reset}"
 	exit 1
 fi
 
-main "$@"
+# Cores e estilos
+nocolor=false
+set_varcolors
+# Loop através de todos os parâmetros ($@)
+for arg in "$@"; do
+	if [[ "$arg" = @(-n|--nocolor) ]]; then
+		nocolor=true
+		[[ "$nocolor" == "true" ]] && unset_varcolors || set_varcolors
+	elif [[ "$arg" = @(-V|--version) ]]; then
+		sh_version
+		exit $(($# ? 0 : 1))
+	elif [[ "$arg" = @(-h|--help) ]]; then
+		sh_usage
+		exit $(($# ? 0 : 1))
+	elif [[ "$arg" = @(-s|--synchronize) ]]; then
+		# Captura o próximo argumento após o -s/--synchronize
+		next_arg="${2:-}"
+
+		# Verifica se o próximo argumento é válido
+		if [[ "$next_arg" =~ ^(stable|testing|extra)$ ]]; then
+      branch="$next_arg"
+			sh_synchronize_remote_with_local "$next_arg"
+			shift # Pula para o próximo argumento para não ser tratado novamente
+		else
+			echo "${red}Error: Opção inválida para --synchronize: $next_arg. Use ${yellow}'stable', 'testing' ou 'extra'.${reset}"
+			exit 1
+		fi
+	else
+		sh_config
+		main "$@"
+	fi
+done
