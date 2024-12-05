@@ -4525,12 +4525,14 @@ sh_copyfilesboot() {
 	local krn_file
 	local krn_version
 	local init_file
+	local isArchLike
 	declare -g bootmnt
 	declare -g airootfs
 
-	if [[ "$id_like" == 'arch' ]] && [[ "$liveOS" -eq $true ]]; then
+  isArchLike=$([[ "$id_like" == "arch" ]] && echo 1 || echo 0)
+  if (( isArchLike && liveOS )); then
     bootmnt="/run/miso/bootmnt/boot"
-	  airootfs="/run/miso/bootmnt/boot/"
+	  airootfs="/run/miso/bootmnt/boot"
     sh_cmd_job "Aguarde, copiando kernel e initrd" "cp -Rpva $bootmnt/* $dir_install/boot/" "$err_not_fatal"
     return 0
   fi
