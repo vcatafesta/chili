@@ -79,7 +79,6 @@ sh_setEnvironment() {
 	readonly err_fatal=$true
 	readonly err_not_fatal=$false
 	readonly dir_install="/mnt/chili-install"
-	readonly chili_iso="liveiso"
 	declare -g shell='/bin/bash'
 	declare -g xdistro=$(uname -n)
 	declare -g sep="\xe2\x94\x82"
@@ -763,8 +762,8 @@ sh_make_user() {
 	local cuser="${AsUser[cuser]}"
 	local cliveuser="${Adistro[cliveuser]}"
 
-	if [[ -d "/run/$chili_iso/bootmnt/virootfs/etc/skel/" ]]; then
-		sh_cmd_job "Adjusting legacy settings pass 1" "cd $dir_install/etc/skel/; cp -Rpva /run/$chili_iso/bootmnt/virootfs/etc/skel/. ." "$err_not_fatal"
+	if [[ -d "/run/liveiso/bootmnt/virootfs/etc/skel/" ]]; then
+		sh_cmd_job "Adjusting legacy settings pass 1" "cd $dir_install/etc/skel/; cp -Rpva /run/liveiso/bootmnt/virootfs/etc/skel/. ." "$err_not_fatal"
 	fi
 
 	if [[ -n "${AsUser[cuser]}" ]]; then
@@ -1042,8 +1041,8 @@ sh_stopmount_iso() {
 	[[ -z "$iso" ]] && return 0
 	last_msg "$cmsg_umount_partition $iso"
 	msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
-	umount -Rfl "/run/$chili_iso/bootmnt" >/dev/null 2>&1
-	umount -Rfl "/run/$chili_iso/airrootfs" >/dev/null 2>&1
+	umount -Rfl "/run/liveiso/bootmnt" >/dev/null 2>&1
+	umount -Rfl "/run/liveiso/airrootfs" >/dev/null 2>&1
 	losetup -d "$loDevice" >/dev/null 2>&1
 	nchoice=$?
 	evaluate_retval 0
@@ -4524,8 +4523,8 @@ sh_copyfilesboot() {
 	local krn_file
 	local krn_version
 	local init_file
-	declare -g bootmnt="/run/$chili_iso/bootmnt/"
-	declare -g airootfs="/run/$chili_iso/airootfs/boot/"
+	declare -g bootmnt="/run/liveiso/bootmnt/"
+	declare -g airootfs="/run/liveiso/airootfs/boot/"
 
 	if ! test -e "$MEDIUM/boot/vmlinuz*"; then
 		if [[ -n "$BOOT" ]]; then
@@ -4557,26 +4556,30 @@ sh_checklive() {
 			iso="$1"
 		else
 			# detect live OS
-			export LIVE_DIR="/run/$chili_iso/bootmnt/chili/x86_64/airootfs.sfs"
-			if [[ -e "$LIVE_DIR" ]]; then
+			if [[ -e "/run/liveiso/bootmnt/chili/x86_64/airootfs.sfs" ]]; then
+			  export LIVE_DIR="/run/liveiso/bootmnt/chili/x86_64/airootfs.sfs"
 				export ROOTSQFS="$LIVE_DIR"
-				export MEDIUM="/run/$chili_iso/airootfs"
+				export MEDIUM="/run/liveiso/airootfs"
 				liveOS=$true
-			else
-				export LIVE_DIR="/lib/initramfs/medium/filesystem/root.sfs"
-				if [[ -e "$LIVE_DIR" ]]; then
-					export ROOTSQFS="$LIVE_DIR"
-					export MEDIUM="/lib/initramfs/system"
-					xdistro=$(grep ^ /lib/initramfs/medium/isolinux/venomlive)
-					liveOS=$true
-				fi
+			elif [[ -e "/lib/initramfs/medium/filesystem/root.sfs" ]]; then
+			  export LIVE_DIR="/lib/initramfs/medium/filesystem/root.sfs"
+				export ROOTSQFS="$LIVE_DIR"
+				export MEDIUM="/lib/initramfs/system"
+				xdistro=$(grep ^ /lib/initramfs/medium/isolinux/venomlive)
+				liveOS=$true
+			elif [[ -e "/run/miso/bootmnt/chililinux/x86_64/rootfs.sfs" ]]; then
+			  export LIVE_DIR="/run/miso/bootmnt/chililinux/x86_64/rootfs.sfs"
+				export ROOTSQFS="$LIVE_DIR"
+				export MEDIUM="/run/miso/sfs/rootfs"
+				xdistro='chililinux'
+				liveOS=$true
 			fi
 		fi
 	fi
 
 	if ! ((liveOS)); then
-		[[ -d "/run/$chili_iso/bootmnt" ]] || mkdir -p "/run/$chili_iso/bootmnt"
-		[[ -d "/run/$chili_iso/airootfs" ]] || mkdir -p "/run/$chili_iso/airootfs"
+		[[ -d "/run/liveiso/bootmnt" ]] || mkdir -p "/run/liveiso/bootmnt"
+		[[ -d "/run/liveiso/airootfs" ]] || mkdir -p "/run/liveiso/airootfs"
 
 		loDevice=$(losetup -f)
 		if ! [[ -e "$loDevice" ]]; then
@@ -4584,48 +4587,48 @@ sh_checklive() {
 		fi
 		#		losetup -d "$loDevice"  > /dev/null 2>&1
 		losetup -P "$loDevice" "$iso" >/dev/null 2>&1
-		mount "$loDevice" "/run/$chili_iso/bootmnt" >/dev/null 2>&1
+		mount "$loDevice" "/run/liveiso/bootmnt" >/dev/null 2>&1
 
 		#		if ! [[ -e "$srDevice" ]]; then
 		#			srDevice=$(sh_mknode_sr)
 		#		else
 		#			losetup -d "$srDevice"  > /dev/null 2>&1
 		#			losetup -P "$srDevice" "$iso"  > /dev/null 2>&1
-		#			mount "$srDevice" "/run/$chili_iso/bootmnt"	> /dev/null 2>&1
+		#			mount "$srDevice" "/run/liveiso/bootmnt"	> /dev/null 2>&1
 		#		fi
 
-		if [[ -e "/run/$chili_iso/bootmnt/chili/" ]]; then
-			export LIVE_DIR="/run/$chili_iso/bootmnt/chili/x86_64/airootfs.sfs"
+		if [[ -e "/run/liveiso/bootmnt/chili/" ]]; then
+			export LIVE_DIR="/run/liveiso/bootmnt/chili/x86_64/airootfs.sfs"
 			export BOOT="chili"
 			xdistro=chili
-		elif [[ -e "/run/$chili_iso/bootmnt/arch/" ]]; then
-			export LIVE_DIR="/run/$chili_iso/bootmnt/arch/x86_64/airootfs.sfs"
+		elif [[ -e "/run/liveiso/bootmnt/arch/" ]]; then
+			export LIVE_DIR="/run/liveiso/bootmnt/arch/x86_64/airootfs.sfs"
 			export BOOT="arch"
 			xdistro=arch
-		elif [[ -e "/run/$chili_iso/bootmnt/manjaro/" ]]; then
-			export LIVE_DIR="/run/$chili_iso/bootmnt/manjaro/x86_64/rootfs.sfs"
+		elif [[ -e "/run/liveiso/bootmnt/manjaro/" ]]; then
+			export LIVE_DIR="/run/liveiso/bootmnt/manjaro/x86_64/rootfs.sfs"
 			export BOOT="manjaro"
 			xdistro=manjaro
-		elif [[ -e "/run/$chili_iso/bootmnt/rootfs/filesystem.sfs" ]]; then
-			export LIVE_DIR="/run/$chili_iso/bootmnt/rootfs/filesystem.sfs"
+		elif [[ -e "/run/liveiso/bootmnt/rootfs/filesystem.sfs" ]]; then
+			export LIVE_DIR="/run/liveiso/bootmnt/rootfs/filesystem.sfs"
 			export BOOT="venom"
 			xdistro=venom
-		elif [[ -e "/run/$chili_iso/bootmnt/casper/filesystem.squashfs" ]]; then
-			export LIVE_DIR="/run/$chili_iso/bootmnt/casper/filesystem.squashfs"
+		elif [[ -e "/run/liveiso/bootmnt/casper/filesystem.squashfs" ]]; then
+			export LIVE_DIR="/run/liveiso/bootmnt/casper/filesystem.squashfs"
 			export BOOT="casper"
 			xdistro=mint
 		fi
 		export ROOTSQFS="$LIVE_DIR"
-		export MEDIUM="/run/$chili_iso/airootfs"
+		export MEDIUM="/run/liveiso/airootfs"
 
 		if ! [[ -e "$LIVE_DIR" ]]; then
-			LIVE_DIR="/run/$chili_iso/bootmnt/filesystem/root.sfs"
+			LIVE_DIR="/run/liveiso/bootmnt/filesystem/root.sfs"
 			ROOTSQFS="$LIVE_DIR"
 			if ! [[ -e "$LIVE_DIR" ]]; then
 				LIVECD=$(sh_testlive)
 				return 1
 			fi
-			xdistro=$(grep ^ /run/$chili_iso/bootmnt/isolinux/venomlive)
+			xdistro=$(grep ^ /run/liveiso/bootmnt/isolinux/venomlive)
 		fi
 
 		if ! test -e "$MEDIUM/boot/vmlinuz*"; then
