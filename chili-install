@@ -9,7 +9,7 @@
 #  Chili GNU/Linux - https://chilios.com.br
 #
 #  Created: 2019/04/05 - 23:02 -04
-#  Altered: 2024/12/05 - 12:05 -04
+#  Altered: 2024/12/06 - 12:24 -04
 #
 #  Copyright (c) 2019-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -845,7 +845,18 @@ sh_execcopia() {
 	log="/tmp/${_APP_}.log"
 	[ -e "$log" ] && rm -f "$log"
 
-	rsync -crav "$ORIGEM" "$DESTINO" 1>&2 >"$log" &
+	#rsync -crav "$ORIGEM" "$DESTINO" 1>&2 >"$log" &
+	#export CPPID=$!
+  rsync -aAXv "$ORIGEM" "$DESTINO" \
+  --exclude=/proc \
+  --exclude=/sys \
+  --exclude=/dev \
+  --exclude=/run \
+  --exclude=/tmp \
+  --exclude=/mnt \
+  --exclude=/media \
+  --exclude=/lost+found \
+  1>&2 >"$log" &
 	export CPPID=$!
 
 	#  trap sh_trapErro 2 15
@@ -4529,11 +4540,13 @@ sh_copyfilesboot() {
 	declare -g bootmnt
 	declare -g airootfs
 
-  isArchLike=$([[ "$id_like" == "arch" ]] && echo 1 || echo 0)
-  if (( isArchLike && liveOS )); then
-    bootmnt="/run/miso/bootmnt/boot"
-	  airootfs="/run/miso/bootmnt/boot"
+  isArchLike=$([[ "$id_like" == "arch" ]] && echo true || echo false)
+  if $isArchLike && $liveOS; then
+    #bootmnt="/boot"
+	  #airootfs="/run/miso/bootmnt/boot"
     sh_cmd_job "Aguarde, copiando kernel e initrd" "cp -Rpva $bootmnt/* $dir_install/boot/" "$err_not_fatal"
+		sh_chroot_job "Aguarde, gerando initrd" "mkinitcpio -P" "$err_not_fatal"
+		sh_chroot_job "Aguarde, atualizando grub" "update-grub" "$err_not_fatal"
     return 0
   fi
 
@@ -4562,7 +4575,7 @@ sh_checklive() {
 	local loDevice="/dev/loop0"
 	local srDevice="/dev/sr0"
 	local iso
-	local liveOS=$false
+	local liveOS=false
 
 	if (($# >= 1)); then
 		if [[ -n "$1" ]]; then
@@ -4575,26 +4588,26 @@ sh_checklive() {
 				export MEDIUM="/run/liveiso/airootfs"
 		    xdistro=$(uname -n)
 		    id_like='lfs'
-			  liveOS=$true
+			  liveOS=true
 			elif [[ -e "/lib/initramfs/medium/filesystem/root.sfs" ]]; then
 			  export LIVE_DIR="/lib/initramfs/medium/filesystem/root.sfs"
 				export ROOTSQFS="$LIVE_DIR"
 				export MEDIUM="/lib/initramfs/system"
 				xdistro=$(grep ^ /lib/initramfs/medium/isolinux/venomlive)
 		    id_like='venom'
-				liveOS=$true
+				liveOS=true
 			elif [[ -e "/run/miso/bootmnt/chililinux/x86_64/rootfs.sfs" ]]; then
 			  export LIVE_DIR="/run/miso/bootmnt/chililinux/x86_64/rootfs.sfs"
 				export ROOTSQFS="$LIVE_DIR"
-				export MEDIUM="/run/miso/sfs/rootfs"
+				export MEDIUM="/" # overlayfs consolidado com livefs.sfs, desktopfs.sfs e rootfs.sfs
 				xdistro='chililinux'
 		    id_like='arch'
-				liveOS=$true
+				liveOS=true
 			fi
 		fi
 	fi
 
-	if ! ((liveOS)); then
+	if ! $liveOS; then
 		[[ -d "/run/liveiso/bootmnt" ]] || mkdir -p "/run/liveiso/bootmnt"
 		[[ -d "/run/liveiso/airootfs" ]] || mkdir -p "/run/liveiso/airootfs"
 
