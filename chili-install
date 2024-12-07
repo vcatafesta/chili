@@ -9,7 +9,7 @@
 #  Chili GNU/Linux - https://chilios.com.br
 #
 #  Created: 2019/04/05 - 23:02 -04
-#  Altered: 2024/12/06 - 12:24 -04
+#  Altered: 2024/12/06 - 23:30 -04
 #
 #  Copyright (c) 2019-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -4817,8 +4817,8 @@ sh_install() {
 	sh_mount_fs || sh_cancelLiveInstall "$@"
 	sh_mk_working_dir || sh_cancelLiveInstall "$@"
 	sh_execcopia || sh_cancelLiveInstall "$@"
-	sh_copyfilesboot || sh_cancelLiveInstall "$@"
 	sh_init_bind || sh_cancelLiveInstall "$@"
+	sh_copyfilesboot || sh_cancelLiveInstall "$@"
 	sh_make_user || sh_cancelLiveInstall "$@"
 	sh_make_fstab || sh_cancelLiveInstall "$@"
 	sh_update_hostname
