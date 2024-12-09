@@ -9,7 +9,7 @@
 #  Chili GNU/Linux - https://chilios.com.br
 #
 #  Created: 2019/04/05 - 23:02 -04
-#  Altered: 2024/12/06 - 23:30 -04
+#  Altered: 2024/12/09 - 01:56 -04
 #
 #  Copyright (c) 2019-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -4571,6 +4571,64 @@ sh_copyfilesboot() {
 	return 0
 }
 
+detect_arch_distro_name() {
+  # Define o diretório base onde as distribuições são montadas
+  local base_dir="/run/miso/bootmnt"
+  local distro_dir
+  local distro
+
+  # Tenta encontrar o diretório da distribuição dentro do diretório base
+  for distro_dir in "$base_dir"/*/x86_64/; do
+    # Verifica se o caminho é um diretório e segue o padrão esperado
+    if [ -d "$distro_dir" ]; then
+      # Extrai o nome da distribuição a partir do caminho
+      distro=$(basename $(dirname "$distro_dir"))
+
+      # Verifica se o nome da distribuição é válido
+      if [[ "$distro" != "x86_64" ]]; then
+        # Retorna o caminho completo encontrado
+        echo "$distro"
+        break
+      fi
+    fi
+  done
+
+  # Caso não encontre nenhum diretório válido, retorna o default e foda-se
+  if [ -z "$distro" ]; then
+    echo 'archlinux'
+  fi
+}
+export -f detect_arch_distro_name
+
+detect_distro_path() {
+  # Define o diretório base onde as distribuições são montadas
+  local base_dir="/run/miso/bootmnt"
+  local distro_dir
+  local distro
+
+  # Tenta encontrar o diretório da distribuição dentro do diretório base
+  for distro_dir in "$base_dir"/*/x86_64/; do
+    # Verifica se o caminho é um diretório e segue o padrão esperado
+    if [ -d "$distro_dir" ]; then
+      # Extrai o nome da distribuição a partir do caminho
+      distro=$(basename $(dirname "$distro_dir"))
+
+      # Verifica se o nome da distribuição é válido
+      if [[ "$distro" != "x86_64" ]]; then
+        # Retorna o caminho completo encontrado
+        echo "$distro_dir"
+        break
+      fi
+    fi
+  done
+
+  # Caso não encontre nenhum diretório válido, retorna o default e foda-se
+  if [ -z "$distro" ]; then
+    echo '/run/miso/bootmnt/manjaro/x86_64/'
+  fi
+}
+export -f detect_distro_path
+
 sh_checklive() {
 	local loDevice="/dev/loop0"
 	local srDevice="/dev/sr0"
@@ -4596,13 +4654,17 @@ sh_checklive() {
 				xdistro=$(grep ^ /lib/initramfs/medium/isolinux/venomlive)
 		    id_like='venom'
 				liveOS=true
-			elif [[ -e "/run/miso/bootmnt/chililinux/x86_64/rootfs.sfs" ]]; then
-			  export LIVE_DIR="/run/miso/bootmnt/chililinux/x86_64/rootfs.sfs"
-				export ROOTSQFS="$LIVE_DIR"
-				export MEDIUM="/" # overlayfs consolidado com livefs.sfs, desktopfs.sfs e rootfs.sfs
-				xdistro='chililinux'
-		    id_like='arch'
-				liveOS=true
+      else
+        local path_iso="$(detect_distro_path)"
+			  if [[ -e "$path_iso/rootfs.sfs" ]]; then
+  			  export LIVE_DIR="$path_iso/rootfs.sfs"
+	  			export ROOTSQFS="$LIVE_DIR"
+		  		export MEDIUM="/" # overlayfs consolidado com livefs.sfs, desktopfs.sfs e rootfs.sfs
+          xdistro=${path_iso#/run/miso/bootmnt/}  # Remove a parte inicial
+          xdistro=${xdistro%%/*}                  # Remove tudo após a primeira barra
+		      id_like='arch'
+  				liveOS=true
+				fi
 			fi
 		fi
 	fi

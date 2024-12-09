@@ -9,7 +9,7 @@
 # MazonOS GNU/Linux - https://mazonos.com
 #
 # Created: 2019/04/05
-# Altered: 2024/08/01
+# Altered: 2024/12/08 02:11 -04
 #
 # Copyright (c) 2019-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -607,7 +607,7 @@ function sh_unsetvarcolors() {
 
 function sh_touchconf() {
 	sh_checkroot "The configuration file '/etc/fetch/fetch.conf' is required"
-	[[ ! -d "${SYSCONFDIR}" ]] ||	mkdir -p "${SYSCONFDIR}" >/dev/null 2>&-
+	[[ -d "${SYSCONFDIR}" ]] ||	mkdir -p "${SYSCONFDIR}" >/dev/null 2>&-
 
 	cat >"$SYSCONFDIR/fetch.conf" <<-'_EOF_'
 		######################################################################
