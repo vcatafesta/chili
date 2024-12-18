@@ -1,0 +1,340 @@
+#!/usr/bin/env bash
+# -*- coding: utf-8 -*-
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+#
+#  chili-make-docker
+#  Created: 2024/12/17 - 21:15
+#  Altered: 2024/12/17 - 21:15
+#
+#  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AS IS'' AND ANY EXPRESS OR
+#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
+#export LANGUAGE=pt_BR
+export TEXTDOMAINDIR=/usr/share/locale
+export TEXTDOMAIN=chili-make-docker
+declare APP="${0##*/}"
+declare APPDESC="Wrapper bash para o docker"
+declare VERSION="0.12.17" # Versão do script
+export TERM=${TERM:-xterm}
+export TERM=${TERM:-xterm-256color}
+declare IS_AUTO=false
+declare PARAM_DEFAULT=false
+
+# Definir a variável de controle para restaurar a formatação original
+reset=$(tput sgr0)
+
+# Definir os estilos de texto como variáveis
+bold=$(tput bold)
+underline=$(tput smul)   # Início do sublinhado
+nounderline=$(tput rmul) # Fim do sublinhado
+reverse=$(tput rev)      # Inverte as cores de fundo e texto
+
+# Definir as cores ANSI como variáveis
+black=$(tput bold)$(tput setaf 0)
+red=$(tput bold)$(tput setaf 196)
+green=$(tput bold)$(tput setaf 2)
+yellow=$(tput bold)$(tput setaf 3)
+blue=$(tput setaf 4)
+pink=$(tput setaf 5)
+magenta=$(tput setaf 5)
+cyan=$(tput setaf 6)
+white=$(tput setaf 7)
+gray=$(tput setaf 8)
+orange=$(tput setaf 202)
+purple=$(tput setaf 125)
+violet=$(tput setaf 61)
+light_red=$(tput setaf 9)
+light_green=$(tput setaf 10)
+light_yellow=$(tput setaf 11)
+light_blue=$(tput setaf 12)
+light_magenta=$(tput setaf 13)
+light_cyan=$(tput setaf 14)
+bright_white=$(tput setaf 15)
+
+#debug
+export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset}'
+#set -x
+#set -e
+shopt -s extglob
+
+#system
+declare APP="${0##*/}"
+declare _VERSION_="1.0.0-20241217"
+declare distro="$(uname -n)"
+declare DEPENDENCIES=(tput)
+source /usr/share/fetch/core.sh
+
+MostraErro() {
+	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
+}
+trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
+
+set_varcolors() {
+	# does the terminal support true-color?
+	if [[ -n "$(command -v "tput")" ]]; then
+		#tput setaf 127 | cat -v  #capturar saida
+		: "${RED=$(tput bold)$(tput setaf 196)}"
+		: "${GREEN=$(tput bold)$(tput setaf 2)}"
+		: "${YELLOW=$(tput bold)$(tput setaf 3)}"
+		: "${BLUE=$(tput setaf 4)}"
+		: "${PURPLE=$(tput setaf 125)}"
+		: "${CYAN=$(tput setaf 6)}"
+		: "${NC=$(tput sgr0)}"
+		: "${RESET=$(tput sgr0)}"
+		: "${BOLD=$(tput bold)}"
+		: "${black=$(tput bold)$(tput setaf 0)}"
+		: "${reverse=$(tput rev)}"
+		: "${branca=${black}$(tput setab 7)}"
+
+		: "${reset=$(tput sgr0)}"
+		: "${rst=$(tput sgr0)}"
+		: "${bold=$(tput bold)}"
+		: "${underline=$(tput smul)}"
+		: "${nounderline=$(tput rmul)}"
+		: "${reverse=$(tput rev)}"
+
+		: "${black=$(tput bold)$(tput setaf 0)}"
+		: "${red=$(tput bold)$(tput setaf 196)}"
+		: "${green=$(tput bold)$(tput setaf 2)}"
+		: "${yellow=$(tput bold)$(tput setaf 3)}"
+		: "${blue=$(tput setaf 27)}"
+		: "${magenta=$(tput setaf 5)}"
+		: "${cyan=$(tput setaf 6)}"
+		: "${white=$(tput setaf 7)}"
+		: "${gray=$(tput setaf 8)}"
+		: "${light_red=$(tput setaf 9)}"
+		: "${light_green=$(tput setaf 10)}"
+		: "${light_yellow=$(tput setaf 11)}"
+		: "${light_blue=$(tput setaf 12)}"
+		: "${light_magenta=$(tput setaf 13)}"
+		: "${light_cyan=$(tput setaf 14)}"
+		: "${light_white=$(tput setaf 15)}"
+		: "${orange=$(tput setaf 202)}"
+		: "${purple=$(tput setaf 125)}"
+		: "${violet=$(tput setaf 61)}"
+
+		# Definir cores de fundo
+		: "${preto=$(tput setab 0)}"
+		: "${vermelho=$(tput setab 196)}"
+		: "${verde=$(tput setab 2)}"
+		: "${amarelo=$(tput setab 3)}"
+		: "${azul=$(tput setab 20)}"
+		: "${roxo=$(tput setab 5)}"
+		: "${ciano=$(tput setab 6)}"
+		: "${branca="${black}$(tput setab 7)"}"
+		: "${cinza=$(tput setab 8)}"
+		: "${laranja=$(tput setab 202)}"
+		: "${roxa=$(tput setab 125)}"
+		: "${violeta=$(tput setab 61)}"
+
+		: "${COL_NC='\e[0m'}" # No Color
+		: "${COL_LIGHT_GREEN='\e[1;32m'}"
+		: "${COL_LIGHT_RED='\e[1;31m'}"
+		: "${DONE="${COL_LIGHT_GREEN} done!${COL_NC}"}"
+		: "${OVER="\\r\\033[K"}"
+		: "${DOTPREFIX="  ${black}::${reset} "}"
+		: "${TICK="${white}[${green}✓${rst}${white}]${rst}"}"
+		: "${CROSS="${white}[${red}✗${rst}${white}]${rst}"}"
+		: "${INFO="${white}[${gray}i${rst}${white}]${rst}"}"
+	else
+		unset_varcolors
+	fi
+}
+
+unset_varcolors() {
+	unset RED GREEN YELLOW BLUE PURPLE CYAN NC RESET BOLD
+	unset reset rst bold underline nounderline reverse
+	unset black red green yellow blue magenta cyan white gray orange purple violet
+	unset light_red light_green light_yellow light_blue light_magenta light_cyan light_white
+	unset preto vermelho verde amarelo azul roxo ciano branca cinza laranja roxa violeta
+	: "${COL_NC='\e[0m'}" # No Color
+	: "${COL_LIGHT_GREEN='\e[1;32m'}"
+	: "${COL_LIGHT_RED='\e[1;31m'}"
+	: "${DONE="${COL_LIGHT_GREEN} done!${COL_NC}"}"
+	: "${OVER="\\r\\033[K"}"
+	: "${DOTPREFIX="  ${black}::${reset} "}"
+	: "${TICK="${white}[${green}✓${rst}${white}]${rst}"}"
+	: "${CROSS="${white}[${red}✗${rst}${white}]${rst}"}"
+	: "${INFO="${white}[${gray}i${rst}${white}]${rst}"}"
+}
+
+switch_to_root() {
+	# Verifica se o usuário não é root
+	if [ "$EUID" -ne 0 ]; then
+		echo "Elevando privilégios para root..."
+		sudo bash -c "$(declare -f funcao_A); $(declare -f funcao_B); $(declare -f funcao_C); funcao_A"
+	else
+		funcao_A
+	fi
+}
+
+msg() {
+	local msg="$1"
+	echo -e "chili-make-docker=>${cyan}running: ${yellow}${msg}${reset}"
+}
+
+msg_info() {
+	local msg="$1"
+	echo -e "chili-make-docker=>${yellow}info   : ${cyan}${msg}${reset}"
+}
+
+msg_warning() {
+	local msg="$1"
+	echo -e "chili-make-docker=>${red}warning: ${orange}${msg}${reset}"
+}
+
+p_log() {
+	local color="$1"
+	local message="$2"
+	local died="$3"
+
+	[[ -z "$died" ]] && died=false
+	# echo -e "${color}=> ${message}${reset}"
+	if $died; then
+		printf "${CROSS} mkiso=>${red}Error: ${color}%s\n\033[m" "$message"
+	else
+		printf "${TICK} mkiso=> ${color}%s\n\033[m" "$message"
+	fi
+	# Remover códigos de escape ANSI do log
+	#clean_log=$(sed -E 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/\x1b\(B//g' <<<"$message")
+	#echo "[$(date '+%Y-%m-%d %H:%M:%S')] ${clean_log}" >>"${LOG_FILE}"
+}
+
+# Funções auxiliares
+conf() {
+	read -r -p "$1 [S/n]"
+	[[ ${REPLY^} == "" ]] && return 0
+	[[ ${REPLY^} == N ]] && return 1 || return 0
+}
+
+die() {
+	local color="$1"
+	local message="$2"
+	p_log "$color" "$message" true
+	exit 1
+}
+
+replicate() {
+	local char=${1:-'#'}
+	local nsize=${2:-$(tput cols)}
+	local line
+	printf -v line "%*s" "$nsize" && echo "${line// /$char}"
+}
+export -f replicate
+
+sh_version() {
+	cat <<EOF_VERSION
+${bold}${cyan}${0##*/} v${VERSION}${reset}
+${APPDESC}
+${bold}${black}Copyright (c) 2024-2024, ${reset}Vilmar Catafesta <vcatafesta@gmail.com>${black}
+${bold}${black}Copyright (C) 2024-2024, ${reset}ChiliLinux Team${bold}${black}
+
+  Este é um software livre: você é livre para alterá-lo e redistribuí-lo.
+  O $APP é disponibilizado para você sob a ${yellow}Licença MIT${black}, e
+  inclui software de código aberto sob uma variedade de outras licenças.
+  Você pode ler instruções sobre como baixar e criar para você mesmo
+  o código fonte específico usado para criar esta cópia.
+  ${red}Este programa vem com absolutamente NENHUMA garantia.${reset}
+EOF_VERSION
+}
+
+# Função para exibir informações de ajuda
+sh_usage() {
+	cat <<EOF_USAGE
+    ${reset}${APP} v${VERSION} - ${APPDESC}${reset}
+    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
+
+    ${cyan}Opções:${reset}
+      -b|build|--build ${orange}<image> ${cyan} # Build docker image${reset}
+      -r|run  |--run   ${orange}<image> ${cyan} # Run docker image${reset}
+      -l|list |--list          ${cyan} # List docker images${reset}
+      -p|push |--push          ${cyan} # Push docker images into dockerhub ${reset}
+      -V|--version             ${cyan} # Imprime a versão do aplicativo ${reset}
+      -h|--help                ${cyan} # Mostra este Help ${reset}
+EOF_USAGE
+}
+
+sh_checkroot() {
+	[[ $1 = "-Qq" ]] && return
+	if [ "$(id -u)" != "0" ]; then
+		printf "${red} error: You cannot perform this operation unless you are root!\n"
+		exit 1
+	fi
+}
+
+## start script
+if test $# -lt 1; then
+	set_varcolors
+	sh_usage
+	exit $(($# ? 0 : 1))
+fi
+
+sh_checkroot
+
+# Loop através de todos os parâmetros ($@)
+for arg in "$@"; do
+	if [[ "$arg" = @(-n|--nocolor) ]]; then
+		nocolor=true
+		[[ "$nocolor" == "true" ]] && unset_varcolors
+	elif [[ "$arg" = @(-V|--version) ]]; then
+		set_varcolors
+		sh_version
+		exit $(($# ? 0 : 1))
+	elif [[ "$arg" = @(-h|--help) ]]; then
+		set_varcolors
+		sh_usage
+		exit $(($# ? 0 : 1))
+	elif [[ "$arg" = @(-b|build|--build) ]]; then
+		set_varcolors
+    msg 'docker build -t voidlinux-docker:1.2 .'
+    docker build -t voidlinux-docker:1.2 .
+	elif [[ "$arg" = @(-r|run|--run) ]]; then
+		set_varcolors
+    msg 'docker run -it voidlinux-docker:1.2'
+    docker run -it voidlinux-docker:1.2
+	elif [[ "$arg" = @(-l|list|--list) ]]; then
+		set_varcolors
+		msg 'docker images'
+		docker images
+	elif [[ "$arg" = @(-p|push|--push) ]]; then
+		set_varcolors
+    msg 'docker login'
+    docker login
+
+    msg 'docker tag voidlinux-docker:1.2 vcatafesta/voidlinux-docker:1.2'
+    docker tag voidlinux-docker:1.2 vcatafesta/voidlinux-docker:1.2
+
+		msg 'docker images'
+    docker images
+
+    msg 'docker push vcatafesta/voidlinux-docker:1.2'
+    docker push vcatafesta/voidlinux-docker:1.2
+
+		msg 'docker images'
+		docker images
+	else
+		set_varcolors
+		sh_usage
+		exit $(($# ? 0 : 1))
+	fi
+done
