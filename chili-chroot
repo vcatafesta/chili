@@ -3,7 +3,7 @@
 #  chili-chroot - chroot util compatible with all likeunix
 #
 #  Created: 2019/04/05
-#  Altered: 2024/04/27
+#  Altered: 2024/12/18 - 10:37 -04
 #
 #  Copyright (c) 2019-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  Chili GNU/Linux - https://github.com/vcatafesta
@@ -128,5 +128,14 @@ sh_init_bind() {
 	fi
 }
 
+sh_checkroot() {
+	[[ $1 = "-Qq" ]] && return
+	if [ "$(id -u)" != "0" ]; then
+		printf "${red} error: You cannot perform this operation unless you are root!\n"
+		exit 1
+	fi
+}
+
 sh_setenvironment
+sh_checkroot
 sh_init_bind "$@"
