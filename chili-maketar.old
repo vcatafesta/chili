@@ -6,8 +6,7 @@
 #  Description: Create tar of directories
 #
 #  Created: 2023/07/28
-#  Altered: 2023/07/28
-#  Updated: 2024/12/25 - 03:42:08 -04 - Added gzip, xz, and normal tar support
+#  Altered: 2023/07/2
 #
 #  Copyright (c) 2023-2023, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -32,15 +31,9 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 #  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#debug
-export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset}'
-#set -x
-#set -e
-shopt -s extglob
-
 readonly APP="${0##*/}"
 readonly _VERSION_="1.0.0-20230728"
-readonly DEPENDENCIES=(tar tput sed pigz pzstd xz gzip)
+readonly DEPENDENCIES=(pigz tar tput sed)
 
 function sh_diahora {
 	#	DIAHORA=$(date +"%d%m%Y-%T" | sed 's/://g')
@@ -53,12 +46,10 @@ function sh_config {
 	declare -g CROSS="${white}[${COL_LIGHT_RED}✗${COL_NC}$white]"
 	declare -g BOOTLOG="/tmp/$APP-$(sh_diahora).log"
 	declare -g LOGGER='/dev/tty8'
-	declare -g quiet=false
-	declare -g use_color=true
-	declare -gi ncontador=1
-	declare -gi njobs=0
-	#declare -g compressor="normal" # Default compressor
-	declare -g compressor="pzstd" # Default compressor
+	declare -gi quiet=0
+	declare -g use_color=1
+	declare -gi contador=0
+	declare -gi njobs=1
 	sh_setvarcolors
 }
 
@@ -75,11 +66,7 @@ function cmdlogger {
 
 	info_msg "Running '$*'"
 	#   error_output=$( "$@" 2>&1 )
-	if $quiet; then
-  	eval "$@" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
-  else
-	  eval "$@" | tee -i -a "$BOOTLOG"
-	fi
+	eval "$@" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
 	#  status="${PIPESTATUS[0]}"
 	status="$?"
 	if [ $status -ne 0 ]; then
@@ -90,13 +77,13 @@ function cmdlogger {
 }
 
 function sh_check_terminal {
-  if [ ! -t 1 ]; then
-		use_color=false
+	if [ ! -t 1 ]; then
+		use_color=0
 	fi
 }
 
 function print_color {
-	if $use_color; then
+	if ((use_color)); then
 		echo -e "${@//\033\[*/}"
 	else
 		echo -e "$@"
@@ -105,7 +92,7 @@ function print_color {
 
 function sh_setvarcolors {
 	sh_check_terminal
-	if $use_color; then
+	if ((use_color)); then
 		bold=$(tput bold)
 		red=$(tput bold)$(tput setaf 196)
 		reset=$(tput sgr0)
@@ -119,16 +106,14 @@ function sh_setvarcolors {
 }
 
 die() {
-	((++njobs))
-  printf "${red}$CROSS ${pink}%03d/%03d => ${red}FATAL: %s\n\033[m" "$ncontador" "$njobs" "$@"
-	((++ncontador))
+	printf "${red}$CROSS ${pink}%03d/%03d => ${red}FATAL: %s\n\033[m" "$ncontador" "$njobs" "$@"
 	exit 1
 }
 
 function info_msg() {
+	((++ncontador))
 	((++njobs))
 	printf "${green}$TICK ${pink}%03d/%03d => ${yellow}%s\n\033[m" "$ncontador" "$njobs" "$@"
-	((++ncontador))
 }
 
 function run_cmd {
@@ -138,15 +123,14 @@ function run_cmd {
 
 function sh_checkDependencies() {
 	local d
-	local errorFound=false
+	local errorFound=0
 	declare -a missing
 
 	for d in "${DEPENDENCIES[@]}"; do
-		[[ -z $(command -v "$d") ]] && missing+=("$d") && errorFound=true &&
-			info_msg "${red}ERRO: não encontrei o comando${reset}: ${cyan}'$d'${reset}"
+		[[ -z $(command -v "$d") ]] && missing+=("$d") && errorFound=1 && info_msg "${red}ERRO: não encontrei o comando${reset}: ${cyan}'$d'${reset}"
 	done
 
-	if $errorFound; then
+	if ((errorFound)); then
 		echo "${yellow}---------------IMPOSSIBLE TO CONTINUE-------------${reset}"
 		echo "This script needs the commands listed above"
 		echo "Install them and/or make sure they are in your ${red}\$PATH${reset}"
@@ -156,97 +140,55 @@ function sh_checkDependencies() {
 }
 
 function sh_main {
-  if [[ "$1" == '.' ]]; then
-    directory=$(basename "$(pwd)")
-  else
-    directory="${1%/}"
-  fi
-	local FILENAME=$directory-$(sh_diahora).tar
+	local FILENAME=$1-$(sh_diahora).tar.gz
 	local error
-	local param='--verbose'
 
-  if $quiet; then
-    param=''
-  fi
-
-	case "$compressor" in
-	pigz)
-		FILENAME+=".gz"
- 		cmdlogger tar -I pigz $param --posix --xattrs -chf "$FILENAME" "$1"
-		;;
-	pzstd)
-		FILENAME+=".zst"
- 		cmdlogger tar -I pzstd $param --posix --xattrs -chf "$FILENAME" "$1"
-		;;
-	gzip)
-		FILENAME+=".gz"
-		cmdlogger tar -z $param --posix --xattrs -chf "$FILENAME" "$1"
-		;;
-	xz)
-		FILENAME+=".xz"
-		cmdlogger tar --xz $param --posix --xattrs -chf "$FILENAME" "$1"
-		;;
-	normal)
-		cmdlogger tar --posix $param --xattrs -chf "$FILENAME" "$1"
-		;;
-	esac
-
-	error=$?
-
+	if ((quiet)); then
+		cmdlogger tar -I pigz --posix --xattrs -cf "$FILENAME" "$1"
+		error=$?
+	else
+		cmdlogger tar -I pigz --posix --xattrs -cvf "$FILENAME" "$1"
+		error=$?
+	fi
 	if ((error)); then
 		die "$@"
 	else
-		info_msg "Successfully created: ${red}$FILENAME ${reset}"
+		info_msg "Successfully created $FILENAME"
 	fi
 }
 
 sh_config
 sh_checkDependencies
 
-#if [ "$(id -u)" -ne 0 ]; then
-#	die "$APP: need root perms to continue, exiting."
-#fi
-if test -w "$PWD"; then
-  info_msg "$USER com gravação permitida em $PWD, prosseguindo..."
-else
-  info_msg "$USER sem permissão de gravação em $PWD"
-  if [ "$(id -u)" -ne 0 ]; then
-    die "$APP: need root perms to continue, exiting."
-  fi
-fi
-
-# Display usage information if no arguments are passed
-if [[ $# -eq 0 ]]; then
-  cat <<-EOF
-    Usage: $APP [options] <directory>
-    Options:
-      -q          Quiet mode (suppress progress messages)
-      -n          Disable colors in the output
-      -z          Use pigz for compression
-      -s          Use pzstd for compression ${cyan}(default)${reset}
-      -g          Use gzip for compression
-      -x          Use xz for compression
-      (normal)    Create tar archive without additional compression
-EOF
-  exit 1
+if [ "$(id -u)" -ne 0 ]; then
+	die "$APP: need root perms to continue, exiting."
 fi
 
 # Process command line options using getopts
-while getopts "qnsxzg" opt; do
-  case $opt in
-    q) quiet=true;info_msg 'Param -q detected, disabling verbose'             ;; # Quiet mode
-    n) use_color=false;sh_setvarcolors;info_msg 'Param -n detected, disabling colors';; # Disable color
-    z) compressor="pigz";info_msg "Param -z detected, compressor is now '$compressor'";; # Use pigz for compression
-    s) compressor="pzstd";info_msg "Param -z detected, compressor is now '$compressor'"     ;; # Use pzstd for compression
-    g) compressor="gzip";info_msg "Param -z detected, compressor is now '$compressor'"      ;; # Use gzip for compression
-    x) compressor="xz";info_msg "Param -z detected, compressor is now '$compressor'"        ;; # Use xz for compression
-    \?) die "Invalid option: -$OPTARG";;
-  esac
+while getopts "qn" opt; do
+	case $opt in
+	q) quiet=1 ;;
+	n)
+		use_color=0
+		sh_setvarcolors
+		;;
+	\?)
+		echo "Invalid option: -$OPTARG" >&2
+		exit 1
+		;;
+	esac
 done
+shift $((OPTIND - 1))
 
-# Process the remaining argument (directory)
-shift $((OPTIND-1))
+if [ $# -ne 1 ]; then
+	cat <<-EOF
+		Usage: $APP [options] <directory>
+		Options:
+		  -q          Quiet mode (suppress progress messages)
+		  -n          Disable colors in the output
+	EOF
+	exit 1
+fi
 
-# Check if the directory argument is missing or invalid
-[[ -z "$1" || ! -d "$1" ]] && die "${cyan}argument directory ${yellow}'$1' ${reset}is either missing or does not exist!"
-sh_main "$1"
+[[ ! -d "$1" ]] && die "${cyan}$1${reset} does not exist!"
+sh_main "$@"

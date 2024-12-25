@@ -306,12 +306,12 @@ for arg in "$@"; do
 		exit $(($# ? 0 : 1))
 	elif [[ "$arg" = @(-b|build|--build) ]]; then
 		set_varcolors
-    msg 'docker build -t voidlinux-docker:1.3 .'
-    docker build -t voidlinux-docker:1.3 .
+    msg 'docker build -t voidlinux-docker:1.4 .'
+    docker build -t voidlinux-docker:1.4 .
 	elif [[ "$arg" = @(-r|run|--run) ]]; then
 		set_varcolors
-    msg 'docker run -it voidlinux-docker:1.3'
-    docker run -it voidlinux-docker:1.3
+    msg 'docker run -it voidlinux-docker:1.4'
+    docker run -it voidlinux-docker:1.4
 	elif [[ "$arg" = @(-l|list|--list) ]]; then
 		set_varcolors
 		msg 'docker images'
@@ -321,14 +321,14 @@ for arg in "$@"; do
     msg 'docker login'
     docker login
 
-    msg 'docker tag voidlinux-docker:1.3 vcatafesta/voidlinux-docker:1.3'
-    docker tag voidlinux-docker:1.3 vcatafesta/voidlinux-docker:1.3
+    msg 'docker tag voidlinux-docker:1.4 vcatafesta/voidlinux-docker:1.4'
+    docker tag voidlinux-docker:1.4 vcatafesta/voidlinux-docker:1.4
 
 		msg 'docker images'
     docker images
 
-    msg 'docker push vcatafesta/voidlinux-docker:1.3'
-    docker push vcatafesta/voidlinux-docker:1.3
+    msg 'docker push vcatafesta/voidlinux-docker:1.4'
+    docker push vcatafesta/voidlinux-docker:1.4
 
 		msg 'docker images'
 		docker images
