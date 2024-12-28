@@ -7,6 +7,7 @@
 #
 #  Criado   : 2023/08/03
 #  Alterado : 2023/08/04
+#  Updated  : qua 25 dez 2024 07:26:06 -04
 #
 #  Direitos autorais (c) 2023-2023, Vilmar Catafesta <vcatafesta@gmail.com>
 #  Todos os direitos reservados.
@@ -30,12 +31,20 @@
 #  SOFTWARE, MESMO SE AVISADO DA POSSIBILIDADE DE TAIS DANOS.
 
 APP="${0##*/}"
-_VERSION_="1.0.0-20230804"
+_VERSION_="1.0.1-20242512"
+
+#debug
+export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset}'
+#set -x
+#set -e
+shopt -s extglob
 
 CHROOT="/home/chrootjail"
-user='galego'
-user='bigbruno'
-user='evili'
+#user='vc'
+#user='galego'
+#user='bigbruno'
+#user='evili'
+user='vcatafesta'
 
 # Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
@@ -80,14 +89,14 @@ function print_blue { printf "${light_blue}=> %s${reset}\n" "$1"; }
 function create_chroot_directories {
 	local adir=('proc' 'proc/loadavg' 'dev' 'sys' 'run' 'tmp' 'var' 'root' 'usr/bin' 'usr/sbin' 'usr/share' 'usr/lib' 'home')
 	for dir in "${adir[@]}"; do
-		print_blue "Criando o diretório: $CHROOT/$dir"
+		print_red "Criando o diretório: $CHROOT/$dir"
 		mkdir -p "$CHROOT/$dir" || return 1
 	done
 
 	pushd "$CHROOT" >/dev/null
 	print_red "Definindo permissões para a pasta tmp"
 	chmod 1777 tmp || return 1
-	print_cyan "Criando links simbólicos"
+	print_red "Criando links simbólicos"
 	ln -sf usr/bin bin || return 1
 	ln -sf usr/sbin sbin || return 1
 	ln -sf usr/lib lib || return 1
@@ -103,11 +112,11 @@ function create_chroot_directories {
 }
 
 # Função para copiar binários e dependências para a chroot jail
-function copy_binaries_to_chroot {
+function copy_binaries_to_chroot_OLD {
 	local afilestxt=("/etc/hosts" "/etc/hostname")
 	set /usr/bin/{bash,sh,id,touch,cat,clear,cp,du,grep,less,ls,mv,mkdir,rmdir,rm,echo,printf,date,awk,uptime,whoami,sed,logname,tput,tree,dircolors,vi,nano,uname,file,which}
 
-	print_cyan "Copiando binários e suas dependências para a chroot jail"
+	print_red "Copiando binários e suas dependências para a chroot jail"
 	for i in $(ldd "$@" | grep -v dynamic | cut -d " " -f 3 | sed 's/://' | sort | uniq); do
 		print_black "Copiando: $i"
 		cp -f --parents "$i" "$CHROOT" || return 1
@@ -137,6 +146,79 @@ function copy_binaries_to_chroot {
 	fi
 }
 
+# Função para copiar binários e dependências para a chroot jail
+function copy_binaries_to_chroot {
+  local afilestxt=("/etc/hosts" "/etc/hostname")
+  local bin_list=("/usr/bin/bash" "/usr/bin/sh" "/usr/bin/id" "/usr/bin/touch" "/usr/bin/cat"
+                  "/usr/bin/clear" "/usr/bin/cp" "/usr/bin/du" "/usr/bin/grep" "/usr/bin/less"
+                  "/usr/bin/ls" "/usr/bin/mv" "/usr/bin/mkdir" "/usr/bin/rmdir" "/usr/bin/rm"
+                  "/usr/bin/echo" "/usr/bin/printf" "/usr/bin/date" "/usr/bin/awk"
+                  "/usr/bin/uptime" "/usr/bin/whoami" "/usr/bin/sed" "/usr/bin/logname"
+                  "/usr/bin/tput" "/usr/bin/tree" "/usr/bin/dircolors" "/usr/bin/vi"
+                  "/usr/bin/nano" "/usr/bin/uname" "/usr/bin/file" "/usr/bin/which")
+
+  print_red "Copiando binários e suas dependências para a chroot jail"
+
+  # Função para garantir que um diretório exista
+  ensure_directory() {
+    local dir="$1"
+    if [[ -e $dir && ! -d $dir ]]; then
+      print_red "Erro: '$dir' existe, mas não é um diretório!"
+      return 1
+    fi
+    mkdir -p "$dir" 2>/dev/null || return 1
+  }
+
+  # Copiar binários e dependências
+  for bin in "${bin_list[@]}"; do
+    if [[ -x $bin ]]; then
+      print_red "Copiando binário: $bin"
+      cp --parents "$bin" "$CHROOT" || return 1
+
+      # Copiar dependências do binário
+      ldd "$bin" | awk '/=>/ {print $3} /ld-linux/ {print $1}' | sort -u | while read -r dep; do
+        if [[ -f $dep ]]; then
+          print_black "  Copiando dependência: $dep"
+          local dep_dir
+          dep_dir=$(dirname "$dep")
+          ensure_directory "$CHROOT/$dep_dir" || return 1
+          cp "$dep" "$CHROOT/$dep_dir" || return 1
+        fi
+      done
+    fi
+  done
+
+  # Copiar arquivos de configuração adicionais
+  for file in "${afilestxt[@]}"; do
+    if [[ -f $file ]]; then
+      print_red "Copiando arquivo de configuração: $file"
+      cp --parents "$file" "$CHROOT" || return 1
+    fi
+  done
+
+  # Copiar terminfo
+  print_red "Copiando terminfo para uso com less"
+  cp -r --parents /usr/share/terminfo "$CHROOT" || return 1
+
+  # Copiar .dircolors
+  if [[ -f /root/.dircolors ]]; then
+    print_red "Copiando .dircolors para uso com ls"
+    cp -f /root/.dircolors "$CHROOT/etc/.dircolors" || return 1
+  fi
+
+  # Copiar bibliotecas específicas dependendo da arquitetura
+  local arch_libs=("/lib64/ld-linux-x86-64.so.2" "/lib/ld-linux.so.2")
+  for lib in "${arch_libs[@]}"; do
+    if [[ -f $lib ]]; then
+      print_red "Copiando biblioteca: $lib"
+      local lib_dir
+      lib_dir=$(dirname "$lib")
+      ensure_directory "$CHROOT/$lib_dir" || return 1
+      cp "$lib" "$CHROOT/$lib_dir" || return 1
+    fi
+  done
+}
+
 # Função para criar o arquivo chroot-shell
 function create_chroot_shell {
 	cat >"$CHROOT/bin/chroot-shell" <<-EOF
@@ -151,27 +233,38 @@ function create_chroot_shell {
 
 # Função para criar arquivos /etc/group e /etc/passwd
 function create_group_and_passwd_files {
-	if ! grep -q root: "$CHROOT/etc/group"; then
-		grep root: /etc/group >>"$CHROOT/etc/group" || return 1
-	fi
-	if ! grep -q "$user": "$CHROOT/etc/group"; then
-		grep "$user": /etc/group >>"$CHROOT/etc/group" || return 1
-	fi
-	if ! grep -q root: "$CHROOT/etc/passwd"; then
-		grep root: /etc/passwd >>"$CHROOT/etc/passwd" || return 1
-	fi
-	if ! grep -q "$user": "$CHROOT/etc/passwd"; then
-		grep "$user": /etc/passwd >>"$CHROOT/etc/passwd" || return 1
-	fi
+  local files=("group" "passwd")
+  local users=("root" "$user")
+
+  for file in "${files[@]}"; do
+    # Certifica-se de que o arquivo existe antes de tentar adicionar conteúdo
+    [[ -f "$CHROOT/etc/$file" ]] || touch "$CHROOT/etc/$file"
+    for usr in "${users[@]}"; do
+      if ! grep -q "${usr}:" "$CHROOT/etc/$file" 2>/dev/null; then
+        grep "${usr}:" "/etc/$file" >>"$CHROOT/etc/$file" 2>/dev/null || return 1
+      fi
+    done
+  done
 }
 
 # Função para configurar permissões e proprietário da pasta do usuário
 function configure_user_directory {
-	sudo groupadd chrootjail
-	sudo usermod -a -G chrootjail "$user" || return 1
+  local group="chrootjail"
+  local user_dir="$CHROOT/home/$user"
 
-	mkdir -p "$CHROOT/home/$user" || return 1
-	chown "$user:$user" "$CHROOT/home/$user" -R || return 1
+  # Criar grupo se não existir
+  if ! getent group "$group" >/dev/null; then
+    sudo groupadd "$group" || return 1
+  fi
+
+  # Adicionar usuário ao grupo
+  if ! id -nG "$user" | grep -qw "$group"; then
+    sudo usermod -a -G "$group" "$user" || return 1
+  fi
+
+  # Criar diretório do usuário, configurar permissões e proprietário
+  mkdir -p "$user_dir" || return 1
+  sudo chown -R "$user:$user" "$user_dir" || return 1
 }
 
 # Função para criar arquivos /etc/hostname e /etc/hosts

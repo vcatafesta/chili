@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 # -*- coding: utf-8 -*-
-# shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2034
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  chili-init-keys - Utilitário para gerenciar e inicializar chaves de assinatura utilizando o pacman
-#  Created: 2024/09/23 - 16:19 -04
-#  Altered: 2024/09/23 - 16:19 -04
-#  Updated: 2024/12/25 - 07:12 -04 - added chili-keyring
+#  search-dconf-key
+#  Created: 2024/12/27 - 23:17
+#  Altered: 2024/12/27 - 23:17
 #
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -32,7 +31,7 @@
 ##############################################################################
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
-export TEXTDOMAIN=chili-init-keys-manjaro
+export TEXTDOMAIN=search-dconf-key
 
 # Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
@@ -73,50 +72,44 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="1.0.1-2024125"
-declare distro
+declare _VERSION_="1.0.0-20241227"
+declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput)
-#source /usr/share/fetch/core.sh
-distro="$(uname -n)"
+source /usr/share/fetch/core.sh
 
 MostraErro() {
   echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
 }
 trap 'MostraErro "${APP[$FUNCNAME][$LINENO]}" "${BASH_COMMAND}" "$?"; exit 1' ERR
 
-# /usr/share/pacman/keyrings
-#!/bin/bash
+#dconf dump /org/cinnamon/
+#dconf list /org/cinnamon/
+echo CINNAMON
+dconf read /org/cinnamon/desktop/background/picture-uri
+dconf read /org/cinnamon/desktop/background/picture-uri-dark
+dconf read /org/cinnamon/desktop/interface/cursor-theme
+dconf read /org/cinnamon/desktop/interface/icon-theme
+dconf read /org/cinnamon/desktop/interface/gtk-theme
+dconf read /org/cinnamon/shell/extensions.user-theme
 
-# Sincronizar pacotes necessários
-sudo pacman -Sy --needed \
-  archlinux-keyring \
-  manjaro-keyring \
-  biglinux-keyring \
-  community-keyring \
-  chili-keyring \
-  ubuntu-keyring \
-  debian-archive-keyring \
-  alpine-keyring \
-  gnome-keyring \
-  debian-ports-archive-keyring \
-  deepin-polkit-agent-ext-gnomekeyring
+gsettings set org.cinnamon.desktop.background picture-uri 'file:///usr/share/backgrounds/chililinux/animal-painting2.jpg'
+#gsettings set org.cinnamon.desktop.background picture-uri-dark 'file:///usr/share/backgrounds/chililinux/animal-painting2.jpg'
+gsettings set org.cinnamon.desktop.interface cursor-theme 'capitaine-cursors-light'
+gsettings set org.cinnamon.desktop.interface icon-theme 'BeautyFolders'
+gsettings set org.cinnamon.desktop.interface gtk-theme 'Tokyonight-Dark-Theme';
+#gsettings set org.cinnamon.shell.extensions.user-theme name 'Tokyonight-Dark-Theme';
 
-# Inicializar e popular o banco de chaves
-sudo pacman-key --init
-sudo pacman-key --populate
+echo GNOME
+gsettings get org.gnome.desktop.background picture-uri-dark
+gsettings get org.gnome.desktop.background picture-uri
+gsettings get org.gnome.desktop.interface cursor-theme
+gsettings get org.gnome.desktop.interface icon-theme
+gsettings get org.gnome.desktop.interface gtk-theme
+gsettings get org.gnome.shell.extensions.user-theme name
 
-# Adicionar e assinar chaves específicas
-keys=(
-  AECEEE84E52BBFAA9F1C9DF01EA0CEEEB09B44A3  #talesam@gmail.com
-  A0D5A8312A83940ED8B04B0F4BAC871802E960F1  #vcatafesta@gmail.com
-)
-
-for key in "${keys[@]}"; do
-  sudo pacman-key --recv-keys "$key"
-  sudo pacman-key --lsign-key "$key"
-done
-
-# Listar informações das chaves
-sudo pacman-key --list-keys
-sudo pacman-key --list-sigs
-sudo pacman-key --finger
+gsettings set org.gnome.desktop.background picture-uri 'file:///usr/share/backgrounds/chililinux/animal-painting2.jpg'
+gsettings set org.gnome.desktop.background picture-uri-dark 'file:///usr/share/backgrounds/chililinux/animal-painting2.jpg'
+gsettings set org.gnome.desktop.interface cursor-theme 'capitaine-cursors-light'
+gsettings set org.gnome.desktop.interface icon-theme 'BeautyFolders'
+gsettings set org.gnome.desktop.interface gtk-theme 'Tokyonight-Dark-Theme';
+gsettings set org.gnome.shell.extensions.user-theme name 'Tokyonight-Dark-Theme';

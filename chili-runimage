@@ -62,14 +62,16 @@ readonly APP="${0##*/}"
 readonly _VERSION_='1.5.01-20240214'
 readonly DEPENDENCIES=('tput' 'printf' 'qemu-system-x86_64' 'gettext')
 readonly PACKAGEDEP=([tput]='ncurses' [printf]='coreutils' [qemu - system - x86_64]='qemu' [gettext]='gettext')
+#readonly iface_bridge='docker0'
+#readonly iface_bridge='virbr0'
 readonly iface_bridge='br0'
 declare xmem='16G'
 #declare audioserver='pulseaudio'
 #declare videodevice='virtio-vga'
 declare audioserver='alsa'
 declare videodevice='VGA'
+declare bridge=false
 declare -i uefi=0
-declare -i bridge=0
 declare -a qemu_options=()
 trap cleanup_working_dir EXIT
 
@@ -400,7 +402,7 @@ while test ${#opts[*]} -gt 0; do
 		uefi=1
 		;;
 	-b | --bridge)
-		bridge=1
+		bridge=true
 		;;
 	-n | --nocolor)
 		sh_unsetvarcolors
@@ -434,20 +436,21 @@ sh_set_qemu_common_options
 if [[ $# > 0 ]]; then
 	#	sh_checkRoot
 	qemu_options+=(-m ${xmem})
-	if ((bridge)); then
+	if $bridge; then
 		random_mac_net0=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
 		random_mac_net1=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
 		#	echo $random_mac_net0
 		#	echo $random_mac_net1
-		#	qemu_options+=(-netdev bridge,id=net0,smb=$HOME)
-		qemu_options+=(-netdev bridge,id=net0)
-		qemu_options+=(-device e1000,netdev=net0)
-		#		qemu_options+=(-netdev bridge,id=net0,br=$iface_bridge)
-		#		qemu_options+=(-device e1000,netdev=net0,mac=$random_mac_net0)
-		#		qemu_options+=(-netdev bridge,id=net1,br=$iface_bridge)
-		#		qemu_options+=(-device e1000,netdev=net1,mac=$random_mac_net1)
-		qemu_options+=(-netdev tap,ifname=tap0,script=no,downscript=no,id=mynet0)
-		qemu_options+=(-device virtio-net-device,netdev=mynet0,mac=92:7b:15:c3:4d:ec)
+		#qemu_options+=(-netdev bridge,id=net0,smb=$HOME)
+		#qemu_options+=(-netdev bridge,id=net0)
+		#qemu_options+=(-device e1000,netdev=net0)
+		qemu_options+=(-netdev bridge,id=net0,br=$iface_bridge)
+		qemu_options+=(-device virtio-net-pci,netdev=net0)
+		#qemu_options+=(-device e1000,netdev=net0,mac=$random_mac_net0)
+		#qemu_options+=(-netdev bridge,id=net1,br=$iface_bridge)
+		#qemu_options+=(-device e1000,netdev=net1,mac=$random_mac_net1)
+		#qemu_options+=(-netdev tap,ifname=tap1,script=no,downscript=no,id=mynet0)
+		#qemu_options+=(-device virtio-net-device,netdev=mynet0,mac=92:7b:15:c3:4d:ec)
 	else
 		#	qemu_options+=(-netdev user,id=net0,smb=$HOME)
 		qemu_options+=(-netdev user,id=net0)

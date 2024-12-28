@@ -176,6 +176,7 @@ function sh_main {
 		;;
 	pzstd)
 		FILENAME+=".zst"
+#   cmdlogger tar --use-compress-program="pzstd -19" --verbose --posix --xattrs -chf chililinux-26122024-1235.tar.zst chililinux
  		cmdlogger tar -I pzstd $param --posix --xattrs -chf "$FILENAME" "$1"
 		;;
 	gzip)

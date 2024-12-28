@@ -4,7 +4,7 @@
 #
 #  chili-make-docker
 #  Created: 2024/12/17 - 21:15
-#  Altered: 2024/12/17 - 21:15
+#  Altered: sex 27 dez 2024 19:20:43 -04
 #
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -34,7 +34,9 @@ export TEXTDOMAINDIR=/usr/share/locale
 export TEXTDOMAIN=chili-make-docker
 declare APP="${0##*/}"
 declare APPDESC="Wrapper bash para o docker"
-declare VERSION="0.12.17" # Versão do script
+declare VERSION="1.12.27-20241227" # Versão do script
+declare DEPENDENCIES=(tput docker awk)
+#source /usr/share/fetch/core.sh
 export TERM=${TERM:-xterm}
 export TERM=${TERM:-xterm-256color}
 declare IS_AUTO=false
@@ -76,13 +78,6 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset}'
 #set -x
 #set -e
 shopt -s extglob
-
-#system
-declare APP="${0##*/}"
-declare _VERSION_="1.0.0-20241217"
-declare distro="$(uname -n)"
-declare DEPENDENCIES=(tput)
-source /usr/share/fetch/core.sh
 
 MostraErro() {
 	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
@@ -260,7 +255,7 @@ EOF_VERSION
 
 # Função para exibir informações de ajuda
 sh_usage() {
-	cat <<EOF_USAGE
+  cat <<EOF_USAGE
     ${reset}${APP} v${VERSION} - ${APPDESC}${reset}
     ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
 
@@ -290,6 +285,18 @@ if test $# -lt 1; then
 fi
 
 sh_checkroot
+if [[ -e Dockerfile ]]; then
+  msg 'loading source Dockerfile...'
+  # Caminho do Dockerfile
+  dockerfile="Dockerfile"
+  # Use grep para localizar as linhas com 'LABEL' e awk para extrair os valores
+  version=$(grep -i 'LABEL version=' "$dockerfile" | awk -F'"' '{print $2}')
+  imagename=$(grep -i 'LABEL imagename=' "$dockerfile" | awk -F'"' '{print $2}')
+  image_docker="$imagename:$version"
+else
+  #image_docker="voidlinux-docker:1.4"
+  image_docker="build-iso:1.6"
+fi
 
 # Loop através de todos os parâmetros ($@)
 for arg in "$@"; do
@@ -306,12 +313,12 @@ for arg in "$@"; do
 		exit $(($# ? 0 : 1))
 	elif [[ "$arg" = @(-b|build|--build) ]]; then
 		set_varcolors
-    msg 'docker build -t voidlinux-docker:1.4 .'
-    docker build -t voidlinux-docker:1.4 .
+    msg "docker build -t $image_docker ."
+    docker build -t $image_docker .
 	elif [[ "$arg" = @(-r|run|--run) ]]; then
 		set_varcolors
-    msg 'docker run -it voidlinux-docker:1.4'
-    docker run -it voidlinux-docker:1.4
+    msg "docker run -it $image_docker"
+    docker run -it $image_docker
 	elif [[ "$arg" = @(-l|list|--list) ]]; then
 		set_varcolors
 		msg 'docker images'
@@ -321,14 +328,14 @@ for arg in "$@"; do
     msg 'docker login'
     docker login
 
-    msg 'docker tag voidlinux-docker:1.4 vcatafesta/voidlinux-docker:1.4'
-    docker tag voidlinux-docker:1.4 vcatafesta/voidlinux-docker:1.4
+    msg "docker tag $image_docker vcatafesta/$image_docker"
+    docker tag $image_docker vcatafesta/$image_docker
 
 		msg 'docker images'
     docker images
 
-    msg 'docker push vcatafesta/voidlinux-docker:1.4'
-    docker push vcatafesta/voidlinux-docker:1.4
+    msg "docker push vcatafesta/$image_docker"
+    docker push vcatafesta/$image_docker
 
 		msg 'docker images'
 		docker images
