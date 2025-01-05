@@ -19,6 +19,122 @@ LIBRARY=${LIBRARY:-'/usr/share/fetch'}
 source "$LIBRARY"/core.sh
 source /usr/lib/lsb/init-functions
 
+#export TERM=${TERM:-xterm}
+#export TERM=${TERM:-xterm-256color}
+
+#Definindo variáveis de cores
+export red="\033[01;31m"
+export green="\033[01;32m"
+export yellow="\033[01;33m"
+export blue="\033[01;34m"
+export pink="\033[01;35m"
+export cyan="\033[01;36m"
+export reset="\033[0m"
+
+die() {
+	local msg="$1"
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	echo -e "BP=>${cyan}error: ${red}${msg}${reset}"
+	exit 1
+}
+export -f die
+
+msg_raw() {
+	local msg="$1"
+	# Remove tags HTML, se existirem
+	#msg="$(sed 's/<[^>]*>//g' <<< "$msg")"
+
+	# Verifica se existe ':' na mensagem
+	if [[ "$msg" == *:* ]]; then
+		# Divide a string antes e depois do primeiro ':'
+		local before_colon="${msg%%:*}:"
+		local after_colon="${msg#*: }"
+		# Aplica as cores
+		msg="${cyan}${before_colon} ${red}${after_colon}${reset}"
+	else
+		# Se não houver ':', aplica apenas a cor padrão
+		msg="${cyan}${msg}${reset}"
+	fi
+	echo -e "$msg"
+}
+export -f msg_raw
+
+msg() {
+	local msg="$1"
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	echo -e "BP=>${cyan}running: ${yellow}${msg}${reset}"
+}
+export -f msg
+
+msg_ok() {
+	local msg="$1"
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	echo -e "BP=>${cyan}feito: ${green}${msg}${reset}"
+}
+export -f msg_ok
+
+msg_run() {
+	local msg="$1"
+	echo -e "BP=>${cyan}running: ${yellow}${msg}${reset}"
+	eval "$msg"
+}
+export -f msg_run
+
+msg_info() {
+  local msg="$1"
+  local caller_function="${FUNCNAME[1]}"      # Nome da função que chamou a função atual
+  local caller_line="${BASH_LINENO[1]}"       # Número da linha que chamou a função atual
+  msg="$(sed 's/<[^>]*>//g' <<<"$msg")"       # Remove as tags HTML
+  #echo -e "${blue}==>${green}[${caller_function}:${caller_line}]=>${yellow}info   : ${cyan}${msg}${reset}"
+  echo -e "${caller_function}=>${yellow}info   : ${cyan}${msg}${reset}"
+}
+export -f msg_info
+
+msg_warning() {
+	local msg="$1"
+  local caller_function="${FUNCNAME[1]}"      # Nome da função que chamou a função atual
+  local caller_line="${BASH_LINENO[1]}"       # Número da linha que chamou a função atual
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+  echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
+}
+export -f msg_warning
+
+msg_warn() {
+	local msg="$1"
+  local caller_function="${FUNCNAME[1]}"      # Nome da função que chamou a função atual
+  local caller_line="${BASH_LINENO[1]}"       # Número da linha que chamou a função atual
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+  echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
+}
+export -f msg_warn
+
+replicate() {
+	local char=${1:-'#'}
+	local nsize=${2:-$(tput cols)}
+	local line
+	#printf -v line "%*s" "$nsize" && echo "${line// /$char}"
+	#printf -v line "%*s" "$nsize" && echo -e "\033[31m${line// /$char}\033[0m"
+	printf -v line "%*s" "$nsize" && echo -e "${blue}${line// /$char}${reset}"
+}
+export -f replicate
+
+send_telegram_message() {
+	local message="$1"
+	local parse_mode="$2"
+
+	# Define parse_mode como "MarkdownV2" se não for especificado
+	[[ -z $parse_mode ]] && parse_mode="HTML"
+
+	# Remove as tags HTML e exibe o resultado no terminal
+	echo -e "${red}$(sed 's/<[^>]*>//g' <<<"$message")${reset}"
+	# Envia a mensagem original com HTML para o Telegram
+	curl -s -X POST "https://api.telegram.org/bot${inputs_telegram_token}/sendMessage" \
+		-d chat_id="${inputs_telegram_chat_id}" \
+		-d text="$message" \
+		-d parse_mode="$parse_mode"
+}
+export -f send_telegram_message
+
 sh_checkcommand() {
 	local cmd="$1"
 	command -v "$1" >/dev/null 2>&-
@@ -242,7 +358,7 @@ sh_bashrc_configure() {
 	#alias rdel='find . -name '$1' -print0 | xargs -0 rm -v'
 	alias ver="lsb_release -a"
 	alias cdg="cd /github/ChiliOS/packages/core"
-	alias cdr="cd /github/ChiliOS/repo"
+	alias cdr="cd /github/ChiliOS/packages/core/testing/x86_64/"
 	alias cdp="cd /var/cache/pacman/pkg"
 	alias cda="cd /var/cache/fetch/archives"
 	alias cda="cd $HOME/.local/share/applications/"
@@ -1036,8 +1152,22 @@ EOF
 	fi
 }
 
+detect_audio_server() {
+	if pgrep -x pipewire >/dev/null; then
+		echo "pipewire"
+	elif pgrep -x pulseaudio >/dev/null; then
+		echo "pa"
+	elif pgrep -x jackd >/dev/null; then
+		echo "jack"
+	else
+		echo "none"
+	fi
+}
+
 #qemu-system-x86_64 -monitor stdio -smp "$(nproc)" -k pt-br -machine accel=kvm -m 4096 -cdrom "$1" -hda "/home/vcatafesta/.aqemu/Linux_2.6_HDA.img" -boot once=d,menu=off -net nic -net user -rtc base=localtime -name "runcdrom"
 chili-qemurunfile() {
+	local random_port=$(shuf -i 4444-45000 -n 1)
+	local random_spice_port=$(shuf -i 5900-5910 -n 1)
 	declare -a qemu_options=()
 
 	if test $# -ge 1; then
@@ -1045,8 +1175,8 @@ chili-qemurunfile() {
 			echo "Imagem/Device $1 não encontrada!"
 			return
 		}
-		#		[[ -r "$1" ]] || { echo "Imagem/Device $1 sem permissão de leitura!"; return; }
-		qemu_options+=(-monitor stdio)
+		msg_info "spice running on port: $random_spice_port"
+		msg_info "remote-viewer spice://localhost:$random_spice_port"
 		qemu_options+=(-no-fd-bootchk)
 		qemu_options+=(-machine accel=kvm)
 		qemu_options+=(-cpu host)
@@ -1060,16 +1190,31 @@ chili-qemurunfile() {
 		qemu_options+=(-device virtio-scsi-pci,id=scsi0)
 		qemu_options+=(-netdev user,id=net0)
 		qemu_options+=(-device e1000,netdev=net0)
-		#		qemu_options+=(-audiodev pa,id=snd0)
-		#		qemu_options+=(-audiodev pipewire,id=snd0)
-		qemu_options+=(-audiodev alsa,id=snd0)
-		#        qemu_options+=(-device hda-duplex,audiodev=snd0,mixer=off)
-		#        qemu_options+=(-rtc base=localtime,clock=host)
+		qemu_options+=(-audiodev "$(detect_audio_server)",id=snd0)
+		qemu_options+=(-rtc base=localtime,clock=host)
 		qemu_options+=(-device ich9-intel-hda)
 		qemu_options+=(-device hda-output,audiodev=snd0)
-		#		qemu_options+=(-global ICH9-LPC.disable_s3=1)
+		qemu_options+=(-global ICH9-LPC.disable_s3=1)
 		qemu_options+=(-machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0)
-		sudo qemu-system-x86_64 "${qemu_options[@]}"
+		qemu_options+=(-monitor tcp:localhost:$random_port,server,nowait)
+		qemu_options+=(-spice port=$random_spice_port,disable-ticketing=on)
+		qemu_options+=(-device virtio-serial)
+		qemu_options+=(-chardev spicevmc,id=vdagent,debug=0,name=vdagent)
+		qemu_options+=(-device virtserialport,chardev=vdagent,name=com.redhat.spice.0)
+		{
+			# Executando o QEMU em segundo plano
+			sudo env XDG_RUNTIME_DIR=/run/user/$(id -u) qemu-system-x86_64 "${qemu_options[@]}" &
+			# Captura o PID do QEMU
+			qemu_pid=$! >/dev/null 2>&-
+			# Executar o remote-viewer
+			remote-viewer spice://localhost:$random_spice_port &
+			# Captura o PID do remote-viewer
+			viewer_pid=$! >/dev/null 2>&-
+			# Aguardar o fechamento do remote-viewer
+			wait $viewer_pid
+			# Quando o remote-viewer for fechado, matar o processo do QEMU
+			kill $qemu_pid
+		}
 	else
 		cat <<EOF
 usage:
@@ -1079,37 +1224,10 @@ EOF
 	fi
 }
 
-#    qemu_options+=(-device hda-duplex,audiodev=snd0,mixer=off)
-#    qemu_options+=(-rtc base=localtime,clock=host)
-#    qemu_options+=(-device ich9-intel-hda)
-#    qemu_options+=(-device hda-output,audiodev=snd0)
-#    qemu_options+=(-global ICH9-LPC.disable_s3=1)
-#    qemu_options+=(-machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0)
-#    qemu_options+=(-serial stdio)
-#
-#
-#
-#
-#			-drive file=~/archlive/qemu/hdb.img,format=raw \
-#			-drive file=~/archlive/qemu/hdc.img,format=raw \
-#			-drive file=~/archlive/qemu/hdd.img,format=raw \
-#			-name 'Chili' \
-#			-audiodev alsa,id=snd0 \
-#		-audiodev pa,id=snd0,server=localhost \
-#		-vga qxl \
-#       -display curses    \
-#       -vga virtio \
-#       -vga virtio     \
-#       -display "sdl" \
-#       -device qxl-vga,vgamem_mb=128 \
-#       -k br-abnt2 \
-#       -net nic,model=virtio -net bridge,br=br0 \
-#       -device virtio-net-pci,romfile=,netdev=net0\
-#       -netdev user,id=net0,hostfwd=tcp::60022-:22 \
-
 chili-qemufilerun() { chili-qemurunfile $@; }
 filerun() { chili-qemurunfile $@; }
-fr() { chili-qemurunfile "$@"; }
+#fr() { chili-qemurunfile "$@"; }
+cr() { chili-runimage "$@"; }
 fru() { chili-qemurunuefi $@; }
 frr() { chili-qemurunimg $@; }
 fileinfo() { for i in "${@}"; do
@@ -1683,7 +1801,9 @@ gpush() {
 
 	log_wait_msg "${red}Iniciando git push in ${yellow}${mainbranch}'${reset}"
 	#export GIT_CURL_VERBOSE=1
+	git fetch upstream
 	git checkout "$mainbranch"
+	git merge upstream/"${mainbranch}"
 	git config --global http.postBuffer 524288000
 	git config credential.helper store
 
@@ -1701,7 +1821,8 @@ gpush() {
 			return 1
 		fi
 	fi
-	git push --force
+	#	git push --force
+	git push origin "$mainbranch"
 	git log origin/$mainbranch..$mainbranch
 	return 0
 }

@@ -1,4 +1,4 @@
-frc_new() {
+frstd() {
    # Verificar se o caminho para a imagem do disco foi fornecido
    if [ -z "$1" ]; then
      echo "Você precisa fornecer o caminho para a imagem do disco como argumento."
@@ -20,15 +20,10 @@ frc_new() {
       -audiodev pa,id=snd0,server=localhost \
       -device ich9-intel-hda -device hda-output,audiodev=snd0 \
       -machine type=q35,accel=kvm,usb=on,pcspk-audiodev=snd0,smm=on \
+      -vga qxl \
       -smp 36 \
       -enable-kvm
-   #  -nographic
-   #  -display curses \
-
-   #sudo qemu-system-x86_64 \
-   #  -drive file=${1},format=raw \
-   #  -display curses \
-   #  -smp 36 \
-   #  -enable-kvm \
-   #  -nographic
 }
+
+#	   -vga std \
+#	   -device VGA \

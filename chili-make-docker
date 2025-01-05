@@ -261,9 +261,10 @@ sh_usage() {
 
     ${cyan}Opções:${reset}
       -b|build|--build ${orange}<image> ${cyan} # Build docker image${reset}
-      -r|run  |--run   ${orange}<image> ${cyan} # Run docker image${reset}
-      -l|list |--list          ${cyan} # List docker images${reset}
-      -p|push |--push          ${cyan} # Push docker images into dockerhub ${reset}
+      -r|run|--run     ${orange}<image> ${cyan} # Run docker image${reset}
+      -l|list|--list           ${cyan} # List docker images${reset}
+      -d|delete|--delete       ${cyan} # List docker images with <none>${reset}
+      -p|push|--push           ${cyan} # Push docker images into dockerhub ${reset}
       -V|--version             ${cyan} # Imprime a versão do aplicativo ${reset}
       -h|--help                ${cyan} # Mostra este Help ${reset}
 EOF_USAGE
@@ -323,6 +324,10 @@ for arg in "$@"; do
 		set_varcolors
 		msg 'docker images'
 		docker images
+	elif [[ "$arg" = @(-d|delete|--dele) ]]; then
+		set_varcolors
+		msg 'docker image ls | awk '$1 == "<none>"''
+		docker image ls | awk '$1 == "<none>"'
 	elif [[ "$arg" = @(-p|push|--push) ]]; then
 		set_varcolors
     msg 'docker login'

@@ -4,8 +4,9 @@
 #  chili-runimage
 #  Created: 2023/04/25
 #  Altered: qua 14 fev 2024 11:05:21 -04
+#  Updated: sex 03 jan 2025 23:06:19 -04
 #
-#  Copyright (c) 2023-2024, Vilmar Catafesta <vcatafesta@gmail.com>
+#  Copyright (c) 2023-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -65,13 +66,14 @@ readonly PACKAGEDEP=([tput]='ncurses' [printf]='coreutils' [qemu - system - x86_
 #readonly iface_bridge='docker0'
 #readonly iface_bridge='virbr0'
 readonly iface_bridge='br0'
-declare xmem='16G'
-#declare audioserver='pulseaudio'
-#declare videodevice='virtio-vga'
-declare audioserver='alsa'
+declare xmem='8G'
+declare audioserver='auto'
+declare videodevice='virtio-vga'
+declare videodevice='qxl'
 declare videodevice='VGA'
 declare bridge=false
-declare -i uefi=0
+declare uefi=false
+declare drive=false
 declare -a qemu_options=()
 trap cleanup_working_dir EXIT
 
@@ -192,129 +194,29 @@ function sh_checkDependencies {
 	fi
 }
 
-function filerun_bios {
-	if test $# -ge 1; then
-		if test -r $1; then
-			#			qemu-system-x86_64 -drive file=${1},format=raw,if=none,id=disk1 -device ide-hd,drive=disk1,bootindex=1 -device virtio-scsi-pci,id=scsi0 "${qemu_options[@]}"
-			#			qemu-system-x86_64 -drive file=${1},format=raw,index=0,media=disk,if=none,id=disk1 -device ide-hd,drive=disk1,bootindex=1 -device virtio-scsi-pci,id=scsi0 "${qemu_options[@]}"
-			qemu-system-x86_64 -drive file=${1},format=raw,media=disk,if=none,id=disk1 -device ide-hd,drive=disk1,bootindex=1 -device virtio-scsi-pci,id=scsi0 "${qemu_options[@]}"
-		else
-			log_msg "${red}ERROR: ${cyan}'$1' ${red}$(gettext "erro de leitura ou não existe")"
-		fi
-	else
-		sh_usage
-	fi
-}
-
-function filerun_uefi {
-	local ovmf_code
-	local ovmf_vars
-	local working_dir
-	local cpath_edk2=('/usr/share/edk2/x64' '/usr/share/edk2-ovmf/x64')
-	local cpath
-
-	if test $# -ge 1; then
-		if test -r $1; then
-			for cpath in "${cpath_edk2[@]}"; do
-				if [[ -f "$cpath/OVMF_CODE.fd" ]]; then
-					ovmf_code="$cpath/OVMF_CODE.fd"
-					ovmf_vars="$cpath/OVMF_VARS.fd"
-					break
-				fi
-			done
-
-			if [[ -z $ovmf_code ]]; then
-				printf 'ERROR: %s\n' "OVMF_VARS.fd $(gettext "não encontrado. Instale o pacote") edk2-ovmf."
-				exit 1
-			fi
-
-			working_dir="$(mktemp -dt chili-runimage-$USER.XXX)"
-			cp -av -- $ovmf_vars "${working_dir}/" >/dev/null 2>&-
-
-			if [[ ${1: -4} == ".iso" ]]; then
-				# ISO disk
-				qemu-system-x86_64 \
-					-cdrom $1 \
-					-boot d \
-					-drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=on \
-					-drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd \
-					"${qemu_options[@]}"
-			else
-				# RAW disk
-				qemu-system-x86_64 \
-					-drive file=${1},format=raw,if=virtio \
-					-drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=on \
-					-drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.fd \
-					"${qemu_options[@]}"
-			fi
-		else
-			log_msg "${red}ERROR: ${cyan}'$1' ${red}$(gettext "erro de leitura ou não existe")"
-			sh_usage
-		fi
-	else
-		sh_usage
-	fi
+detect_audio_server() {
+  if pgrep -x pipewire >/dev/null; then
+    echo "pipewire"
+  elif pgrep -x pulseaudio >/dev/null; then
+    echo "pa"
+  elif pgrep -x jackd >/dev/null; then
+    echo "jack"
+  else
+    echo "none"
+  fi
 }
 
 function sh_set_qemu_common_options {
-	#   qemu_options+=(-drive id=disk,file=/archlive/qemu/hda.img,format=raw,if=none -device ahci,id=ahci -device ide-hd,drive=disk,bus=ahci.0)
-	#   qemu_options+=(-device virtio-scsi-pci,id=scsi1 -drive file=/archlive/qemu/hda.img,if=none,format=raw,discard=unmap,aio=native,cache=none,id=someid -device scsi-hd,drive=someid,bus=scsi0.0)
-	#	qemu_options+=(-drive file=/archlive/qemu/hdb.img,format=raw,media=disk)
-	#	qemu_options+=(-drive file=/archlive/qemu/hdc.img,format=raw,media=disk)
-	#	qemu_options+=(-drive file=/archlive/qemu/hdd.img,format=raw,media=disk)
 	qemu_options+=(-no-fd-bootchk)
-	qemu_options+=(-machine accel=kvm)
 	qemu_options+=(-cpu host)
+  qemu_options+=(-machine accel=kvm)
 	qemu_options+=(-smp "$(nproc)")
-	#	qemu_options+=(-m ${xmem})
-	#   qemu_options+=(-name "$HOSTNAME")
 	qemu_options+=(-name 'chili-runimage')
-	#   qemu_options+=(-drive file=${1},if=none,id=disk1)
-	#   qemu_options+=(-device ide-hd,drive=disk1,bootindex=1)
-	#   qemu_options+=(-name archiso,process=archiso_0)
-	#   qemu_options+=(-device virtio-scsi-pci,id=scsi0)
-	#   qemu_options+=(-netdev user,id=net0)
-	#   qemu_options+=(-device e1000,netdev=net0)
-	#gpu
-	#	qemu_options+=(-vga std)				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
-	#  	qemu_options+=(-vga virtio)             # ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (virtio-gpu.ko)
-	#   qemu_options+=(-vga qxl) 				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (qxl.ko) ✓ windows driver
-	#	qemu_options+=(-vga cirrus)		        # ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (cirrus.ko)
-	#   qemu_options+=(-vga vmware)             # ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (virtio-gpu.ko)	#   qemu_options+=(-vga vmware)             # ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (virtio-gpu.ko)
-
-	#	qemu_options+=(-device virtio-vga)      # ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (virtio-gpu.ko)
-	#	qemu_options+=(-device qxl-vga)			# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (qxl.ko) ✓ windows driver
-	#	qemu_options+=(-device VGA)				# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
-	#	qemu_options+=(-device cirrus-vga)		# ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (cirrus.ko)
-	#	qemu_options+=(-device ati-vga)         # ✓ VGA compatível ✓ vgabios suporte ✗ sem suporte UEFI
-	#   qemu_options+=(-device virtio-gpu-pci virgl=on)  # ✗ not VGA compatible ✗ no vgabios support ✓ UEFI support (VirtioGpuDxe) ✓ linux driver (virtio-gpu.ko)
-	#   qemu_options+=(-device VGA,vgamem_mb=1024) # ✓ VGA compatible ✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
-	#   qemu_options+=(-device virtio-gpu-pci)  # ✗ not VGA compatible ✗ no vgabios support ✓ UEFI support (VirtioGpuDxe) ✓ linux driver (virtio-gpu.ko)
-	#	qemu_options+=(-device bochs-display)	# ✗ not VGA compatible	✓ vgabios support ✓ UEFI support (QemuVideoDxe) ✓ linux driver (bochs-drm.ko)
-	#	qemu_options+=(-device ramfb)			# ✗ não compatível com VGA ✓ vgabios suporte ✓ Suporte UEFI (QemuRamfbDxe)
-
-	#   qemu_options+=(-vga "$videodevice")
 	qemu_options+=(-device "$videodevice")
-
-	#display
-	#   qemu_options+=(-display sdl)
-	#   qemu_options+=(-display sdl,gl=on)
-	#   qemu_options+=(-display curses)
-	#   qemu_options+=(-display none)
-	#   qemu_options+=(-display gtk)
 	qemu_options+=(-display gtk,gl=on)
-	#   qemu_options+=(-display vnc=127.0.0.1:0)
 	qemu_options+=(-device intel-hda)
-	if [[ "$audioserver" = 'pulseaudio' ]]; then
-		#	qemu_options+=(-audiodev pa,id=snd0,server=localhost)
-		#   qemu_options+=(-audiodev pa,id=snd0,server=unix:/tmp/pulse-socket)
-		#   qemu_options+=(-audiodev pa,id=snd0,server=unix:${XDG_RUNTIME_DIR}/pulse/native,out.stream-name=foobar,in.stream-name=foobar)
-		qemu_options+=(-audiodev pa,id=snd0)
-	elif [[ "$audioserver" = 'alsa' ]]; then
-		qemu_options+=(-audiodev alsa,id=snd0)
-	else
-		qemu_options+=(-audiodev pipewire,id=snd0)
-	fi
+	[[ "$audioserver" = 'auto' ]] && audioserver="$(detect_audio_server)"
+  qemu_options+=(-audiodev "$audioserver",id=snd0)
 	qemu_options+=(-device hda-duplex,audiodev=snd0,mixer=off)
 	qemu_options+=(-rtc base=localtime,clock=host)
 	qemu_options+=(-device ich9-intel-hda)
@@ -324,10 +226,95 @@ function sh_set_qemu_common_options {
 	qemu_options+=(-serial stdio)
 }
 
-#				  	-netdev user,id=net0 \
-#				  	-device virtio-net-pci,netdev=net0 \
-#				  	-net nic,model=virtio \
-#				  	-net user \
+function filerun_bios {
+	if test $# -ge 1; then
+		if test -e $1; then
+      mkdir -p /run/user/$(id -u)
+      chmod 700 /run/user/$(id -u)
+      export XDG_RUNTIME_DIR=/run/user/0
+      qemu_options+=(-drive file=${1},format=raw,media=disk,if=none,id=disk1)
+      qemu_options+=(-device ide-hd,drive=disk1,bootindex=1 -device virtio-scsi-pci,id=scsi0)
+      sudo env XDG_RUNTIME_DIR=/run/user/$(id -u) qemu-system-x86_64 "${qemu_options[@]}"
+		else
+			log_msg "${red}ERROR: ${cyan}'$1' ${red}$(gettext "erro de leitura ou não existe")"
+		fi
+	else
+		sh_usage
+	fi
+}
+
+function filerun_uefi {
+  local input_file=$(readlink -f "$1")
+	local ovmf_code
+	local ovmf_vars
+	local working_dir
+	local cpath_edk2=('/usr/share/edk2/x64')
+	local cpath
+
+	if test $# -ge 1; then
+		if test -e "$input_file"; then
+			for cpath in "${cpath_edk2[@]}"; do
+				if [[ -f "$cpath/OVMF_CODE.4m.fd" ]]; then
+					ovmf_code="$cpath/OVMF_CODE.4m.fd"
+					ovmf_vars="$cpath/OVMF_VARS.4m.fd"
+					break
+				fi
+			done
+
+			if [[ -z $ovmf_code ]]; then
+				printf 'ERROR: %s\n' "OVMF_CODE.4m.fd $(gettext "não encontrado. Instale o pacote") edk2-ovmf."
+				exit 1
+			fi
+
+			if [[ -z $ovmf_vars ]]; then
+				printf 'ERROR: %s\n' "OVMF_VARS.4m.fd $(gettext "não encontrado. Instale o pacote") edk2-ovmf."
+				exit 1
+			fi
+
+      #working_dir="$(mktemp -dt chili-runimage-$USER-$(date +%Y%m%d-%H%M%S))"
+      working_dir="/tmp/chili-runimage-$USER-$(date +%Y%m%d-%H%M%S)"
+      mkdir -p "$working_dir"
+      #trap "rm -rf $working_dir" EXIT
+
+      cp -av -- "$ovmf_vars" "${working_dir}/" >/dev/null 2>&1 || {
+        printf 'ERROR: %s\n' "$(gettext "Erro ao copiar OVMF_VARS. Verifique permissões ou espaço em disco.")"
+        exit 1
+      }
+
+      chmod 644 "${working_dir}/OVMF_VARS.4m.fd"
+
+      mkdir -p /run/user/$(id -u)
+      chmod 700 /run/user/$(id -u)
+      export XDG_RUNTIME_DIR=/run/user/$(id -u)
+      if [[ ${input_file: -4} == ".iso" ]]; then
+        # ISO disk
+        qemu_options+=(-drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=on)
+        qemu_options+=(-drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.4m.fd)
+        qemu_options+=(-cdrom "$input_file")
+        qemu_options+=(-boot d)
+        #sudo -u $USER env XDG_RUNTIME_DIR=/run/user/$(id -u) qemu-system-x86_64 "${qemu_options[@]}"
+        sudo env XDG_RUNTIME_DIR=/run/user/$(id -u) qemu-system-x86_64 "${qemu_options[@]}"
+      elif [[ ${input_file: -6} == ".qcow2" ]]; then
+        # QCOW2 disk
+        qemu_options+=(-drive file="$input_file",format=qcow2,if=virtio)
+        qemu_options+=(-drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=on)
+        qemu_options+=(-drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.4m.fd)
+        sudo env XDG_RUNTIME_DIR=/run/user/$(id -u) qemu-system-x86_64 "${qemu_options[@]}"
+      else
+        # RAW disk
+        qemu_options+=(-drive file="$input_file",format=raw,if=virtio)
+        qemu_options+=(-drive if=pflash,format=raw,unit=0,file=${ovmf_code},read-only=on)
+        qemu_options+=(-drive if=pflash,format=raw,unit=1,file=${working_dir}/OVMF_VARS.4m.fd)
+        sudo env XDG_RUNTIME_DIR=/run/user/$(id -u) qemu-system-x86_64 "${qemu_options[@]}"
+      fi
+		else
+			log_msg "${red}ERROR: ${cyan}'$1' ${red}$(gettext "O arquivo $1 não pode ser lido. Verifique se ele existe e tem as permissões corretas.")"
+			sh_usage
+		fi
+	else
+		sh_usage
+	fi
+}
 
 function sh_usage {
 	cat <<EOF
@@ -391,7 +378,7 @@ while test ${#opts[*]} -gt 0; do
 		;;
 	-d | --drive)
 		if [[ -n $2 ]]; then
-			drive=1
+			drive=true
 			drive_path=$2
 			shift
 		else
@@ -399,7 +386,7 @@ while test ${#opts[*]} -gt 0; do
 		fi
 		;;
 	-u | --uefi)
-		uefi=1
+		uefi=true
 		;;
 	-b | --bridge)
 		bridge=true
@@ -454,12 +441,13 @@ if [[ $# > 0 ]]; then
 	else
 		#	qemu_options+=(-netdev user,id=net0,smb=$HOME)
 		qemu_options+=(-netdev user,id=net0)
-		qemu_options+=(-device e1000,netdev=net0)
+		#qemu_options+=(-device e1000,netdev=net0)
+		qemu_options+=(-device virtio-net-pci,netdev=net0)
 	fi
-	if ((drive)); then
+	if $drive; then
 		qemu_options+=(-drive file=$drive_path,format=raw,media=disk)
 	fi
-	if ((uefi)); then
+	if $uefi; then
 		filerun_uefi "$@"
 	else
 		filerun_bios "$@"
