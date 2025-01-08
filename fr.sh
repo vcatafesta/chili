@@ -77,11 +77,6 @@ declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput)
 source /usr/share/fetch/core.sh
 
-MostraErro() {
-	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
-}
-#trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
-
 supports_uefi() {
 	fdisk -l "$1" 2>/dev/null | grep -q "EFI"
 }

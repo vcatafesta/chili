@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # -*- coding: utf-8 -*-
-# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2001,SC2034,SC2183,SC2154
 #
 #  chili-make-repo
 #  Created: 2024/08/21 - 19:07
 #  Altered: dom 27 out 2024 09:19:14 -04
+#  Updated: ter 07 jan 2025 00:11:05 -04
 #
-#  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
+#  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -45,9 +46,178 @@ shopt -s extglob
 #system
 declare APP="${0##*/}"
 declare _VERSION_="1.0.3-20240911"
-declare distro="$(uname -n)"
-declare DEPENDENCIES=(tput)
-source /usr/share/fetch/core.sh
+declare nocolor=false
+declare organization=
+declare FETCH_RE='-[^-]+[0-9]+[^.]*.pkg[^.]*.tar.zst$'
+declare PKG_EXT='pkg.tar.zst'
+
+red="\033[01;31m"
+green="\033[01;32m"
+yellow="\033[01;33m"
+blue="\033[01;34m"
+pink="\033[01;35m"
+cyan="\033[01;36m"
+reset="\033[0m"
+
+# Definir a variável de controle para restaurar a formatação original
+reset=$(tput sgr0)
+
+# Definir os estilos de texto como variáveis
+bold=$(tput bold)
+underline=$(tput smul)   # Início do sublinhado
+nounderline=$(tput rmul) # Fim do sublinhado
+reverse=$(tput rev)      # Inverte as cores de fundo e texto
+
+# Definir as cores ANSI como variáveis
+black=$(tput bold)$(tput setaf 0)
+red=$(tput bold)$(tput setaf 196)
+green=$(tput bold)$(tput setaf 2)
+yellow=$(tput bold)$(tput setaf 3)
+blue=$(tput setaf 4)
+pink=$(tput setaf 5)
+magenta=$(tput setaf 5)
+cyan=$(tput setaf 6)
+white=$(tput setaf 7)
+gray=$(tput setaf 8)
+orange=$(tput setaf 202)
+purple=$(tput setaf 125)
+violet=$(tput setaf 61)
+light_red=$(tput setaf 9)
+light_green=$(tput setaf 10)
+light_yellow=$(tput setaf 11)
+light_blue=$(tput setaf 12)
+light_magenta=$(tput setaf 13)
+light_cyan=$(tput setaf 14)
+bright_white=$(tput setaf 15)
+
+die() {
+	local msg="$1"
+	export TERM=${TERM:-xterm}
+	export TERM=${TERM:-xterm-256color}
+	#Definindo variáveis de cores
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	echo -e "==>${cyan}error: ${red}${msg}${reset}"
+	exit 1
+}
+export -f die
+
+msg_raw() {
+	local msg="$1"
+	export TERM=${TERM:-xterm}
+	export TERM=${TERM:-xterm-256color}
+	#Definindo variáveis de cores
+	# Remove tags HTML, se existirem
+	#msg="$(sed 's/<[^>]*>//g' <<< "$msg")"
+
+	# Verifica se existe ':' na mensagem
+	if [[ "$msg" == *:* ]]; then
+		# Divide a string antes e depois do primeiro ':'
+		local before_colon="${msg%%:*}:"
+		local after_colon="${msg#*: }"
+		# Aplica as cores
+		msg="${cyan}${before_colon} ${red}${after_colon}${reset}"
+	else
+		# Se não houver ':', aplica apenas a cor padrão
+		msg="${cyan}${msg}${reset}"
+	fi
+	echo -e "$msg"
+}
+export -f msg_raw
+
+msg() {
+	local msg="$1"
+	export TERM=${TERM:-xterm}
+	export TERM=${TERM:-xterm-256color}
+	#Definindo variáveis de cores
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	echo -e "==>${cyan}running: ${yellow}${msg}${reset}"
+}
+export -f msg
+
+msg_ok() {
+	local msg="$1"
+	export TERM=${TERM:-xterm}
+	export TERM=${TERM:-xterm-256color}
+	#Definindo variáveis de cores
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	echo -e "==>${cyan}feito: ${green}${msg}${reset}"
+}
+export -f msg_ok
+
+msg_run() {
+	local msg="$1"
+	export TERM=${TERM:-xterm}
+	export TERM=${TERM:-xterm-256color}
+	#Definindo variáveis de cores
+	echo -e "==>${cyan}running: ${yellow}${msg}${reset}"
+	eval "$msg"
+}
+export -f msg_run
+
+msg_info() {
+	local msg="$1"
+	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	export TERM=${TERM:-xterm}
+	export TERM=${TERM:-xterm-256color}
+	#Definindo variáveis de cores
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	#echo -e "${blue}==>${green}[${caller_function}:${caller_line}]=>${yellow}info   : ${cyan}${msg}${reset}"
+	#echo -e "${caller_function}=>${yellow}info   : ${cyan}${msg}${reset}"
+	echo -e "==>${yellow}info   : ${cyan}${msg}${reset}"
+}
+export -f msg_info
+
+msg_warning() {
+	local msg="$1"
+	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	export TERM=${TERM:-xterm}
+	export TERM=${TERM:-xterm-256color}
+	#Definindo variáveis de cores
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
+	echo -e "==>${red}warning: ${orange}${msg}${reset}"
+}
+export -f msg_warning
+
+msg_warn() {
+	local msg="$1"
+	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	export TERM=${TERM:-xterm}
+	export TERM=${TERM:-xterm-256color}
+	#Definindo variáveis de cores
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
+	echo -e "==>${red}warning: ${orange}${msg}${reset}"
+}
+export -f msg_warn
+
+replicate() {
+	local char=${1:-'#'}
+	local nsize=${2:-$(tput cols)}
+	local line
+	printf -v line "%*s" "$nsize" && echo -e "${blue}${line// /$char}${reset}"
+}
+export -f replicate
+
+send_telegram_message() {
+	local message="$1"
+	local parse_mode="$2"
+
+	# Define parse_mode como "MarkdownV2" se não for especificado
+	[[ -z $parse_mode ]] && parse_mode="HTML"
+
+	# Remove as tags HTML e exibe o resultado no terminal
+	echo -e "${red}$(sed 's/<[^>]*>//g' <<<"$message")${reset}"
+	# Envia a mensagem original com HTML para o Telegram
+	curl -s -X POST "https://api.telegram.org/bot${inputs_telegram_token}/sendMessage" \
+		-d chat_id="${inputs_telegram_chat_id}" \
+		-d text="$message" \
+		-d parse_mode="$parse_mode"
+}
+export -f send_telegram_message
 
 set_varcolors() {
 	# Definir a variável de controle para restaurar a formatação original
@@ -82,43 +252,80 @@ set_varcolors() {
 	bright_white=$(tput setaf 15)
 }
 
-MostraErro() {
-	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
+sign_package() {
+  local package="$1"
+  local gpg_key="$HOME/.GPG_KEY"
+  local default_key="A0D5A8312A83940ED8B04B0F4BAC871802E960F1"
+
+  # Verifica se o pacote existe
+  if [[ ! -f "$package" ]]; then
+    echo "Erro: O pacote '$package' não foi encontrado."
+    return 1
+  fi
+
+  # Verifica se o arquivo de senha existe
+  if [[ ! -f "$gpg_key" ]]; then
+    echo "Erro: O arquivo de senha '$gpg_key' não foi encontrado."
+    return 1
+  fi
+
+  # Lê a senha de forma segura
+  local passphrase
+  passphrase=$(<"$gpg_key") || {
+    echo "Erro: Não foi possível ler a senha do arquivo '$gpg_key'."
+    return 1
+  }
+
+  # Assina o pacote
+  gpg --pinentry-mode loopback \
+      --passphrase "$passphrase" \
+      --default-key "$default_key" \
+      --detach-sign "$package" && {
+    echo "Pacote '$package' assinado com sucesso."
+    return 0
+  }
+  echo "Erro: Falha ao assinar o pacote '$package'."
+  return 1
 }
-trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
 
 upload_the_package_files() {
 	# Upload the package files
 	for i in *.zst; do
-		pkgname=$(basename $i)
-		if rsync -vapz -e "ssh -p ${secret_PORT}" $i ${secret_USER}:${secret_PATH}/${branch,,}/x86_64/; then
+		pkgname=$(basename "$i")
+		if rsync -vapz -e "ssh -p ${secret_PORT}" "$i" "${secret_USER}":"${secret_PATH}"/"${branch,,}"/x86_64/; then
 			echo "✅ Pacote $pkgname enviado com sucesso para o repositório $branch"
 		else
-			exit
 			echo "❌ Falha ao enviar o pacote $pkgname para o repositório $branch"
 		fi
 	done
 	for i in *.sig *.md5; do
-		rsync -vapz -e "ssh -p ${secret_PORT}" $i ${secret_USER}@${secret_IP}:${secret_PATH}/${branch,,}/x86_64/
+		rsync -vapz -e "ssh -p ${secret_PORT}" "$i" "${secret_USER}"@"${secret_IP}":"${secret_PATH}"/"${branch,,}"/x86_64/
 	done
 }
 repo_add_remote_host() {
-	ssh -v "$secret_USER" -p "$secret_PORT" <<EOF
-set -x
-cd $secret_PATH/${branch,,}/x86_64
-repo-add -n -R $db_name.db.tar.gz *.pkg.tar.zst
-exit_code=\$?
-echo "Comando repo-add concluído com código de saída: \$exit_code"
-exit \$exit_code
-EOF
+	ssh -v "$secret_USER" -p "$secret_PORT" <<-EOF
+		set -x
+		cd $secret_PATH/${branch,,}/x86_64
+		repo-add -n -R $db_name.db.tar.gz *.pkg.tar.zst
+		exit_code=\$?
+		echo "Comando repo-add concluído com código de saída: \$exit_code"
+		exit \$exit_code
+	EOF
 }
 
 sh_config() {
-	remote_USER="u537062342"
-	remote_PORT="65002"
-	remote_HOST="154.49.247.66"
-	FETCH_RE='-[^-]+[0-9]+[^.]*.pkg[^.]*.tar.zst$'
-	PKG_EXT='pkg.tar.zst'
+	if [[ "$organization" == 'hostinger' ]]; then
+		remote_USER="u537062342"
+		remote_PORT="65002"
+		remote_HOST="154.49.247.66"
+		remote_DOMAIN="repo"
+		remote_PATH="/home/${remote_USER}/domains/chililinux.com/public_html/${remote_DOMAIN}"
+	elif [[ "$organization" == 'oracle' ]]; then
+		remote_USER="vcatafesta"
+		remote_PORT="22"
+		remote_HOST="136.248.71.178"
+		remote_PATH="/home/${remote_USER}/Docker/RepoChililinux/html"
+	fi
 }
 
 main() {
@@ -127,8 +334,7 @@ main() {
 	local_PATH="$3"
 
 	if [[ ! "$remote_DOMAIN" =~ ^(repo|elven)$ ]]; then
-		echo "${red}Error: Unknown domain: $remote_DOMAIN - valid: ${yellow}'repo' ${red}or ${yellow}'elven' ${reset}"
-		return 1
+		die "${red}Error: Unknown domain: $remote_DOMAIN - valid: ${yellow}'repo' ${red}or ${yellow}'elven' ${reset}"
 	fi
 
 	if [[ "$remote_DOMAIN" == "repo" ]]; then
@@ -145,8 +351,7 @@ main() {
 	elif [ "$branch" == "extra" ]; then
 		db_name="${remote_prefix_db}-extra"
 	else
-		echo "${red}Error: Unknown branch type: $branch - valid: testing, stable or extra"
-		return 1
+		die "${red}Error: Unknown branch type: $branch - valid: testing, stable or extra"
 	fi
 
 	if [[ "$remote_DOMAIN" == "repo" ]]; then
@@ -160,28 +365,102 @@ main() {
 	elif [[ -z "$local_PATH" ]]; then
 		local_PATH="$PWD"
 	elif [[ ! -d "$local_PATH" ]]; then
-		echo "${red}Error: Unknown path: $local_PATH"
-		return 1
+		die "${red}Error: Unknown path: $local_PATH"
 	fi
 
-	remote_PATH="/home/${remote_USER}/domains/chililinux.com/public_html/${remote_DOMAIN}/${branch,,}/x86_64"
-	echo "subdomain  : ${remote_DOMAIN}"
-	echo "db_name    : ${db_name}"
-	echo "branch     : ${branch}"
-	echo "localpath  : ${local_PATH}"
-	echo "remotepath : ${remote_PATH}"
+	remote_PATH="${remote_PATH}/${branch,,}/x86_64"
+	msg_raw "subdomain  : ${remote_DOMAIN}"
+	msg_raw "db_name    : ${db_name}"
+	msg_raw "branch     : ${branch}"
+	msg_raw "localpath  : ${local_PATH}"
+	msg_raw "remotepath : ${remote_PATH}"
 
-	mkdir -p ${local_PATH}
-	cd ${local_PATH} || return 1
-	if repo-add -n -R ${db_name}.db.tar.gz *.pkg.tar.zst; then
+	msg_run "mkdir -p ${local_PATH}"
+	msg_run "cd ${local_PATH} || return 1"
+	if repo-add -n -R "${db_name}".db.tar.gz *.pkg.tar.zst; then
 		#mkdir -p /home/${remote_USER}/.ssh/
-		mkdir -p $HOME/.ssh/
+		msg_run "mkdir -p $HOME/.ssh/"
 		#ssh-keyscan -t rsa -p ${remote_PORT} ${remote_HOST} | sudo tee -a /home/${remote_USER}/.ssh/known_hosts
 		#ssh-keyscan -t rsa -p ${remote_PORT} ${remote_HOST} >> /home/${remote_USER}/.ssh/known_hosts
 		#rsync --progress -Cravzp --rsh='ssh -l u537062342 -p 65002' ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
-		ssh-keyscan -t rsa -p ${remote_PORT} ${remote_HOST} >>$HOME/.ssh/known_hosts
-		rsync --progress -Cravzp -e 'ssh -p 65002' ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
+		msg_run "ssh-keyscan -t rsa -p ${remote_PORT} ${remote_HOST} >>$HOME/.ssh/known_hosts"
+		msg_run "rsync --progress -Cravzp -e \"ssh -v -p ${remote_PORT}\" ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/"
 	fi
+}
+
+search_for_sign_package() {
+  local aBranchs=('stable' 'testing' 'extra')
+  local local_PATH AllPackages original_dir
+  local -A processed_branches=() # Associative array para rastrear branches processados
+  local total_processed=0        # Contador de pacotes processados
+  local total_signed=0           # Contador de pacotes assinados
+  local total_unsigned=0         # Contador de pacotes sem assinatura
+  local total_already_signed=0   # Contador de pacotes já assinados
+
+  # Salva o diretório original para garantir retorno
+  original_dir=$(pwd)
+
+  for branch in "${aBranchs[@]}"; do
+    if [[ ${processed_branches[$branch]} ]]; then
+      msg_warn "Branch '$branch' já foi processado. Evitando loop."
+      continue
+    fi
+
+    local_PATH="/github/ChiliOS/packages/core/${branch,,}/x86_64"
+
+    # Verifica se o diretório existe
+    if [[ ! -d "$local_PATH" ]]; then
+      msg_warn "Diretório não encontrado: $local_PATH"
+      continue
+    fi
+
+    pushd "$local_PATH" > /dev/null || {
+      msg_error "Falha ao acessar o diretório: $local_PATH"
+      return 1
+    }
+
+    # Gera um array de pacotes encontrados
+    AllPackages=()
+    readarray -d '' AllPackages < <(find . -type f -iname "*.$PKG_EXT" -print0)
+
+    # Itera sobre os pacotes
+    for pkg in "${AllPackages[@]}"; do
+      ((total_processed++)) # Incrementa o contador de pacotes processados
+      if [[ ! -e "$pkg.sig" ]]; then
+        ((total_unsigned++)) # Incrementa o contador de pacotes sem assinatura
+        msg_info "Assinando pacote: $pkg"
+        sign_package "$pkg"
+        ((total_signed++)) # Incrementa o contador de pacotes assinados
+      else
+        ((total_already_signed++)) # Incrementa o contador de pacotes já assinados
+      fi
+    done
+
+    # Marca o branch como processado
+    processed_branches[$branch]=1
+
+    popd > /dev/null || {
+      msg_error "Falha ao retornar ao diretório original."
+      return 1
+    }
+
+    msg_info "Concluído o processamento do branch: $branch"
+  done
+
+  # Garante retorno ao diretório original em caso de falhas
+  cd "$original_dir" || {
+    msg_error "Não foi possível retornar ao diretório original."
+    return 1
+  }
+
+  # Exibe o resumo final
+  replicate '-'
+  msg_info "Resumo Final:"
+  msg_raw "Pacotes processados    : $total_processed"
+  msg_raw "Pacotes já assinados   : $total_already_signed"
+  msg_raw "Pacotes sem assinatura : $total_unsigned"
+  msg_raw "Pacotes agora assinados: $total_signed"
+  replicate '-'
 }
 
 sh_synchronize_remote_with_local() {
@@ -199,27 +478,33 @@ sh_synchronize_remote_with_local() {
 	fi
 
 	for branch in "${aBranchs[@]}"; do
-		remote_DOMAIN="repo"
-		remote_PATH="/home/${remote_USER}/domains/chililinux.com/public_html/${remote_DOMAIN}/${branch,,}/x86_64"
+		remote_PATH+="/${branch,,}/x86_64"
 		local_PATH="/github/ChiliOS/packages/core/${branch,,}/x86_64"
 
-		pushd "$local_PATH" || exit 1
-		echo "${cyan}Sincronizando repositório remoto com local - branch: $branch ${reset}"
-		echo "${cyan}Puxando do remoto para local ${reset}"
-		rsync --progress --delete -Craz -e 'ssh -p 65002' ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
-    rm -f chili-${branch}*
+		replicate '-'
+		msg_raw "subdomain  : ${remote_DOMAIN}"
+		msg_raw "db_name    : ${db_name}"
+		msg_raw "branch     : ${branch}"
+		msg_raw "localpath  : ${local_PATH}"
+		msg_raw "remotepath : ${remote_PATH}"
+		replicate '-'
+		msg_run "pushd $local_PATH >/dev/null 2>&- || exit 1"
+		msg_info "${cyan}Sincronizando ${remote_PATH} com ${local_PATH}${reset}"
+		msg_info "${cyan}Puxando do remoto para local ${reset}"
+		msg_run "rsync --progress --delete -Craz -e \"ssh -p ${remote_PORT}\" ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/"
+		msg_run "rm -f chili-${branch}*"
 
 		AllOldPackages=$(find "$PWD" -type f -iname "*.$PKG_EXT" | sort -Vr | awk -F "$FETCH_RE" 'lista[$1]++')
-		for old in ${AllOldPackages[@]}; do
-			echo "Removing old package: [$((++count))] $old"
-			rm -fv "${old}" "${old}.sig" "${old}.md5" "${old}.sig.md5"
+		for old in "${AllOldPackages[@]}"; do
+			msg_info "Removendo pacotes antigos: [$((++count))] $old"
+			msg_run "rm -fv ${old} ${old}.sig ${old}.md5 ${old}.sig.md5"
 		done
 
-		echo "${cyan}Criando Database (.db) localmente ${reset}"
-		repo-add -q -p -n -R chili-${branch}.db.tar.gz *.pkg.tar.zst
-		echo "${cyan}Empurrando para o remoto ${reset}"
-		rsync --progress --delete -Craz -e 'ssh -p 65002' ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
-		popd || exit 1
+		msg_info "${cyan}Recriando database ${orange}'chili-${branch}.db.tar.gz' ${cyan}localmente ${reset}"
+		msg_run "repo-add -q -p -n -R chili-${branch}.db.tar.gz *.pkg.tar.zst"
+		msg_info "${cyan}Empurrando para o remoto ${reset}"
+		msg_run "rsync --progress --delete -Craz -e \"ssh -p ${remote_PORT}\" ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/"
+		msg_run "popd >/dev/null 2>&- || exit 1"
 	done
 	exit $(($# ? 0 : 1))
 }
@@ -230,38 +515,61 @@ if test $# -lt 1; then
 	echo "     ${cyan}${APP} repo stable ${reset}"
 	echo "     ${cyan}${APP} elven testing /local/dos/pacotes ${reset}"
 	echo "     ${cyan}${APP} -s        # sincronizar local com remoto (puxar/empurrar) ${reset}"
+	echo "     ${cyan}${APP} --sign    # assinar pacote faltantes ${reset}"
 	exit 1
 fi
 
-# Cores e estilos
-nocolor=false
 set_varcolors
-# Loop através de todos os parâmetros ($@)
-for arg in "$@"; do
-	if [[ "$arg" = @(-n|--nocolor) ]]; then
+while [[ $# -gt 0 ]]; do
+	arg="$1"
+	case "$arg" in
+	-n | --nocolor)
 		nocolor=true
-		[[ "$nocolor" == "true" ]] && unset_varcolors || set_varcolors
-	elif [[ "$arg" = @(-V|--version) ]]; then
+		if [[ "$nocolor" == "true" ]]; then
+			unset_varcolors
+		else
+			set_varcolors
+		fi
+		shift
+		;;
+	-V | --version)
 		sh_version
-		exit $(($# ? 0 : 1))
-	elif [[ "$arg" = @(-h|--help) ]]; then
+		exit 0
+		;;
+	-h | --help)
 		sh_usage
-		exit $(($# ? 0 : 1))
-	elif [[ "$arg" = @(-s|--synchronize) ]]; then
-		# Captura o próximo argumento após o -s/--synchronize
+		exit 0
+		;;
+	--sign)
+		search_for_sign_package
+		exit 0
+		;;
+	-o | --organization)
 		next_arg="${2:-}"
-
-		# Verifica se o próximo argumento é válido
+		if [[ "$next_arg" =~ ^(hostinger|oracle)$ ]]; then
+			organization="$next_arg"
+			shift 2
+		else
+			die "${red}Error: Opção inválida para --organization: $next_arg. Use ${yellow}'hostinger' ou 'oracle'${reset}"
+		fi
+		;;
+	-s | --synchronize)
+		next_arg="${2:-}"
 		if [[ "$next_arg" =~ ^(stable|testing|extra|all)$ ]]; then
 			branch="$next_arg"
-			sh_synchronize_remote_with_local "$next_arg"
-			shift # Pula para o próximo argumento para não ser tratado novamente
+			shift 2
+			if [[ -z "$organization" ]]; then
+				die "${red}Error: ${cyan}Nenhuma organização definida. Use ${yellow}'-o hostinger' ou '-o oracle'${reset}"
+			fi
+			sh_synchronize_remote_with_local "$branch"
 		else
-			echo "${red}Error: Opção inválida para --synchronize: $next_arg. Use ${yellow}'stable', 'testing', 'extra' ou 'all'${reset}"
-			exit 1
+			die "${red}Error: Opção inválida para --synchronize: $next_arg. Use ${yellow}'stable', 'testing', 'extra' ou 'all'${reset}"
 		fi
-	else
+		;;
+	*)
 		sh_config
 		main "$@"
-	fi
+		break
+		;;
+	esac
 done
