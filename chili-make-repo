@@ -253,39 +253,39 @@ set_varcolors() {
 }
 
 sign_package() {
-  local package="$1"
-  local gpg_key="$HOME/.GPG_KEY"
-  local default_key="A0D5A8312A83940ED8B04B0F4BAC871802E960F1"
+	local package="$1"
+	local gpg_key="$HOME/.GPG_KEY"
+	local default_key="A0D5A8312A83940ED8B04B0F4BAC871802E960F1"
 
-  # Verifica se o pacote existe
-  if [[ ! -f "$package" ]]; then
-    echo "Erro: O pacote '$package' não foi encontrado."
-    return 1
-  fi
+	# Verifica se o pacote existe
+	if [[ ! -f "$package" ]]; then
+		echo "Erro: O pacote '$package' não foi encontrado."
+		return 1
+	fi
 
-  # Verifica se o arquivo de senha existe
-  if [[ ! -f "$gpg_key" ]]; then
-    echo "Erro: O arquivo de senha '$gpg_key' não foi encontrado."
-    return 1
-  fi
+	# Verifica se o arquivo de senha existe
+	if [[ ! -f "$gpg_key" ]]; then
+		echo "Erro: O arquivo de senha '$gpg_key' não foi encontrado."
+		return 1
+	fi
 
-  # Lê a senha de forma segura
-  local passphrase
-  passphrase=$(<"$gpg_key") || {
-    echo "Erro: Não foi possível ler a senha do arquivo '$gpg_key'."
-    return 1
-  }
+	# Lê a senha de forma segura
+	local passphrase
+	passphrase=$(<"$gpg_key") || {
+		echo "Erro: Não foi possível ler a senha do arquivo '$gpg_key'."
+		return 1
+	}
 
-  # Assina o pacote
-  gpg --pinentry-mode loopback \
-      --passphrase "$passphrase" \
-      --default-key "$default_key" \
-      --detach-sign "$package" && {
-    echo "Pacote '$package' assinado com sucesso."
-    return 0
-  }
-  echo "Erro: Falha ao assinar o pacote '$package'."
-  return 1
+	# Assina o pacote
+	gpg --pinentry-mode loopback \
+		--passphrase "$passphrase" \
+		--default-key "$default_key" \
+		--detach-sign "$package" && {
+		echo "Pacote '$package' assinado com sucesso."
+		return 0
+	}
+	echo "Erro: Falha ao assinar o pacote '$package'."
+	return 1
 }
 
 upload_the_package_files() {
@@ -311,21 +311,6 @@ repo_add_remote_host() {
 		echo "Comando repo-add concluído com código de saída: \$exit_code"
 		exit \$exit_code
 	EOF
-}
-
-sh_config() {
-	if [[ "$organization" == 'hostinger' ]]; then
-		remote_USER="u537062342"
-		remote_PORT="65002"
-		remote_HOST="154.49.247.66"
-		remote_DOMAIN="repo"
-		remote_PATH="/home/${remote_USER}/domains/chililinux.com/public_html/${remote_DOMAIN}"
-	elif [[ "$organization" == 'oracle' ]]; then
-		remote_USER="vcatafesta"
-		remote_PORT="22"
-		remote_HOST="136.248.71.178"
-		remote_PATH="/home/${remote_USER}/Docker/RepoChililinux/html"
-	fi
 }
 
 main() {
@@ -389,122 +374,152 @@ main() {
 }
 
 search_for_sign_package() {
-  local aBranchs=('stable' 'testing' 'extra')
-  local local_PATH AllPackages original_dir
-  local -A processed_branches=() # Associative array para rastrear branches processados
-  local total_processed=0        # Contador de pacotes processados
-  local total_signed=0           # Contador de pacotes assinados
-  local total_unsigned=0         # Contador de pacotes sem assinatura
-  local total_already_signed=0   # Contador de pacotes já assinados
+	local aBranchs=('stable' 'testing' 'extra')
+	local local_PATH AllPackages original_dir
+	local -A processed_branches=() # Associative array para rastrear branches processados
+	local total_processed=0        # Contador de pacotes processados
+	local total_signed=0           # Contador de pacotes assinados
+	local total_unsigned=0         # Contador de pacotes sem assinatura
+	local total_already_signed=0   # Contador de pacotes já assinados
 
-  # Salva o diretório original para garantir retorno
-  original_dir=$(pwd)
+	# Salva o diretório original para garantir retorno
+	original_dir=$(pwd)
 
-  for branch in "${aBranchs[@]}"; do
-    if [[ ${processed_branches[$branch]} ]]; then
-      msg_warn "Branch '$branch' já foi processado. Evitando loop."
-      continue
-    fi
+	for branch in "${aBranchs[@]}"; do
+		if [[ ${processed_branches[$branch]} ]]; then
+			msg_warn "Branch '$branch' já foi processado. Evitando loop."
+			continue
+		fi
 
-    local_PATH="/github/ChiliOS/packages/core/${branch,,}/x86_64"
+		local_PATH="/github/ChiliOS/packages/core/${branch,,}/x86_64"
 
-    # Verifica se o diretório existe
-    if [[ ! -d "$local_PATH" ]]; then
-      msg_warn "Diretório não encontrado: $local_PATH"
-      continue
-    fi
+		# Verifica se o diretório existe
+		if [[ ! -d "$local_PATH" ]]; then
+			msg_warn "Diretório não encontrado: $local_PATH"
+			continue
+		fi
 
-    pushd "$local_PATH" > /dev/null || {
-      msg_error "Falha ao acessar o diretório: $local_PATH"
-      return 1
-    }
+		pushd "$local_PATH" >/dev/null || {
+			msg_error "Falha ao acessar o diretório: $local_PATH"
+			return 1
+		}
 
-    # Gera um array de pacotes encontrados
-    AllPackages=()
-    readarray -d '' AllPackages < <(find . -type f -iname "*.$PKG_EXT" -print0)
+		# Gera um array de pacotes encontrados
+		AllPackages=()
+		readarray -d '' AllPackages < <(find . -type f -iname "*.$PKG_EXT" -print0)
 
-    # Itera sobre os pacotes
-    for pkg in "${AllPackages[@]}"; do
-      ((total_processed++)) # Incrementa o contador de pacotes processados
-      if [[ ! -e "$pkg.sig" ]]; then
-        ((total_unsigned++)) # Incrementa o contador de pacotes sem assinatura
-        msg_info "Assinando pacote: $pkg"
-        sign_package "$pkg"
-        ((total_signed++)) # Incrementa o contador de pacotes assinados
-      else
-        ((total_already_signed++)) # Incrementa o contador de pacotes já assinados
-      fi
-    done
+		# Itera sobre os pacotes
+		for pkg in "${AllPackages[@]}"; do
+			((total_processed++)) # Incrementa o contador de pacotes processados
+			if [[ ! -e "$pkg.sig" ]]; then
+				((total_unsigned++)) # Incrementa o contador de pacotes sem assinatura
+				msg_info "Assinando pacote: $pkg"
+				sign_package "$pkg"
+				((total_signed++)) # Incrementa o contador de pacotes assinados
+			else
+				((total_already_signed++)) # Incrementa o contador de pacotes já assinados
+			fi
+		done
 
-    # Marca o branch como processado
-    processed_branches[$branch]=1
+		# Marca o branch como processado
+		processed_branches[$branch]=1
 
-    popd > /dev/null || {
-      msg_error "Falha ao retornar ao diretório original."
-      return 1
-    }
+		popd >/dev/null || {
+			msg_error "Falha ao retornar ao diretório original."
+			return 1
+		}
 
-    msg_info "Concluído o processamento do branch: $branch"
-  done
+		msg_info "Concluído o processamento do branch: $branch"
+	done
 
-  # Garante retorno ao diretório original em caso de falhas
-  cd "$original_dir" || {
-    msg_error "Não foi possível retornar ao diretório original."
-    return 1
-  }
+	# Garante retorno ao diretório original em caso de falhas
+	cd "$original_dir" || {
+		msg_error "Não foi possível retornar ao diretório original."
+		return 1
+	}
 
-  # Exibe o resumo final
-  replicate '-'
-  msg_info "Resumo Final:"
-  msg_raw "Pacotes processados    : $total_processed"
-  msg_raw "Pacotes já assinados   : $total_already_signed"
-  msg_raw "Pacotes sem assinatura : $total_unsigned"
-  msg_raw "Pacotes agora assinados: $total_signed"
-  replicate '-'
+	# Exibe o resumo final
+	replicate '-'
+	msg_info "Resumo Final:"
+	msg_raw "Pacotes processados    : $total_processed"
+	msg_raw "Pacotes já assinados   : $total_already_signed"
+	msg_raw "Pacotes sem assinatura : $total_unsigned"
+	msg_raw "Pacotes agora assinados: $total_signed"
+	replicate '-'
+}
+
+sh_config() {
+	if [[ "$organization" == 'hostinger' ]]; then
+		remote_USER="u537062342"
+		remote_PORT="65002"
+		remote_HOST="154.49.247.66"
+		remote_DOMAIN="repo"
+		remote_PATH="/home/${remote_USER}/domains/chililinux.com/public_html/${remote_DOMAIN}"
+	elif [[ "$organization" == 'oracle' ]]; then
+		remote_USER="vcatafesta"
+		remote_PORT="22"
+		remote_HOST="136.248.71.178"
+		remote_PATH="/home/${remote_USER}/Docker/RepoChililinux/html"
+	fi
 }
 
 sh_synchronize_remote_with_local() {
-	sh_config
-	if [[ -z "$branch" ]]; then
-		aBranchs=('testing')
-	elif [[ "$branch" == 'stable' ]]; then
-		local aBranchs=('stable')
-	elif [[ "$branch" == 'testing' ]]; then
-		local aBranchs=('testing')
-	elif [[ "$branch" == 'extra' ]]; then
-		local aBranchs=('extra')
-	elif [[ "$branch" == 'all' ]]; then
-		local aBranchs=('stable' 'testing' 'extra')
-	fi
+	local aOrganizations=('hostinger' 'oracle')
 
-	for branch in "${aBranchs[@]}"; do
-		remote_PATH+="/${branch,,}/x86_64"
-		local_PATH="/github/ChiliOS/packages/core/${branch,,}/x86_64"
+	for organization in "${aOrganizations[@]}"; do
+		if [[ -z "$branch" ]]; then
+			aBranchs=('testing')
+		elif [[ "$branch" == 'stable' ]]; then
+			local aBranchs=('stable')
+		elif [[ "$branch" == 'testing' ]]; then
+			local aBranchs=('testing')
+		elif [[ "$branch" == 'extra' ]]; then
+			local aBranchs=('extra')
+		elif [[ "$branch" == 'all' ]]; then
+			local aBranchs=('stable' 'testing' 'extra')
+		fi
 
-		replicate '-'
-		msg_raw "subdomain  : ${remote_DOMAIN}"
-		msg_raw "db_name    : ${db_name}"
-		msg_raw "branch     : ${branch}"
-		msg_raw "localpath  : ${local_PATH}"
-		msg_raw "remotepath : ${remote_PATH}"
-		replicate '-'
-		msg_run "pushd $local_PATH >/dev/null 2>&- || exit 1"
-		msg_info "${cyan}Sincronizando ${remote_PATH} com ${local_PATH}${reset}"
-		msg_info "${cyan}Puxando do remoto para local ${reset}"
-		msg_run "rsync --progress --delete -Craz -e \"ssh -p ${remote_PORT}\" ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/"
-		msg_run "rm -f chili-${branch}*"
+		for branch in "${aBranchs[@]}"; do
+  		sh_config
+			remote_PATH+="/${branch,,}/x86_64"
+			local_PATH="/github/ChiliOS/packages/core/${branch,,}/x86_64"
 
-		AllOldPackages=$(find "$PWD" -type f -iname "*.$PKG_EXT" | sort -Vr | awk -F "$FETCH_RE" 'lista[$1]++')
-		for old in "${AllOldPackages[@]}"; do
-			msg_info "Removendo pacotes antigos: [$((++count))] $old"
-			msg_run "rm -fv ${old} ${old}.sig ${old}.md5 ${old}.sig.md5"
+			replicate '-'
+			msg_raw "subdomain  : ${remote_DOMAIN}"
+			msg_raw "db_name    : ${db_name}"
+			msg_raw "branch     : ${branch}"
+			msg_raw "localpath  : ${local_PATH}"
+			msg_raw "remotepath : ${remote_PATH}"
+			replicate '-'
+
+			msg_run "pushd $local_PATH >/dev/null 2>&- || exit 1"
+			msg_info "${cyan}Sincronizando ${remote_PATH} com ${local_PATH}${reset}"
+			msg_info "${cyan}Puxando do remoto para local ${reset}"
+			rsync --info=skip0 -Craz -e "ssh -p ${remote_PORT}" ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
+
+      msg_run "rm -f *.md5"
+
+      AllOldPackages=$(find "$PWD" -type f -iname "*.$PKG_EXT" | sort -Vr | awk -F "$FETCH_RE" 'lista[$1]++')
+      for old in ${AllOldPackages[@]}; do
+        msg_info "${red}=>Removendo pacote antigo : [$((++count))]=>${old} ${reset}"
+        msg_run "rm -f ${old}"
+        msg_run "rm -f ${old}.sig"
+        msg_run "rm -f ${old}.md5"
+        msg_run "rm -f ${old}.sig.md5"
+      done
+
+			msg_run "rm -f chili-${branch}*"
+			msg_info "${cyan}Recriando database ${orange}'chili-${branch}.db.tar.gz' ${cyan}localmente ${reset}"
+			msg_run "repo-add -q -p -n -R chili-${branch}.db.tar.gz *.pkg.tar.zst"
+
+			msg_info "${cyan}Recriando link for ${orange}'chililinux-${branch}.db.tar.gz' ${cyan}localmente ${reset}"
+			msg_run "ln -sf chili-${branch}.db chililinux-${branch}.db"
+			msg_run "ln -sf chili-${branch}.files chililinux-${branch}.files"
+
+			msg_info "${cyan}Empurrando para o remoto: ${orange}$organization ${reset}"
+			rsync --info=skip0 --progress --delete -Craz -e "ssh -p ${remote_PORT}" ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
+			msg_run "popd >/dev/null 2>&- || exit 1"
 		done
-
-		msg_info "${cyan}Recriando database ${orange}'chili-${branch}.db.tar.gz' ${cyan}localmente ${reset}"
-		msg_run "repo-add -q -p -n -R chili-${branch}.db.tar.gz *.pkg.tar.zst"
-		msg_info "${cyan}Empurrando para o remoto ${reset}"
-		msg_run "rsync --progress --delete -Craz -e \"ssh -p ${remote_PORT}\" ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/"
-		msg_run "popd >/dev/null 2>&- || exit 1"
 	done
 	exit $(($# ? 0 : 1))
 }
@@ -558,9 +573,9 @@ while [[ $# -gt 0 ]]; do
 		if [[ "$next_arg" =~ ^(stable|testing|extra|all)$ ]]; then
 			branch="$next_arg"
 			shift 2
-			if [[ -z "$organization" ]]; then
-				die "${red}Error: ${cyan}Nenhuma organização definida. Use ${yellow}'-o hostinger' ou '-o oracle'${reset}"
-			fi
+#			if [[ -z "$organization" ]]; then
+#				die "${red}Error: ${cyan}Nenhuma organização definida. Use ${yellow}'-o hostinger' ou '-o oracle'${reset}"
+#			fi
 			sh_synchronize_remote_with_local "$branch"
 		else
 			die "${red}Error: Opção inválida para --synchronize: $next_arg. Use ${yellow}'stable', 'testing', 'extra' ou 'all'${reset}"
