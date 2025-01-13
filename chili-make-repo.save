@@ -1,0 +1,626 @@
+#!/usr/bin/env bash
+# -*- coding: utf-8 -*-
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2001,SC2034,SC2183,SC2154
+#
+#  chili-make-repo
+#  Created: 2024/08/21 - 19:07
+#  Altered: dom 27 out 2024 09:19:14 -04
+#  Updated: qui 09 jan 2025 01:37:10 -04
+#
+#  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AS IS'' AND ANY EXPRESS OR
+#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
+#export LANGUAGE=pt_BR
+export TEXTDOMAINDIR=/usr/share/locale
+export TEXTDOMAIN=chili-make-repo
+export TERM=${TERM:-xterm}
+export TERM=${TERM:-xterm-256color}
+
+reset=$(tput sgr0)
+green=$(tput bold)$(tput setaf 2)
+pink=$(tput setaf 5)
+
+#debug
+export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset}'
+#set -x
+#set -e
+shopt -s extglob
+
+#system
+declare APP="${0##*/}"
+declare VERSION="1.1.5-20250109"
+declare APPDESC="Wrapper para gerenciamento de repositorios like arch"
+declare nocolor=false
+declare organization=
+declare FETCH_RE='-[^-]+[0-9]+[^.]*.pkg[^.]*.tar.zst$'
+declare PKG_EXT='pkg.tar.zst'
+declare	aOrganizations=('hostinger' 'oracle')
+
+sh_config() {
+	remote_DOMAIN="repo"
+  local_PATH="/github/ChiliOS/packages/core"
+	if [[ "$organization" == 'hostinger' ]]; then
+		remote_USER="u537062342"
+		remote_PORT="65002"
+		remote_HOST="154.49.247.66"
+		remote_PATH="/home/${remote_USER}/domains/chililinux.com/public_html/${remote_DOMAIN}"
+	elif [[ "$organization" == 'oracle' ]]; then
+		remote_USER="vcatafesta"
+		remote_PORT="22"
+		remote_HOST="136.248.71.178"
+		remote_PATH="/home/${remote_USER}/Docker/RepoChililinux/html"
+	elif [[ "$organization" == 'communitybig' ]]; then
+		remote_USER="talesam"
+		remote_PORT="22"
+		remote_HOST="136.248.71.178"
+		remote_PATH="/home/${remote_USER}/Docker/RepoCommunitybig/html"
+	fi
+}
+
+die() {
+	local msg="$1"
+	#Definindo variáveis de cores
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	echo -e "==>${cyan}error: ${red}${msg}${reset}"
+	exit 1
+}
+export -f die
+
+msg_raw() {
+	local msg="$1"
+	# Remove tags HTML, se existirem
+	#msg="$(sed 's/<[^>]*>//g' <<< "$msg")"
+
+	# Verifica se existe ':' na mensagem
+	if [[ "$msg" == *:* ]]; then
+		# Divide a string antes e depois do primeiro ':'
+		local before_colon="${msg%%:*}:"
+		local after_colon="${msg#*: }"
+		# Aplica as cores
+		msg="${cyan}${before_colon} ${red}${after_colon}${reset}"
+	else
+		# Se não houver ':', aplica apenas a cor padrão
+		msg="${cyan}${msg}${reset}"
+	fi
+	echo -e "$msg"
+}
+export -f msg_raw
+
+msg() {
+	local msg="$1"
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	echo -e "==>${cyan}running: ${yellow}${msg}${reset}"
+}
+export -f msg
+
+msg_ok() {
+	local msg="$1"
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	echo -e "==>${cyan}feito  : ${green}${msg}${reset}"
+}
+export -f msg_ok
+
+msg_run() {
+	local msg="$1"
+	echo -e "==>${cyan}running: ${yellow}${msg}${reset}"
+	eval "$msg"
+}
+export -f msg_run
+
+msg_info() {
+	local msg="$1"
+	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	#echo -e "${blue}==>${green}[${caller_function}:${caller_line}]=>${yellow}info   : ${cyan}${msg}${reset}"
+	#echo -e "${caller_function}=>${yellow}info   : ${cyan}${msg}${reset}"
+	echo -e "==>${yellow}info   : ${cyan}${msg}${reset}"
+}
+export -f msg_info
+
+msg_warning() {
+	local msg="$1"
+	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
+	echo -e "==>${red}warning: ${orange}${msg}${reset}"
+}
+export -f msg_warning
+
+msg_warn() {
+	local msg="$1"
+	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
+	echo -e "==>${red}warning: ${orange}${msg}${reset}"
+}
+export -f msg_warn
+
+replicate() {
+	local char=${1:-'#'}
+	local nsize=${2:-$(tput cols)}
+	local line
+	printf -v line "%*s" "$nsize" && echo -e "${blue}${line// /$char}${reset}"
+}
+export -f replicate
+
+send_telegram_message() {
+	local message="$1"
+	local parse_mode="$2"
+
+	# Define parse_mode como "MarkdownV2" se não for especificado
+	[[ -z $parse_mode ]] && parse_mode="HTML"
+
+	# Remove as tags HTML e exibe o resultado no terminal
+	echo -e "${red}$(sed 's/<[^>]*>//g' <<<"$message")${reset}"
+	# Envia a mensagem original com HTML para o Telegram
+	curl -s -X POST "https://api.telegram.org/bot${inputs_telegram_token}/sendMessage" \
+		-d chat_id="${inputs_telegram_chat_id}" \
+		-d text="$message" \
+		-d parse_mode="$parse_mode"
+}
+export -f send_telegram_message
+
+set_varcolors() {
+	# does the terminal support true-color?
+	export TERM=${TERM:-xterm}
+	export TERM=${TERM:-xterm-256color}
+	if [[ -n "$(command -v "tput")" ]]; then
+		#tput setaf 127 | cat -v  #capturar saida
+		: "${RED=$(tput bold)$(tput setaf 196)}"
+		: "${GREEN=$(tput bold)$(tput setaf 2)}"
+		: "${YELLOW=$(tput bold)$(tput setaf 3)}"
+		: "${BLUE=$(tput setaf 4)}"
+		: "${PURPLE=$(tput setaf 125)}"
+		: "${CYAN=$(tput setaf 6)}"
+		: "${NC=$(tput sgr0)}"
+		: "${RESET=$(tput sgr0)}"
+		: "${BOLD=$(tput bold)}"
+		: "${black=$(tput bold)$(tput setaf 0)}"
+		: "${reverse=$(tput rev)}"
+		: "${branca=${black}$(tput setab 7)}"
+
+		: "${reset=$(tput sgr0)}"
+		: "${rst=$(tput sgr0)}"
+		: "${bold=$(tput bold)}"
+		: "${underline=$(tput smul)}"
+		: "${nounderline=$(tput rmul)}"
+		: "${reverse=$(tput rev)}"
+
+		: "${black=$(tput bold)$(tput setaf 0)}"
+		: "${red=$(tput bold)$(tput setaf 196)}"
+		: "${green=$(tput bold)$(tput setaf 2)}"
+		: "${yellow=$(tput bold)$(tput setaf 3)}"
+		: "${blue=$(tput setaf 27)}"
+		: "${magenta=$(tput setaf 5)}"
+		: "${cyan=$(tput setaf 6)}"
+		: "${white=$(tput setaf 7)}"
+		: "${gray=$(tput setaf 8)}"
+		: "${light_red=$(tput setaf 9)}"
+		: "${light_green=$(tput setaf 10)}"
+		: "${light_yellow=$(tput setaf 11)}"
+		: "${light_blue=$(tput setaf 12)}"
+		: "${light_magenta=$(tput setaf 13)}"
+		: "${light_cyan=$(tput setaf 14)}"
+		: "${light_white=$(tput setaf 15)}"
+		: "${orange=$(tput setaf 202)}"
+		: "${purple=$(tput setaf 125)}"
+		: "${violet=$(tput setaf 61)}"
+
+		# Definir cores de fundo
+		: "${preto=$(tput setab 0)}"
+		: "${vermelho=$(tput setab 196)}"
+		: "${verde=$(tput setab 2)}"
+		: "${amarelo=$(tput setab 3)}"
+		: "${azul=$(tput setab 20)}"
+		: "${roxo=$(tput setab 5)}"
+		: "${ciano=$(tput setab 6)}"
+		: "${branca="${black}$(tput setab 7)"}"
+		: "${cinza=$(tput setab 8)}"
+		: "${laranja=$(tput setab 202)}"
+		: "${roxa=$(tput setab 125)}"
+		: "${violeta=$(tput setab 61)}"
+
+		: "${COL_NC='\e[0m'}" # No Color
+		: "${COL_LIGHT_GREEN='\e[1;32m'}"
+		: "${COL_LIGHT_RED='\e[1;31m'}"
+		: "${DONE="${COL_LIGHT_GREEN} done!${COL_NC}"}"
+		: "${OVER="\\r\\033[K"}"
+		: "${DOTPREFIX="  ${black}::${reset} "}"
+		: "${TICK="${white}[${green}✓${rst}${white}]${rst}"}"
+		: "${CROSS="${white}[${red}✗${rst}${white}]${rst}"}"
+		: "${INFO="${white}[${gray}i${rst}${white}]${rst}"}"
+	else
+		unset_varcolors
+	fi
+}
+
+unset_varcolors() {
+	unset RED GREEN YELLOW BLUE PURPLE CYAN NC RESET BOLD
+	unset reset rst bold underline nounderline reverse
+	unset black red green yellow blue magenta cyan white gray orange purple violet
+	unset light_red light_green light_yellow light_blue light_magenta light_cyan light_white
+	unset preto vermelho verde amarelo azul roxo ciano branca cinza laranja roxa violeta
+	TICK="${white}[${verde}✓${rst}${white}]${rst}"
+	CROSS="${white}[${roxa}✗${rst}${white}]${rst}"
+	INFO="${white}[${cinza}i${rst}${white}]${rst}"
+}
+
+read_file_sign_conf() {
+	local config_file="$HOME/.chili-make-repo.conf"
+	secret_key=""
+	gpg_key=""
+
+	# Verifica se o arquivo de configuração existe
+	if [[ ! -f "$config_file" ]]; then
+		msg_warn "Erro: Arquivo de configuração não encontrado.
+  ${yellow}Exemplo do caminho esperado:${reset}
+    $config_file${reset}
+
+  ${yellow}Exemplo do conteúdo do arquivo:${reset}
+$(replicate '#')
+SECRETKEY=minha_senha_secreta
+GPGKEY=A0D5A8312A83940ED8B04B0F4BAC871802E960F1${reset}
+$(replicate '#')"
+
+		{
+			echo "SECRETKEY=minha_senha_secreta"
+			echo "GPGKEY=A0D5A8312A83940ED8B04B0F4BAC871802E960F1"
+		} >${config_file}
+		msg_info "Foi adicionado entradas nesse arquivo ${yellow}${config_file} ${reset}como exemplo, edite e faça os ajustes necessários manualmente!"
+		return 1
+	fi
+
+	# Lê o arquivo de configuração
+	source "$config_file"
+
+	# Verifica se as variáveis foram carregadas
+	if [[ -z "$SECRETKEY" || -z "$GPGKEY" ]]; then
+		die "Erro: SECRETKEY ou GPGKEY não definidas no arquivo de configuração ${orange}${config_file}${reset}
+  ${yellow}Exemplo do conteúdo esperado:${reset}
+$(replicate '#')
+SECRETKEY=minha_senha_secreta
+GPGKEY=A0D5A8312A83940ED8B04B0F4BAC871802E960F1${reset}
+$(replicate '#')"
+		return 1
+	fi
+
+	# Atribui os valores carregados
+	secret_key="$SECRETKEY"
+	gpg_key="$GPGKEY"
+
+	# Exibe informações para depuração
+	msg_raw "Usando SECRETKEY: $secret_key"
+	msg_raw "Usando GPGKEY   : $gpg_key"
+	return 0
+}
+
+sign_package() {
+	local package="$1"
+	local passphrase="$secret_key"
+	local default_key="$gpg_key"
+
+	# Assina o pacote
+	gpg --pinentry-mode loopback \
+		--passphrase "$passphrase" \
+		--default-key "$default_key" \
+		--detach-sign "$package" && {
+		msg_info "Pacote '$package' assinado com sucesso."
+		return 0
+	}
+	msg_warn "Erro: Falha ao assinar o pacote '$package'."
+	return 1
+}
+
+search_for_sign_package() {
+	local AllPackages
+	local original_dir
+	local -A processed_branches=() # Associative array para rastrear branches processados
+	local total_processed=0        # Contador de pacotes processados
+	local total_signed=0           # Contador de pacotes assinados
+	local total_unsigned=0         # Contador de pacotes sem assinatura
+	local total_already_signed=0   # Contador de pacotes já assinados
+
+	if ! read_file_sign_conf; then
+		exit 1
+	fi
+
+  get_branchs
+	# Salva o diretório original para garantir retorno
+	original_dir=$(pwd)
+
+	for branch in "${aBranchs[@]}"; do
+		if [[ ${processed_branches[$branch]} ]]; then
+			msg_warn "Branch '$branch' já foi processado. Evitando loop."
+			continue
+		fi
+    sh_config
+		local_PATH+="/${branch,,}/x86_64"
+
+		# Verifica se o diretório existe
+		if [[ ! -d "$local_PATH" ]]; then
+			msg_warn "Diretório não encontrado: $local_PATH"
+			continue
+		fi
+
+		pushd "$local_PATH" >/dev/null || {
+			msg_warn "Falha ao acessar o diretório: $local_PATH"
+			return 1
+		}
+
+		# Gera um array de pacotes encontrados
+		AllPackages=()
+		readarray -d '' AllPackages < <(find . -type f -iname "*.$PKG_EXT" -print0)
+
+		# Itera sobre os pacotes
+		for pkg in "${AllPackages[@]}"; do
+			((total_processed++)) # Incrementa o contador de pacotes processados
+			if [[ ! -e "$pkg.sig" ]]; then
+				((total_unsigned++)) # Incrementa o contador de pacotes sem assinatura
+				msg_info "Assinando pacote: $pkg"
+				sign_package "$pkg"
+				((total_signed++)) # Incrementa o contador de pacotes assinados
+			else
+				((total_already_signed++)) # Incrementa o contador de pacotes já assinados
+			fi
+		done
+
+		# Marca o branch como processado
+		processed_branches[$branch]=1
+
+		popd >/dev/null || {
+			msg_warn "Falha ao retornar ao diretório original."
+			return 1
+		}
+
+		msg_info "Concluído o processamento do branch: $branch"
+	done
+
+	# Garante retorno ao diretório original em caso de falhas
+	cd "$original_dir" || {
+		msg_warn "Não foi possível retornar ao diretório original."
+		return 1
+	}
+
+	# Exibe o resumo final
+	replicate '-'
+	msg_info "Resumo Final:"
+	msg_raw "Pacotes processados    : $total_processed"
+	msg_raw "Pacotes já assinados   : $total_already_signed"
+	msg_raw "Pacotes sem assinatura : $total_unsigned"
+	msg_raw "Pacotes agora assinados: $total_signed"
+	replicate '-'
+}
+
+get_branchs() {
+	if [[ -z "$branch" ]]; then
+		aBranchs=('testing')
+	elif [[ "$branch" == 'stable' ]]; then
+		aBranchs=('stable')
+	elif [[ "$branch" == 'testing' ]]; then
+		aBranchs=('testing')
+	elif [[ "$branch" == 'extra' ]]; then
+		aBranchs=('extra')
+	elif [[ "$branch" == 'all' ]]; then
+		aBranchs=('stable' 'testing' 'extra')
+	fi
+}
+
+get_organizations() {
+	if [[ -z "$organization" ]]; then
+		aOrganizations=('hostinger' 'oracle')
+	else
+		aOrganizations=("$organization")
+	fi
+}
+
+sh_synchronize_remote_with_local() {
+	get_organizations
+	get_branchs
+	sh_config
+	if [[ "$remote_DOMAIN" == "repo" ]]; then
+		remote_prefix_db='chili'
+	else
+		remote_prefix_db="$remote_DOMAIN"
+	fi
+	sh_remote_pull
+	search_for_sign_package
+	sh_create_databases
+	sh_remote_push
+}
+
+sh_remote_pull() {
+	for organization in "${aOrganizations[@]}"; do
+		for branch in "${aBranchs[@]}"; do
+			sh_config
+			remote_PATH+="/${branch,,}/x86_64"
+			local_PATH+="/${branch,,}/x86_64"
+			if [[ "$remote_DOMAIN" == "repo" ]]; then
+				remote_prefix_db='chili'
+			else
+				remote_prefix_db="$remote_DOMAIN"
+			fi
+			db_name="${remote_prefix_db}-${branch,,}"
+			msg_raw "organization: ${organization}"
+			msg_raw "   subdomain: ${remote_DOMAIN}"
+			msg_raw "     db_name: ${db_name}"
+			msg_raw "      branch: ${branch}"
+			msg_raw "   localpath: ${local_PATH}"
+			msg_raw "  remotepath: ${remote_PATH}"
+
+			pushd $local_PATH >/dev/null 2>&- || exit 1
+			msg_info "${cyan}Sincronizando... Puxando do remoto para local ${reset}"
+			msg_raw "   Remoto : ${remote_PATH}"
+			msg_raw "    Local : ${local_PATH}"
+			rsync --info=skip0 -Craz -e "ssh -p ${remote_PORT}" ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
+		done
+	done
+}
+
+sh_create_databases() {
+	for branch in "${aBranchs[@]}"; do
+	  sh_config
+		local_PATH+="/${branch,,}/x86_64"
+		db_name="${remote_prefix_db}-${branch,,}"
+
+		pushd $local_PATH >/dev/null 2>&- || exit 1
+		rm -f *.md5 >/dev/null 2>&-
+
+		AllOldPackages=$(find "$PWD" -type f -iname "*.$PKG_EXT" | sort -Vr | awk -F "$FETCH_RE" 'lista[$1]++')
+		for old in ${AllOldPackages[@]}; do
+			msg_info "${red}=>Removendo pacote antigo: [$((++count))] => $(basename "${old}") ${reset}"
+			rm -f ${old} ${old}.sig ${old}.md5 ${old}.sig.md5 >/dev/null 2>&-
+		done
+		rm -f ${db_name}* >/dev/null 2>&-
+		msg_info "${cyan}Recriando database ${orange}'${db_name}.db.tar.gz' ${cyan}localmente ${reset}"
+		msg_run "repo-add -q -p -n -R ${db_name}.db.tar.gz *.pkg.tar.zst"
+
+		msg_info "${cyan}Recriando link for ${orange}'chililinux-${branch}.db.tar.gz' ${cyan}localmente ${reset}"
+		msg_run "ln -sf ${db_name}.db chililinux-${branch}.db"
+		msg_run "ln -sf ${db_name}.files chililinux-${branch}.files"
+		popd >/dev/null 2>&- || exit 1
+		replicate '-'
+	done
+}
+
+sh_remote_push() {
+	for organization in "${aOrganizations[@]}"; do
+		for branch in "${aBranchs[@]}"; do
+			sh_config
+			remote_PATH+="/${branch,,}/x86_64"
+			local_PATH+="/${branch,,}/x86_64"
+
+			pushd $local_PATH >/dev/null 2>&- || exit 1
+			msg_info "${cyan}Empurrando para o remoto: ${orange}$organization ${reset}"
+			echo -n $black
+			rsync --itemize-changes --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT}" ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
+			echo -n $reset
+			popd >/dev/null 2>&- || exit 1
+			replicate '-'
+		done
+		replicate '='
+	done
+	msg_ok "Tudo sincronizado!"
+	exit $(($# ? 0 : 1))
+}
+
+sh_version() {
+	cat <<-EOF
+		    ${BOLD}${CYAN}${0##*/} v${VERSION}${RESET}
+		    ${APPDESC}
+		    ${BOLD}${black}Copyright (C) 2024-2024 ${reset}ChiliLinux Team${black}
+
+		    Este é um software livre: você é livre para alterá-lo e redistribuí-lo.
+		    O $APP é disponibilizado para você sob a ${yellow}Licença MIT${black}, e
+		    inclui software de código aberto sob uma variedade de outras licenças.
+		    Você pode ler instruções sobre como baixar e criar para você mesmo
+		    o código fonte específico usado para criar esta cópia.
+		    ${red}Este programa vem com absolutamente NENHUMA garantia.
+		    ${reset}
+	EOF
+}
+
+sh_usage() {
+	cat <<-EOF
+		    ${reset}${APP} v${VERSION} - ${APPDESC}${reset}
+		    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
+
+		        ${cyan}Opções:${reset}
+		          -o|--org|--organization ${orange}<name> ${cyan} # Configura organização no Github ${reset}válidos: ${yellow}hostinger,oracle ou communitybig ${reset}
+		          -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
+		          -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
+		          -s|--synchronize               ${cyan} # sincronizar local com remoto (puxar/empurrar) ${reset}
+		          -S|--sign                      ${cyan} # assinar pacote faltantes ${reset}
+		          -h|--help                      ${cyan} # Mostra este Help ${reset}
+
+		    ${red}ex: ${cyan}${APP} <subdomain> <branch> [<local_dir>]                  ${reset}
+		        ${cyan}${APP} repo testing /github/ChiliOS/packages/core/testing/x86_64 ${reset}
+		        ${cyan}${APP} -s testing               ${reset}
+		        ${cyan}${APP} -s all                   ${reset}
+		        ${cyan}${APP} --sign                   ${reset}
+		        ${cyan}${APP} -o hostinger --sign      ${reset}
+		        ${cyan}${APP} -o hostinger -s stable   ${reset}
+	EOF
+	exit 0
+}
+
+set_varcolors
+if test $# -lt 1; then
+	sh_usage
+	exit 0
+fi
+
+while [[ $# -gt 0 ]]; do
+	arg="$1"
+	case "$arg" in
+	-n | --nocolor)
+		nocolor=true
+		if [[ "$nocolor" == "true" ]]; then
+			unset_varcolors
+		else
+			set_varcolors
+		fi
+		shift
+		;;
+	-V | --version)
+		sh_version
+		exit 0
+		;;
+	-h | --help)
+		sh_usage
+		exit 0
+		;;
+	-S | --sign)
+		search_for_sign_package
+		exit 0
+		;;
+	-o | --org | --organization)
+		next_arg="${2:-}"
+		if [[ "$next_arg" =~ ^(hostinger|oracle|communitybig)$ ]]; then
+			organization="$next_arg"
+			shift 2
+		else
+			die "${red}Error: Opção inválida para --organization: $next_arg. Use ${yellow}'hostinger', 'oracle' ou 'communitybig' ${reset}"
+		fi
+		;;
+	-s | --synchronize)
+		next_arg="${2:-}"
+		if [[ "$next_arg" =~ ^(stable|testing|extra|all)$ ]]; then
+			branch="$next_arg"
+			shift 2
+			#			if [[ -z "$organization" ]]; then
+			#				die "${red}Error: ${cyan}Nenhuma organização definida. Use ${yellow}'-o hostinger' ou '-o oracle'${reset}"
+			#			fi
+			sh_synchronize_remote_with_local "$branch"
+		else
+			die "${red}Error: Opção inválida para --synchronize: $next_arg. Use ${yellow}'stable', 'testing', 'extra' ou 'all'${reset}"
+		fi
+		;;
+	*)
+		die "Opção inválida! (Use -h para ajuda)"
+		break
+		;;
+	esac
+done
