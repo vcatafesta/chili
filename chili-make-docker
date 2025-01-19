@@ -314,7 +314,9 @@ for arg in "$@"; do
 		exit $(($# ? 0 : 1))
 	elif [[ "$arg" = @(-b|build|--build) ]]; then
 		set_varcolors
-    msg "docker build -t $image_docker ."
+    msg "docker build --no-cache -t $image_docker ."
+    #docker buildx build -t $image_docker .
+    #docker build --no-cache -t $image_docker .
     docker build -t $image_docker .
 	elif [[ "$arg" = @(-r|run|--run) ]]; then
 		set_varcolors

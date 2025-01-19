@@ -4,7 +4,7 @@
 #  chili-runimage - wrapper para o qemu
 #  Created: 2023/04/25
 #  Altered: qua 14 fev 2024 11:05:21 -04
-#  Updated: qui 09 jan 2025 19:23:34 -04
+#  Updated: qua 15 jan 2025 20:53:01 -04
 #
 #  Copyright (c) 2023-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -60,10 +60,10 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 
 #system
 readonly APP="${0##*/}"
-readonly VERSION='1.5.01-20240214'
+readonly VERSION='1.15.01-20250115'
 readonly APPDESC='Wrapper para o qemu'
-readonly DEPENDENCIES=('tput' 'printf' 'qemu-system-x86_64' 'gettext')
-readonly PACKAGEDEP=([tput]='ncurses' [printf]='coreutils' [qemu - system - x86_64]='qemu' [gettext]='gettext')
+readonly DEPENDENCIES=('tput' 'printf' 'gettext' 'qemu-system-x86_64')
+readonly PACKAGEDEP=([tput]='ncurses' [printf]='coreutils' [gettext]='gettext' [qemu-system-x86_64]='qemu-full')
 
 #readonly iface_bridge='docker0'
 #readonly iface_bridge='virbr0'
@@ -286,12 +286,19 @@ function sh_checkDependencies {
 	declare -a missing
 
 	for d in "${DEPENDENCIES[@]}"; do
-		[[ -n $(command -v "$d") ]] && { :; } || {
-			printf "%s\n" "${red}ERROR${reset}: $(gettext "Não foi possível encontrar o comando") ${cyan}'$d'${reset} -> $(gettext "instalar pacote") '${PACKAGEDEP[$d]}'"
-			missing+=("$d")
-			errorFound=true
-		}
+    if ! command -v "$d" &> /dev/null; then
+      printf "%s\n" "${red}ERROR${reset}: $(gettext "Não foi possível encontrar o comando") ${cyan}'$d'${reset} -> $(gettext "instalar pacote") ${cyan}"${PACKAGEDEP[$d]}"${reset}"
+      missing+=("$d")
+      errorFound=true
+    fi
 	done
+
+  file_ovmf='/usr/share/edk2/x64/OVMF_VARS.4m.fd'
+  if [[ ! -e "$file_ovmf" ]]; then
+	  printf "%s\n" "${red}ERROR${reset}: $(gettext "Não foi possível encontrar o arquivo") ${cyan}'$file_ovmf'${reset} -> $(gettext "instalar pacote") ${cyan}'edk2-ovmf'${reset}"
+		missing+=("$file_ovmf")
+		errorFound=true
+	fi
 
 	if $errorFound; then
 		echo "===================================================="
@@ -538,8 +545,15 @@ if [[ $# > 0 ]]; then
 		#qemu_options+=(-netdev bridge,id=net0,smb=$HOME)
 		#qemu_options+=(-netdev bridge,id=net0)
 		#qemu_options+=(-device e1000,netdev=net0)
+
+    #via br0
 		qemu_options+=(-netdev bridge,id=net0,br=$iface_bridge)
 		qemu_options+=(-device virtio-net-pci,netdev=net0)
+
+    # via tap0
+    #qemu_options+=(-netdev tap,id=net0,ifname=tap0,script=no,downscript=no)
+    #qemu_options+=(-device virtio-net-pci,netdev=net0)
+
 		#qemu_options+=(-device e1000,netdev=net0,mac=$random_mac_net0)
 		#qemu_options+=(-netdev bridge,id=net1,br=$iface_bridge)
 		#qemu_options+=(-device e1000,netdev=net1,mac=$random_mac_net1)
