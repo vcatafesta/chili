@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  filtro_with_grep
-#  Created: 2025/01/19 - 14:30
-#  Altered: 2025/01/19 - 14:30
+#  remove_bridge_virbr
+#  Created: 2025/01/20 - 22:22
+#  Altered: 2025/01/20 - 22:22
 #
 #  Copyright (c) 2025-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -31,7 +31,7 @@
 ##############################################################################
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
-export TEXTDOMAIN=filtro_with_grep
+export TEXTDOMAIN=remove_bridge_virbr
 
 # Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
@@ -72,19 +72,63 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="1.0.0-20250119"
+declare _VERSION_="1.0.0-20250120"
 declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput)
 source /usr/share/fetch/core.sh
 
-MostraErro() {
-  echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
+# Função para exibir mensagens informativas
+msg_info() {
+  echo -e "${yellow}[INFO] ${cyan}$1${reset}"
 }
-trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
 
-if test $# -lt 1; then
-  echo "${red}ops, deu ruim: Falta arquivo! ${reset}"
-  echo "  ${cyan}uso: ${reset}$0 <arquivo>"
+# Função para exibir mensagens informativas
+msg_err() {
+  echo -e "${red}[ERRO] ${cyan}$1${reset}"
+}
+
+remove_bridge_and_tap() {
+  local bridge_name=$1
+  local tap_name="tap$(echo "$bridge_name" | sed 's/[^0-9]*//g')" # Ajuste para pegar o número correto do tap
+
+  # Remover a bridge
+  msg_info "Removendo a bridge $bridge_name..."
+  sudo ip link set "$bridge_name" down 1>/dev/null
+  sudo brctl delbr "$bridge_name" 1>/dev/null
+
+  # Remover a interface TAP associada
+  if ip link show "$tap_name" &>/dev/null; then
+    msg_info "Removendo a interface TAP $tap_name..."
+    sudo ip link set "$tap_name" down 1>/dev/null
+    sudo ip tuntap del dev "$tap_name" mode tap 1>/dev/null
+  else
+    msg_err "A interface TAP $tap_name não existe."
+  fi
+
+  # Remover a rede do libvirt
+  msg_info "Removendo a rede do libvirt..."
+  sudo virsh net-destroy "$bridge_name" 1>/dev/null
+  sudo virsh net-autostart --disable "$bridge_name" 1>/dev/null
+  sudo virsh net-undefine "$bridge_name" 1>/dev/null
+  sudo ip link delete "$bridge_name"
+  sudo systemctl restart libvirtd
+
+  # Remover a configuração da rede do libvirt, caso fique residuos
+  local network_config="/etc/libvirt/qemu/networks/${bridge_name}.xml"
+  local network_config_autostart="/etc/libvirt/qemu/networks/autostart/${bridge_name}.xml"
+  msg_info "Removendo o arquivo de configuração da rede $bridge_name..."
+  sudo rm -fv "$network_config" 1>/dev/null
+  sudo rm -fv "$network_config_autostart" 1>/dev/null
+
+  msg_info "Bridge $bridge_name e TAP $tap_name removidos com sucesso."
+}
+
+# Verifica se o nome da bridge foi passado como parâmetro
+if [ -z "$1" ]; then
+  msg_info "Erro: Nenhuma interface foi especificada."
   exit 1
 fi
-grep -Ev '(^#|^$)' "$@"
+
+# Chama a função para remover a bridge e a interface associada
+remove_bridge_and_tap "$1"
+

@@ -45,22 +45,23 @@ readonly APP="${0##*/}"
 readonly VERSION='1.16.01-20250116'
 readonly APPDESC='Wrapper lite para o qemu'
 readonly -a DEPENDENCIES=(
-  'tput'
-  'gettext'
-  'qemu-system-x86_64'
-  'spice-vdagent'
-  'remote-viewer'
-  'python3'
-  )
+	'tput'
+	'gettext'
+	'qemu-system-x86_64'
+	'spice-vdagent'
+	'remote-viewer'
+	'python3'
+)
 readonly -A PACKAGEDEP=(
-  [tput]='ncurses'
-  [gettext]='gettext'
-  [qemu-system-x86_64]='qemu-full'
-  [spice-vdagent]='spice-vdagent'
-  [remote-viewer]='virt-viewer'
-  [python3]='python'
-  )
+	[tput]='ncurses'
+	[gettext]='gettext'
+	[qemu - system - x86_64]='qemu-full'
+	[spice - vdagent]='spice-vdagent'
+	[remote - viewer]='virt-viewer'
+	[python3]='python'
+)
 
+declare iface_bridge='br0'
 declare xmem='8G'
 declare videodevice='qxl'
 declare videodevice='VGA'
@@ -74,72 +75,72 @@ declare -a qemu_options=()
 trap cleanup_working_dir EXIT
 
 function cleanup_working_dir {
-  if [[ -d "${working_dir}" ]]; then
-    rm -rf -- "${working_dir}"
-  fi
+	if [[ -d "${working_dir}" ]]; then
+		rm -rf -- "${working_dir}"
+	fi
 }
 
 sh_setvarcolors() {
-  if command -v "tput" &> /dev/null; then
-    tput sgr0 # reset colors
-    bold=$(tput bold)
-    reset=$(tput sgr0)
-    white="${bold}$(tput setaf 7)"
-    black="${bold}$(tput setaf 0)"
-    red=$(tput bold)$(tput setaf 196)
-    green=$(tput setaf 2)
-    yellow=$(tput bold)$(tput setaf 3)
-    blue=$(tput setaf 4)
-    pink=$(tput setaf 5)
-    cyan=$(tput setaf 6)
-    orange=$(tput setaf 3)
-    purple=$(tput setaf 125)
-    violet=$(tput setaf 61)
-  else
-    red="\033[01;31m"
-    green="\033[01;32m"
-    yellow="\033[01;33m"
-    blue="\033[01;34m"
-    pink="\033[01;35m"
-    cyan="\033[01;36m"
-    reset="\033[0m"
-  fi
-  COL_NC='\e[0m' # No Color
-  COL_LIGHT_GREEN='\e[1;32m'
-  COL_LIGHT_RED='\e[1;31m'
-  TICK="${white}[${COL_LIGHT_GREEN}✓${COL_NC}${white}]"
-  CROSS="${white}[${COL_LIGHT_RED}✗${COL_NC}${white}]"
-  INFO="[i]"
-  # shellcheck disable=SC2034
-  DONE="${COL_LIGHT_GREEN} done!${COL_NC}"
-  OVER="\\r\\033[K"
-  DOTPREFIX="  ${black}::${reset} "
+	if command -v "tput" &>/dev/null; then
+		tput sgr0 # reset colors
+		bold=$(tput bold)
+		reset=$(tput sgr0)
+		white="${bold}$(tput setaf 7)"
+		black="${bold}$(tput setaf 0)"
+		red=$(tput bold)$(tput setaf 196)
+		green=$(tput setaf 2)
+		yellow=$(tput bold)$(tput setaf 3)
+		blue=$(tput setaf 4)
+		pink=$(tput setaf 5)
+		cyan=$(tput setaf 6)
+		orange=$(tput setaf 3)
+		purple=$(tput setaf 125)
+		violet=$(tput setaf 61)
+	else
+		red="\033[01;31m"
+		green="\033[01;32m"
+		yellow="\033[01;33m"
+		blue="\033[01;34m"
+		pink="\033[01;35m"
+		cyan="\033[01;36m"
+		reset="\033[0m"
+	fi
+	COL_NC='\e[0m' # No Color
+	COL_LIGHT_GREEN='\e[1;32m'
+	COL_LIGHT_RED='\e[1;31m'
+	TICK="${white}[${COL_LIGHT_GREEN}✓${COL_NC}${white}]"
+	CROSS="${white}[${COL_LIGHT_RED}✗${COL_NC}${white}]"
+	INFO="[i]"
+	# shellcheck disable=SC2034
+	DONE="${COL_LIGHT_GREEN} done!${COL_NC}"
+	OVER="\\r\\033[K"
+	DOTPREFIX="  ${black}::${reset} "
 }
 
 sh_unsetvarcolors() {
-  unset bold reset cyan red blue white black
-  unset green yellow orange pink cyan purple violet
+	unset bold reset cyan red blue white black
+	unset green yellow orange pink cyan purple violet
 }
 
 die() {
-  local msg=$1
-  shift
-  printf "  %b %s\\n" "${CROSS}" "${bold}${red}${msg}"
-  exit 1
+	local msg=$1
+	shift
+	printf "  %b %s\\n" "${CROSS}" "${bold}${red}${msg}"
+	exit 1
 }
 
 log_err() {
-  printf "  %b %s\\n" "${CROSS}" "${*}"
+	printf "  %b %s\\n" "${CROSS}" "${*}"
 }
 
 log_msg() {
-  local retval="${PIPESTATUS[0]}"
+	local retval="${PIPESTATUS[0]}"
 
-  if [[ $retval -eq 0 ]]; then
-    printf "  %b %s\\n" "${TICK}" "${*}"
-  else
-    printf "  %b %s\\n" "${CROSS}" "${*}"
-  fi
+	if [[ $retval -eq 0 ]]; then
+		printf "  %b %s\\n" "${TICK}" "${*}"
+	else
+		printf "  %b %s\\n" "${CROSS}" "${*}"
+	fi
 }
 
 msg_raw() {
@@ -184,31 +185,71 @@ msg_run() {
 export -f msg_run
 
 msg_info() {
-  local msg="$1"
-  local caller_function="${FUNCNAME[1]}"      # Nome da função que chamou a função atual
-  local caller_line="${BASH_LINENO[1]}"       # Número da linha que chamou a função atual
-  #echo -e "${caller_function}=>${yellow}info   : ${cyan}${msg}${reset}"
-  echo -e "  =>${yellow}info   : ${cyan}${msg}${reset}"
+	local msg="$1"
+	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	#echo -e "${caller_function}=>${yellow}info   : ${cyan}${msg}${reset}"
+	echo -e "  =>${yellow}info   : ${cyan}${msg}${reset}"
 }
 export -f msg_info
 
 msg_warning() {
 	local msg="$1"
-  local caller_function="${FUNCNAME[1]}"      # Nome da função que chamou a função atual
-  local caller_line="${BASH_LINENO[1]}"       # Número da linha que chamou a função atual
-	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
-  echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
+	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
+	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
+	echo -e "  =>${red}warning: ${orange}${msg}${reset}"
 }
 export -f msg_warning
 
 msg_warn() {
 	local msg="$1"
-  local caller_function="${FUNCNAME[1]}"      # Nome da função que chamou a função atual
-  local caller_line="${BASH_LINENO[1]}"       # Número da linha que chamou a função atual
-	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
-  echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
+	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
+	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
+	echo -e "  =>${red}warning: ${orange}${msg}${reset}"
 }
 export -f msg_warn
+
+sh_create_bridge() {
+	# Nome da ponte e da interface TAP
+	BRIDGE_NAME="br1"
+	TAP_NAME="tap1"
+	BRIDGE_IP="172.30.255.1/24"
+
+	# Cria a ponte
+	ip link add name "$BRIDGE_NAME" type bridge
+
+	# Configura o IP da ponte
+	ip addr add "$BRIDGE_IP" dev "$BRIDGE_NAME"
+
+	# Ativa a ponte
+	ip link set "$BRIDGE_NAME" up
+
+	# Cria a interface TAP
+	ip tuntap add dev "$TAP_NAME" mode tap
+
+	# Conecta a interface TAP à ponte
+	ip link set "$TAP_NAME" master "$BRIDGE_NAME"
+
+	# Ativa a interface TAP
+	ip link set "$TAP_NAME" up
+
+	# Confirmação
+	echo "Ponte '$BRIDGE_NAME' criada com IP $BRIDGE_IP e TAP '$TAP_NAME' conectada."
+
+	# Exibe o estado das interfaces
+	ip addr show "$BRIDGE_NAME"
+	ip addr show "$TAP_NAME"
+}
+
+# Função para obter as interfaces do tipo bridge usando brctl
+get_bridge_interfaces() {
+	#brctl show | awk 'NR > 1 {printf "%s ", $1}'
+	brctl show | awk 'NR > 1 {printf "%s ", $1}' | sed 's/ $//'
+}
 
 replicate() {
 	local char=${1:-'#'}
@@ -236,63 +277,63 @@ send_telegram_message() {
 export -f send_telegram_message
 
 readconf() {
-  local msg="$1"
-  local color="${2:-${red}}"
+	local msg="$1"
+	local color="${2:-${red}}"
 
-  echo -n -e "$color"
-  if [[ $LC_DEFAULT -eq 0 ]]; then
-    read -r -p "$msg [S/n]"
-  else
-    read -r -p "$msg [Y/n]"
-  fi
-  echo -n -e "$reset"
-  case "${REPLY^}" in
-  [SY]) return 0 ;;
-  "") return 0 ;;
-  *) return 1 ;;
-  esac
+	echo -n -e "$color"
+	if [[ $LC_DEFAULT -eq 0 ]]; then
+		read -r -p "$msg [S/n]"
+	else
+		read -r -p "$msg [Y/n]"
+	fi
+	echo -n -e "$reset"
+	case "${REPLY^}" in
+	[SY]) return 0 ;;
+	"") return 0 ;;
+	*) return 1 ;;
+	esac
 }
 
 sh_checkDependencies() {
-  local aBlock_files=()
-  local d
-  local errorFound=false
-  declare -a missing
+	local aBlock_files=()
+	local d
+	local errorFound=false
+	declare -a missing
 
-  for d in "${DEPENDENCIES[@]}"; do
-    if ! command -v "$d" &> /dev/null; then
-      log_err "Check: ${red}ERROR${reset}: $(gettext "Não foi possível encontrar o comando") ${cyan}'$d'${reset} -> $(gettext "instalar pacote") ${cyan}"${PACKAGEDEP[$d]}"${reset}"
-      missing+=("$d")
-      errorFound=true
-    else
-      log_msg "Check: ${cyan}$d"
-    fi
-  done
+	for d in "${DEPENDENCIES[@]}"; do
+		if ! command -v "$d" &>/dev/null; then
+			log_err "Check: ${red}ERROR${reset}: $(gettext "Não foi possível encontrar o comando") ${cyan}'$d'${reset} -> $(gettext "instalar pacote") ${cyan}"${PACKAGEDEP[$d]}"${reset}"
+			missing+=("$d")
+			errorFound=true
+		else
+			log_msg "Check: ${cyan}$d"
+		fi
+	done
 
-  aBlock_files+=('/usr/share/edk2/x64/OVMF_VARS.4m.fd')
-  aBlock_files+=('/archlive/qemu/hda.img')
-  aBlock_files+=('/archlive/qemu/hdb.img')
-  aBlock_files+=('/archlive/qemu/hdc.img')
-  aBlock_files+=('/archlive/qemu/hdd.img')
-  for d in "${aBlock_files[@]}"; do
-    if [[ ! -e "$d" ]]; then
-      log_err "Check: ${red}ERROR${reset}: $(gettext "Não foi possível encontrar o arquivo") ${cyan}'$d'${reset}"
-      missing+=("$d")
-      errorFound=true
-    fi
-  done
+	aBlock_files+=('/usr/share/edk2/x64/OVMF_VARS.4m.fd')
+	aBlock_files+=('/archlive/qemu/hda.img')
+	aBlock_files+=('/archlive/qemu/hdb.img')
+	aBlock_files+=('/archlive/qemu/hdc.img')
+	aBlock_files+=('/archlive/qemu/hdd.img')
+	for d in "${aBlock_files[@]}"; do
+		if [[ ! -e "$d" ]]; then
+			log_err "Check: ${red}ERROR${reset}: $(gettext "Não foi possível encontrar o arquivo") ${cyan}'$d'${reset}"
+			missing+=("$d")
+			errorFound=true
+		fi
+	done
 
-  if $errorFound; then
-    replicate '='
-    echo "${yellow}             $(gettext "IMPOSSÍVEL CONTINUAR")"
-    echo "${black}$(gettext "Este script precisa dos comandos listados acima")"
-    echo "${black}$(gettext "Instale-os e/ou verifique se eles estão em seu") ${red}\$PATH${reset}"
-    replicate '='
-    #die $(gettext "Abortando...")
-    if readconf "Deseja instalar os pacotes e criar os arquivos necessários ?"; then
-      sh_setup
-    fi
-  fi
+	if $errorFound; then
+		replicate '='
+		echo "${yellow}             $(gettext "IMPOSSÍVEL CONTINUAR")"
+		echo "${black}$(gettext "Este script precisa dos comandos listados acima")"
+		echo "${black}$(gettext "Instale-os e/ou verifique se eles estão em seu") ${red}\$PATH${reset}"
+		replicate '='
+		#die $(gettext "Abortando...")
+		if readconf "Deseja instalar os pacotes e criar os arquivos necessários ?"; then
+			sh_setup
+		fi
+	fi
 }
 
 supports_uefi() {
@@ -312,24 +353,24 @@ detect_audio_server() {
 }
 
 sh_version() {
-  cat <<-EOF
-        ${BOLD}${CYAN}${0##*/} v${VERSION}${RESET}
-        ${APPDESC}
-        ${BOLD}${black}Copyright (C) 2024-2024 ${reset}ChiliLinux Team${black}
+	cat <<-EOF
+		        ${BOLD}${CYAN}${0##*/} v${VERSION}${RESET}
+		        ${APPDESC}
+		        ${BOLD}${black}Copyright (C) 2024-2024 ${reset}ChiliLinux Team${black}
 
-        Este é um software livre: você é livre para alterá-lo e redistribuí-lo.
-        O $APP é disponibilizado para você sob a ${yellow}Licença MIT${black}, e
-        inclui software de código aberto sob uma variedade de outras licenças.
-        Você pode ler instruções sobre como baixar e criar para você mesmo
-        o código fonte específico usado para criar esta cópia.
-        ${red}Este programa vem com absolutamente NENHUMA garantia.
-        ${reset}
-EOF
-   exit 0
+		        Este é um software livre: você é livre para alterá-lo e redistribuí-lo.
+		        O $APP é disponibilizado para você sob a ${yellow}Licença MIT${black}, e
+		        inclui software de código aberto sob uma variedade de outras licenças.
+		        Você pode ler instruções sobre como baixar e criar para você mesmo
+		        o código fonte específico usado para criar esta cópia.
+		        ${red}Este programa vem com absolutamente NENHUMA garantia.
+		        ${reset}
+	EOF
+	exit 0
 }
 
 function sh_usage {
-  cat <<EOF
+	cat <<EOF
 $(gettext "Uso"):
   ${orange}$APP${reset} [$(gettext "Opções")
 
@@ -354,38 +395,38 @@ $(gettext "Exemplo"):
   # ${orange}$APP${reset} -b file.img            #$(gettext "Execute uma imagem, em ponte, usando") BIOS
   # ${orange}$APP${reset} -m 16G /dev/sdX        #$(gettext "Execute uma device, 16GB memória, usando") BIOS
 EOF
-  exit 0
+	exit 0
 }
 
 sh_setup() {
-  msg_info "Instalando necessários pacotes"
-  sudo pacman -S --needed --quiet --noconfirm \
-    qemu-full \
-    edk2-ovmf \
-    ncurses \
-    gettext \
-    spice-vdagent \
-    virt-viewer
+	msg_info "Instalando necessários pacotes"
+	sudo pacman -S --needed --quiet --noconfirm \
+		qemu-full \
+		edk2-ovmf \
+		ncurses \
+		gettext \
+		spice-vdagent \
+		virt-viewer
 
-  msg_info "Criando diretórios de trabalho"
-  sudo mkdir -p /archlive/qemu/ &> /dev/null
-  msg_info "Setando permissões no diretórios de trabalho"
-  sudo chmod 1777 /archlive/qemu/ &> /dev/null
-  msg_info "Criando arquivos de bloco no diretórios de trabalho"
-  sudo qemu-img create /archlive/qemu/hda.img -f raw 32G &> /dev/null
-  sudo qemu-img create /archlive/qemu/hdb.img -f raw 32G &> /dev/null
-  sudo qemu-img create /archlive/qemu/hdc.img -f raw 32G &> /dev/null
-  sudo qemu-img create /archlive/qemu/hdd.img -f raw 32G &> /dev/null
+	msg_info "Criando diretórios de trabalho"
+	sudo mkdir -p /archlive/qemu/ &>/dev/null
+	msg_info "Setando permissões no diretórios de trabalho"
+	sudo chmod 1777 /archlive/qemu/ &>/dev/null
+	msg_info "Criando arquivos de bloco no diretórios de trabalho"
+	sudo qemu-img create /archlive/qemu/hda.img -f raw 32G &>/dev/null
+	sudo qemu-img create /archlive/qemu/hdb.img -f raw 32G &>/dev/null
+	sudo qemu-img create /archlive/qemu/hdc.img -f raw 32G &>/dev/null
+	sudo qemu-img create /archlive/qemu/hdd.img -f raw 32G &>/dev/null
 
-  sh_start_vdagentd
+	sh_start_vdagentd
 }
 
 sh_start_vdagentd() {
-  if ! pgrep spice-vdagentd; then
-    msg_info "Ativando o serviço spice-vdaagentd"
-    sudo systemctl enable spice-vdagentd
-    sudo systemctl start spice-vdagentd
-  fi
+	if ! pgrep spice-vdagentd; then
+		msg_info "Ativando o serviço spice-vdaagentd"
+		sudo systemctl enable spice-vdagentd
+		sudo systemctl start spice-vdagentd
+	fi
 }
 
 chili-fr() {
@@ -394,23 +435,23 @@ chili-fr() {
 	local random_spice_port="$(shuf -i 5900-5910 -n 1)"
 
 	# Verificar se a imagem foi especificada
-	[[ -z "$img"   ]] && { die "Erro: Imagem/Device não especificada!"; }
-	[[ ! -e "$img" ]] && { die "Erro: Imagem/Device ${cyan}${img} ${red}não encontrada!${reset}";	}
+	[[ -z "$img" ]] && { die "Erro: Imagem/Device não especificada!"; }
+	[[ ! -e "$img" ]] && { die "Erro: Imagem/Device ${cyan}${img} ${red}não encontrada!${reset}"; }
 
-  # Forçar UEFI, se solicitado
-  if $uefi; then
-    msg_info "Forçando inicialização UEFI..."
-    qemu_options+=(-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF.4m.fd)
-  else
-    msg_warn "Parametro -u não informado, usando BIOS Legacy (padrão)..."
-  fi
+	# Forçar UEFI, se solicitado
+	if $uefi; then
+		msg_info "Forçando inicialização UEFI..."
+		qemu_options+=(-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF.4m.fd)
+	else
+		msg_warn "Parametro -u não informado, usando BIOS Legacy (padrão)..."
+	fi
 
 	# Adicionar opções padrão do QEMU
 	qemu_options+=(-no-fd-bootchk)
 	qemu_options+=(-machine accel=kvm)
 	qemu_options+=(-cpu host)
 	qemu_options+=(-smp "$(nproc)")
-  qemu_options+=(-m ${xmem})
+	qemu_options+=(-m ${xmem})
 	qemu_options+=(-k pt-br)
 
 	qemu_options+=(-drive file=${img},if=none,id=disk1,format=raw)
@@ -427,26 +468,26 @@ chili-fr() {
 	qemu_options+=(-device hda-output,audiodev=snd0)
 	qemu_options+=(-global ICH9-LPC.disable_s3=1)
 	qemu_options+=(-machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0)
- 	qemu_options+=(-device virtio-serial)
- 	qemu_options+=(-device virtio-serial)
+	qemu_options+=(-device virtio-serial)
+	qemu_options+=(-device virtio-serial)
 
-  #video
- 	qemu_options+=(-device "$videodevice")
+	#video
+	qemu_options+=(-device "$videodevice")
 
-  if $spice; then
-    sh_start_vdagentd
+	if $spice; then
+		sh_start_vdagentd
 
-  	# Informar as portas usadas
-	  msg_info "spice running on port: $random_spice_port"
-  	msg_info "remote-viewer spice://localhost:$random_spice_port"
+		# Informar as portas usadas
+		msg_info "spice running on port: $random_spice_port"
+		msg_info "remote-viewer spice://localhost:$random_spice_port"
 
-  	# Configurar SPICE
-  	qemu_options+=(-spice port=$random_spice_port,disable-ticketing=on)
-  	qemu_options+=(-monitor tcp:localhost:$random_port,server,nowait)
-  	#qemu_options+=(-chardev spicevmc,id=vdagent,debug=0,name=vdagent)
-  	#qemu_options+=(-device virtserialport,chardev=vdagent,name=com.redhat.spice.0)
-    qemu_options+=(-chardev spicevmc,id=charchannel0,name=vdagent)
-    qemu_options+=(-device virtserialport,chardev=charchannel0,name=com.redhat.spice.0)
+		# Configurar SPICE
+		qemu_options+=(-spice port=$random_spice_port,disable-ticketing=on)
+		qemu_options+=(-monitor tcp:localhost:$random_port,server,nowait)
+		#qemu_options+=(-chardev spicevmc,id=vdagent,debug=0,name=vdagent)
+		#qemu_options+=(-device virtserialport,chardev=vdagent,name=com.redhat.spice.0)
+		qemu_options+=(-chardev spicevmc,id=charchannel0,name=vdagent)
+		qemu_options+=(-device virtserialport,chardev=charchannel0,name=com.redhat.spice.0)
 
 		# Executar o QEMU
 		sudo env XDG_RUNTIME_DIR=/run/user/$(id -u) qemu-system-x86_64 "${qemu_options[@]}" &
@@ -456,18 +497,18 @@ chili-fr() {
 
 		# Aguardar o remote-viewer e encerrar o QEMU quando ele fechar
 		wait $viewer_pid
-		kill $qemu_pid &> /dev/null
-  else
-		sudo env XDG_RUNTIME_DIR=/run/user/$(id -u) qemu-system-x86_64 "${qemu_options[@]}" &> /dev/null
-  fi
+		kill $qemu_pid &>/dev/null
+	else
+		sudo env XDG_RUNTIME_DIR=/run/user/$(id -u) qemu-system-x86_64 "${qemu_options[@]}" 1>/dev/null
+	fi
 }
 export -f fr
 
 sh_setvarcolors
 sh_checkDependencies
 
-OPTIONS=m:ubVnhd:sv:
-LONGOPTIONS=memory:,uefi,bridge,version,nocolor,help,drive:,spice,video:
+OPTIONS=m:ub:Vnhd:sv:i:
+LONGOPTIONS=memory:,uefi,bridge:,version,nocolor,help,drive:,spice,video:,image:
 opts=($(getopt --options="$OPTIONS" --longoptions="$LONGOPTIONS" --name "$0" -- "$@"))
 eval set -- "${opts[*]}"
 
@@ -481,12 +522,27 @@ while test ${#opts[*]} -gt 0; do
 	-u | --uefi)
 		uefi=true
 		;;
+	-i | --image)
+		if [[ -z "$2" ]]; then
+			die "Argumento inválido para --image, falta parâmetro de imagem/disco/device" >&2
+		else
+			img="$2"
+			shift
+		fi
+		;;
 	-b | --bridge)
-		bridge=true
+		if [[ " $(get_bridge_interfaces) " =~ " $2 " ]]; then
+			iface_bridge="$2"
+			msg_info "Parametro -b/--bridge detectado: tentando usar bridge '$iface_bridge'"
+			bridge=true
+			shift
+		else
+			die "Argumento inválido para --bridge. Use nome da bridge, válidos são: $(get_bridge_interfaces)" >&2
+		fi
 		;;
 	-s | --spice)
 		spice=true
-    log_msg "Parametro -s/--spice detectado: tentando usar spice..."
+		log_msg "Parametro -s/--spice detectado: tentando usar spice..."
 		;;
 	-v | --video)
 		if [[ $2 =~ ^(virtio-vga|virtio-gpu-pci|qxl-vga|VGA|cirrus-vga|ati-vga|virtio-gpu-pci|bochs-display|ramfb)?$ ]]; then
@@ -500,11 +556,11 @@ while test ${#opts[*]} -gt 0; do
 		if [[ -n $2 ]]; then
 			drive=true
 			drive_path=$2
-			if lsblk $drive_path &> /dev/null; then
-        log_msg "Parametro -d,--drive detectado: $drive_path"
-      else
-  			die "${cyan}Parametro -d,--drive => ${red}$drive_path: não é um dispositivo de bloco"
-      fi
+			if lsblk $drive_path &>/dev/null; then
+				log_msg "Parametro -d,--drive detectado: $drive_path"
+			else
+				die "${cyan}Parametro -d,--drive => ${red}$drive_path: não é um dispositivo de bloco"
+			fi
 			shift
 		else
 			die "$(gettext "Argumento inválido para --drive. Use formato device, como /dev/sdX (por exemplo).")" >&2
@@ -513,7 +569,7 @@ while test ${#opts[*]} -gt 0; do
 	-m | --memory)
 		if [[ $2 =~ ^[0-9]+[MG]?$ ]]; then
 			xmem=$2
-	    log_msg "Parametro -m/--memory detectado: $2"
+			log_msg "Parametro -m/--memory detectado: $2"
 			shift
 		else
 			die "$(gettext "Argumento inválido para -m. Use um formato como 16GB (por exemplo).")" >&2
@@ -536,30 +592,30 @@ done
 #sh_set_qemu_common_options
 
 if [[ $# > 0 ]]; then
-  if $bridge; then
-    random_mac_net0=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
-    random_mac_net1=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
-    #qemu_options+=(-netdev bridge,id=net0,smb=$HOME)
-    #qemu_options+=(-netdev bridge,id=net0)
-    #qemu_options+=(-device e1000,netdev=net0)
-    qemu_options+=(-netdev bridge,id=net0,br=$iface_bridge)
-    qemu_options+=(-device virtio-net-pci,netdev=net0)
-    #qemu_options+=(-device e1000,netdev=net0,mac=$random_mac_net0)
-    #qemu_options+=(-netdev bridge,id=net1,br=$iface_bridge)
-    #qemu_options+=(-device e1000,netdev=net1,mac=$random_mac_net1)
-    #qemu_options+=(-netdev tap,ifname=tap1,script=no,downscript=no,id=mynet0)
-    #qemu_options+=(-device virtio-net-device,netdev=mynet0,mac=92:7b:15:c3:4d:ec)
-  else
-  	# Configurar rede
-  	qemu_options+=(-netdev user,id=net0)
-  	#qemu_options+=(-device e1000,netdev=net0)
-    qemu_options+=(-device virtio-net-pci,netdev=net0)
-  fi
-  if $drive; then
-  	msg_info "Anexando disco/drive externo: ${yellow}$drive_path"
-    qemu_options+=(-drive file=$drive_path,format=raw,media=disk)
-  fi
-  chili-fr "$@"
+	if $bridge; then
+		random_mac_net0=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
+		random_mac_net1=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
+		#qemu_options+=(-netdev bridge,id=net0,smb=$HOME)
+		#qemu_options+=(-netdev bridge,id=net0)
+		#qemu_options+=(-device e1000,netdev=net0)
+		qemu_options+=(-netdev bridge,id=net0,br=$iface_bridge)
+		qemu_options+=(-device virtio-net-pci,netdev=net0)
+		#qemu_options+=(-device e1000,netdev=net0,mac=$random_mac_net0)
+		#qemu_options+=(-netdev bridge,id=net1,br=$iface_bridge)
+		#qemu_options+=(-device e1000,netdev=net1,mac=$random_mac_net1)
+		#qemu_options+=(-netdev tap,ifname=tap1,script=no,downscript=no,id=mynet0)
+		#qemu_options+=(-device virtio-net-device,netdev=mynet0,mac=92:7b:15:c3:4d:ec)
+	else
+		# Configurar rede
+		qemu_options+=(-netdev user,id=net0)
+		#qemu_options+=(-device e1000,netdev=net0)
+		qemu_options+=(-device virtio-net-pci,netdev=net0)
+	fi
+	if $drive; then
+		msg_info "Anexando disco/drive externo: ${yellow}$drive_path"
+		qemu_options+=(-drive file=$drive_path,format=raw,media=disk)
+	fi
+	chili-fr "$@"
 else
-  die "${opts[*]} $(gettext "falta parâmetro de imagem/disco/device"): ($(gettext "usar -h para ajuda"))"
+	die "${opts[*]} $(gettext "falta parâmetro de imagem/disco/device"): ($(gettext "usar -h para ajuda"))"
 fi

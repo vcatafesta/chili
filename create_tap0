@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  filtro_with_grep
-#  Created: 2025/01/19 - 14:30
-#  Altered: 2025/01/19 - 14:30
+#  create_tap0
+#  Created: 2025/01/20 - 23:20
+#  Altered: 2025/01/20 - 23:20
 #
 #  Copyright (c) 2025-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -31,7 +31,7 @@
 ##############################################################################
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
-export TEXTDOMAIN=filtro_with_grep
+export TEXTDOMAIN=create_tap0
 
 # Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
@@ -72,7 +72,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="1.0.0-20250119"
+declare _VERSION_="1.0.0-20250120"
 declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput)
 source /usr/share/fetch/core.sh
@@ -82,9 +82,17 @@ MostraErro() {
 }
 trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
 
-if test $# -lt 1; then
-  echo "${red}ops, deu ruim: Falta arquivo! ${reset}"
-  echo "  ${cyan}uso: ${reset}$0 <arquivo>"
-  exit 1
-fi
-grep -Ev '(^#|^$)' "$@"
+# Cria a interface TAP
+sudo ip tuntap add dev tap0 mode tap
+
+# Adiciona a interface TAP à bridge virbr0
+sudo brctl addif virbr0 tap0
+
+# Ativa a interface TAP
+sudo ip link set tap0 up
+
+# Verifica as interfaces na bridge virbr0
+brctl show virbr0
+
+# Verifica o status da interface tap0
+ip link show tap0

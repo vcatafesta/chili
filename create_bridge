@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  filtro_with_grep
-#  Created: 2025/01/19 - 14:30
-#  Altered: 2025/01/19 - 14:30
+#  create_bridge
+#  Created: 2025/01/20 - 21:02
+#  Altered: 2025/01/20 - 21:02
 #
 #  Copyright (c) 2025-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -31,7 +31,7 @@
 ##############################################################################
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
-export TEXTDOMAIN=filtro_with_grep
+export TEXTDOMAIN=create_bridge
 
 # Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
@@ -72,7 +72,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="1.0.0-20250119"
+declare _VERSION_="1.0.0-20250120"
 declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput)
 source /usr/share/fetch/core.sh
@@ -82,9 +82,32 @@ MostraErro() {
 }
 trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
 
-if test $# -lt 1; then
-  echo "${red}ops, deu ruim: Falta arquivo! ${reset}"
-  echo "  ${cyan}uso: ${reset}$0 <arquivo>"
-  exit 1
-fi
-grep -Ev '(^#|^$)' "$@"
+# Nome da ponte e da interface TAP
+BRIDGE_NAME="br1"
+TAP_NAME="tap1"
+BRIDGE_IP="172.30.255.1/24"
+
+# Cria a ponte
+ip link add name "$BRIDGE_NAME" type bridge
+
+# Configura o IP da ponte
+ip addr add "$BRIDGE_IP" dev "$BRIDGE_NAME"
+
+# Ativa a ponte
+ip link set "$BRIDGE_NAME" up
+
+# Cria a interface TAP
+ip tuntap add dev "$TAP_NAME" mode tap
+
+# Conecta a interface TAP à ponte
+ip link set "$TAP_NAME" master "$BRIDGE_NAME"
+
+# Ativa a interface TAP
+ip link set "$TAP_NAME" up
+
+# Confirmação
+echo "Ponte '$BRIDGE_NAME' criada com IP $BRIDGE_IP e TAP '$TAP_NAME' conectada."
+
+# Exibe o estado das interfaces
+ip addr show "$BRIDGE_NAME"
+ip addr show "$TAP_NAME"
