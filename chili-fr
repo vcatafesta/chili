@@ -5,7 +5,7 @@
 #  chili-fr
 #  Created: 2019/12/13 - 00:00
 #  Altered: 2024/10/03 - 00:00
-#  Updated: qui 16 jan 2025 23:11:08 -04
+#  Updated: qua 22 jan 2025 22:09:40 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -42,7 +42,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 
 #system
 readonly APP="${0##*/}"
-readonly VERSION='1.16.01-20250116'
+readonly VERSION='1.22.01-20250122'
 readonly APPDESC='Wrapper lite para o qemu'
 readonly -a DEPENDENCIES=(
 	'tput'
@@ -51,6 +51,7 @@ readonly -a DEPENDENCIES=(
 	'spice-vdagent'
 	'remote-viewer'
 	'python3'
+	'virsh'
 )
 readonly -A PACKAGEDEP=(
 	[tput]='ncurses'
@@ -59,17 +60,21 @@ readonly -A PACKAGEDEP=(
 	[spice - vdagent]='spice-vdagent'
 	[remote - viewer]='virt-viewer'
 	[python3]='python'
+	[virsh]='libvirt'
 )
 
 declare iface_bridge='br0'
+declare bridge=false
 declare xmem='8G'
 declare videodevice='qxl'
-declare videodevice='VGA'
 declare videodevice='virtio-vga'
-declare uefi=false
+declare videodevice='VGA'
 declare spice=false
-declare bridge=false
 declare drive=false
+declare uefi=false
+declare netdevice='virtio-net-pci'
+declare anetdevices=()
+declare netchoosedriver=false
 declare LC_DEFAULT=0
 declare -a qemu_options=()
 trap cleanup_working_dir EXIT
@@ -85,6 +90,7 @@ sh_setvarcolors() {
 		tput sgr0 # reset colors
 		bold=$(tput bold)
 		reset=$(tput sgr0)
+		rst=$(tput sgr0)
 		white="${bold}$(tput setaf 7)"
 		black="${bold}$(tput setaf 0)"
 		red=$(tput bold)$(tput setaf 196)
@@ -213,43 +219,15 @@ msg_warn() {
 }
 export -f msg_warn
 
-sh_create_bridge() {
-	# Nome da ponte e da interface TAP
-	BRIDGE_NAME="br1"
-	TAP_NAME="tap1"
-	BRIDGE_IP="172.30.255.1/24"
-
-	# Cria a ponte
-	ip link add name "$BRIDGE_NAME" type bridge
-
-	# Configura o IP da ponte
-	ip addr add "$BRIDGE_IP" dev "$BRIDGE_NAME"
-
-	# Ativa a ponte
-	ip link set "$BRIDGE_NAME" up
-
-	# Cria a interface TAP
-	ip tuntap add dev "$TAP_NAME" mode tap
-
-	# Conecta a interface TAP à ponte
-	ip link set "$TAP_NAME" master "$BRIDGE_NAME"
-
-	# Ativa a interface TAP
-	ip link set "$TAP_NAME" up
-
-	# Confirmação
-	echo "Ponte '$BRIDGE_NAME' criada com IP $BRIDGE_IP e TAP '$TAP_NAME' conectada."
-
-	# Exibe o estado das interfaces
-	ip addr show "$BRIDGE_NAME"
-	ip addr show "$TAP_NAME"
+msg_info() {
+  echo -e "${yellow}[INFO] ${cyan}$1${reset}"
 }
 
-# Função para obter as interfaces do tipo bridge usando brctl
-get_bridge_interfaces() {
-	#brctl show | awk 'NR > 1 {printf "%s ", $1}'
-	brctl show | awk 'NR > 1 {printf "%s ", $1}' | sed 's/ $//'
+# Função para exibir mensagens informativas
+msg_err() {
+  echo -e "${red}[ERRO] ${cyan}$1${reset}"
 }
+
 
 replicate() {
 	local char=${1:-'#'}
@@ -336,6 +314,166 @@ sh_checkDependencies() {
 	fi
 }
 
+######################################################################################################
+
+# Função para verificar se a interface TAP já existe e retornar o próximo número disponível
+get_next_free_tap() {
+	local next_tap=1
+	while ip link show "tap$next_tap" &>/dev/null; do
+		next_tap=$((next_tap + 1))
+	done
+	echo "tap$next_tap"
+}
+
+# Função para verificar se a bridge existe e retornar o próximo nome disponível
+get_next_free_bridge() {
+	local base_bridge="virbr"
+	local next_bridge=1
+	while ip link show "$base_bridge$next_bridge" &>/dev/null; do
+		next_bridge=$((next_bridge + 1))
+	done
+	echo "$base_bridge$next_bridge"
+}
+
+create_bridge_virbr() {
+	local bridge_name="$1"
+	if [[ -z "$bridge_name" ]]; then
+		# Obter o próximo nome de bridge disponível
+		bridge_name=$(get_next_free_bridge)
+	fi
+
+	# Criar a rede virsh correspondente à nova bridge
+	if ! sudo virsh net-list --all | grep -q "$bridge_name" 1>/dev/null; then
+		msg_info "Criando a rede $bridge_name..."
+
+		# Calcular a faixa de IP com base no nome da bridge
+		# O número da bridge será extraído (ex: virbr1 -> 1, virbr2 -> 2, etc.)
+		bridge_number=$(echo "$bridge_name" | grep -o '[0-9]*')
+		base_ip="172.$((30 + bridge_number)).255.1"
+		GATEWAY="$base_ip"
+		subnet="255.255.255.0"
+		dhcp_range_start="172.$((30 + bridge_number)).255.2"
+		dhcp_range_end="172.$((30 + bridge_number)).255.200"
+
+		# Criando o arquivo de configuração temporário para a rede
+		tmp_net_config=$(mktemp)
+
+		cat <<EOF >"$tmp_net_config"
+<!--
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh net-edit $bridge_name
+or other application using the libvirt API.
+-->
+
+<network>
+  <name>$bridge_name</name>
+  <uuid>$(uuidgen)</uuid>
+  <forward mode='nat'/>
+  <bridge name='$bridge_name' stp='on' delay='0'/>
+  <ip address='$base_ip' netmask='$subnet'>
+    <dhcp>
+      <range start='$dhcp_range_start' end='$dhcp_range_end'/>
+    </dhcp>
+  </ip>
+</network>
+EOF
+		# Definir a rede usando o arquivo temporário
+		sudo virsh net-define "$tmp_net_config" 1>/dev/null
+		# Remover o arquivo de configuração temporário após a definição
+		sudo rm -f "$tmp_net_config"
+	fi
+
+	# Tornar a nova bridge persistente
+	msg_info "Tornando $bridge_name persistente..."
+	msg_info "Iniciando a rede $bridge_name..."
+	sudo virsh net-autostart "$bridge_name" 1>/dev/null
+
+	if ! sudo virsh net-start "$bridge_name" 1>/dev/null; then
+		msg_err "Falha ao iniciar a rede $bridge_name. Tentando novamente."
+		sudo virsh net-destroy "$bridge_name" 1>/dev/null
+		sudo virsh net-start "$bridge_name" 1>/dev/null
+	fi
+
+	# Obter o próximo nome de interface TAP disponível
+	#tap_name=$(get_next_free_tap)-"$bridge_name"
+	tap_name="tap-$bridge_name"
+
+	# Criar a interface TAP (ex: tap0, tap1, tap2...)
+	msg_info "Criando a interface TAP $tap_name..."
+	sudo ip tuntap add dev "$tap_name" mode tap 1>/dev/null
+
+	# Colocar a interface TAP para up
+	msg_info "Ativando a interface TAP $tap_name..."
+	sudo ip link set "$tap_name" up 1>/dev/null
+
+	# Adicionar a interface TAP à bridge recém-criada
+	msg_info "Adicionando $tap_name à bridge $bridge_name..."
+	sudo brctl addif "$bridge_name" "$tap_name" 1>/dev/null
+
+	# Verificar se a bridge e o TAP foram configurados corretamente
+	msg_info "Verificando a associação de interfaces à bridge $bridge_name..."
+	brctl show "$bridge_name" 1>/dev/null
+
+	# Exibir as interfaces para verificar se tudo está funcionando
+	msg_info "Verificando as interfaces de rede..."
+	ip addr show "$bridge_name" 1>/dev/null
+	ip addr show "$tap_name" 1>/dev/null
+
+	sudo virsh net-info "$bridge_name"
+	msg_info "Configuração concluída!"
+  exit
+}
+
+remove_bridge_and_tap() {
+  local bridge_name="$1"
+  local tap_name
+
+  #tap_name="tap$(echo "$bridge_name" | sed 's/[^0-9]*//g')" # Ajuste para pegar o número correto do tap
+  tap_name="tap-$bridge_name"
+
+  # Remover a bridge
+  msg_info "Removendo a bridge $bridge_name..."
+  sudo ip link set "$bridge_name" down 1>/dev/null
+  sudo brctl delbr "$bridge_name" 1>/dev/null
+
+  # Remover a interface TAP associada
+  if ip link show "$tap_name" &>/dev/null; then
+    msg_info "Removendo a interface TAP $tap_name..."
+    sudo ip link set "$tap_name" down 1>/dev/null
+    sudo ip tuntap del dev "$tap_name" mode tap 1>/dev/null
+  else
+    msg_err "A interface TAP $tap_name não existe."
+  fi
+
+  # Remover a rede do libvirt
+  msg_info "Removendo a rede do libvirt..."
+  sudo virsh net-destroy "$bridge_name" 1>/dev/null
+  sudo virsh net-autostart --disable "$bridge_name" 1>/dev/null
+  sudo virsh net-undefine "$bridge_name" 1>/dev/null
+  sudo ip link delete "$bridge_name" 1>/dev/null
+  sudo systemctl restart libvirtd 1>/dev/null
+
+  # Remover a configuração da rede do libvirt, caso fique residuos
+  local network_config="/etc/libvirt/qemu/networks/${bridge_name}.xml"
+  local network_config_autostart="/etc/libvirt/qemu/networks/autostart/${bridge_name}.xml"
+  msg_info "Removendo o arquivo de configuração da rede $bridge_name..."
+  sudo rm -fv "$network_config" 1>/dev/null
+  sudo rm -fv "$network_config_autostart" 1>/dev/null
+
+	sudo virsh net-info "$bridge_name" 1>/dev/null
+  msg_ok "Bridge $bridge_name e TAP $tap_name removidos com sucesso."
+  exit 0
+}
+
+######################################################################################################
+
+# Função para obter as interfaces do tipo bridge usando brctl
+get_bridge_interfaces() {
+	#brctl show | awk 'NR > 1 {printf "%s ", $1}'
+	brctl show | awk 'NR > 1 {printf "%s ", $1}' | sed 's/ $//'
+}
+
 supports_uefi() {
 	fdisk -l "$1" 2>/dev/null | grep -q "EFI"
 }
@@ -354,46 +492,53 @@ detect_audio_server() {
 
 sh_version() {
 	cat <<-EOF
-		        ${BOLD}${CYAN}${0##*/} v${VERSION}${RESET}
-		        ${APPDESC}
-		        ${BOLD}${black}Copyright (C) 2024-2024 ${reset}ChiliLinux Team${black}
+		${bold}${cyan}${0##*/} v${VERSION}${rst}
+		${APPDESC}
+		${bold}${black}Copyright (C) 2019-2025 ChiliLinux Team${black}
 
-		        Este é um software livre: você é livre para alterá-lo e redistribuí-lo.
-		        O $APP é disponibilizado para você sob a ${yellow}Licença MIT${black}, e
-		        inclui software de código aberto sob uma variedade de outras licenças.
-		        Você pode ler instruções sobre como baixar e criar para você mesmo
-		        o código fonte específico usado para criar esta cópia.
-		        ${red}Este programa vem com absolutamente NENHUMA garantia.
-		        ${reset}
+		  Este é um software livre: você é livre para alterá-lo e redistribuí-lo.
+		  O $APP é disponibilizado para você sob a ${yellow}Licença MIT${black}, e
+		  inclui software de código aberto sob uma variedade de outras licenças.
+		  Você pode ler instruções sobre como baixar e criar para você mesmo
+		  o código fonte específico usado para criar esta cópia.
+		  ${red}Este programa vem com absolutamente NENHUMA garantia.
+		  ${rst}
 	EOF
 	exit 0
 }
 
 function sh_usage {
 	cat <<EOF
-$(gettext "Uso"):
-  ${orange}$APP${reset} [$(gettext "Opções")
-
-$(gettext "Opções"):
-  -d|--drive    $(gettext "ex: /dev/sdX - default: none")
-  -m|--memory   $(gettext "memória inicial de convidado - default: 4GB")
-  -n|--nocolor  $(gettext "remover cores da saída - default: color")
-  -s|--spice    $(gettext "ativar o spice - default: desligado")
-  -u|--uefi     $(gettext "inicialização em") 'UEFI - default: bios'
-  -v|--video    $(gettext "virtio-vga,virtio-gpu-pci,qxl-vga,VGA,cirrus-vga,ati-vga,virtio-gpu-pci,bochs-display,ramfb - default: virtio-vga")
-  -V|--version  $(gettext "versão do aplicativo")
-  -h|--help     $(gettext "imprime esta ajuda")
-
-$(gettext "Exemplo"):
-  # ${orange}$APP${reset} -b -u file.iso         #$(gettext "Execute uma imagem, em ponte, usando") UEFI
-  # ${orange}$APP${reset} -u file.img            #$(gettext "Execute uma imagem, em NAT, usando") UEFI
-  # ${orange}$APP${reset} -b -u /dev/sdX         #$(gettext "Execute uma device, em ponte, usando") UEFI
-  # ${orange}$APP${reset} -m 16G -b -u /dev/sdX  #$(gettext "Execute uma device, em ponte, 16Gb memória, usando") UEFI
-  # ${orange}$APP${reset} -a pipewire /dev/sdX   #$(gettext "Execute uma device, em NAT, usando audio pipewire")
-
-  # ${orange}$APP${reset} file.iso               #$(gettext "Execute uma imagem usando") BIOS
-  # ${orange}$APP${reset} -b file.img            #$(gettext "Execute uma imagem, em ponte, usando") BIOS
-  # ${orange}$APP${reset} -m 16G /dev/sdX        #$(gettext "Execute uma device, 16GB memória, usando") BIOS
+uso: ${orange}$APP${reset} [Opções]
+${cyan}$(gettext "Opções"):${reset}
+  ${rst}-b|--bridge ${orange}<bridge_name>         ${cyan}# inicia rede em modo bridge - ex: -b br0 (default: NAT)
+  ${rst}-c|--create-bridge ${orange}<bridge_name>  ${cyan}# criar bridge - ex: -c br0
+  ${rst}-r|--remove-bridge ${orange}<bridge_name>  ${cyan}# remover bridge - ex: -r br0
+  ${rst}-d|--drive ${orange}<drive_path>           ${cyan}# anexa disco externo - ex: -d /dev/sdX (default: none)
+  ${rst}-m|--memory ${orange}<mem>                 ${cyan}# memória inicial de convidado - ex: -m 16G (default: 8GB)
+  ${rst}-v|--video ${orange}<video_driver>         ${cyan}# virtio-vga,virtio-gpu-pci,qxl-vga,VGA,cirrus-vga,ati-vga,virtio-gpu-pci,bochs-display - default: VGA
+  ${rst}-N|--network ${orange}<net_driver>         ${cyan}# virtio-net-pci,e1000,rtl8139,vmxnet3 (default: virtio-pc)
+  ${rst}-n|--nocolor                      ${cyan}# remover cores da saída - (default: color)
+  ${rst}-s|--spice                        ${cyan}# ativar o spice - (default: desligado)
+  ${rst}-u|--uefi                         ${cyan}# inicialização em UEFI - (default: BIOS)
+  ${rst}-V|--version                      ${cyan}# exibe a versão do aplicativo
+  ${rst}-h|--help                         ${cyan}# imprime este ajuda
+${cyan}$(gettext "Exemplo"):${rst}
+  $ ${orange}$APP${reset} -u -b br0 file.iso        ${cyan}#$(gettext "Execute uma imagem, em ponte, usando") UEFI ${rst}
+  $ ${orange}$APP${reset} -u -s -b br0 file.iso     ${cyan}#$(gettext "Execute uma imagem, em ponte, usando spice, usando") UEFI ${rst}
+  $ ${orange}$APP${reset} -u file.img               ${cyan}#$(gettext "Execute uma imagem, em NAT, usando") UEFI ${rst}
+  $ ${orange}$APP${reset} -b br0 /dev/sdX           ${cyan}#$(gettext "Execute uma device, em ponte, usando") UEFI ${rst}
+  $ ${orange}$APP${reset} -u -m 16G -b br0 /dev/sdX ${cyan}#$(gettext "Execute uma device, em ponte, 16Gb memória, usando") UEFI ${rst}
+  $ ${orange}$APP${reset} -a pipewire /dev/sdX      ${cyan}#$(gettext "Execute uma device, em NAT, usando audio pipewire") ${rst}
+  $ ${orange}$APP${reset} file.iso                  ${cyan}#$(gettext "Execute uma imagem usando") BIOS${rst}
+  $ ${orange}$APP${reset} -b file.img               ${cyan}#$(gettext "Execute uma imagem, em ponte, usando") BIOS ${rst}
+  $ ${orange}$APP${reset} -m 16G /dev/sdX           ${cyan}#$(gettext "Execute uma device, 16GB memória, usando") BIOS ${rst}
+${cyan}uso mais comum:${rst}
+  $ ${orange}$APP${reset} filename.iso ${rst}
+  $ ${orange}$APP${reset} -u filename.iso ${rst}
+  $ ${orange}$APP${reset} /dev/sdb ${rst}
+  $ ${orange}$APP${reset} -u /dev/sdb ${rst}
+  ${reset}
 EOF
 	exit 0
 }
@@ -406,7 +551,8 @@ sh_setup() {
 		ncurses \
 		gettext \
 		spice-vdagent \
-		virt-viewer
+		virt-viewer \
+		libvirt
 
 	msg_info "Criando diretórios de trabalho"
 	sudo mkdir -p /archlive/qemu/ &>/dev/null
@@ -454,8 +600,17 @@ chili-fr() {
 	qemu_options+=(-m ${xmem})
 	qemu_options+=(-k pt-br)
 
-	qemu_options+=(-drive file=${img},if=none,id=disk1,format=raw)
-	qemu_options+=(-device ide-hd,drive=disk1,bootindex=1)
+	format=$(file -b --mime-type "${img}")
+	if [[ "${format}" == "application/x-iso9660-image" ]]; then
+		qemu_options+=(-boot d)
+		qemu_options+=(-cdrom "${img}")
+	elif [[ "${img}" == *.qcow2 ]]; then
+		qemu_options+=(-drive file="${img}",if=none,id=disk1,format=qcow2)
+		qemu_options+=(-device ide-hd,drive=disk1,bootindex=1)
+	else
+		qemu_options+=(-drive file="${img}",if=none,id=disk1,format=raw)
+		qemu_options+=(-device ide-hd,drive=disk1,bootindex=1)
+	fi
 
 	msg_info "Anexando disco virtual: ${yellow}/archlive/qemu/hda.img"
 	qemu_options+=(-drive file=/archlive/qemu/hda.img,format=raw)
@@ -505,17 +660,24 @@ chili-fr() {
 export -f fr
 
 sh_setvarcolors
+
+# Display usage information if no arguments are passed
+if [[ $# -eq 0 || $1 == @(-h|--help) ]]; then
+	sh_usage
+fi
+if [[ $1 == @(-V|--version) ]]; then
+	sh_version
+fi
+
 sh_checkDependencies
 
-OPTIONS=m:ub:Vnhd:sv:i:
-LONGOPTIONS=memory:,uefi,bridge:,version,nocolor,help,drive:,spice,video:,image:
+OPTIONS=m:ub:Vnhd:sv:i:N:c:r:
+LONGOPTIONS=memory:,uefi,bridge:,version,nocolor,help,drive:,spice,video:,image:,network:,create-bridge,remove-bridge
 opts=($(getopt --options="$OPTIONS" --longoptions="$LONGOPTIONS" --name "$0" -- "$@"))
 eval set -- "${opts[*]}"
 
 while test ${#opts[*]} -gt 0; do
 	case $1 in
-	-V | --version) sh_version ;;
-	-h | --help) sh_usage ;;
 	-n | --nocolor)
 		sh_unsetvarcolors
 		;;
@@ -530,6 +692,28 @@ while test ${#opts[*]} -gt 0; do
 			shift
 		fi
 		;;
+	-c | --create-bridge)
+		if [[ -z "$2" ]]; then
+			die "Argumento inválido para --create-bridge, falta nome para bridge" >&2
+		else
+		  if [[ " $(get_bridge_interfaces) " =~ " $2 " ]]; then
+			  die "Argumento inválido para ${cyan}--bridge-create${red}. BRIDGE ${cyan}$2 ${red}já existe" >&2
+		  else
+  			bridge_name="$2"
+  			create_bridge_virbr "$bridge_name"
+	  		shift
+      fi
+		fi
+		;;
+	-r | --remove-bridge)
+		if [[ " $(get_bridge_interfaces) " =~ " $2 " ]]; then
+			bridge_name="$2"
+			remove_bridge_and_tap "$bridge_name"
+			shift
+		else
+			die "Argumento inválido para ${cyan}--remove-bridge${red}. Válidos são: ${yellow}$(get_bridge_interfaces)${reset}" >&2
+		fi
+		;;
 	-b | --bridge)
 		if [[ " $(get_bridge_interfaces) " =~ " $2 " ]]; then
 			iface_bridge="$2"
@@ -537,7 +721,7 @@ while test ${#opts[*]} -gt 0; do
 			bridge=true
 			shift
 		else
-			die "Argumento inválido para --bridge. Use nome da bridge, válidos são: $(get_bridge_interfaces)" >&2
+			die "Argumento inválido para ${cyan}--bridge${red}. Válidos são: ${yellow}$(get_bridge_interfaces)${reset}" >&2
 		fi
 		;;
 	-s | --spice)
@@ -550,6 +734,17 @@ while test ${#opts[*]} -gt 0; do
 			shift
 		else
 			die "$(gettext "Argumento inválido para -v. Use VGA,virtio-vga,virtio-gpu-pci,qxl-vga,cirrus-vga,ati-vga,virtio-gpu-pci,bochs-display ou ramfb")" >&2
+		fi
+		;;
+	-N | --network)
+		if [[ $2 =~ ^(virtio-net-pci|e1000|rtl8139|vmxnet3|ne2k_pci|ne2k_isa|pcnet|smc91c111|i82551|i82557b|i82559er)?$ ]]; then
+			netdevice="$2"
+			anetdevices+=("$netdevice")
+			netchoosedriver=true
+			msg_info "Anexando placa de rede, driver: ${yellow}$netdevice"
+			shift
+		else
+			die "Argumento inválido para --network. Use virtio-net-pci,e1000,rtl8139,vmxnet3,ne2k_pci,ne2k_isa,pcnet,smc91c111,i82551,i82557b,i82559er" >&2
 		fi
 		;;
 	-d | --drive)
@@ -589,28 +784,43 @@ while test ${#opts[*]} -gt 0; do
 	shift
 done
 
-#sh_set_qemu_common_options
-
 if [[ $# > 0 ]]; then
-	if $bridge; then
-		random_mac_net0=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
-		random_mac_net1=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
-		#qemu_options+=(-netdev bridge,id=net0,smb=$HOME)
-		#qemu_options+=(-netdev bridge,id=net0)
-		#qemu_options+=(-device e1000,netdev=net0)
-		qemu_options+=(-netdev bridge,id=net0,br=$iface_bridge)
-		qemu_options+=(-device virtio-net-pci,netdev=net0)
-		#qemu_options+=(-device e1000,netdev=net0,mac=$random_mac_net0)
-		#qemu_options+=(-netdev bridge,id=net1,br=$iface_bridge)
-		#qemu_options+=(-device e1000,netdev=net1,mac=$random_mac_net1)
-		#qemu_options+=(-netdev tap,ifname=tap1,script=no,downscript=no,id=mynet0)
-		#qemu_options+=(-device virtio-net-device,netdev=mynet0,mac=92:7b:15:c3:4d:ec)
+	# Configurar rede
+	#random_mac_net0=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
+	#random_mac_net1=$(python3 -c "import random; print(':'.join(['{:02x}'.format(random.randint(0, 255)) for _ in range(6)]))")
+	#qemu_options+=(-netdev bridge,id=net0,smb=$HOME)
+	#qemu_options+=(-netdev bridge,id=net0)
+	#qemu_options+=(-device e1000,netdev=net0)
+	#qemu_options+=(-device e1000,netdev=net0,mac=$random_mac_net0)
+
+	#qemu_options+=(-netdev bridge,id=net1,br=$iface_bridge)
+	#qemu_options+=(-device e1000,netdev=net1,mac=$random_mac_net1)
+
+	#qemu_options+=(-netdev tap,ifname=tap1,script=no,downscript=no,id=net0)
+	#qemu_options+=(-device virtio-net-device,netdev=net0,mac=92:7b:15:c3:4d:ec)
+
+	# Configurar rede
+	if $netchoosedriver; then
+		for netdevice in "${anetdevices[@]}"; do
+			((nId++))
+			netdev_id="net$nId"
+			if $bridge; then
+				qemu_options+=(-netdev bridge,id="$netdev_id",br=$iface_bridge)
+			else
+				qemu_options+=(-netdev user,id="$netdev_id")
+			fi
+			qemu_options+=(-device "$netdevice",netdev="$netdev_id")
+		done
 	else
-		# Configurar rede
-		qemu_options+=(-netdev user,id=net0)
-		#qemu_options+=(-device e1000,netdev=net0)
-		qemu_options+=(-device virtio-net-pci,netdev=net0)
+		netdev_id="net0"
+		if $bridge; then
+			qemu_options+=(-netdev bridge,id="$netdev_id",br=$iface_bridge)
+		else
+			qemu_options+=(-netdev user,id="$netdev_id")
+		fi
+		qemu_options+=(-device "$netdevice",netdev="$netdev_id")
 	fi
+
 	if $drive; then
 		msg_info "Anexando disco/drive externo: ${yellow}$drive_path"
 		qemu_options+=(-drive file=$drive_path,format=raw,media=disk)

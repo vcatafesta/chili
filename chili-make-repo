@@ -5,7 +5,7 @@
 #  chili-make-repo
 #  Created: 2024/08/21 - 19:07
 #  Altered: dom 27 out 2024 09:19:14 -04
-#  Updated: dom 12 jan 2025 01:41:48 -04
+#  Updated: qui 23 jan 2025 12:16:37 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -48,11 +48,13 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare VERSION="1.1.11-20250111"
+declare VERSION="1.1.23-20250123"
 declare APPDESC="Wrapper para gerenciamento de repositorios like arch"
 declare nocolor=false
 declare verbose=false
+declare signonly=false
 declare organization=
+declare aOrganizations=()
 declare FETCH_RE='-[^-]+[0-9]+[^.]*.pkg[^.]*.tar.zst$'
 declare PKG_EXT='pkg.tar.zst'
 declare -A AVps=([communitybig]="oracle" [chili]="hostinger|oracle")
@@ -73,8 +75,10 @@ sh_config() {
 		[panofundo]="█▓░▒pdvShell█▒▓░"
 		[corpanofundo]="$cinza"
 	)
-	declare -gi lastrow; lastrow=$(lastrow)
-	declare -gi lastcol; lastcol=$(lastcol)
+	declare -gi lastrow
+	lastrow=$(lastrow)
+	declare -gi lastcol
+	lastcol=$(lastcol)
 	declare -gi Prow=0
 	declare -gi Pcol=0
 
@@ -151,7 +155,7 @@ function readconf() {
 	local nrow
 	local ncol
 
-  nrow="$(row)"
+	nrow="$(row)"
 	ncol="$(col)"
 	echo -n -e "$color"
 	printf '\a' # beep
@@ -346,20 +350,23 @@ export -f msg_raw
 msg() {
 	local msg="$1"
 	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
-	echo -e "==>${cyan}running: ${yellow}${msg}${reset}"
+	echo -e "==>${cyan}[RUNNING]: ${yellow}${msg}${reset}"
+	printf "==>%b%-10s%s\n" "${cyan}" "[RUNNING]" "${yellow}$msg${reset}"
 }
 export -f msg
 
 msg_ok() {
 	local msg="$1"
 	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
-	echo -e "==>${cyan}feito  : ${green}${msg}${reset}"
+	#echo -e "==>${cyan}[FEITO]  : ${green}${msg}${reset}"
+	printf "==>%b%-10s%s\n" "${green}" "[FEITO]" "${green}$msg${reset}"
 }
 export -f msg_ok
 
 msg_run() {
 	local msg="$1"
-	echo -e "==>${cyan}running: ${yellow}${msg}${reset}"
+	#echo -e "==>${cyan}[RUNNING]: ${yellow}${msg}${reset}"
+	printf "==>%b%-10s%s\n" "${cyan}" "[RUNNING]" "${yellow}$msg${reset}"
 	eval "$msg"
 }
 export -f msg_run
@@ -371,7 +378,9 @@ msg_info() {
 	msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
 	#echo -e "${blue}==>${green}[${caller_function}:${caller_line}]=>${yellow}info   : ${cyan}${msg}${reset}"
 	#echo -e "${caller_function}=>${yellow}info   : ${cyan}${msg}${reset}"
-	echo -e "==>${yellow}info   : ${cyan}${msg}${reset}"
+	#echo -e "==>${yellow}[INFO]   : ${cyan}${msg}${reset}"
+	printf "==>%b%-10s%s\n" "${yellow}" "[INFO]" "${cyan}$msg${reset}"
+
 }
 export -f msg_info
 
@@ -381,7 +390,8 @@ msg_warning() {
 	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
 	msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
 	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
-	echo -e "==>${red}warning: ${orange}${msg}${reset}"
+	#echo -e "==>${red}warning: ${orange}${msg}${reset}"
+	printf "==>%b%-10s%s\n" "${red}" "[WARNING]" "${orange}$msg${reset}"
 }
 export -f msg_warning
 
@@ -391,7 +401,8 @@ msg_warn() {
 	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
 	msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
 	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
-	echo -e "==>${red}warning: ${orange}${msg}${reset}"
+	#echo -e "==>${red}warning: ${orange}${msg}${reset}"
+	printf "==>%b%-10s%s\n" "${red}" "[WARNING]" "${orange}$msg${reset}"
 }
 export -f msg_warn
 
@@ -572,6 +583,7 @@ read_file_sign_conf() {
 	gpg_key="$GPGKEY"
 
 	# Exibe informações para depuração
+	msg_raw "organization    : ${organization}"
 	msg_raw "Usando SECRETKEY: $secret_key"
 	msg_raw "Usando GPGKEY   : $gpg_key"
 	return 0
@@ -603,75 +615,90 @@ search_for_sign_package() {
 	local total_unsigned=0         # Contador de pacotes sem assinatura
 	local total_already_signed=0   # Contador de pacotes já assinados
 
-	if ! read_file_sign_conf; then
-		exit 1
-	fi
+	process_sign() {
+		processed_branches=()  # Associative array para rastrear branches processados
+		total_processed=0      # Contador de pacotes processados
+		total_signed=0         # Contador de pacotes assinados
+		total_unsigned=0       # Contador de pacotes sem assinatura
+		total_already_signed=0 # Contador de pacotes já assinados
 
-	get_branchs
-	# Salva o diretório original para garantir retorno
-	original_dir=$(pwd)
-
-	for branch in "${aBranchs[@]}"; do
-		if [[ ${processed_branches[$branch]} ]]; then
-			msg_warn "Branch '$branch' já foi processado. Evitando loop."
-			continue
-		fi
-		sh_config
-		local_PATH+="/${branch,,}/x86_64"
-
-		# Verifica se o diretório existe
-		if [[ ! -d "$local_PATH" ]]; then
-			msg_warn "Diretório não encontrado: $local_PATH"
-			continue
+		if ! read_file_sign_conf; then
+			exit 1
 		fi
 
-		pushd "$local_PATH" >/dev/null || {
-			msg_warn "Falha ao acessar o diretório: $local_PATH"
-			return 1
-		}
+		# Salva o diretório original para garantir retorno
+		original_dir=$(pwd)
 
-		# Gera um array de pacotes encontrados
-		AllPackages=()
-		readarray -d '' AllPackages < <(find . -type f -iname "*.$PKG_EXT" -print0)
-
-		# Itera sobre os pacotes
-		for pkg in "${AllPackages[@]}"; do
-			((total_processed++)) # Incrementa o contador de pacotes processados
-			if [[ ! -e "$pkg.sig" ]]; then
-				((total_unsigned++)) # Incrementa o contador de pacotes sem assinatura
-				msg_info "Assinando pacote: $pkg"
-				sign_package "$pkg"
-				((total_signed++)) # Incrementa o contador de pacotes assinados
-			else
-				((total_already_signed++)) # Incrementa o contador de pacotes já assinados
+		for branch in "${aBranchs[@]}"; do
+			if [[ ${processed_branches[$branch]} ]]; then
+				msg_warn "Branch '$branch' já foi processado. Evitando loop."
+				continue
 			fi
+			sh_config
+			local_PATH+="/${branch,,}/x86_64"
+
+			# Verifica se o diretório existe
+			if [[ ! -d "$local_PATH" ]]; then
+				msg_warn "Diretório não encontrado: $local_PATH"
+				continue
+			fi
+
+			pushd "$local_PATH" >/dev/null || {
+				msg_warn "Falha ao acessar o diretório: $local_PATH"
+				return 1
+			}
+
+			# Gera um array de pacotes encontrados
+			AllPackages=()
+			readarray -d '' AllPackages < <(find . -type f -iname "*.$PKG_EXT" -print0)
+
+			# Itera sobre os pacotes
+			for pkg in "${AllPackages[@]}"; do
+				((total_processed++)) # Incrementa o contador de pacotes processados
+				if [[ ! -e "$pkg.sig" ]]; then
+					((total_unsigned++)) # Incrementa o contador de pacotes sem assinatura
+					msg_info "Assinando pacote: $pkg"
+					sign_package "$pkg"
+					((total_signed++)) # Incrementa o contador de pacotes assinados
+				else
+					((total_already_signed++)) # Incrementa o contador de pacotes já assinados
+				fi
+			done
+
+			# Marca o branch como processado
+			processed_branches[$branch]=1
+
+			popd >/dev/null || {
+				msg_warn "Falha ao retornar ao diretório original."
+				return 1
+			}
+			msg_info "Concluído o processamento do branch: $branch"
 		done
 
-		# Marca o branch como processado
-		processed_branches[$branch]=1
-
-		popd >/dev/null || {
-			msg_warn "Falha ao retornar ao diretório original."
+		# Garante retorno ao diretório original em caso de falhas
+		cd "$original_dir" || {
+			msg_warn "Não foi possível retornar ao diretório original."
 			return 1
 		}
 
-		msg_info "Concluído o processamento do branch: $branch"
-	done
-
-	# Garante retorno ao diretório original em caso de falhas
-	cd "$original_dir" || {
-		msg_warn "Não foi possível retornar ao diretório original."
-		return 1
+		# Exibe o resumo final
+		#replicate '-'
+		msg_info "Resumo Final:"
+		msg_raw "Pacotes processados    : $total_processed"
+		msg_raw "Pacotes já assinados   : $total_already_signed"
+		msg_raw "Pacotes sem assinatura : $total_unsigned"
+		msg_raw "Pacotes agora assinados: $total_signed"
+		replicate '='
 	}
 
-	# Exibe o resumo final
-	replicate '-'
-	msg_info "Resumo Final:"
-	msg_raw "Pacotes processados    : $total_processed"
-	msg_raw "Pacotes já assinados   : $total_already_signed"
-	msg_raw "Pacotes sem assinatura : $total_unsigned"
-	msg_raw "Pacotes agora assinados: $total_signed"
-	replicate '-'
+	get_branchs
+	if $signonly; then
+		for organization in "${aOrganizations[@]}"; do
+	    process_sign
+		done
+  else
+    process_sign
+	fi
 }
 
 get_branchs() {
@@ -689,12 +716,18 @@ get_branchs() {
 }
 
 sh_synchronize_remote_with_local() {
-	get_branchs
-	sh_config
-	sh_remote_pull
-	search_for_sign_package
+  get_branchs
+	for organization in "${aOrganizations[@]}"; do
+		sh_config
+		sh_remote_pull
+  done
+
+  search_for_sign_package
 	sh_create_databases
-	sh_remote_push "$@"
+
+	for organization in "${aOrganizations[@]}"; do
+		sh_remote_push "$@"
+	done
 }
 
 sh_remote_pull() {
@@ -779,11 +812,11 @@ sh_remote_push() {
 			rsync --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT}" "${local_PATH}"/ "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/
 		fi
 		popd >/dev/null 2>&- || exit 1
-		replicate '-'
+		#replicate '-'
 	done
-	replicate '='
 	msg_ok "Tudo sincronizado!"
-	exit $(($# ? 0 : 1))
+	replicate '='
+	return
 }
 
 sh_version() {
@@ -808,19 +841,21 @@ sh_usage() {
 		    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
 
 		        ${cyan}Opções:${reset}
-		          -o|--org|--organization ${orange}<name> ${cyan} # Configura organização no Github ${reset}válidos: ${yellow}chili,chililinux,communitybig ou biglinux ${reset}
-		          -c|--config                    ${cyan} # configurar ambiente ${reset}
+		          -o|--org|--organization ${orange}<name> ${cyan} # Configura organização no Github ${reset}válidos: ${yellow}chili,chililinux,communitybig,biglinux ${reset}
+		          -c|--config ${orange}[organization]     ${cyan} # configurar ambiente da organization ${reset}default: ${yellow}nova ${reset}
 		          -s|--synchronize               ${cyan} # sincronizar local com remoto (puxar/empurrar) ${reset}
 		          -S|--sign                      ${cyan} # assinar pacote faltantes ${reset}
 		          -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
 		          -v|--verbose                   ${cyan} # ativa modo verboso ${reset}
 		          -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
-		          -h|--help                      ${cyan} # Mostra este Help ${reset}
+		          -h|--help                      ${cyan} # imprime este Help ${reset}
 
-		    ${red}ex: ${cyan}${APP} -o chili -s testing      ${reset}
-		        ${cyan}${APP} -o chili -s all          ${reset}
-		        ${cyan}${APP} -o chili --sign testing  ${reset}
-		        ${cyan}${APP} -o chili --sign all      ${reset}
+		    ${red}ex: ${cyan}${APP} -o chili -s testing         ${rst}
+		        ${red}${APP} -o chili -o chililinux -s all     ${rst}
+		        ${black}${APP} -o chili -o chililinux -s stable  ${rst}
+		        ${green}${APP} -o chili -s all                   ${rst}
+		        ${yellow}${APP} -o chili --sign testing           ${rst}
+		        ${orange}${APP} -o chili --sign all               ${rst}
 	EOF
 	exit 0
 }
@@ -921,18 +956,29 @@ while [[ $# -gt 0 ]]; do
 		;;
 	-o | --org | --organization)
 		next_arg="${2:-}"
-		organization="$next_arg"
-		shift 2
+		if [[ "$next_arg" =~ ^(chili|chililinux|communitybig|biglinux|all)?$ ]]; then
+			organization="$next_arg"
+			if [[ "$next_arg" == 'all' ]]; then
+				aOrganizations+=("chili")
+				aOrganizations+=("chililinux")
+			else
+				aOrganizations+=("$next_arg")
+			fi
+			shift 2
+		else
+			die "${red} organização invãlida. Válidas: ${yellow}chili,chililinux,communitybig,biglinux ${reset}"
+		fi
 		;;
 	-S | --sign)
 		next_arg="${2:-}"
 		if [[ "$next_arg" =~ ^(stable|testing|extra|all)$ ]]; then
 			branch="$next_arg"
 			shift 2
-			if [[ -z "$organization" ]]; then
+			if [[ ${#aOrganizations[@]} -eq 0 ]]; then
 				die "${cyan}Nenhuma organização definida. (Use -h para ajuda)${reset}"
 			fi
-			search_for_sign_package
+		  signonly=true
+    	search_for_sign_package
 			exit 0
 		else
 			die "Opção inválida para --sign: $next_arg. Use ${yellow}'stable', 'testing', 'extra' ou 'all'${reset}"
@@ -948,6 +994,7 @@ while [[ $# -gt 0 ]]; do
 				die "${cyan}Nenhuma organização definida. (Use -h para ajuda)${reset}"
 			fi
 			sh_synchronize_remote_with_local "$branch"
+			exit 0
 		else
 			die "Opção inválida para --synchronize: $next_arg. Use ${yellow}'stable', 'testing', 'extra' ou 'all'${reset}"
 		fi

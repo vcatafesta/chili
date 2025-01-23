@@ -111,25 +111,26 @@ if [[ -z "$bridge_name" ]]; then
 fi
 
 # Remover a interface bridge
-msg_info "Removendo a interface BRIDGE $bridge_name..."
-if sudo virsh net-destroy $bridge_name &> /dev/null; then
-  sudo virsh net-undefine $bridge_name 1> /dev/null
-  sudo ip link delete $bridge_name 1> /dev/null
-  msg_info "Interface BRIDGE $bridge_name removida com sucesso!"
-else
-  msg_err "A interface BRIDGE $bridge_name não existe."
-fi
+#msg_info "Removendo a interface BRIDGE $bridge_name..."
+#if sudo virsh net-destroy $bridge_name &> /dev/null; then
+# sudo virsh net-undefine $bridge_name 1> /dev/null
+#  sudo ip link delete $bridge_name 1> /dev/null
+#  msg_info "Interface BRIDGE $bridge_name removida com sucesso!"
+#else
+#  msg_err "A interface BRIDGE $bridge_name não existe."
+#fi
+
 # Remover a interface TAP associada
-tap_name="tap$(echo "$bridge_name" | sed 's/[^0-9]*//g')" # Ajuste para pegar o número correto do tap
-if ip link show "$tap_name" &>/dev/null; then
-  msg_info "Removendo a interface TAP $tap_name..."
-  sudo ip link set "$tap_name" nomaster 1>/dev/null
-  sudo ip link set "$tap_name" down 1>/dev/null
-  sudo ip tuntap del dev "$tap_name" mode tap 1>/dev/null
-  msg_info "Interface TAP $tap_name removida com sucesso!"
-else
-  msg_err "A interface TAP $tap_name não existe."
-fi
+#tap_name="tap$(echo "$bridge_name" | sed 's/[^0-9]*//g')" # Ajuste para pegar o número correto do tap
+#if ip link show "$tap_name" &>/dev/null; then
+#  msg_info "Removendo a interface TAP $tap_name..."
+#  sudo ip link set "$tap_name" nomaster 1>/dev/null
+#  sudo ip link set "$tap_name" down 1>/dev/null
+#  sudo ip tuntap del dev "$tap_name" mode tap 1>/dev/null
+#  msg_info "Interface TAP $tap_name removida com sucesso!"
+#else
+#  msg_err "A interface TAP $tap_name não existe."
+#fi
 
 # Criar a rede virsh correspondente à nova bridge
 if ! sudo virsh net-list --all | grep -q "$bridge_name" 1> /dev/null; then
@@ -172,7 +173,7 @@ EOF
   sudo virsh net-define "$tmp_net_config" 1> /dev/null
 
   # Remover o arquivo de configuração temporário após a definição
-  rm -f "$tmp_net_config"
+  sudo rm -f "$tmp_net_config"
 fi
 
 # Tornar a nova bridge persistente
@@ -187,7 +188,7 @@ if ! sudo virsh net-start "$bridge_name" 1> /dev/null; then
 fi
 
 # Obter o próximo nome de interface TAP disponível
-tap_name=$(get_next_free_tap)
+tap_name=$(get_next_free_tap)-"$bridge_name"
 
 # Criar a interface TAP (ex: tap0, tap1, tap2...)
 msg_info "Criando a interface TAP $tap_name..."
