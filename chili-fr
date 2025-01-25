@@ -5,7 +5,7 @@
 #  chili-fr
 #  Created: 2019/12/13 - 00:00
 #  Altered: 2024/10/03 - 00:00
-#  Updated: qua 22 jan 2025 22:09:40 -04
+#  Updated: qui 23 jan 2025 16:49:22 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -54,13 +54,13 @@ readonly -a DEPENDENCIES=(
 	'virsh'
 )
 readonly -A PACKAGEDEP=(
-	[tput]='ncurses'
-	[gettext]='gettext'
-	[qemu - system - x86_64]='qemu-full'
-	[spice - vdagent]='spice-vdagent'
-	[remote - viewer]='virt-viewer'
-	[python3]='python'
-	[virsh]='libvirt'
+	['tput']='ncurses'
+	['gettext']='gettext'
+	['qemu-system-x86_64']='qemu-full'
+	['spice-vdagent']='spice-vdagent'
+	['remote-viewer']='virt-viewer'
+	['python3']='python'
+	['virsh']='libvirt'
 )
 
 declare iface_bridge='br0'
@@ -220,14 +220,13 @@ msg_warn() {
 export -f msg_warn
 
 msg_info() {
-  echo -e "${yellow}[INFO] ${cyan}$1${reset}"
+	echo -e "${yellow}[INFO] ${cyan}$1${reset}"
 }
 
 # Função para exibir mensagens informativas
 msg_err() {
-  echo -e "${red}[ERRO] ${cyan}$1${reset}"
+	echo -e "${red}[ERRO] ${cyan}$1${reset}"
 }
-
 
 replicate() {
 	local char=${1:-'#'}
@@ -343,22 +342,23 @@ create_bridge_virbr() {
 	fi
 
 	# Criar a rede virsh correspondente à nova bridge
-	if ! sudo virsh net-list --all | grep -q "$bridge_name" 1>/dev/null; then
-		msg_info "Criando a rede $bridge_name..."
+	if sudo virsh net-list --all 1>/dev/null; then
+		if ! sudo virsh net-list --all | grep -q "$bridge_name" 1>/dev/null; then
+			msg_info "Criando a rede $bridge_name..."
 
-		# Calcular a faixa de IP com base no nome da bridge
-		# O número da bridge será extraído (ex: virbr1 -> 1, virbr2 -> 2, etc.)
-		bridge_number=$(echo "$bridge_name" | grep -o '[0-9]*')
-		base_ip="172.$((30 + bridge_number)).255.1"
-		GATEWAY="$base_ip"
-		subnet="255.255.255.0"
-		dhcp_range_start="172.$((30 + bridge_number)).255.2"
-		dhcp_range_end="172.$((30 + bridge_number)).255.200"
+			# Calcular a faixa de IP com base no nome da bridge
+			# O número da bridge será extraído (ex: virbr1 -> 1, virbr2 -> 2, etc.)
+			bridge_number=$(echo "$bridge_name" | grep -o '[0-9]*')
+			base_ip="172.$((30 + bridge_number)).255.1"
+			GATEWAY="$base_ip"
+			subnet="255.255.255.0"
+			dhcp_range_start="172.$((30 + bridge_number)).255.2"
+			dhcp_range_end="172.$((30 + bridge_number)).255.200"
 
-		# Criando o arquivo de configuração temporário para a rede
-		tmp_net_config=$(mktemp)
+			# Criando o arquivo de configuração temporário para a rede
+			tmp_net_config=$(mktemp)
 
-		cat <<EOF >"$tmp_net_config"
+			cat <<EOF >"$tmp_net_config"
 <!--
 WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
 OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
@@ -378,10 +378,13 @@ or other application using the libvirt API.
   </ip>
 </network>
 EOF
-		# Definir a rede usando o arquivo temporário
-		sudo virsh net-define "$tmp_net_config" 1>/dev/null
-		# Remover o arquivo de configuração temporário após a definição
-		sudo rm -f "$tmp_net_config"
+			# Definir a rede usando o arquivo temporário
+			sudo virsh net-define "$tmp_net_config" 1>/dev/null
+			# Remover o arquivo de configuração temporário após a definição
+			sudo rm -f "$tmp_net_config"
+		fi
+	else
+		die "erro fatal!"
 	fi
 
 	# Tornar a nova bridge persistente
@@ -422,48 +425,48 @@ EOF
 
 	sudo virsh net-info "$bridge_name"
 	msg_info "Configuração concluída!"
-  exit
+	exit
 }
 
 remove_bridge_and_tap() {
-  local bridge_name="$1"
-  local tap_name
+	local bridge_name="$1"
+	local tap_name
 
-  #tap_name="tap$(echo "$bridge_name" | sed 's/[^0-9]*//g')" # Ajuste para pegar o número correto do tap
-  tap_name="tap-$bridge_name"
+	#tap_name="tap$(echo "$bridge_name" | sed 's/[^0-9]*//g')" # Ajuste para pegar o número correto do tap
+	tap_name="tap-$bridge_name"
 
-  # Remover a bridge
-  msg_info "Removendo a bridge $bridge_name..."
-  sudo ip link set "$bridge_name" down 1>/dev/null
-  sudo brctl delbr "$bridge_name" 1>/dev/null
+	# Remover a bridge
+	msg_info "Removendo a bridge $bridge_name..."
+	sudo ip link set "$bridge_name" down 1>/dev/null
+	sudo brctl delbr "$bridge_name" 1>/dev/null
 
-  # Remover a interface TAP associada
-  if ip link show "$tap_name" &>/dev/null; then
-    msg_info "Removendo a interface TAP $tap_name..."
-    sudo ip link set "$tap_name" down 1>/dev/null
-    sudo ip tuntap del dev "$tap_name" mode tap 1>/dev/null
-  else
-    msg_err "A interface TAP $tap_name não existe."
-  fi
+	# Remover a interface TAP associada
+	if ip link show "$tap_name" &>/dev/null; then
+		msg_info "Removendo a interface TAP $tap_name..."
+		sudo ip link set "$tap_name" down 1>/dev/null
+		sudo ip tuntap del dev "$tap_name" mode tap 1>/dev/null
+	else
+		msg_err "A interface TAP $tap_name não existe."
+	fi
 
-  # Remover a rede do libvirt
-  msg_info "Removendo a rede do libvirt..."
-  sudo virsh net-destroy "$bridge_name" 1>/dev/null
-  sudo virsh net-autostart --disable "$bridge_name" 1>/dev/null
-  sudo virsh net-undefine "$bridge_name" 1>/dev/null
-  sudo ip link delete "$bridge_name" 1>/dev/null
-  sudo systemctl restart libvirtd 1>/dev/null
+	# Remover a rede do libvirt
+	msg_info "Removendo a rede do libvirt..."
+	sudo virsh net-destroy "$bridge_name" 1>/dev/null
+	sudo virsh net-autostart --disable "$bridge_name" 1>/dev/null
+	sudo virsh net-undefine "$bridge_name" 1>/dev/null
+	sudo ip link delete "$bridge_name" 1>/dev/null
+	sudo systemctl restart libvirtd 1>/dev/null
 
-  # Remover a configuração da rede do libvirt, caso fique residuos
-  local network_config="/etc/libvirt/qemu/networks/${bridge_name}.xml"
-  local network_config_autostart="/etc/libvirt/qemu/networks/autostart/${bridge_name}.xml"
-  msg_info "Removendo o arquivo de configuração da rede $bridge_name..."
-  sudo rm -fv "$network_config" 1>/dev/null
-  sudo rm -fv "$network_config_autostart" 1>/dev/null
+	# Remover a configuração da rede do libvirt, caso fique residuos
+	local network_config="/etc/libvirt/qemu/networks/${bridge_name}.xml"
+	local network_config_autostart="/etc/libvirt/qemu/networks/autostart/${bridge_name}.xml"
+	msg_info "Removendo o arquivo de configuração da rede $bridge_name..."
+	sudo rm -fv "$network_config" 1>/dev/null
+	sudo rm -fv "$network_config_autostart" 1>/dev/null
 
 	sudo virsh net-info "$bridge_name" 1>/dev/null
-  msg_ok "Bridge $bridge_name e TAP $tap_name removidos com sucesso."
-  exit 0
+	msg_ok "Bridge $bridge_name e TAP $tap_name removidos com sucesso."
+	exit 0
 }
 
 ######################################################################################################
@@ -696,13 +699,13 @@ while test ${#opts[*]} -gt 0; do
 		if [[ -z "$2" ]]; then
 			die "Argumento inválido para --create-bridge, falta nome para bridge" >&2
 		else
-		  if [[ " $(get_bridge_interfaces) " =~ " $2 " ]]; then
-			  die "Argumento inválido para ${cyan}--bridge-create${red}. BRIDGE ${cyan}$2 ${red}já existe" >&2
-		  else
-  			bridge_name="$2"
-  			create_bridge_virbr "$bridge_name"
-	  		shift
-      fi
+			if [[ " $(get_bridge_interfaces) " =~ " $2 " ]]; then
+				die "Argumento inválido para ${cyan}--bridge-create${red}. BRIDGE ${cyan}$2 ${red}já existe" >&2
+			else
+				bridge_name="$2"
+				create_bridge_virbr "$bridge_name"
+				shift
+			fi
 		fi
 		;;
 	-r | --remove-bridge)
@@ -711,7 +714,15 @@ while test ${#opts[*]} -gt 0; do
 			remove_bridge_and_tap "$bridge_name"
 			shift
 		else
-			die "Argumento inválido para ${cyan}--remove-bridge${red}. Válidos são: ${yellow}$(get_bridge_interfaces)${reset}" >&2
+			die "${red}Erro:${rst} \
+Argumento inválido para ${cyan}--remove-bridge${reset}. \
+$(
+bridges=$(get_bridge_interfaces);
+[[ -n $bridges ]] && Válidos são: \
+echo "${yellow}$bridges" ||
+echo "${yellow}nenhuma bridge disponível"
+)
+${reset}" >&2
 		fi
 		;;
 	-b | --bridge)

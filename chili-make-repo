@@ -5,7 +5,7 @@
 #  chili-make-repo
 #  Created: 2024/08/21 - 19:07
 #  Altered: dom 27 out 2024 09:19:14 -04
-#  Updated: qui 23 jan 2025 12:16:37 -04
+#  Updated: sex 24 jan 2025 22:36:25 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -48,7 +48,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare VERSION="1.1.23-20250123"
+declare VERSION="1.1.24-20250124"
 declare APPDESC="Wrapper para gerenciamento de repositorios like arch"
 declare nocolor=false
 declare verbose=false
@@ -93,6 +93,7 @@ errorbeep() {
 }
 
 get_organization_conf() {
+	root_PATH=$(TIni.Get "$config_file" "$organization" 'local_PATH')
 	local_PATH=$(TIni.Get "$config_file" "$organization" 'local_PATH')
 	prefix_DB=$(TIni.Get "$config_file" "$organization" 'prefix_DB')
 	remote_USER=$(TIni.Get "$config_file" "$organization" 'remote_USER')
@@ -101,6 +102,12 @@ get_organization_conf() {
 	remote_PATH=$(TIni.Get "$config_file" "$organization" 'remote_PATH')
 	SECRETKEY=$(TIni.Get "$config_file" "$organization" 'SECRETKEY')
 	GPGKEY=$(TIni.Get "$config_file" "$organization" 'GPGKEY')
+
+  [[ ! -d "$root_PATH" ]] && msg_run "mkdir -p $root_PATH 1>/dev/null" || true
+  get_branchs
+	for dir in "${aBranchs[@]}"; do
+    [[ ! -d "$root_PATH/$dir/x86_64" ]] && msg_run "mkdir -p $root_PATH/$dir/x86_64 1>/dev/null" || true
+  done
 }
 
 dbseek_conf() {
@@ -702,16 +709,18 @@ search_for_sign_package() {
 }
 
 get_branchs() {
-	if [[ -z "$branch" ]]; then
+	if [[ -z "$arg_branch" ]]; then
 		aBranchs=('testing')
-	elif [[ "$branch" == 'stable' ]]; then
+	elif [[ "$arg_branch" == 'stable' ]]; then
 		aBranchs=('stable')
-	elif [[ "$branch" == 'testing' ]]; then
+	elif [[ "$arg_branch" == 'testing' ]]; then
 		aBranchs=('testing')
-	elif [[ "$branch" == 'extra' ]]; then
+	elif [[ "$arg_branch" == 'extra' ]]; then
 		aBranchs=('extra')
-	elif [[ "$branch" == 'all' ]]; then
-		aBranchs=('stable' 'testing' 'extra')
+	elif [[ "$arg_branch" == 'aur' ]]; then
+		aBranchs=('aur')
+	elif [[ "$arg_branch" == 'all' ]]; then
+		aBranchs=('stable' 'testing' 'extra' 'aur')
 	fi
 }
 
@@ -747,7 +756,7 @@ sh_remote_pull() {
 		msg_raw " remote_PORT: ${remote_PORT}"
 
 		pushd "$local_PATH" >/dev/null 2>&- || exit 1
-		msg_info "${cyan}Sincronizando... Puxando do remoto para local ${reset}"
+		msg_info "${cyan}Sincronizando... Puxando branch ${orange}${branch} ${cyan}do remoto para local ${reset}"
 		msg_raw "    Local : ${local_PATH}"
 		msg_raw "   Remoto : ${remote_PATH}"
 		if $verbose; then
@@ -761,6 +770,7 @@ sh_remote_pull() {
 }
 
 sh_create_databases() {
+  get_branchs
 	for branch in "${aBranchs[@]}"; do
 		sh_config
 		local_PATH+="/${branch,,}/x86_64"
@@ -803,7 +813,7 @@ sh_remote_push() {
 		local_PATH+="/${branch,,}/x86_64"
 
 		pushd "$local_PATH" >/dev/null 2>&- || exit 1
-		msg_info "${cyan}Empurrando para o remoto: ${orange}$organization ${reset}"
+		msg_info "${cyan}Empurrando para o remoto: ${orange}${branch}/${organization} ${reset}"
 		if $verbose; then
 			echo -n "$black"
 			rsync --itemize-changes --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT}" "${local_PATH}"/ "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/
@@ -851,11 +861,12 @@ sh_usage() {
 		          -h|--help                      ${cyan} # imprime este Help ${reset}
 
 		    ${red}ex: ${cyan}${APP} -o chili -s testing         ${rst}
-		        ${red}${APP} -o chili -o chililinux -s all     ${rst}
-		        ${black}${APP} -o chili -o chililinux -s stable  ${rst}
-		        ${green}${APP} -o chili -s all                   ${rst}
-		        ${yellow}${APP} -o chili --sign testing           ${rst}
-		        ${orange}${APP} -o chili --sign all               ${rst}
+		        ${red}${APP} -o chili -o chililinux -s all      ${rst}
+		        ${black}${APP} -o chili -o chililinux -s stable ${rst}
+		        ${black}${APP} -o chili -s aur                  ${rst}
+		        ${green}${APP} -o chili -s all                  ${rst}
+		        ${yellow}${APP} -o chili --sign testing         ${rst}
+		        ${orange}${APP} -o chili --sign all             ${rst}
 	EOF
 	exit 0
 }
@@ -971,8 +982,8 @@ while [[ $# -gt 0 ]]; do
 		;;
 	-S | --sign)
 		next_arg="${2:-}"
-		if [[ "$next_arg" =~ ^(stable|testing|extra|all)$ ]]; then
-			branch="$next_arg"
+		if [[ "$next_arg" =~ ^(stable|testing|extra|aur|all)$ ]]; then
+			arg_branch="$next_arg"
 			shift 2
 			if [[ ${#aOrganizations[@]} -eq 0 ]]; then
 				die "${cyan}Nenhuma organização definida. (Use -h para ajuda)${reset}"
@@ -981,22 +992,22 @@ while [[ $# -gt 0 ]]; do
     	search_for_sign_package
 			exit 0
 		else
-			die "Opção inválida para --sign: $next_arg. Use ${yellow}'stable', 'testing', 'extra' ou 'all'${reset}"
+			die "Opção inválida para --sign: $next_arg. Use ${yellow}'stable', 'testing', 'extra', 'aur' ou 'all'${reset}"
 		fi
 		;;
 	-s | --synchronize)
 		next_arg="${2:-}"
-		if [[ "$next_arg" =~ ^(stable|testing|extra|all)$ ]]; then
-			branch="$next_arg"
+		if [[ "$next_arg" =~ ^(stable|testing|extra|aur|all)$ ]]; then
+			arg_branch="$next_arg"
 			shift 2
 			if [[ -z "$organization" ]]; then
 				errorbeep
 				die "${cyan}Nenhuma organização definida. (Use -h para ajuda)${reset}"
 			fi
-			sh_synchronize_remote_with_local "$branch"
+			sh_synchronize_remote_with_local "$arg_branch"
 			exit 0
 		else
-			die "Opção inválida para --synchronize: $next_arg. Use ${yellow}'stable', 'testing', 'extra' ou 'all'${reset}"
+			die "Opção inválida para --synchronize: $next_arg. Use ${yellow}'stable', 'testing', 'extra', 'aur' ou 'all'${reset}"
 		fi
 		;;
 	-c | --config)
