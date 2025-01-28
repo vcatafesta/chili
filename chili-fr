@@ -5,7 +5,7 @@
 #  chili-fr
 #  Created: 2019/12/13 - 00:00
 #  Altered: 2024/10/03 - 00:00
-#  Updated: qui 23 jan 2025 16:49:22 -04
+#  Updated: ter 28 jan 2025 00:48:03 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -42,7 +42,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 
 #system
 readonly APP="${0##*/}"
-readonly VERSION='1.22.01-20250122'
+readonly VERSION='1.28.01-20250128'
 readonly APPDESC='Wrapper lite para o qemu'
 readonly -a DEPENDENCIES=(
 	'tput'
@@ -52,6 +52,8 @@ readonly -a DEPENDENCIES=(
 	'remote-viewer'
 	'python3'
 	'virsh'
+	'find'
+	'awk'
 )
 readonly -A PACKAGEDEP=(
 	['tput']='ncurses'
@@ -61,8 +63,11 @@ readonly -A PACKAGEDEP=(
 	['remote-viewer']='virt-viewer'
 	['python3']='python'
 	['virsh']='libvirt'
+	['find']='findutils'
+	['awk']='gawk'
 )
 
+declare HOME_DIR="$HOME/.chili-fr"
 declare iface_bridge='br0'
 declare bridge=false
 declare xmem='8G'
@@ -72,10 +77,16 @@ declare videodevice='VGA'
 declare spice=false
 declare drive=false
 declare uefi=false
+declare vdisk=false
+declare vdisk_name=''
 declare netdevice='virtio-net-pci'
 declare anetdevices=()
 declare netchoosedriver=false
 declare LC_DEFAULT=0
+declare -i lastrow=$(tput lines)
+declare -i lastcol=$(tput cols)
+declare -i Prow=0
+declare -i Pcol=0
 declare -a qemu_options=()
 trap cleanup_working_dir EXIT
 
@@ -121,6 +132,36 @@ sh_setvarcolors() {
 	DONE="${COL_LIGHT_GREEN} done!${COL_NC}"
 	OVER="\\r\\033[K"
 	DOTPREFIX="  ${black}::${reset} "
+}
+
+get() {
+	local row="$1"
+	local col="$2"
+	local prompt="$3"
+	local new_value="$4"
+	local old_value="$5"
+	local color="${Acores[box]}"
+
+	# setpos "$row" "$col"
+	printf "%s" "${reset}$color"
+	read -p "${prompt}${reverse}" -e -i "$old_value" "$new_value"
+	# tput sc # Salva a posição atual do cursor
+	echo -n -e "$reset"
+}
+
+row() { echo "$Prow"; }
+col() { echo "$Pcol"; }
+lastrow() { echo "$(tput lines)"; }
+lastcol() { echo "$(tput cols)"; }
+
+setpos() {
+	local row="$1"
+	local col="$2"
+
+	Prow="$row"
+	Pcol="$col"
+	# tput cup "$row" "$col"
+	printf "\e[$((row + 1));$((col + 1))H"
 }
 
 sh_unsetvarcolors() {
@@ -172,14 +213,14 @@ export -f msg_raw
 msg() {
 	local msg="$1"
 	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
-	echo -e "BP=>${cyan}running: ${yellow}${msg}${reset}"
+	echo -e "  =>${cyan}running: ${yellow}${msg}${reset}"
 }
 export -f msg
 
 msg_ok() {
 	local msg="$1"
 	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
-	echo -e "BP=>${cyan}feito: ${green}${msg}${reset}"
+	echo -e "  =>${cyan}feito: ${green}${msg}${reset}"
 }
 export -f msg_ok
 
@@ -205,7 +246,7 @@ msg_warning() {
 	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
 	msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
 	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
-	echo -e "  =>${red}warning: ${orange}${msg}${reset}"
+	echo -e "  =>${yellow}warning: ${cyan}${msg}${reset}"
 }
 export -f msg_warning
 
@@ -215,7 +256,7 @@ msg_warn() {
 	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
 	msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
 	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
-	echo -e "  =>${red}warning: ${orange}${msg}${reset}"
+	echo -e "  =>${yellow}warning: ${cyan}${msg}${reset}"
 }
 export -f msg_warn
 
@@ -477,6 +518,13 @@ get_bridge_interfaces() {
 	brctl show | awk 'NR > 1 {printf "%s ", $1}' | sed 's/ $//'
 }
 
+# Função para obter os arquivos RAW no diretório $HOME_DIR/vdisk/
+get_raw_images() {
+  local dir="${HOME_DIR:-$HOME}/vdisk"
+  # Lista os arquivos com extensão .img, removendo o caminho e separando por espaço
+  find "$dir" -maxdepth 1 -type f -name "*.img" -exec basename {} \; | tr '\n' ' ' | sed 's/ $//'
+}
+
 supports_uefi() {
 	fdisk -l "$1" 2>/dev/null | grep -q "EFI"
 }
@@ -519,7 +567,10 @@ ${cyan}$(gettext "Opções"):${reset}
   ${rst}-r|--remove-bridge ${orange}<bridge_name>  ${cyan}# remover bridge - ex: -r br0
   ${rst}-d|--drive ${orange}<drive_path>           ${cyan}# anexa disco externo - ex: -d /dev/sdX (default: none)
   ${rst}-m|--memory ${orange}<mem>                 ${cyan}# memória inicial de convidado - ex: -m 16G (default: 8GB)
-  ${rst}-v|--video ${orange}<video_driver>         ${cyan}# virtio-vga,virtio-gpu-pci,qxl-vga,VGA,cirrus-vga,ati-vga,virtio-gpu-pci,bochs-display - default: VGA
+  ${rst}-v|--vdisk ${orange}<filename.img|qcow2>   ${cyan}# usa um disco virtual interno - ( default: none)
+  ${rst}   --cvdisk ${orange}<filename>            ${cyan}# cria um disco virtual para uso interno
+  ${rst}   --rvdisk ${orange}<filename>            ${cyan}# remove um disco virtual
+  ${rst}-g|--video ${orange}<video_driver>         ${cyan}# virtio-vga,virtio-gpu-pci,qxl-vga,VGA,cirrus-vga,ati-vga,virtio-gpu-pci,bochs-display - default: VGA
   ${rst}-N|--network ${orange}<net_driver>         ${cyan}# virtio-net-pci,e1000,rtl8139,vmxnet3 (default: virtio-pc)
   ${rst}-n|--nocolor                      ${cyan}# remover cores da saída - (default: color)
   ${rst}-s|--spice                        ${cyan}# ativar o spice - (default: desligado)
@@ -536,11 +587,16 @@ ${cyan}$(gettext "Exemplo"):${rst}
   $ ${orange}$APP${reset} file.iso                  ${cyan}#$(gettext "Execute uma imagem usando") BIOS${rst}
   $ ${orange}$APP${reset} -b file.img               ${cyan}#$(gettext "Execute uma imagem, em ponte, usando") BIOS ${rst}
   $ ${orange}$APP${reset} -m 16G /dev/sdX           ${cyan}#$(gettext "Execute uma device, 16GB memória, usando") BIOS ${rst}
-${cyan}uso mais comum:${rst}
+${cyan}Forma de uso mais comum:${rst}
   $ ${orange}$APP${reset} filename.iso ${rst}
   $ ${orange}$APP${reset} -u filename.iso ${rst}
-  $ ${orange}$APP${reset} /dev/sdb ${rst}
-  $ ${orange}$APP${reset} -u /dev/sdb ${rst}
+  $ ${orange}$APP${reset} /dev/sdX ${rst}
+  $ ${orange}$APP${reset} -u /dev/sdX ${rst}
+  $ ${orange}$APP${reset} -d /dev/sdX filename.iso ${rst}
+  $ ${orange}$APP${reset} -u -d /dev/sdX filename.iso ${rst}
+  $ ${orange}$APP${reset} -v vdisk_name.img filename.iso ${rst}
+  $ ${orange}$APP${reset} -u -v vdisk_name.img filename.iso ${rst}
+  $ ${orange}$APP${reset} $HOME_DIR/vdisk/vdisk_name.img ${rst}
   ${reset}
 EOF
 	exit 0
@@ -558,16 +614,78 @@ sh_setup() {
 		libvirt
 
 	msg_info "Criando diretórios de trabalho"
-	sudo mkdir -p /archlive/qemu/ &>/dev/null
+	mkdir -p "$HOME_DIR/" &>/dev/null
 	msg_info "Setando permissões no diretórios de trabalho"
-	sudo chmod 1777 /archlive/qemu/ &>/dev/null
+	sudo chmod 1777 "$HOME_DIR/" &>/dev/null
 	msg_info "Criando arquivos de bloco no diretórios de trabalho"
-	sudo qemu-img create /archlive/qemu/hda.img -f raw 32G &>/dev/null
-	sudo qemu-img create /archlive/qemu/hdb.img -f raw 32G &>/dev/null
-	sudo qemu-img create /archlive/qemu/hdc.img -f raw 32G &>/dev/null
-	sudo qemu-img create /archlive/qemu/hdd.img -f raw 32G &>/dev/null
+	sudo qemu-img create $HOME_DIR/hda.img -f raw 32G &>/dev/null
+	sudo qemu-img create $HOME_DIR/hdb.img -f raw 32G &>/dev/null
+	sudo qemu-img create $HOME_DIR/hdc.img -f raw 32G &>/dev/null
+	sudo qemu-img create $HOME_DIR/hdd.img -f raw 32G &>/dev/null
 
 	sh_start_vdagentd
+}
+
+sh_create_vdisk_file() {
+	msg_info "Criando diretórios de trabalho"
+	mkdir -p "$HOME_DIR/vdisk" &>/dev/null
+	msg_info "Setando permissões no diretórios de trabalho"
+	sudo chmod 1777 "$HOME_DIR/" &>/dev/null
+	sudo chown $USER:$USER "$HOME_DIR/" -R &>/dev/null
+
+	while true; do
+		replicate "================== DISCOS VIRTUAIS DISPONÍVEIS em $HOME_DIR ===================" 1
+		echo -n $green
+		ls -lh $HOME_DIR/vdisk
+		echo -n $rst
+		replicate '='
+		get 10 10 "Entre com o nome do disco (sem extensão) - ex vda  : " cvdisk_name
+		get 11 10 "Entre com o tamanho do disco virtual em GB - ex 32 : " cvdisk_size
+
+		if test -e $HOME_DIR/vdisk/$cvdisk_name.img &>/dev/null; then
+			if readconf "Disco virtual já existe, escolha outro nome. Tentar novamente?"; then
+				continue
+			fi
+		else
+			if qemu-img create $HOME_DIR/vdisk/$cvdisk_name.img -f raw "$cvdisk_size"G &>/dev/null; then
+				msg_ok "Disco virtual '$HOME_DIR/vdisk/$cvdisk_name.img' criado com sucesso"
+				echo -n $green
+				ls -lh $HOME_DIR/vdisk
+				echo -n $rst
+				replicate '='
+			else
+				die "Falha na criação do disco virtual $HOME_DIR/vdisk/$cvdisk_name.img"
+			fi
+		fi
+		break
+	done
+}
+
+sh_remove_vdisk_file() {
+	msg_info "Criando diretórios de trabalho"
+	mkdir -p "$HOME_DIR/vdisk" &>/dev/null
+	msg_info "Setando permissões no diretórios de trabalho"
+	sudo chmod 1777 "$HOME_DIR/" &>/dev/null
+	sudo chown $USER:$USER "$HOME_DIR/" -R &>/dev/null
+
+	replicate "================== DISCOS VIRTUAIS DISPONÍVEIS em $HOME_DIR ===================" 1
+	echo -n $green
+	ls -lh $HOME_DIR/vdisk
+	echo -n $rst
+	replicate '='
+	get 10 10 "Entre com o nome do disco para remover - ex vda.img : " cvdisk_name
+
+	if test -e $HOME_DIR/vdisk/$cvdisk_name &>/dev/null; then
+		if readconf "PERGUNTA: Deseja realmente excluir o disco virtual ?"; then
+			if rm -f $HOME_DIR/vdisk/$cvdisk_name &>/dev/null; then
+				msg_ok "Disco virtual '$HOME_DIR/vdisk/$cvdisk_name' foi removido com sucesso"
+				exit 0
+			fi
+		fi
+		exit $?
+	else
+		die "Disco virtual digitado não existe"!
+	fi
 }
 
 sh_start_vdagentd() {
@@ -592,7 +710,7 @@ chili-fr() {
 		msg_info "Forçando inicialização UEFI..."
 		qemu_options+=(-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF.4m.fd)
 	else
-		msg_warn "Parametro -u não informado, usando BIOS Legacy (padrão)..."
+		msg_warn "Parametro --uefi não informado, usando BIOS Legacy (padrão)..."
 	fi
 
 	# Adicionar opções padrão do QEMU
@@ -615,8 +733,12 @@ chili-fr() {
 		qemu_options+=(-device ide-hd,drive=disk1,bootindex=1)
 	fi
 
-	msg_info "Anexando disco virtual: ${yellow}/archlive/qemu/hda.img"
-	qemu_options+=(-drive file=/archlive/qemu/hda.img,format=raw)
+  if $vdisk; then
+  	msg_info "Anexando disco virtual: ${yellow}$HOME_DIR/vdisk/${vdisk_name}"
+	  qemu_options+=(-drive file=$HOME_DIR/vdisk/${vdisk_name}.img,format=raw)
+  else
+		msg_warn "Parametro --vdisk não informado, iniciando sem disco virtual..."
+  fi
 
 	qemu_options+=(-name "chili-fr $*",process=archiso_0)
 	qemu_options+=(-device virtio-scsi-pci,id=scsi0)
@@ -674,8 +796,8 @@ fi
 
 sh_checkDependencies
 
-OPTIONS=m:ub:Vnhd:sv:i:N:c:r:
-LONGOPTIONS=memory:,uefi,bridge:,version,nocolor,help,drive:,spice,video:,image:,network:,create-bridge,remove-bridge
+OPTIONS=m:ub:Vnhd:sg:v:i:N:c:r:
+LONGOPTIONS=memory:,uefi,bridge:,version,nocolor,help,drive:,spice,video:,image:,network:,create-bridge,remove-bridge,cvdisk,rvdisk,vdisk
 opts=($(getopt --options="$OPTIONS" --longoptions="$LONGOPTIONS" --name "$0" -- "$@"))
 eval set -- "${opts[*]}"
 
@@ -717,11 +839,11 @@ while test ${#opts[*]} -gt 0; do
 			die "${red}Erro:${rst} \
 Argumento inválido para ${cyan}--remove-bridge${reset}. \
 $(
-bridges=$(get_bridge_interfaces);
-[[ -n $bridges ]] && Válidos são: \
-echo "${yellow}$bridges" ||
-echo "${yellow}nenhuma bridge disponível"
-)
+				bridges=$(get_bridge_interfaces)
+				[[ -n $bridges ]] && Válidos são: \
+					echo "${yellow}$bridges" ||
+					echo "${yellow}nenhuma bridge disponível"
+			)
 ${reset}" >&2
 		fi
 		;;
@@ -739,13 +861,31 @@ ${reset}" >&2
 		spice=true
 		log_msg "Parametro -s/--spice detectado: tentando usar spice..."
 		;;
-	-v | --video)
+	-g | --video)
 		if [[ $2 =~ ^(virtio-vga|virtio-gpu-pci|qxl-vga|VGA|cirrus-vga|ati-vga|virtio-gpu-pci|bochs-display|ramfb)?$ ]]; then
 			videodevice="$2"
 			shift
 		else
 			die "$(gettext "Argumento inválido para -v. Use VGA,virtio-vga,virtio-gpu-pci,qxl-vga,cirrus-vga,ati-vga,virtio-gpu-pci,bochs-display ou ramfb")" >&2
 		fi
+		;;
+	-v | --vdisk)
+		if [[ " $(get_raw_images) " =~ " $2 " ]]; then
+			vdisk_name="$2"
+			msg_info "Parametro -v/--vdisk detectado: tentando usar virtual disk '$vdisk_name'"
+			vdisk=true
+			shift
+		else
+			die "Argumento inválido para ${cyan}--vdisk${red}. Válidos são: ${yellow}$(get_raw_images)${reset}" >&2
+		fi
+		;;
+	--cvdisk)
+		sh_create_vdisk_file
+		exit $?
+		;;
+	--rvdisk)
+		sh_remove_vdisk_file
+		exit $?
 		;;
 	-N | --network)
 		if [[ $2 =~ ^(virtio-net-pci|e1000|rtl8139|vmxnet3|ne2k_pci|ne2k_isa|pcnet|smc91c111|i82551|i82557b|i82559er)?$ ]]; then
@@ -838,5 +978,6 @@ if [[ $# > 0 ]]; then
 	fi
 	chili-fr "$@"
 else
-	die "${opts[*]} $(gettext "falta parâmetro de imagem/disco/device"): ($(gettext "usar -h para ajuda"))"
+#	die "${opts[*]} $(gettext "falta parâmetro de imagem/disco/device"): ($(gettext "usar -h para ajuda"))"
+	die "$(gettext "falta parâmetro de imagem/disco/device"): ($(gettext "usar -h para ajuda"))"
 fi

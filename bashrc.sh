@@ -23,13 +23,13 @@ source /usr/lib/lsb/init-functions
 #export TERM=${TERM:-xterm-256color}
 
 #Definindo variáveis de cores
-export red="\033[01;31m"
-export green="\033[01;32m"
-export yellow="\033[01;33m"
-export blue="\033[01;34m"
-export pink="\033[01;35m"
-export cyan="\033[01;36m"
-export reset="\033[0m"
+#export red="\033[01;31m"
+#export green="\033[01;32m"
+#export yellow="\033[01;33m"
+#export blue="\033[01;34m"
+#export pink="\033[01;35m"
+#export cyan="\033[01;36m"
+#export reset="\033[0m"
 
 die() {
 	local msg="$1"
@@ -37,7 +37,6 @@ die() {
 	echo -e "BP=>${cyan}error: ${red}${msg}${reset}"
 	exit 1
 }
-export -f die
 
 msg_raw() {
 	local msg="$1"
@@ -57,28 +56,24 @@ msg_raw() {
 	fi
 	echo -e "$msg"
 }
-export -f msg_raw
 
 msg() {
 	local msg="$1"
 	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
 	echo -e "BP=>${cyan}running: ${yellow}${msg}${reset}"
 }
-export -f msg
 
 msg_ok() {
 	local msg="$1"
 	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
 	echo -e "BP=>${cyan}feito: ${green}${msg}${reset}"
 }
-export -f msg_ok
 
 msg_run() {
 	local msg="$1"
 	echo -e "BP=>${cyan}running: ${yellow}${msg}${reset}"
 	eval "$msg"
 }
-export -f msg_run
 
 msg_info() {
   local msg="$1"
@@ -88,7 +83,6 @@ msg_info() {
   #echo -e "${blue}==>${green}[${caller_function}:${caller_line}]=>${yellow}info   : ${cyan}${msg}${reset}"
   echo -e "${caller_function}=>${yellow}info   : ${cyan}${msg}${reset}"
 }
-export -f msg_info
 
 msg_warning() {
 	local msg="$1"
@@ -97,7 +91,6 @@ msg_warning() {
 	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
   echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
 }
-export -f msg_warning
 
 msg_warn() {
 	local msg="$1"
@@ -106,7 +99,6 @@ msg_warn() {
 	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
   echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
 }
-export -f msg_warn
 
 replicate() {
 	local char=${1:-'#'}
@@ -116,7 +108,6 @@ replicate() {
 	#printf -v line "%*s" "$nsize" && echo -e "\033[31m${line// /$char}\033[0m"
 	printf -v line "%*s" "$nsize" && echo -e "${blue}${line// /$char}${reset}"
 }
-export -f replicate
 
 send_telegram_message() {
 	local message="$1"
@@ -133,7 +124,6 @@ send_telegram_message() {
 		-d text="$message" \
 		-d parse_mode="$parse_mode"
 }
-export -f send_telegram_message
 
 sh_checkcommand() {
 	local cmd="$1"
@@ -190,10 +180,12 @@ export -f pathremove pathprepend pathappend
 sh_bashrc_configure() {
 	#alias sc="sudo sftp -P 65002 u356719782@185.211.7.40:/home/u356719782/domains/chililinux.com/public_html/packages/core/"
 	#alias hs="sudo ssh -X -p 65002 u356719782@185.211.7.40"
-	alias hsx="ssh -X -p 65002 u537062342@154.49.247.66"
-	alias hs="ssh -X -p 65002 u537062342@154.49.247.66"
-	alias sc="sudo sftp -P 65002 u537062342@154.49.247.66:/home/u537062342/domains/chililinux.com/public_html/packages/core/"
-	alias hpb="sudo ssh -X -p 2222 root@vcatafesta.ddns.net"
+	#alias hsx="ssh -X -p 65002 u537062342@154.49.247.66"
+	alias hs="ssh -X -p 65002 u537062342@repo.chililinux.com"
+	alias sc="sftp -P 65002 u537062342@repo.chililinux.com:/home/u537062342/domains/chililinux.com/public_html/"
+	alias hpb="ssh -X -p 2222 root@vcatafesta.ddns.net"
+	alias hso="ssh -X -p 22 vcatafesta@repo2.chililinux.com"
+	alias sco="sftp -P 22 vcatafesta@repo2.chililinux.com://home/vcatafesta/Docker/RepoChililinux/html/"
 
 	# Definir a variável de controle para restaurar a formatação original
 	reset=$(tput sgr0)
