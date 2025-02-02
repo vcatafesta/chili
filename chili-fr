@@ -735,7 +735,7 @@ chili-fr() {
 
   if $vdisk; then
   	msg_info "Anexando disco virtual: ${yellow}$HOME_DIR/vdisk/${vdisk_name}"
-	  qemu_options+=(-drive file=$HOME_DIR/vdisk/${vdisk_name}.img,format=raw)
+	  qemu_options+=(-drive file=$HOME_DIR/vdisk/${vdisk_name},format=raw)
   else
 		msg_warn "Parametro --vdisk não informado, iniciando sem disco virtual..."
   fi
@@ -749,9 +749,10 @@ chili-fr() {
 	qemu_options+=(-global ICH9-LPC.disable_s3=1)
 	qemu_options+=(-machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0)
 	qemu_options+=(-device virtio-serial)
-	qemu_options+=(-device virtio-serial)
 
 	#video
+	#qemu_options+=(-vga vmware) # std cirrus qxl vmware virtio
+	#qemu_options+=(-display gtk) # sdl gtk curses none spice-app
 	qemu_options+=(-device "$videodevice")
 
 	if $spice; then
