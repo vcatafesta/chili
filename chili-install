@@ -61,12 +61,15 @@ declare -gA Alanguage=([pt_BR]=0 [en_US]=1 [de_DE]=2 [fr_FR]=3 [es_ES]=4 [it_IT]
 declare -gA Alocale=([0]=pt_BR [1]=en_US [2]=de_DE [3]=fr_FR [4]=es_ES [5]=it_IT)
 readonly DEPENDENCIES=(awk cat cut dialog dd grep lsblk parted sed sfdisk tee tput pv whiptail which)
 
+# Testa se o terminal suporta caracteres gráficos estendidos
 sh_ascii_lines() {
-	if [[ "$LANG" =~ 'UTF-8' ]]; then
-		export NCURSES_NO_UTF8_ACS=1
-	else
-		export NCURSES_NO_UTF8_ACS=0
-	fi
+  #Isso força o dialog a usar caracteres ASCII básicos para as bordas.
+  #if [[ "$LANG" =~ 'UTF-8' ]]; then
+  if [[ "$(printf '\u250C')" =~ "┌" ]]; then
+    export NCURSES_NO_UTF8_ACS=1  # Terminal suporta ACS
+  else
+    export NCURSES_NO_UTF8_ACS=0  # Terminal NÃO suporta ACS
+  fi
 }
 
 sh_setEnvironment() {
