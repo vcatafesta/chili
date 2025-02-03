@@ -64,8 +64,7 @@ sh_ascii-lines() {
 cleanup() {
   rm -f "$dialogRcFile"
 }
-
-trap cleanup EXIT
+#trap cleanup EXIT
 
 sh_create_dialogrc() {
   # Cria o arquivo .dialogrc com configurações de cores personalizadas

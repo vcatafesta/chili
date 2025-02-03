@@ -65,7 +65,7 @@ declare dialogRcFile="$HOME/.dialogrc"
 cleanup() {
   rm -f "$dialogRcFile"
 }
-trap cleanup EXIT
+#trap cleanup EXIT
 
 sh_create_dialogrc() {
   cat > "$dialogRcFile" <<-EOF
@@ -124,7 +124,7 @@ sh_ascii_lines() {
 }
 
 sh_setEnvironment() {
-  sh_create_dialogrc
+  [[ ! -e "$dialogRcFile" ]] && sh_create_dialogrc
 	sh_ascii_lines
 	en_US
 	: "${DIALOG=${DIALOG:-"dialog"}}"

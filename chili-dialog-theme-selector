@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  chili-dialog_theme_selector
+#  chili-dialog-theme-selector - Seletor de temas para o Dialog
 #  Created: 2025/02/03 - 00:54
 #  Altered: 2025/02/03 - 00:54
+#  Updated: 2025/02/03 - 00:54
 #
 #  Copyright (c) 2025-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -31,7 +32,7 @@
 ##############################################################################
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
-export TEXTDOMAIN=chili-dialog_theme_selector
+export TEXTDOMAIN=chili-dialog-theme-selector
 
 # Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
@@ -74,13 +75,14 @@ shopt -s extglob
 declare APP="${0##*/}"
 declare _VERSION_="1.0.0-20250203"
 declare distro="$(uname -n)"
-declare DEPENDENCIES=(tput)
-source /usr/share/fetch/core.sh
+declare DEPENDENCIES=(tput dialog)
+declare ccabec="$APP - Seletor de temas para o Dialog"
+declare ctitle="Menu de Temas"
 
 MostraErro() {
 	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
 }
-#trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
+trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
 
 # Declaração dos temas no array associativo
 declare -A themes=(
@@ -1010,7 +1012,7 @@ inputbox_border2_color = (MAGENTA,DEFAULT,OFF)
 searchbox_border2_color = (RED,DEFAULT,ON)
 menubox_border2_color = (RED,DEFAULT,ON)"
 
-  ["Despertar"]="
+	["Despertar"]="
 use_shadow = ON
 use_colors = ON
 screen_color = (BLACK,DEFAULT,OFF)
@@ -1051,7 +1053,7 @@ inputbox_border2_color = (CYAN,DEFAULT,OFF)
 searchbox_border2_color = (CYAN,DEFAULT,ON)
 menubox_border2_color = (CYAN,DEFAULT,ON)"
 
-  ["MidnightAurora"]="
+	["MidnightAurora"]="
 use_shadow = ON
 use_colors = ON
 screen_color = (BLACK,DEFAULT,OFF)
@@ -1092,7 +1094,7 @@ inputbox_border2_color = (BLUE,DEFAULT,OFF)
 searchbox_border2_color = (GREEN,DEFAULT,ON)
 menubox_border2_color = (GREEN,DEFAULT,ON)"
 
-  ["CyberGlow"]="
+	["CyberGlow"]="
 use_shadow = ON
 use_colors = ON
 screen_color = (BLACK,DEFAULT,OFF)
@@ -1133,7 +1135,7 @@ inputbox_border2_color = (BLUE,DEFAULT,OFF)
 searchbox_border2_color = (CYAN,DEFAULT,ON)
 menubox_border2_color = (CYAN,DEFAULT,ON)"
 
-  ["Inferno"]="
+	["Inferno"]="
 use_shadow = ON
 use_colors = ON
 screen_color = (BLACK,DEFAULT,OFF)
@@ -1174,7 +1176,7 @@ inputbox_border2_color = (BLACK,BLACK,ON)
 searchbox_border2_color = (BLACK,BLACK,ON)
 menubox_border2_color = (BLACK,BLACK,ON)"
 
-  ["Black"]="
+	["Black"]="
 use_shadow = ON
 use_colors = ON
 screen_color = (BLACK,DEFAULT,OFF)
@@ -1215,7 +1217,7 @@ inputbox_border2_color = (BLACK,BLACK,ON)
 searchbox_border2_color = (BLACK,BLACK,ON)
 menubox_border2_color = (BLACK,BLACK,ON)"
 
-  ["Neon"]="
+	["Neon"]="
 use_shadow = ON
 use_colors = ON
 screen_color = (BLACK,DEFAULT,OFF)
@@ -1256,7 +1258,7 @@ inputbox_border2_color = (GREEN,DEFAULT,OFF)
 searchbox_border2_color = (GREEN,DEFAULT,ON)
 menubox_border2_color = (GREEN,DEFAULT,ON)"
 
-["Neon e Ciano"]="
+	["Neon e Ciano"]="
 use_shadow = ON
 use_colors = ON
 screen_color = (CYAN,BLACK,OFF)
@@ -1297,7 +1299,7 @@ inputbox_border2_color = (CYAN,BLACK,OFF)
 searchbox_border2_color = (CYAN,BLACK,ON)
 menubox_border2_color = (CYAN,BLACK,ON)"
 
-["Fogo e Ouro"]="
+	["Fogo e Ouro"]="
 use_shadow = ON
 use_colors = ON
 screen_color = (RED,YELLOW,OFF)
@@ -1338,7 +1340,7 @@ inputbox_border2_color = (RED,YELLOW,OFF)
 searchbox_border2_color = (RED,YELLOW,ON)
 menubox_border2_color = (RED,YELLOW,ON)"
 
-["Verde e Azul"]="
+	["Verde e Azul"]="
 use_shadow = ON
 use_colors = ON
 screen_color = (GREEN,BLUE,OFF)
@@ -1379,7 +1381,7 @@ inputbox_border2_color = (GREEN,BLUE,OFF)
 searchbox_border2_color = (GREEN,BLUE,ON)
 menubox_border2_color = (GREEN,BLUE,ON)"
 
-["Rosa e Preto"]="use_shadow = ON
+	["Rosa e Preto"]="use_shadow = ON
 use_colors = ON
 screen_color = (MAGENTA,BLACK,OFF)
 dialog_color = (WHITE,BLACK,OFF)
@@ -1419,7 +1421,7 @@ inputbox_border2_color = (MAGENTA,BLACK,OFF)
 searchbox_border2_color = (MAGENTA,BLACK,ON)
 menubox_border2_color = (MAGENTA,BLACK,ON)"
 
-["Azul e Vermelho"]="
+	["Azul e Vermelho"]="
 use_shadow = ON
 use_colors = ON
 screen_color = (BLUE,BLACK,OFF)
@@ -1460,7 +1462,7 @@ inputbox_border2_color = (BLUE,BLACK,OFF)
 searchbox_border2_color = (BLUE,BLACK,ON)
 menubox_border2_color = (RED,BLACK,ON)"
 
-["Azul e Cinza"]="
+	["Azul e Cinza"]="
 use_shadow = ON
 use_colors = ON
 screen_color = (BLUE,BLACK,OFF)
@@ -1501,7 +1503,7 @@ inputbox_border2_color = (BLUE,BLACK,OFF)
 searchbox_border2_color = (BLUE,BLACK,ON)
 menubox_border2_color = (CYAN,BLACK,ON)"
 
-["Vermelho e Cinza"]="
+	["Vermelho e Cinza"]="
 use_shadow = ON
 use_colors = ON
 screen_color = (RED,BLACK,OFF)
@@ -1542,7 +1544,7 @@ inputbox_border2_color = (RED,BLACK,OFF)
 searchbox_border2_color = (RED,BLACK,ON)
 menubox_border2_color = (RED,BLACK,ON)"
 
-["Preto e Cinza"]="use_shadow = ON
+	["Preto e Cinza"]="use_shadow = ON
 use_colors = ON
 screen_color = (BLACK,WHITE,OFF)
 dialog_color = (WHITE,BLACK,OFF)
@@ -1582,7 +1584,7 @@ inputbox_border2_color = (WHITE,BLACK,OFF)
 searchbox_border2_color = (WHITE,BLACK,ON)
 menubox_border2_color = (WHITE,BLACK,ON)"
 
-  ["BlackWhite"]="use_shadow = ON
+	["BlackWhite"]="use_shadow = ON
 use_colors = ON
 screen_color = (BLACK,WHITE,OFF)
 dialog_color = (WHITE,BLACK,OFF)
@@ -1622,7 +1624,7 @@ inputbox_border2_color = (WHITE,BLACK,OFF)
 searchbox_border2_color = (WHITE,BLACK,ON)
 menubox_border2_color = (WHITE,BLACK,ON)"
 
-  ["Architect"]="
+	["Architect"]="
 screen_color = (white,black,off)
 dialog_color = (white,black,off)
 title_color = (cyan,black,on)
@@ -1665,6 +1667,47 @@ tab_len = 0
 visit_items = off
 use_shadow = off
 use_colors = on"
+
+	["Jelly"]="
+use_shadow = OFF
+use_colors = ON
+screen_color = (YELLOW,DEFAULT,OFF)
+dialog_color = (WHITE,DEFAULT,OFF)
+title_color = (YELLOW,DEFAULT,ON)
+border_color = (WHITE,DEFAULT,ON)
+button_active_color = (BLACK,YELLOW,ON)
+button_inactive_color = (WHITE,DEFAULT,OFF)
+button_key_active_color = (BLACK,YELLOW,ON)
+button_key_inactive_color = (RED,DEFAULT,OFF)
+button_label_active_color = (BLACK,YELLOW,ON)
+button_label_inactive_color = (WHITE,DEFAULT,ON)
+inputbox_color = (WHITE,DEFAULT,OFF)
+inputbox_border_color = (WHITE,DEFAULT,OFF)
+searchbox_color = (WHITE,DEFAULT,OFF)
+searchbox_title_color = (YELLOW,DEFAULT,ON)
+searchbox_border_color = (WHITE,DEFAULT,ON)
+position_indicator_color = (YELLOW,DEFAULT,ON)
+menubox_color = (WHITE,DEFAULT,OFF)
+menubox_border_color = (WHITE,DEFAULT,ON)
+item_color = (WHITE,DEFAULT,OFF)
+item_selected_color = (BLACK,YELLOW,ON)
+tag_color = (YELLOW,DEFAULT,ON)
+tag_selected_color = (BLACK,YELLOW,ON)
+tag_key_color = (RED,DEFAULT,OFF)
+tag_key_selected_color = (RED,YELLOW,ON)
+check_color = (WHITE,DEFAULT,OFF)
+check_selected_color = (BLACK,YELLOW,ON)
+uarrow_color = (YELLOW,DEFAULT,ON)
+darrow_color = (YELLOW,DEFAULT,ON)
+itemhelp_color = (WHITE,DEFAULT,OFF)
+form_active_text_color = (WHITE,DEFAULT,ON)
+form_text_color = (WHITE,DEFAULT,ON)
+form_item_readonly_color = (WHITE,DEFAULT,ON)
+gauge_color = (YELLOW,DEFAULT,ON)
+border2_color = (WHITE,DEFAULT,ON)
+inputbox_border2_color = (WHITE,DEFAULT,OFF)
+searchbox_border2_color = (WHITE,DEFAULT,ON)
+menubox_border2_color = (WHITE,DEFAULT,ON)"
 )
 
 # Exibir o menu com números e nomes de temas
@@ -1675,7 +1718,11 @@ for key in "${!themes[@]}"; do
 	((count++))
 done
 
-theme_choice=$(dialog --menu "Escolha o tema desejado" 0 0 0 "${theme_list[@]}" 2>&1 >/dev/tty)
+theme_choice=$(dialog \
+              --colors \
+              --title "$ctitle" \
+              --backtitle "$ccabec" \
+              --menu "Escolha o tema desejado" 0 0 0 "${theme_list[@]}" 2>&1 >/dev/tty)
 
 # Salvar o tema escolhido no arquivo .dialogrc
 if [ -n "$theme_choice" ]; then
