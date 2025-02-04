@@ -10,29 +10,30 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: 2025/02/02 - 13:33 -04
+#  Updated: seg 03 fev 2025 23:12:15 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-
-#  chili-install uses quite a few external programs during its execution. You
-#  need to have at least the following installed for makepkg to function:
-#		awk, bsdtar (libarchive), bzip2, coreutils, fakeroot, file, find (findutils),
-#     gettext, gpg, grep, gzip, sed, tput (ncurses), xz, etc
-#########################################################################
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AS IS'' AND ANY EXPRESS OR
+#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
 #debug
 export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 #set -x
@@ -40,7 +41,7 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="4.0.6.20250201"
+declare -r _VERSION_="4.2.03.20250203"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
@@ -126,7 +127,7 @@ sh_ascii_lines() {
 sh_setEnvironment() {
   [[ ! -e "$dialogRcFile" ]] && sh_create_dialogrc
 	sh_ascii_lines
-	en_US
+	pt_BR
 	: "${DIALOG=${DIALOG:-"dialog"}}"
 	: "${DOWNLOADER="curl -L -O -C - "}"
 
@@ -231,6 +232,8 @@ sh_confDistro() {
 		Adistro+=([cdistro]='Chili' [chost]="chililinux" [ptcom]='.com' [calias]="chili" [cnick]="chili" [cliveuser]="live" [cgroups]='wheel,audio,video,users')
   elif [[ "$xdistro" = @(bigcommunity|communitybig) ]]; then
     Adistro+=([cdistro]='BigCommunity' [chost]="communitybig" [ptcom]='.org' [calias]="bigcommunity" [cnick]="bigcommunity" [cliveuser]="live" [cgroups]='wheel,audio,video,users')
+  elif [[ "$xdistro" = @(biglinux) ]]; then
+    Adistro+=([cdistro]='BigLinux' [chost]="biglinux" [ptcom]='.com.br' [calias]="biglinux" [cnick]="biglinux" [cliveuser]="live" [cgroups]='wheel,audio,video,users')
 	else
 		Adistro+=([cdistro]='Unknown' [chost]="linux" [ptcom]='.com' [calias]="linux" [cnick]="linux" [cliveuser]="live" [cgroups]='audio,video,users')
 	fi
@@ -1411,14 +1414,20 @@ EOF
 		echo "GRUB_THEME=/boot/grub/themes/Vimix/theme.txt" >>"$dir_install/etc/default/grub"
 	elif [[ "$xdistro" = @(mint) ]]; then
 		echo "GRUB_THEME=/boot/grub/themes/linuxmint/theme.txt" >>"$dir_install/etc/default/grub"
+  elif [[ "$xdistro" = @(bigcommunity|communitybig) ]]; then
+		echo "GRUB_THEME=/boot/grub/themes/community/theme.txt" >>"$dir_install/etc/default/grub"
+  elif [[ "$xdistro" = @(biglinux) ]]; then
+		echo "GRUB_THEME=/boot/grub/themes/biglinux/theme.txt" >>"$dir_install/etc/default/grub"
 	else
 		echo "GRUB_THEME=/boot/grub/themes/chili/theme.txt" >>"$dir_install/etc/default/grub"
 	fi
+
 	if ((LOSPROBER)); then
 		echo "GRUB_DISABLE_OS_PROBER=false" >>"$dir_install/etc/default/grub"
 	else
 		echo "GRUB_DISABLE_OS_PROBER=true" >>"$dir_install/etc/default/grub"
 	fi
+
 	echo "set menu_color_normal=white/blue" >>"$dir_install/boot/grub/grub.cfg"
 	echo "set menu_color_highlight=white/red" >>"$dir_install/boot/grub/grub.cfg"
 
@@ -1443,13 +1452,18 @@ sh_mkefiroaming() {
 	return 0
 }
 
+sh_clean_issue() {
+  local fileconf="$dir_install/etc/issue"
+  sh_chroot_job "Removing $fileconf" "rm -f $fileconf" "$err_not_fatal"
+}
+
 sh_finishInstall() {
 	if confmulti "*** INSTALL ***" \ "\n$cfinish" \ "\nDeseja Rebootar agorar?"; then
 		sh_stop_bind
 		sh_stop_mount
 		if [[ -n "$iso" ]]; then
+      reboot
 			:
-			#			reboot
 		fi
 	fi
 	return 0
@@ -3485,7 +3499,7 @@ pt_BR() {
 	cmsg_Formatando_particao='Formatando partição'
 	cmsg_Montando_particao='Montando partição'
 	cmsg_Instalando_GRUB_EFI_na_particao='Instalando GRUB EFI na partição'
-	cmsgInstalacao_Automatica='Instalacao'
+	cmsgInstalacao_Automatica='Instalacao Automatizada'
 	cmsgInstalacao_Automatica_cancelada='Instalacao cancelada'
 	cmsgErro_na_formatacao='Erro na formatação'
 	cmsgErro_na_inclusao_do_usuario='Erro na inclusao do usuário'
@@ -3565,7 +3579,7 @@ en_US() {
 	cmsg_Formatando_particao='Formatting partition'
 	cmsg_Montando_particao='Mounting partition'
 	cmsg_Instalando_GRUB_EFI_na_particao='Installing EFI grub on partition'
-	cmsgInstalacao_Automatica='Installation'
+	cmsgInstalacao_Automatica='Automatized Installation'
 	cmsgInstalacao_Automatica_cancelada='Installation canceled'
 	cmsgErro_na_formatacao='Error in formatting'
 	cmsgErro_na_inclusao_do_usuario='Error adding user'
@@ -4457,12 +4471,12 @@ sh_setLanguage() {
 		"ISO non détecté \n↓ il est recommandé NETWORK ↓"
 		"ISO no detectado \n↓ se recomienda NETWORK ↓"
 		"ISO non rilevato \n↓ si consiglia NETWORK ↓")'
-		'welcome=("Bem-vindo ao instalador $APP"
-		"Welcome to the $APP installer"
-		"Willkommen beim $APP Installationsprogramm"
-		"Bienvenue dans le programme d installation de $APP"
-		"Bienvenido al instalador $APP"
-		"Benvenuto nel programma di installazione $APP")'
+		'welcome=("Bem-vindo ao instalador $_APP_"
+		"Welcome to the $_APP_ installer"
+		"Willkommen beim $_APP_ Installationsprogramm"
+		"Bienvenue dans le programme d installation de $_APP_"
+		"Bienvenido al instalador $_APP_"
+		"Benvenuto nel programma di installazione $_APP_")'
 		'escolhaIdioma=("Escolha o idioma"
 		"Choose language"
 		"Sprache wählen"
@@ -4546,10 +4560,17 @@ sh_getLocale() {
 
 	LC_DEFAULT="${Alanguage[pt_BR]}"
 	LOCALE="pt_BR"
-	if lc=$(grep _ <(locale -a) | head -1 | cut -c1-5); then
-		LOCALE="$lc"
-		LC_DEFAULT="${Alanguage[$lc]}"
-	fi
+
+  if [[ -z "$LANG" ]]; then
+  	if lc=$(grep _ <(locale -a) | head -1 | cut -c1-5); then
+  		LOCALE="$lc"
+	  	LC_DEFAULT="${Alanguage[$lc]}"
+  	fi
+  else
+    lc=$( echo $LANG | cut -c1-5)
+    LOCALE="$lc"
+	  LC_DEFAULT="${Alanguage[$lc]}"
+  fi
 }
 
 sh_mknode_lo() {
@@ -4946,6 +4967,7 @@ sh_install() {
 	sh_update_Xkeymap
 	sh_update_timezone
 	sh_grubinstall || sh_cancelLiveInstall "$@"
+  sh_clean_issue
 	sh_finishInstall
 	zeravar
 }
@@ -5046,7 +5068,7 @@ sh_main_menu() {
 			--ok-label "${cmsg_Aceitar[$LC_DEFAULT]}" \
 			--cancel-label "${cmsg_ButtonBack[$LC_DEFAULT]}" \
 			--extra-button --extra-label "${cmsg_Definicoes[$LC_DEFAULT]}" \
-			--title "$APP - ${cmsg_MenuInstalacao[$LC_DEFAULT]} $(sh_getparamfile)" \
+			--title "$_APP_ - ${cmsg_MenuInstalacao[$LC_DEFAULT]} $(sh_getparamfile)" \
 			--menu "\n${cmsg_LABEL[$LC_DEFAULT]}" \
 			23 00 23 \
 			Auto "$cmsgInstalacao_Automatica" \

@@ -783,7 +783,7 @@ chili-fr() {
 		sudo env XDG_RUNTIME_DIR=/run/user/$(id -u) qemu-system-x86_64 "${qemu_options[@]}" 1>/dev/null
 	fi
 }
-export -f fr
+export -f chili-fr
 
 sh_setvarcolors
 
