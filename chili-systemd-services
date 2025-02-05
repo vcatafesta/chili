@@ -1,0 +1,381 @@
+#!/usr/bin/env bash
+# -*- coding: utf-8 -*-
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+#
+#  chili-systemd-services
+#  Created: 2025/02/04 - 22:23
+#  Altered: 2025/02/04 - 22:23
+#
+#  Copyright (c) 2025-2025, Vilmar Catafesta <vcatafesta@gmail.com>
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AS IS'' AND ANY EXPRESS OR
+#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
+#export LANGUAGE=pt_BR
+export TEXTDOMAINDIR=/usr/share/locale
+export TEXTDOMAIN=chili-systemd-services
+
+# Definir a variável de controle para restaurar a formatação original
+reset=$(tput sgr0)
+
+# Definir os estilos de texto como variáveis
+bold=$(tput bold)
+underline=$(tput smul)   # Início do sublinhado
+nounderline=$(tput rmul) # Fim do sublinhado
+reverse=$(tput rev)      # Inverte as cores de fundo e texto
+
+# Definir as cores ANSI como variáveis
+black=$(tput bold)$(tput setaf 0)
+red=$(tput bold)$(tput setaf 196)
+green=$(tput bold)$(tput setaf 2)
+yellow=$(tput bold)$(tput setaf 3)
+blue=$(tput setaf 4)
+pink=$(tput setaf 5)
+magenta=$(tput setaf 5)
+cyan=$(tput setaf 6)
+white=$(tput setaf 7)
+gray=$(tput setaf 8)
+orange=$(tput setaf 202)
+purple=$(tput setaf 125)
+violet=$(tput setaf 61)
+light_red=$(tput setaf 9)
+light_green=$(tput setaf 10)
+light_yellow=$(tput setaf 11)
+light_blue=$(tput setaf 12)
+light_magenta=$(tput setaf 13)
+light_cyan=$(tput setaf 14)
+bright_white=$(tput setaf 15)
+
+#debug
+export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset}'
+#set -x
+#set -e
+shopt -s extglob
+
+#system
+declare APP="${0##*/}"
+declare APPDESC="Wrapper para o systemctl"
+declare _VERSION_="1.2.04-20250204"
+declare distro="$(uname -n)"
+declare DEPENDENCIES=(tput dialog)
+declare dialogRcFile="$HOME/.dialogrc"
+declare -g sep="\xe2\x94\x82"
+declare ccabec="${APP} - v${_VERSION_} - ${APPDESC}"
+
+
+# flag dialog exit status codes
+: "${D_OK=0}"
+: "${D_DONE=0}"
+: "${D_CANCEL=1}"
+: "${D_HELP=2}"
+: "${D_EXTRA=3}"
+: "${D_CONFIG=3}"
+: "${D_ITEM_HELP=4}"
+: "${D_ESC=255}"
+
+cleanup() {
+	rm -f "$dialogRcFile"
+}
+#trap cleanup EXIT
+
+sh_create_dialogrc() {
+	cat >"$dialogRcFile" <<-EOF
+		use_shadow = OFF
+		use_colors = ON
+		screen_color = (YELLOW,DEFAULT,OFF)
+		dialog_color = (WHITE,DEFAULT,OFF)
+		title_color = (YELLOW,DEFAULT,ON)
+		border_color = (WHITE,DEFAULT,ON)
+		button_active_color = (BLACK,YELLOW,ON)
+		button_inactive_color = (WHITE,DEFAULT,OFF)
+		button_key_active_color = (BLACK,YELLOW,ON)
+		button_key_inactive_color = (RED,DEFAULT,OFF)
+		button_label_active_color = (BLACK,YELLOW,ON)
+		button_label_inactive_color = (WHITE,DEFAULT,ON)
+		inputbox_color = (WHITE,DEFAULT,OFF)
+		inputbox_border_color = (WHITE,DEFAULT,OFF)
+		searchbox_color = (WHITE,DEFAULT,OFF)
+		searchbox_title_color = (YELLOW,DEFAULT,ON)
+		searchbox_border_color = (WHITE,DEFAULT,ON)
+		position_indicator_color = (YELLOW,DEFAULT,ON)
+		menubox_color = (WHITE,DEFAULT,OFF)
+		menubox_border_color = (WHITE,DEFAULT,ON)
+		item_color = (WHITE,DEFAULT,OFF)
+		item_selected_color = (BLACK,YELLOW,ON)
+		tag_color = (YELLOW,DEFAULT,ON)
+		tag_selected_color = (BLACK,YELLOW,ON)
+		tag_key_color = (RED,DEFAULT,OFF)
+		tag_key_selected_color = (RED,YELLOW,ON)
+		check_color = (WHITE,DEFAULT,OFF)
+		check_selected_color = (BLACK,YELLOW,ON)
+		uarrow_color = (YELLOW,DEFAULT,ON)
+		darrow_color = (YELLOW,DEFAULT,ON)
+		itemhelp_color = (WHITE,DEFAULT,OFF)
+		form_active_text_color = (WHITE,DEFAULT,ON)
+		form_text_color = (WHITE,DEFAULT,ON)
+		form_item_readonly_color = (WHITE,DEFAULT,ON)
+		gauge_color = (YELLOW,DEFAULT,ON)
+		border2_color = (WHITE,DEFAULT,ON)
+		inputbox_border2_color = (WHITE,DEFAULT,OFF)
+		searchbox_border2_color = (WHITE,DEFAULT,ON)
+		menubox_border2_color = (WHITE,DEFAULT,ON)
+	EOF
+	export DIALOGRC="$dialogRcFile"
+}
+
+MostraErro() {
+	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
+}
+trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
+
+# Testa se o terminal suporta caracteres gráficos estendidos
+sh_ascii_lines() {
+	#Isso força o dialog a usar caracteres ASCII básicos para as bordas.
+	#if [[ "$LANG" =~ 'UTF-8' ]]; then
+	if [[ "$(printf '\u250C')" =~ "┌" ]]; then
+		export NCURSES_NO_UTF8_ACS=1 # Terminal suporta ACS
+	else
+		export NCURSES_NO_UTF8_ACS=0 # Terminal NÃO suporta ACS
+	fi
+}
+#!/bin/bash
+
+# Verificar se o script está sendo executado como root
+if [ "$EUID" -ne 0 ]; then
+	dialog --msgbox "Este script deve ser executado como root." 6 40
+	exit 1
+fi
+
+# Função para dividir a string
+sh_splitarray() {
+	local str="$1"
+	local pos="$2"
+	local sep="${3:-'|'}"
+	local array
+
+	[[ $# -eq 3 && "$pos" = "|" && "$sep" =~ ^[0-9]+$ ]] && {
+		sep="$2"
+		pos="$3"
+	}
+	[[ $# -eq 2 && "$pos" = "$sep" ]] && {
+		sep="$pos"
+		pos=1
+	}
+	[[ $# -eq 1 || ! "$pos" =~ ^[0-9]+$ ]] && { pos=1; }
+
+	IFS="$sep" read -r -a array <<<"${str}"
+	echo "${array[pos - 1]}"
+}
+
+###################################################################################################
+
+# Separador vertical │ (U+2502) para exibição com printf
+declare -g sep="│"
+
+# Largura fixa para os campos (ajuste conforme necessário)
+largura_estado=10
+largura_status=12
+largura_descricao=50
+
+# Array associativo para armazenar os serviços
+declare -A servicos
+declare -a servicos_ordenados
+ultimo_servico=""
+botao_acao="Parar/Iniciar" # Valor padrão do botão
+
+# Função para ajustar o tamanho dos campos
+ajustar_tamanho() {
+	printf "%-*s" "$1" "$2"
+}
+
+# Função para listar serviços do systemd e armazená-los no array
+
+listar_servicos() {
+	# Limpar os arrays antes de preenchê-los
+	servicos=()
+	servicos_ordenados=()
+
+	# Obter todos os serviços ordenados alfabeticamente
+	mapfile -t todos_servicos < <(systemctl list-unit-files --type=service --no-pager --no-legend | awk '{print $1}' | sort)
+	mapfile -t ativos < <(systemctl list-units --type=service --no-pager --no-legend | awk '{print $1}')
+	mapfile -t habilitados < <(systemctl list-unit-files --type=service --state=enabled --no-pager --no-legend | awk '{print $1}')
+
+	for servico in "${todos_servicos[@]}"; do
+		estado="Parado"
+		enabled_status="Desativado"
+
+		# Verifica se o serviço está rodando ou não
+		[[ " ${ativos[*]} " =~ " $servico " ]] && estado="Rodando"
+
+		# Verifica se o serviço está ativado ou desativado
+		[[ " ${habilitados[*]} " =~ " $servico " ]] && enabled_status="Ativado"
+
+		# Evitar erro ao tentar pegar descrição de templates (@.service)
+		if [[ "$servico" == *@.* ]]; then
+			descricao="Modelo de serviço (sem descrição)"
+		else
+			descricao=$(systemctl show "$servico" --property=Description --no-pager 2>/dev/null | cut -d= -f2-)
+		fi
+		[[ -z "$descricao" ]] && descricao="Sem descrição"
+
+		# Armazenar no array com formato "Estado|Habilitação|Descrição"
+		servicos["$servico"]="$estado|$enabled_status|$descricao"
+
+		# Adicionar o serviço ao array ordenado
+		servicos_ordenados+=("$servico")
+	done
+}
+
+# Função para definir o texto do botão baseado no estado do serviço
+atualizar_botao() {
+	local servico="$1"
+	local estado enabled_status
+
+	IFS="$sep" read -r estado enabled_status _ <<<"${servicos[$servico]}"
+
+	if [[ "$estado" =~ "Rodando" ]]; then
+		botao_acao="Desativar"
+	else
+		botao_acao="Ativar"
+	fi
+}
+
+menu_dialog() {
+	local escolha
+	local opcoes=()
+
+	# Construir a lista de opções separando nome do serviço e detalhes
+	for servico in "${servicos_ordenados[@]}"; do
+		# Obter os detalhes do serviço
+		estado=$(sh_splitarray "${servicos[$servico]}" 1 "|")     # Pega o estado
+		habilitado=$(sh_splitarray "${servicos[$servico]}" 2 "|") # Pega o estado de habilitação
+		descricao=$(sh_splitarray "${servicos[$servico]}" 3 "|")  # Pega a descrição
+
+		# Ajustar os tamanhos dos campos
+		estado_formatado=$(printf "%-*s" "$largura_estado" "$estado")
+		habilitado_formatado=$(printf "%-*s" "$largura_status" "$habilitado")
+		descricao_formatada=$(printf "%-*s" "$largura_descricao" "$descricao")
+
+		# Adiciona a opção no formato desejado
+		opcoes+=("$servico" "$estado_formatado$sep$habilitado_formatado$sep$descricao_formatada")
+	done
+	while true; do
+
+		# Exibir a lista com um botão adicional de recarregar
+		servico=$(dialog \
+		  --backtitle "$ccabec" \
+		  --title "SERVICES" \
+			--stdout \
+			--default-item "$ultimo_servico" \
+			--ok-label "$botao_acao" \
+			--cancel-label "Cancelar" \
+			--extra-button --extra-label "Recarregar" \
+			--menu "Escolha um serviço para gerenciar" \
+			20 100 15 "${opcoes[@]}")
+
+		exit_status=$?
+
+		case $exit_status in
+		"$D_ESC" | "$D_CANCEL")
+			return
+			;;
+		"$D_EXTRA")
+			listar_servicos # Apenas quando o usuário clicar "Recarregar"
+			continue
+			;;
+		*)
+			if [[ -n "$servico" ]]; then
+				ultimo_servico="$servico"           # Salva apenas o nome do serviço
+				alternar_servico "$servico"         # Ativa/desativa o serviço
+				atualizar_estado_servico "$servico" # Atualiza o array localmente
+			fi
+			;;
+		esac
+	done
+}
+
+buscar_indice_servico() {
+	local nome_procura="$1"
+	local indice
+
+	indice=$(printf "%s\n" "${opcoes[@]}" | grep -n "^$nome_procura$" | cut -d: -f1)
+
+	if [[ -n "$indice" ]]; then
+		echo $((indice - 1)) # Ajusta para zero-based
+	else
+		echo -1 # Retorna -1 se não encontrado
+	fi
+}
+
+# Função para atualizar apenas o estado do serviço sem modificar os outros campos
+atualizar_estado_servico() {
+	local servico="$1"
+	local estado_atual habilitacao descricao
+
+	# Se o serviço estiver rodando, define "Rodando", senão, "Parado"
+	if systemctl is-active --quiet "$servico"; then
+		estado_atual="Rodando"
+	else
+		estado_atual="Parado"
+	fi
+
+	# Extrai os outros campos usando a função sh_splitarray
+	habilitacao=$(sh_splitarray "${servicos[$servico]}" 2)
+	descricao=$(sh_splitarray "${servicos[$servico]}" 3)
+
+	# Atualiza o estado no array sem modificar os outros valores
+	servicos["$servico"]="$estado_atual|$habilitacao|$descricao"
+
+	# Adiciona a opção no formato desejado
+	indice=$(buscar_indice_servico "$servico")
+
+	if [[ $indice -ge 0 ]]; then
+		# Ajustar os tamanhos dos campos
+		estado_formatado=$(printf "%-*s" "$largura_estado" "$estado_atual")
+		habilitado_formatado=$(printf "%-*s" "$largura_status" "$habilitacao")
+		descricao_formatada=$(printf "%-*s" "$largura_descricao" "$descricao")
+		opcoes[$((indice + 1))]="$estado_formatado$sep$habilitado_formatado$sep$descricao_formatada"
+	fi
+
+}
+
+# Função para ativar ou desativar um serviço
+alternar_servico() {
+	local servico="$1"
+	local status="${servicos[$servico]}"
+
+	if [[ "$status" == *"Rodando"* ]]; then
+		systemctl stop "$servico" && systemctl disable "$servico" && dialog --msgbox "$servico foi desligado e desativado." 6 40
+	else
+		systemctl enable --now "$servico" && dialog --msgbox "$servico foi ativado e iniciado." 6 40
+	fi
+	#listar_servicos  # Atualiza a lista após a alteração
+}
+
+###################################################################################################
+
+[[ ! -e "$dialogRcFile" ]] && sh_create_dialogrc
+sh_ascii_lines
+echo "[INFO] ${yellow}Running...${reset}"
+
+# Inicializar a lista de serviços
+listar_servicos
+menu_dialog

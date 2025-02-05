@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: seg 03 fev 2025 23:12:15 -04
+#  Updated: ter 04 fev 2025 16:31:37 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -41,7 +41,7 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="4.2.03.20250203"
+declare -r _VERSION_="4.2.04.20250204"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
@@ -1395,19 +1395,18 @@ sh_grubinstall() {
 	#	cat << EOF > "$fileconf"
 	cat >"$fileconf" <<EOF
 # Begin /etc/default/grub
-GRUB_DEFAULT=0
+GRUB_DEFAULT=saved
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="${xdistro^}"
-#GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=3 audit=0"
-GRUB_CMDLINE_LINUX_DEFAULT="splash"
+GRUB_TIMEOUT_STYLE=menu
+GRUB_CMDLINE_LINUX_DEFAULT="plymouth.enable=1 loglevel=4 libata.noacpi=1 acpi=force apm=power-off nowatchdog tsc=nowatchdog cryptomgr.notests no_timer_check rcupdate.rcu_expedited=1 nouveau.modeset=1 rw nosoftlockup audit=0 nomce skew_tick=1 intremap=off intel_pstate=active amd_pstate=passive cpuidle.governor=teo split_lock_detect=off clearcpuid=514 transparent_hugepage=never loglevel=3 systemd.show_status=auto rd.udev.log_level=3 apparmor=1 security=apparmor vconsole.font=Uni2-Fixed16 intel_iommu=on tdx=on nvme_load=yes"
 GRUB_CMDLINE_LINUX=""
 GRUB_PRELOAD_MODULES="part_gpt part_msdos lvm"
 GRUB_TIMEOUT_STYLE=menu
 GRUB_TERMINAL_INPUT=console
-GRUB_GFXMODE=auto
+GRUB_GFXMODE=1024x768,auto
 GRUB_GFXPAYLOAD_LINUX=keep
 GRUB_DISABLE_RECOVERY=false
-# End /etc/default/grub
 EOF
 
 	if [[ "$xdistro" = @(mazonos|MAZON) ]]; then
@@ -1428,8 +1427,11 @@ EOF
 		echo "GRUB_DISABLE_OS_PROBER=true" >>"$dir_install/etc/default/grub"
 	fi
 
-	echo "set menu_color_normal=white/blue" >>"$dir_install/boot/grub/grub.cfg"
-	echo "set menu_color_highlight=white/red" >>"$dir_install/boot/grub/grub.cfg"
+  {
+	  echo "set menu_color_normal=white/blue"
+  	echo "set menu_color_highlight=white/red"
+    echo "# End /etc/default/grub"
+  } >>"$dir_install/boot/grub/grub.cfg"
 
 	sh_chroot_job "${cmsg_Instalando[$LC_DEFAULT]} GRUB i386-pc ${cmsg_Em[$LC_DEFAULT]} $_BOOTLOADER" \
 		"grub-install $_BOOTLOADER --target=i386-pc --recheck"
@@ -1452,19 +1454,24 @@ sh_mkefiroaming() {
 	return 0
 }
 
+sh_disable_services() {
+  sh_chroot_job "Disabling service: manjaro-live" "systemctl disable manjaro-live.service" "$err_not_fatal"
+  sh_chroot_job "Masking service: manjaro-live" "systemctl mask manjaro-live.service" "$err_not_fatal"
+}
+
 sh_clean_issue() {
   local fileconf="$dir_install/etc/issue"
-  sh_chroot_job "Removing $fileconf" "rm -f $fileconf" "$err_not_fatal"
+
+  if [[ "$fileconf" ]]; then
+    sh_cmd_job "Removing $fileconf" "rm -f $fileconf" "$err_not_fatal"
+  fi
 }
 
 sh_finishInstall() {
 	if confmulti "*** INSTALL ***" \ "\n$cfinish" \ "\nDeseja Rebootar agorar?"; then
 		sh_stop_bind
 		sh_stop_mount
-		if [[ -n "$iso" ]]; then
-      reboot
-			:
-		fi
+    reboot
 	fi
 	return 0
 }
@@ -3411,6 +3418,39 @@ sh_update_keymap() {
 			FONT="lat2a-16 -m 8859-2"
 			# End /etc/sysconfig/console
 		EOF
+	elif [[ "$xdistro" = @(bigcommunity|communitybig|biglinux) ]]; then
+	  fileconf="$dir_install/etc/vconsole.conf"
+    KEYMAP="${AConfLocale[_KEYMAP]}"
+    KEYMAP_before="${KEYMAP%-*}"
+    KEYMAP_after="${KEYMAP#*-}"
+		{
+      echo "# Written by systemd-localed(8) or systemd-firstboot(1), read by systemd-localed"
+      echo "# and systemd-vconsole-setup(8). Use localectl(1) to update this file."
+		  echo "KEYMAP=$KEYMAP"
+      echo "FONT=Uni2-Fixed16"
+      echo "XKBLAYOUT=$KEYMAP_before"
+      echo "XKBMODEL=$KEYMAP_after"
+    } > "$fileconf"
+
+    LANG="${LOCALE}.UTF-8"
+    {
+      echo "LANG=$LANG"
+      echo "LANGUAGE=$LANG"
+      echo "LC_TYPE=$LANG"
+      echo "LC_NUMERIC=$LANG"
+      echo "LC_TIME=$LANG"
+      echo "LC_COLLATE=$LANG"
+      echo "LC_MONETARY=$LANG"
+      echo "LC_MESSAGES=$LANG"
+      echo "LC_PAPER=$LANG"
+      echo "LC_NAME=$LANG"
+      echo "LC_ADDRESS=$LANG"
+      echo "LC_TELEPHONE=$LANG"
+      echo "LC_MEASUREMENT=$LANG"
+      echo "LC_IDENTIFICATION=$LANG"
+      echo "LC_ALL=$LANG"
+    } > "$dir_install/etc/locale.conf"
+    cp -f "$dir_install/etc/locale.conf" "$dir_install/etc/environment"
 	else
 		fileconf="$dir_install/etc/rc.conf"
 		[[ ! -e "$fileconf" ]] && >|"$fileconf"
@@ -4967,6 +5007,7 @@ sh_install() {
 	sh_update_Xkeymap
 	sh_update_timezone
 	sh_grubinstall || sh_cancelLiveInstall "$@"
+  sh_disable_services
   sh_clean_issue
 	sh_finishInstall
 	zeravar

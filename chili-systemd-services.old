@@ -1,0 +1,239 @@
+#!/usr/bin/env bash
+# -*- coding: utf-8 -*-
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+#
+#  chili-systemd-services
+#  Created: 2025/02/04 - 22:23
+#  Altered: 2025/02/04 - 22:23
+#
+#  Copyright (c) 2025-2025, Vilmar Catafesta <vcatafesta@gmail.com>
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AS IS'' AND ANY EXPRESS OR
+#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
+#export LANGUAGE=pt_BR
+export TEXTDOMAINDIR=/usr/share/locale
+export TEXTDOMAIN=chili-systemd-services
+
+# Definir a variável de controle para restaurar a formatação original
+reset=$(tput sgr0)
+
+# Definir os estilos de texto como variáveis
+bold=$(tput bold)
+underline=$(tput smul)   # Início do sublinhado
+nounderline=$(tput rmul) # Fim do sublinhado
+reverse=$(tput rev)      # Inverte as cores de fundo e texto
+
+# Definir as cores ANSI como variáveis
+black=$(tput bold)$(tput setaf 0)
+red=$(tput bold)$(tput setaf 196)
+green=$(tput bold)$(tput setaf 2)
+yellow=$(tput bold)$(tput setaf 3)
+blue=$(tput setaf 4)
+pink=$(tput setaf 5)
+magenta=$(tput setaf 5)
+cyan=$(tput setaf 6)
+white=$(tput setaf 7)
+gray=$(tput setaf 8)
+orange=$(tput setaf 202)
+purple=$(tput setaf 125)
+violet=$(tput setaf 61)
+light_red=$(tput setaf 9)
+light_green=$(tput setaf 10)
+light_yellow=$(tput setaf 11)
+light_blue=$(tput setaf 12)
+light_magenta=$(tput setaf 13)
+light_cyan=$(tput setaf 14)
+bright_white=$(tput setaf 15)
+
+#debug
+export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset}'
+#set -x
+#set -e
+shopt -s extglob
+
+#system
+declare APP="${0##*/}"
+declare _VERSION_="1.0.0-20250204"
+declare distro="$(uname -n)"
+declare DEPENDENCIES=(tput dialog)
+declare dialogRcFile="$HOME/.dialogrc"
+
+cleanup() {
+	rm -f "$dialogRcFile"
+}
+#trap cleanup EXIT
+
+sh_create_dialogrc() {
+	cat >"$dialogRcFile" <<-EOF
+		use_shadow = OFF
+		use_colors = ON
+		screen_color = (YELLOW,DEFAULT,OFF)
+		dialog_color = (WHITE,DEFAULT,OFF)
+		title_color = (YELLOW,DEFAULT,ON)
+		border_color = (WHITE,DEFAULT,ON)
+		button_active_color = (BLACK,YELLOW,ON)
+		button_inactive_color = (WHITE,DEFAULT,OFF)
+		button_key_active_color = (BLACK,YELLOW,ON)
+		button_key_inactive_color = (RED,DEFAULT,OFF)
+		button_label_active_color = (BLACK,YELLOW,ON)
+		button_label_inactive_color = (WHITE,DEFAULT,ON)
+		inputbox_color = (WHITE,DEFAULT,OFF)
+		inputbox_border_color = (WHITE,DEFAULT,OFF)
+		searchbox_color = (WHITE,DEFAULT,OFF)
+		searchbox_title_color = (YELLOW,DEFAULT,ON)
+		searchbox_border_color = (WHITE,DEFAULT,ON)
+		position_indicator_color = (YELLOW,DEFAULT,ON)
+		menubox_color = (WHITE,DEFAULT,OFF)
+		menubox_border_color = (WHITE,DEFAULT,ON)
+		item_color = (WHITE,DEFAULT,OFF)
+		item_selected_color = (BLACK,YELLOW,ON)
+		tag_color = (YELLOW,DEFAULT,ON)
+		tag_selected_color = (BLACK,YELLOW,ON)
+		tag_key_color = (RED,DEFAULT,OFF)
+		tag_key_selected_color = (RED,YELLOW,ON)
+		check_color = (WHITE,DEFAULT,OFF)
+		check_selected_color = (BLACK,YELLOW,ON)
+		uarrow_color = (YELLOW,DEFAULT,ON)
+		darrow_color = (YELLOW,DEFAULT,ON)
+		itemhelp_color = (WHITE,DEFAULT,OFF)
+		form_active_text_color = (WHITE,DEFAULT,ON)
+		form_text_color = (WHITE,DEFAULT,ON)
+		form_item_readonly_color = (WHITE,DEFAULT,ON)
+		gauge_color = (YELLOW,DEFAULT,ON)
+		border2_color = (WHITE,DEFAULT,ON)
+		inputbox_border2_color = (WHITE,DEFAULT,OFF)
+		searchbox_border2_color = (WHITE,DEFAULT,ON)
+		menubox_border2_color = (WHITE,DEFAULT,ON)
+	EOF
+	export DIALOGRC="$dialogRcFile"
+}
+
+MostraErro() {
+	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
+}
+trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
+
+# Testa se o terminal suporta caracteres gráficos estendidos
+sh_ascii_lines() {
+	#Isso força o dialog a usar caracteres ASCII básicos para as bordas.
+	#if [[ "$LANG" =~ 'UTF-8' ]]; then
+	if [[ "$(printf '\u250C')" =~ "┌" ]]; then
+		export NCURSES_NO_UTF8_ACS=1 # Terminal suporta ACS
+	else
+		export NCURSES_NO_UTF8_ACS=0 # Terminal NÃO suporta ACS
+	fi
+}
+#!/bin/bash
+
+# Verificar se o script está sendo executado como root
+if [ "$EUID" -ne 0 ]; then
+	dialog --msgbox "Este script deve ser executado como root." 6 40
+	exit 1
+fi
+
+###################################################################################################
+
+
+declare -A servicos  # Array associativo para armazenar serviços e estados
+declare -a servicos_ordenados  # Array para manter a ordem alfabética
+ultimo_servico=""  # Último serviço selecionado
+
+listar_servicos() {
+  servicos=()
+  servicos_ordenados=()
+
+  # Obtém todos os serviços e remove colunas desnecessárias
+  mapfile -t todos_servicos < <(systemctl list-unit-files --type=service --no-pager --no-legend | awk '{print $1}' | sort)
+
+  # Obtém os serviços ativos e habilitados com apenas duas chamadas
+  mapfile -t ativos < <(systemctl list-units --type=service --no-pager --no-legend | awk '{print $1}')
+  mapfile -t habilitados < <(systemctl list-unit-files --type=service --state=enabled --no-pager --no-legend | awk '{print $1}')
+
+  for servico in "${todos_servicos[@]}"; do
+    if [[ " ${ativos[*]} " =~ " $servico " ]]; then
+      estado="Rodando"
+    else
+      estado="Parado"
+    fi
+
+    if [[ " ${habilitados[*]} " =~ " $servico " ]]; then
+      enabled_status="Ativado"
+    else
+      enabled_status="Desativado"
+    fi
+
+    servicos["$servico"]="$estado|$enabled_status"
+    servicos_ordenados+=("$servico")
+  done
+}
+
+# Função para exibir o menu e interagir com o usuário
+menu_dialog() {
+  local escolha
+  local opcoes=()
+
+  for servico in "${servicos_ordenados[@]}"; do
+    opcoes+=("$servico" "${servicos[$servico]}")
+  done
+
+  escolha=$(dialog --stdout --default-item "$ultimo_servico" --menu "Escolha um serviço para gerenciar" 20 70 15 "${opcoes[@]}")
+  echo "$escolha"
+}
+
+# Função para alternar o estado de um serviço
+alternar_servico() {
+  local servico="$1"
+  local estado enabled_status
+
+  IFS="|" read -r estado enabled_status <<< "${servicos[$servico]}"
+
+  if [[ "$estado" == "Rodando" ]]; then
+    systemctl stop "$servico" && systemctl disable "$servico"
+    estado="Parado"
+    enabled_status="Desativado"
+    dialog --msgbox "$servico foi desligado e desativado." 6 40
+  else
+    systemctl enable --now "$servico"
+    estado="Rodando"
+    enabled_status="Ativado"
+    dialog --msgbox "$servico foi ativado e iniciado." 6 40
+  fi
+
+  servicos["$servico"]="$estado|$enabled_status"
+}
+
+# Carrega a lista de serviços
+listar_servicos
+
+###################################################################################################
+
+[[ ! -e "$dialogRcFile" ]] && sh_create_dialogrc
+sh_ascii_lines
+
+
+# Loop principal
+while true; do
+  servico=$(menu_dialog)
+  [ -z "$servico" ] && break
+  ultimo_servico="$servico"  # Salva o último serviço selecionado
+  alternar_servico "$servico"
+done
