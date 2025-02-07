@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: ter 04 fev 2025 16:31:37 -04
+#  Updated: qui 06 fev 2025 06:38:45 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -41,10 +41,11 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="4.2.04.20250204"
+declare -r _VERSION_="4.2.06.20250206"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
+declare -i njobs=42
 declare -i LAUTO=1 LINSTALL=0 LCHROOT=0 LBIND=0 LMKPART=0 LEFI=0 LBIOS=1 LMKPARTED=0 LOSPROBER=0 LFDE=0 LVM=0 LFS=0 LPARTITION=0 LTABLE=0
 declare -gA AsUser
 declare -gA Amntpoint
@@ -223,22 +224,71 @@ sh_setEnvironment() {
 
 sh_confDistro() {
 	if [[ "$xdistro" = @(mazonos|MAZON) ]]; then
-		Adistro+=([cdistro]='MazonOs' [chost]='mazonos' [ptcom]='.com' [calias]='mazonos' [cnick]='mazon' [cliveuser]='mazon' [cgroups]='audio,video')
+		Adistro+=([cdistro]='MazonOs'
+		          [chost]='mazonos'
+		          [ptcom]='mazonos.com'
+		          [calias]='mazonos'
+		          [cnick]='mazon'
+		          [cliveuser]='mazon'
+		          [cgroups]='audio,video'
+		          )
 	elif [[ "$xdistro" = @(venom) ]]; then
-		Adistro+=([cdistro]='Venom' [chost]="${xdistro}live" [ptcom]='.com' [calias]="$xdistro" [cnick]="$xdistro" [cliveuser]="$xdistro" [cgroups]='wheel,audio,video,users')
+		Adistro+=([cdistro]='Venom'
+		          [chost]="${xdistro}live"
+		          [ptcom]='venomlinux.org'
+		          [calias]="$xdistro"
+		          [cnick]="$xdistro"
+		          [cliveuser]="$xdistro"
+		          [cgroups]='wheel,audio,video,users'
+		          )
 	elif [[ "$xdistro" = @(mint) ]]; then
-		Adistro+=([cdistro]='Mint' [chost]="${xdistro}live" [ptcom]='.com' [calias]="$xdistro" [cnick]="$xdistro" [cliveuser]="$xdistro" [cgroups]='audio,video,users')
+		Adistro+=([cdistro]='Mint'
+		          [chost]="${xdistro}live"
+		          [ptcom]='linuxmint.com'
+		          [calias]="$xdistro"
+		          [cnick]="$xdistro"
+		          [cliveuser]="$xdistro"
+		          [cgroups]='audio,video,users'
+		          )
 	elif [[ "$xdistro" = @(chili|chililinux) ]]; then
-		Adistro+=([cdistro]='Chili' [chost]="chililinux" [ptcom]='.com' [calias]="chili" [cnick]="chili" [cliveuser]="live" [cgroups]='wheel,audio,video,users')
+		Adistro+=([cdistro]='Chili'
+		          [chost]="chililinux"
+		          [ptcom]='chililinux.com'
+		          [calias]="chili"
+		          [cnick]="chili"
+		          [cliveuser]="live"
+		          [cgroups]='wheel,audio,video,users'
+		          )
   elif [[ "$xdistro" = @(bigcommunity|communitybig) ]]; then
-    Adistro+=([cdistro]='BigCommunity' [chost]="communitybig" [ptcom]='.org' [calias]="bigcommunity" [cnick]="bigcommunity" [cliveuser]="live" [cgroups]='wheel,audio,video,users')
+    Adistro+=([cdistro]='BigCommunity'
+              [chost]="bigcommunity"
+              [ptcom]='communitybig.org'
+              [calias]="bigcommunity"
+              [cnick]="bigcommunity"
+              [cliveuser]="live"
+              [cgroups]='wheel,audio,video,users'
+              )
   elif [[ "$xdistro" = @(biglinux) ]]; then
-    Adistro+=([cdistro]='BigLinux' [chost]="biglinux" [ptcom]='.com.br' [calias]="biglinux" [cnick]="biglinux" [cliveuser]="live" [cgroups]='wheel,audio,video,users')
+    Adistro+=([cdistro]='BigLinux'
+              [chost]="biglinux"
+              [ptcom]='biglinux.com.br'
+              [calias]="biglinux"
+              [cnick]="biglinux"
+              [cliveuser]="live"
+              [cgroups]='wheel,audio,video,users'
+              )
 	else
-		Adistro+=([cdistro]='Unknown' [chost]="linux" [ptcom]='.com' [calias]="linux" [cnick]="linux" [cliveuser]="live" [cgroups]='audio,video,users')
+		Adistro+=([cdistro]='Unknown'
+		          [chost]="linux"
+		          [ptcom]='linuxfoundation.org'
+		          [calias]="linux"
+		          [cnick]="linux"
+		          [cliveuser]="live"
+		          [cgroups]='audio,video,users'
+		          )
 	fi
 	# common vars
-	site="${Adistro[chost]}${Adistro[ptcom]}"
+	site="${Adistro[ptcom]}"
 	xemail="root@$site"
 	chostname="${Adistro[chost]}"
 	ccabec="${Adistro[cdistro]} install ${_VERSION_}"
@@ -520,8 +570,8 @@ sh_chroot_job() {
 }
 
 fmt() {
-	printf "${bold}${yellow}%03d/%03d${reset}" "$ncounter" "$ncounter"
-	return $?
+  printf "${bold}${yellow}%03d/%03d${reset}" "$ncounter" "$njobs"
+  return $?
 }
 
 unfmt() {
@@ -845,10 +895,14 @@ sh_make_user() {
 
 	sh_update_sudoers
 
-	if [[ -d "$dir_install/home/$cliveuser/" ]]; then
-		sh_chroot_job "Adjusting legacy settings pass 2" "cd /home/$cuser; cp -Rpva /home/$cliveuser/. . ; chown $cuser:$cuser /home/$cuser/. -R" "$err_not_fatal" "$err_not_fatal"
-		sh_chroot_job "Deleting live user" "userdel --remove --force $cliveuser" "$err_not_fatal" "$err_not_fatal"
-	fi
+  if [[ -d "$dir_install/home/$cliveuser/" ]]; then
+    if [[ "$cliveuser" != "$cuser" ]]; then
+	   	sh_chroot_job "Adjusting legacy settings pass 2" "cd /home/$cuser; cp -Rpva /home/$cliveuser/. . ; chown $cuser:$cuser /home/$cuser/. -R" "$err_not_fatal" "$err_not_fatal"
+    fi
+  fi
+  if [[ "$cliveuser" != "$cuser" ]]; then
+    sh_chroot_job "Deleting live user" "userdel --remove --force $cliveuser" "$err_not_fatal" "$err_not_fatal"
+  fi
 }
 
 sh_update_sudoers() {
@@ -1399,7 +1453,7 @@ GRUB_DEFAULT=saved
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="${xdistro^}"
 GRUB_TIMEOUT_STYLE=menu
-GRUB_CMDLINE_LINUX_DEFAULT="plymouth.enable=1 loglevel=4 libata.noacpi=1 acpi=force apm=power-off nowatchdog tsc=nowatchdog cryptomgr.notests no_timer_check rcupdate.rcu_expedited=1 nouveau.modeset=1 rw nosoftlockup audit=0 nomce skew_tick=1 intremap=off intel_pstate=active amd_pstate=passive cpuidle.governor=teo split_lock_detect=off clearcpuid=514 transparent_hugepage=never loglevel=3 systemd.show_status=auto rd.udev.log_level=3 apparmor=1 security=apparmor vconsole.font=Uni2-Fixed16 intel_iommu=on tdx=on nvme_load=yes"
+GRUB_CMDLINE_LINUX_DEFAULT="loglevel=4 libata.noacpi=1 acpi=force apm=power-off nowatchdog tsc=nowatchdog cryptomgr.notests no_timer_check rcupdate.rcu_expedited=1 nouveau.modeset=1 rw nosoftlockup audit=0 nomce skew_tick=1 intremap=off intel_pstate=active amd_pstate=passive cpuidle.governor=teo split_lock_detect=off clearcpuid=514 transparent_hugepage=never loglevel=3 systemd.show_status=auto rd.udev.log_level=3 apparmor=1 security=apparmor vconsole.font=Uni2-Fixed16 intel_iommu=on tdx=on nvme_load=yes"
 GRUB_CMDLINE_LINUX=""
 GRUB_PRELOAD_MODULES="part_gpt part_msdos lvm"
 GRUB_TIMEOUT_STYLE=menu
@@ -1455,20 +1509,40 @@ sh_mkefiroaming() {
 }
 
 sh_disable_services() {
-  sh_chroot_job "Disabling service: manjaro-live" "systemctl disable manjaro-live.service" "$err_not_fatal"
-  sh_chroot_job "Masking service: manjaro-live" "systemctl mask manjaro-live.service" "$err_not_fatal"
+  local masking=('manjaro-live' 'plymouth-start')
+  local services=('manjaro-live'
+                  'avahi-daemon'
+                  'community-livecd-key'
+                  'cups'
+                  'docker'
+                  'nginx'
+                  'vboxservice'
+                  'plymouth-start'
+                  'plymouth-quit'
+                  'plymouth-quit-wait'
+                  'plymouth-read-write'
+                  'plymouth-reboot'
+                  'plymouth-show-log-comm'
+                  'sddm-plymouth')
+
+  for service in ${services[@]}; do
+    sh_chroot_job "Disabling service: $service" "systemctl disable ${service}.service" "$err_not_fatal"
+  done
+  for mask in ${masking[@]}; do
+    sh_chroot_job "Masking service: $mask" "systemctl mask ${mask}.service" "$err_not_fatal"
+  done
 }
 
 sh_clean_issue() {
   local fileconf="$dir_install/etc/issue"
 
   if [[ "$fileconf" ]]; then
-    sh_cmd_job "Removing $fileconf" "rm -f $fileconf" "$err_not_fatal"
+    sh_cmd_job "Removing $fileconf" "mv -f $fileconf $fileconf.bak" "$err_not_fatal"
   fi
 }
 
 sh_finishInstall() {
-	if confmulti "*** INSTALL ***" \ "\n$cfinish" \ "\nDeseja Rebootar agorar?"; then
+	if confmulti "*** INSTALL ***" \ "\n$cfinish" \ "\nDeseja Reiniciar agorar?"; then
 		sh_stop_bind
 		sh_stop_mount
     reboot
@@ -2437,15 +2511,15 @@ sh_make_fs() {
 			last_msg="${cmsg_FormatandoParticao[$LC_DEFAULT]} ${_PART} FS ${fstype,,}"
 			msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
 			declare -A fsparms=(
-				[ext2]="-F   -L VOID"
-				[ext3]="-F   -L VOID"
-				[ext4]="-F   -L VOID"
-				[btrfs]="-f   -L VOID"
-				[f2fs]="-f   -l VOID"
-				[xfs]="-f   -L VOID"
-				[jfs]="-f   -L VOID"
+				[ext2]="-F -L ROOT"
+				[ext3]="-F -L ROOT"
+				[ext4]="-F -L ROOT"
+				[btrfs]="-f -L ROOT"
+				[f2fs]="-f -l ROOT"
+				[xfs]="-f -L ROOT"
+				[jfs]="-f -L ROOT"
 				[vfat]="-F32 -n EFI"
-				[reiserfs]="-f   -l VOID"
+				[reiserfs]="-f -l ROOT"
 			)
 			if [[ "$fstype" = "swap" ]]; then
 				mkswap "$_PART" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
@@ -3496,7 +3570,7 @@ pt_BR() {
 	cmsg021='Formatar partição'
 	yeslabel='Sim'
 	nolabel='Não'
-	cfinish="Instalação completa!\nReboot para iniciar com $cdistro Linux.\n\nBugs? $xemail"
+	cfinish="Instalação finalizada!\nReboot para iniciar com $cdistro Linux.\n\nBugs? $xemail"
 	cgrubsuccess='GRUB instalado com sucesso!'
 	ccancelgrub='Instalação do GRUB cancelada!'
 	cmsgInstalar_GRUB='Instalar GRUB'
@@ -3905,7 +3979,7 @@ sh_setLanguage() {
 			"Définir le gestionnaire de fenêtres"
 			"Definir administrador de ventanas"
 			"Definisci gestore di finestre")'
-		'cmsg_descWifi=("Definir rede e senha wifi (opcional)"
+		'cmsg_descWifi=("Definir rede, senha e conectar wifi (opcional)"
 			"Set wifi network and password (optional)"
 			"Stellen Sie das WLAN-Netzwerk und das Passwort ein (optional)"
 			"Définir le réseau wifi et le mot de passe (optionnel)"
@@ -5118,12 +5192,12 @@ sh_main_menu() {
 			FileSystem "${cmsg_descFileSystem[LC_DEFAULT]}" \
 			"${cmsg_Teclado[$LC_DEFAULT]}" "${cmsg_descTeclado[LC_DEFAULT]}" \
 			"Timezone" "${cmsg_descTimezone[LC_DEFAULT]}" \
+			"Wifi" "${cmsg_descWifi[LC_DEFAULT]}" \
 			"Extra" "${cmsg_descExtra[LC_DEFAULT]}" \
 			"${cmsg_Instalar[$LC_DEFAULT]}" "${cmsg_descInstalar[$LC_DEFAULT]}" \
 			"Fde" "Full-Disk Encryption + Lvm (optional)" \
 			"Lvm" "Logical Volume Management (optional)" \
 			"Vg" "Delete/Clear Volume Group (VG) from LVM (optional)" \
-			"Wifi" "${cmsg_descWifi[LC_DEFAULT]}" \
 			"Chroot" "$cinitbind" \
 			"Clonedisk" "Util Clonedisk")
 
@@ -5148,14 +5222,14 @@ sh_main_menu() {
 		"FileSystem") sh_choosePartition && [ -n "$LPARTITION" ] && DEFITEM="${cmsg_Teclado[$LC_DEFAULT]}" ;;
 		"${cmsg_Teclado[$LC_DEFAULT]}") sh_chooseKeymap && [ -n "$LKEYMAP" ] && DEFITEM="Timezone" ;;
 		"Timezone") sh_chooseTimezone && [ -n "$LTIMEZONE" ] && DEFITEM="Extra" ;;
-		"Extra") sh_confadduser && [ -n "$LEXTRA" ] && DEFITEM="${cmsg_Instalar[$LC_DEFAULT]}" ;;
+		"Extra") sh_confadduser && [ -n "$LEXTRA" ] && DEFITEM="Wifi" ;;
+		"Wifi") bash chili-wifi-config && DEFITEM="${cmsg_Instalar[$LC_DEFAULT]}" ;;
 		"${cmsg_Instalar[$LC_DEFAULT]}") sh_install ;;
 		"Fde") sh_confLvm && [ -n "$LFDE" ] && DEFITEM="${cmsg_Instalar[$LC_DEFAULT]}" ;;
 		"Lvm") sh_confLvm && [ -n "$LVM" ] && DEFITEM="${cmsg_Instalar[$LC_DEFAULT]}" ;;
 		"Vg") sh_chooseVg ;;
-		"Wifi") sh_confWifi && [ -n "$LWIFI" ] && DEFITEM="${cmsg_Instalar[$LC_DEFAULT]}" ;;
 		"Chroot") sh_dryrun ;;
-		"Clonedisk") exec chili-clonedisk ;;
+		"Clonedisk") bash chili-clonedisk ;;
 		esac
 	done
 }
