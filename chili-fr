@@ -329,10 +329,10 @@ sh_checkDependencies() {
 	done
 
 	aBlock_files+=('/usr/share/edk2/x64/OVMF_VARS.4m.fd')
-	aBlock_files+=('/archlive/qemu/hda.img')
-	aBlock_files+=('/archlive/qemu/hdb.img')
-	aBlock_files+=('/archlive/qemu/hdc.img')
-	aBlock_files+=('/archlive/qemu/hdd.img')
+	#aBlock_files+=('/archlive/qemu/hda.img')
+	#aBlock_files+=('/archlive/qemu/hdb.img')
+	#aBlock_files+=('/archlive/qemu/hdc.img')
+	#aBlock_files+=('/archlive/qemu/hdd.img')
 	for d in "${aBlock_files[@]}"; do
 		if [[ ! -e "$d" ]]; then
 			log_err "Check: ${red}ERROR${reset}: $(gettext "Não foi possível encontrar o arquivo") ${cyan}'$d'${reset}"

@@ -5,6 +5,7 @@
 #  chili-wifi-config
 #  Created: 2025/02/06 - 04:53
 #  Altered: 2025/02/06 - 04:53
+#  Updated: sex 07 fev 2025 13:53:54 -04
 #
 #  Copyright (c) 2025-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -72,12 +73,13 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="1.0.0-20250206"
+declare APPDESC="Wrapper para o NetworkManager Cli"
+declare _VERSION_="1.2.07-20250207"
 declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput dialog)
 declare dialogRcFile="$HOME/.dialogrc"
 declare -g sep="\xe2\x94\x82"
-declare ccabec="${APP} - v${_VERSION_} - ${APPDESC} - Configuração Wi-Fi"
+declare ccabec="${APP} - v${_VERSION_} - ${APPDESC}"
 
 # flag dialog exit status codes
 : "${D_OK=0}"
@@ -100,50 +102,50 @@ cleanup() {
 #trap cleanup EXIT
 
 sh_create_dialogrc() {
-	cat >"$dialogRcFile" <<-EOF
-		screen_color = (white,black,off)
-		dialog_color = (white,black,off)
-		title_color = (cyan,black,on)
-		border_color = dialog_color
-		shadow_color = (black,black,on)
-		button_inactive_color = dialog_color
-		button_key_inactive_color = dialog_color
-		button_label_inactive_color = dialog_color
-		button_active_color = (white,cyan,on)
-		button_key_active_color = button_active_color
-		button_label_active_color = (black,cyan,on)
-		tag_key_selected_color = (white,cyan,on)
-		item_selected_color = tag_key_selected_color
-		form_text_color = (black,green,on)
-		form_item_readonly_color = (green,black,on)
-		itemhelp_color = (white,cyan,off)
-		inputbox_color = dialog_color
-		inputbox_border_color = dialog_color
-		searchbox_color = dialog_color
-		searchbox_title_color = title_color
-		searchbox_border_color = border_color
-		position_indicator_color = title_color
-		menubox_color = dialog_color
-		menubox_border_color = border_color
-		item_color = dialog_color
-		tag_color = title_color
-		tag_selected_color = button_label_active_color
-		tag_key_color = button_key_inactive_color
-		check_color = dialog_color
-		check_selected_color = button_active_color
-		uarrow_color = screen_color
-		darrow_color = screen_color
-		form_active_text_color = button_active_color
-		gauge_color = title_color
-		border2_color = dialog_color
-		searchbox_border2_color = dialog_color
-		menubox_border2_color = dialog_color
-		separate_widget = ''
-		tab_len = 0
-		visit_items = off
-		use_shadow = off
-		use_colors = on
-	EOF
+	cat >"$dialogRcFile" <<EOF
+screen_color = (white,black,off)
+dialog_color = (white,black,off)
+title_color = (cyan,black,on)
+border_color = dialog_color
+shadow_color = (black,black,on)
+button_inactive_color = dialog_color
+button_key_inactive_color = dialog_color
+button_label_inactive_color = dialog_color
+button_active_color = (white,cyan,on)
+button_key_active_color = button_active_color
+button_label_active_color = (black,cyan,on)
+tag_key_selected_color = (white,cyan,on)
+item_selected_color = tag_key_selected_color
+form_text_color = (black,green,on)
+form_item_readonly_color = (green,black,on)
+itemhelp_color = (white,cyan,off)
+inputbox_color = dialog_color
+inputbox_border_color = dialog_color
+searchbox_color = dialog_color
+searchbox_title_color = title_color
+searchbox_border_color = border_color
+position_indicator_color = title_color
+menubox_color = dialog_color
+menubox_border_color = border_color
+item_color = dialog_color
+tag_color = title_color
+tag_selected_color = button_label_active_color
+tag_key_color = button_key_inactive_color
+check_color = dialog_color
+check_selected_color = button_active_color
+uarrow_color = screen_color
+darrow_color = screen_color
+form_active_text_color = button_active_color
+gauge_color = title_color
+border2_color = dialog_color
+searchbox_border2_color = dialog_color
+menubox_border2_color = dialog_color
+separate_widget = ''
+tab_len = 0
+visit_items = off
+use_shadow = off
+use_colors = on
+EOF
 	export DIALOGRC="$dialogRcFile"
 }
 
@@ -290,13 +292,14 @@ get_wifi_interface() {
 
 	if [[ -z "$interfaces" ]]; then
 		dialog \
+			--backtitle "$ccabec" \
 			--msgbox "Nenhuma interface wifi encontrada. Saindo..." \
 			6 40
 		exit 1
 	fi
 	# Exibe as interfaces em um menu usando o dialog
 	interface=$(dialog \
-		--backtitle "Configuração Wi-Fi" \
+		--backtitle "$ccabec" \
 		--title "Selecione a Interface de Rede" \
 		--menu "Escolha a interface de rede" \
 		15 50 4 \
@@ -305,6 +308,7 @@ get_wifi_interface() {
 	# Verifica se o usuário selecionou uma interface
 	if [ -z "$interface" ]; then
 		dialog \
+			--backtitle "$ccabec" \
 			--msgbox "Nenhuma interface selecionada. Saindo..." \
 			6 40
 		exit 1
@@ -331,7 +335,7 @@ connect_wifi() {
 
 	# Solicita ao usuário para selecionar a rede Wi-Fi com o dialog
 	network=$(dialog \
-		--backtitle "Configuração Wi-Fi" \
+		--backtitle "$ccabec" \
 		--title "Selecione a Rede Wi-Fi" \
 		--menu "Escolha a rede Wi-Fi" \
 		15 50 4 \
@@ -339,13 +343,15 @@ connect_wifi() {
 
 	# Verifica se o usuário selecionou uma rede
 	if [ -z "$network" ]; then
-		dialog --msgbox "Nenhuma rede selecionada. Saindo..." 6 40
+		dialog \
+			--backtitle "$ccabec" \
+			--msgbox "Nenhuma rede selecionada. Saindo..." 6 40
 		exit 1
 	fi
 
 	# Solicita ao usuário a senha da rede Wi-Fi
 	password=$(dialog \
-		--backtitle "Configuração Wi-Fi" \
+		--backtitle "$ccabec" \
 		--title "Senha da Rede Wi-Fi" \
 		--insecure \
 		--passwordbox "Digite a senha para a rede Wi-Fi '$network'" \
@@ -372,9 +378,13 @@ connect_wifi() {
 
 	# Verifica se a conexão foi bem-sucedida
 	if [ $? -eq 0 ]; then
-		dialog --msgbox "Conectado com sucesso à rede Wi-Fi '$network'!" 6 40
+		dialog \
+			--backtitle "$ccabec" \
+			--msgbox "Conectado com sucesso à rede Wi-Fi '$network'!" 6 40
 	else
-		dialog --msgbox "Falha ao conectar à rede Wi-Fi '$network'. Verifique a senha e tente novamente." 6 40
+		dialog \
+			--backtitle "$ccabec" \
+			--msgbox "Falha ao conectar à rede Wi-Fi '$network'. Verifique a senha e tente novamente." 6 40
 	fi
 }
 
@@ -388,7 +398,7 @@ main() {
 
 	# Exibe uma mensagem inicial
 	dialog \
-		--backtitle "Configuração Wi-Fi" \
+		--backtitle "$ccabec" \
 		--title "Configuração Wi-Fi" \
 		--msgbox "Bem-vindo ao assistente de configuração de Wi-Fi!" \
 		6 40
@@ -405,7 +415,9 @@ main() {
 
 	# Verifica se há redes Wi-Fi disponíveis
 	if [ -z "$networks" ]; then
-		dialog --msgbox "Nenhuma rede Wi-Fi encontrada. Saindo..." 6 40
+		dialog \
+			--backtitle "$ccabec" \
+			--msgbox "Nenhuma rede Wi-Fi encontrada. Saindo..." 6 40
 		exit 1
 	fi
 
@@ -413,6 +425,24 @@ main() {
 	connect_wifi
 }
 
+sh_check_connection() {
+  # Obtém a interface conectada
+  interface=$(nmcli -t -f DEVICE,STATE d | grep "connected" | cut -d: -f1 | head -n1)
+
+  # Se houver uma interface conectada, exibe os detalhes e pergunta se deseja prosseguir
+  if [[ -n "$interface" ]]; then
+    ip_address=$(ip -4 addr show "$interface" | awk '/inet / {print $2}' | cut -d/ -f1)
+    gateway=$(ip route | awk '/default/ {print $3}')
+
+    dialog \
+      --backtitle "$ccabec" \
+      --yesno "Você já está conectado à internet!\n\nInterface: $interface\nIP: $ip_address\nRota padrão: $gateway\n\nDeseja continuar mesmo assim?" 12 60
+    if [ $? -ne 0 ]; then
+      exit 0
+    fi
+  fi
+}
+
 sh_create_dialogrc
-# Executa a função principal
+sh_check_connection
 main
