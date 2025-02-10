@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: seg 10 fev 2025 03:37:03 UTC
+#  Updated: sex 07 fev 2025 13:27:53 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -38,28 +38,15 @@
 export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 #set -x
 #set -e
-shopt -s extglob  # Habilita padrões estendidos
+shopt -s extglob
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="4.2.10.20250210"
+declare -r _VERSION_="4.2.07.20250207"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
-declare -i njobs=50
-declare -i LAUTO=1
-declare -i LINSTALL=0
-declare -i LCHROOT=0
-declare -i LBIND=0
-declare -i LMKPART=0
-declare -i LEFI=0
-declare -i LBIOS=1
-declare -i LMKPARTED=0
-declare -i LOSPROBER=0
-declare -i LFDE=0
-declare -i LVM=0
-declare -i LFS=0
-declare -i LPARTITION=0
-declare -i LTABLE=0
+declare -i njobs=42
+declare -i LAUTO=1 LINSTALL=0 LCHROOT=0 LBIND=0 LMKPART=0 LEFI=0 LBIOS=1 LMKPARTED=0 LOSPROBER=0 LFDE=0 LVM=0 LFS=0 LPARTITION=0 LTABLE=0
 declare -gA AsUser
 declare -gA Amntpoint
 declare -gA AmntpointFDE
@@ -69,12 +56,12 @@ declare -gA AARRAY_DSK_DEVICES
 declare -gA AARRAY_PART_DEVICES
 declare -gA AARRAY_VG_DEVICES
 declare -gA AConfFde=([partition]='' [vg]='VG' [passphrase]='vg' [verifypassphrase]='vg' [lvroot]='25%' [lvswap]='2%' [lvvar]='' [lvhome]='100%')
-declare -gA AConfDisk=([_DEVICE]='/dev/sdX' [_FILESYSTEM]='btrfs' [_DISKTABLE]='' [_BOOTLOADER]='/dev/sdX' [_OSPROBER]=0)
+declare -gA AConfDisk=([_DEVICE]='/dev/sdX' [_FILESYSTEM]='ext4' [_DISKTABLE]='' [_BOOTLOADER]='/dev/sdX' [_OSPROBER]=0)
 declare -gA AConfLocale=([_TIMEZONE]='America/Sao_Paulo' [_KEYMAP]='br-abnt2' [_CLOCK]='UTC')
 declare -gA AConfWifi=([_NETWORK]='wifi_ssid' [_PASSWORD]='wifi_password')
 declare -gA Alanguage=([pt_BR]=0 [en_US]=1 [de_DE]=2 [fr_FR]=3 [es_ES]=4 [it_IT]=5)
 declare -gA Alocale=([0]=pt_BR [1]=en_US [2]=de_DE [3]=fr_FR [4]=es_ES [5]=it_IT)
-declare -r DEPENDENCIES=(awk cat cut dialog dd grep lsblk parted sed sfdisk tee tput pv whiptail which tr)
+readonly DEPENDENCIES=(awk cat cut dialog dd grep lsblk parted sed sfdisk tee tput pv whiptail which)
 declare dialogRcFile="$HOME/.dialogrc"
 
 cleanup() {
@@ -311,7 +298,6 @@ sh_confDistro() {
 		          )
 	fi
 	# common vars
-	cdistro="${Adistro[cdistro]}"
 	site="${Adistro[ptcom]}"
 	xemail="${Adistro[contato]}"
 	chostname="${Adistro[chost]}"
@@ -321,18 +307,30 @@ sh_confDistro() {
 	url_release="http://${site}/releases"
 	url_distro="http://${site}/releases/"
 
-  sh_setUser
+	sh_setUser
 }
 
 sh_setUser() {
-  if [[ ! "$xdistro" =~ (bigcommunity|communitybig|biglinux) ]]; then
-  	AsUser[cuser]=$(sh_getusernameloggeduserbyid)
-  	AsUser[cfullname]=$(sh_getfullusernameloggeduserbyid)
-  	AsUser[cpass]="${Adistro[cliveuser]}"
-  	AsUser[cpassroot]=root
-  fi
-  AsUser[cgroups]="${Adistro[cgroups]}"
-  AsUser[chostname]="$chostname"
+	AsUser[cuser]=$(sh_getusernameloggeduserbyid)
+	AsUser[cfullname]=$(sh_getfullusernameloggeduserbyid)
+	AsUser[cpass]="${Adistro[cliveuser]}"
+	AsUser[cpassroot]=root
+	AsUser[chostname]="$chostname"
+	AsUser[cgroups]="${Adistro[cgroups]}"
+
+	#	AsUser[cuser]=${AsUser[cuser]:-${AsUser[cuser]:-$(sh_getusernameloggeduserbyid)}}
+	#	AsUser[cfullname]=${AsUser[cfullname]:-${AsUser[cfullname]:-$(sh_getfullusernameloggeduserbyid)}}
+	#	AsUser[cpass]=${AsUser[cpass]:-${AsUser[cpass]:-$cliveuser}}
+	#	AsUser[cpassroot]=${AsUser[cpassroot]:-${AsUser[cpassroot]:-root}}
+	#	AsUser[chostname]=${AsUser[chostname]:-${AsUser[chostname]:-"$chostname"}}
+	#	AsUser[cgroups]=${AsUser[cgroups]:-${AsUser[cgroups]:-"$cgroups"}}
+
+	#	[[ -v AsUser[cuser]     && (-z ${AsUser[cuser]}     || ${#AsUser[cuser]}     -eq 0) ]] && AsUser[cuser]=$(sh_getusernameloggeduserbyid)
+	#	[[ -v AsUser[cfullname] && (-z ${AsUser[cfullname]} || ${#AsUser[cfullname]} -eq 0) ]] && AsUser[cfullname]=$(sh_getfullusernameloggeduserbyid)
+	#	[[ -v AsUser[cpass]     && (-z ${AsUser[cpass]}     || ${#AsUser[cpass]}     -eq 0) ]] && AsUser[cpass]="$cliveuser"
+	#	[[ -v AsUser[cpassroot] && (-z ${AsUser[cpassroot]} || ${#AsUser[cpassroot]} -eq 0) ]] && AsUser[cpassroot]=root
+	#	[[ -v AsUser[chostname] && (-z ${AsUser[chostname]} || ${#AsUser[chostname]} -eq 0) ]] && AsUser[chostname]="$chostname"
+	#	[[ -v AsUser[cgroups]   && (-z ${AsUser[cgroups]}   || ${#AsUser[cgroups]}   -eq 0) ]] && AsUser[cgroups]="$cgroups"
 }
 
 sh_touchConf() {
@@ -400,7 +398,7 @@ sh_loadSavedConfig() {
 	else
 		die "${cmsg_falhaAbertura[$LC_DEFAULT]} $app_conf!"
 	fi
-  sh_setUser
+	sh_setUser
 }
 
 sh_getfullusernameloggeduser() {
@@ -625,12 +623,9 @@ log_success_msg() {
 }
 
 timespec() {
-  local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
-  local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
-
-#	STAMP="$(date +"%b %d %T %:z") $(hostname)"
-	STAMP="$(date +"%b %d %T %:z") [$caller_function][$caller_line]"
-  echo "$STAMP"
+	STAMP="$(date +"%b %d %T %:z") $(hostname)"
+	echo "$STAMP"
+	return 0
 }
 
 msg() {
@@ -679,11 +674,11 @@ log_msg() {
 	fi
 }
 
-log_exec() {
-  {
-    echo "[${FUNCNAME[1]:-shell}:${BASH_LINENO[0]:-unknown}] Executando: $*"
-    "$@" 2>&1
-  } | tee -i -a "$BOOTLOG" >"$LOGGER"
+log_msgOLD() {
+	if ! ((quiet)); then
+		echo -e "${DOTPREFIX}${*}"
+	fi
+	return 0
 }
 
 mensagem() {
@@ -874,7 +869,7 @@ confmulti() {
 		--yes-label "$yeslabel" \
 		--no-label "$nolabel" \
 		--yesno "$*" \
-		15 60
+		10 60
 	nchoice=$?
 	return $nchoice
 }
@@ -1002,10 +997,10 @@ sh_execcopia() {
 			${DIALOG} --colors \
 				--title $TITLE \
 				--gauge "$MSG           							\nFalta ${RED}${REVERSE}$((100 - PERCENTAGEM))%${RESET} para completar a tarefa \Zb\Z1${PONT:nval:1}\ZB\Zn \
-           							\n\nDestino    : ${YELLOW}${REVERSE}${AConfDisk[_DEVICE]}$dir_install${RESET}
+           							\n\nDestino    : ${BLUE}${REVERSE}${AConfDisk[_DEVICE]}$dir_install${RESET}
            							\nDisponivel : ${DISPONIVEL}MB\
            							\nTotal      :	${TOTALGB}MB\
-           							\nCopiado    : ${GREEN}${REVERSE}${COPIADOMB}MB${RESET}\
+           							\nCopiado    : ${BLUE}${REVERSE}${COPIADOMB}MB${RESET}\
            							\nArquivo    :	${LASTFILE}\
            							\n" 13 130 0 <<<$PERCENTAGEM
 			((nval++))
@@ -1013,6 +1008,73 @@ sh_execcopia() {
 		done
 	)
 	return 0
+}
+
+sh_execcopiaOLD() {
+	ORIGEM="$MEDIUM/"
+	DESTINO="$dir_install/"
+	DEST="$dir_install"
+
+	#	sizeof()    { find $1 -type f 2> /dev/null | wc -l; }
+	sizeof() { du -s "$1" 2>/dev/null | cut -f1; }
+	running() { ps "$1" | grep "$1" >/dev/null; }
+
+	TITLE="INSTALL"
+	MSG="Aguarde, instalando... if=$ORIGEM of=$DESTINO"
+	INTERVALO=0.2
+	#	PORCENTO=0
+	DIR_DESTINO="$DESTINO/${ORIGEM##*/}"
+	MSG=$(eval echo "$MSG")
+	mensagem "Aguarde, computando arquivos para instalar"
+	#	TOTAL=$(unsquashfs -ll "$LIVE_DIR" | awk '{n+=$3} END {print n}')
+	#	TOTAL=$((TOTAL/1024))
+	#	TOTALGB=$((TOTAL/1024))
+	TOTAL=$(sizeof "$ORIGEM")
+	TOTALGB=$((TOTAL / 1024))
+	DISPONIVEL=$(df | grep "${DEST}" | awk '{print $4}')
+	DISPONIVEL=$((DISPONIVEL / 1024))
+
+	if ((DISPONIVEL < TOTALGB)); then
+		if ! confmulti "*** WARNING ***" \
+			"\nTamanho da partição destino é menor que o necessário\n" \
+			"\nPartição destino   : ${part}" \
+			"\nTamanho disponível : ${DISPONIVEL}G" \
+			"\nTamanho necessário : ${TOTALGB}G" \
+			"\n\nSistema destino poderá não funcionar, continuar?"; then
+			sh_stop_bind
+			sh_stop_mount
+			sh_main_menu "$@"
+		fi
+	fi
+
+	log="/tmp/${_APP_}.log"
+	[ -e "$log" ] && rm -f "$log"
+
+	#	cp -rap $ORIGEM/* $DESTINO >$log &
+	#	CPPID=$!
+
+	rsync -crav "$ORIGEM" "$DESTINO" 1>&2 >"$log" &
+	export CPPID=$!
+
+	#rsync -cra $ORIGEM $DESTINO &
+	#CPPID=$!
+
+	#  trap sh_trapErro 2 15
+	#trap "kill $CPPID" 2 15
+
+	(
+		while running "$CPPID"; do
+			COPIADO=$(sizeof "$DIR_DESTINO")
+			PORCENTAGEM=$((COPIADO * 100 / TOTAL))
+			COPIADOMB=$((COPIADO / 1024))
+			LASTFILE=$(tail -n1 "$log")
+			[[ "$PORCENTAGEM" -gt 100 ]] && PORCENTAGEM=100
+			#          echo "$PORCENTAGEM% - $ORIGEM - $COPIADO - $DIR_DESTINO" >> $log
+			#          ${DIALOG} --infobox "Percentual completo: $PORCENTAGEM\nBytes copiado: $COPIADO" 21 80
+			${DIALOG} --colors --title "$TITLE" --gauge "\n$MSG\n\nDestino    : ${part}\nDisponivel : ${DISPONIVEL}MB\nTotal      : ${TOTALGB}MB\nCopiado    : ${COPIADOMB}MB\nArquivo    : ${LASTFILE}\n\n\n" 13 130 0 <<<$PORCENTAGEM
+			sleep "$INTERVALO"
+		done
+	)
 }
 
 sh_mk_working_dir() {
@@ -1027,7 +1089,7 @@ sh_mk_working_dir() {
 	last_msg="${cmsg_CriandoDiretorios[$LC_DEFAULT]} $dir_install"
 	msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
 	for cdir in "${adir[@]}"; do
-		[[ -d "$cdir" ]] || log_exec mkdir -p "$cdir"
+		[[ -d "$cdir" ]] || mkdir -p "$cdir"
 	done
 	evaluate_retval "$?"
 }
@@ -1039,28 +1101,14 @@ sh_mount_fs() {
 	local fstype
 
 	if ! ((LVM)); then
-    log_exec mkdir -p $dir_install
 		for i in "${!Amntpoint[@]}"; do
 			_part="$i"
 			mntpoint="$(sh_splitarray "${Amntpoint[$i]}" 1)"
-			fstype="$(sh_splitarray "${Amntpoint[$i]}" 2)"
-
 			if [[ -n "$mntpoint" && "$mntpoint" = "/" ]]; then
 				last_msg="${cmsg_MontandoParticao[$LC_DEFAULT]} $_part ($mntpoint) ${cmsg_Em[$LC_DEFAULT]} $dir_install"
 				msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
-  			if [[ -n "$mntpoint" && "$mntpoint" = "/" ]]; then
-    			if [[ "$fstype" = "btrfs" ]]; then
-            log_exec mount -o subvol=@       $_part $dir_install
-            log_exec mkdir -p $dir_install/home
-            log_exec mkdir -p $dir_install/var/cache
-            log_exec mkdir -p $dir_install/var/log
-            log_exec mount -o subvol=@home   $_part $dir_install/home
-            log_exec mount -o subvol=@cache  $_part $dir_install/var/cache
-            log_exec mount -o subvol=@log    $_part $dir_install/var/log
-          else
-    				log_exec mount "$_part" "$dir_install"
-          fi
-        fi
+				mkdir -p "$dir_install"
+				mount "$_part" "$dir_install"
 				evaluate_retval "$?"
 				break
 			fi
@@ -1076,10 +1124,10 @@ sh_mount_fs() {
 			lvunit="${size: -1}"
 
 			if [[ -n "$mntpoint" && "$mntpoint" = "/" ]]; then
-				log_exec mkdir -p "$dir_install${mntpoint}"
+				mkdir -p "$dir_install${mntpoint}"
 				last_msg="${cmsg_MontandoParticao[$LC_DEFAULT]} ${_part} ($dir_install) ${cmsg_Em[$LC_DEFAULT]} $dir_install${mntpoint}"
 				msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
-				log_exec mount "${_part}" "$dir_install${mntpoint}"
+				mount "${_part}" "$dir_install${mntpoint}"
 				evaluate_retval "$?"
 				break
 			fi
@@ -1096,33 +1144,32 @@ sh_mount_fs() {
 
 			[[ -n "$mntpoint" && "$mntpoint" = "/" || "$fstype" = "swap" ]] && continue
 
-			log_exec mkdir -p "$dir_install${mntpoint}"
+			mkdir -p "$dir_install${mntpoint}"
 			last_msg="${cmsg_MontandoParticao[$LC_DEFAULT]} ${_part} ($dir_install) ${cmsg_Em[$LC_DEFAULT]} $dir_install${mntpoint}"
 			msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
-			log_exec mount "${_part}" "$dir_install${mntpoint}"
+			mount "${_part}" "$dir_install${mntpoint}"
 			evaluate_retval "$?"
 		done
 	fi
 
-#	for i in "${!Amntpoint[@]}"; do
-#		_part="$i"
-#		mntpoint="$(sh_splitarray "${Amntpoint[$i]}" 1)"
-#		fstype="$(sh_splitarray "${Amntpoint[$i]}" 2)"
-#		if [[ -n "$mntpoint" && "$mntpoint" = "/" ]]; then
-#			continue
-#		fi
-#		if [[ "$fstype" = "swap" ]]; then
-#			continue
-#		fi
-#		if [[ -n "$mntpoint" ]]; then
-#			last_msg="${cmsg_MontandoParticao[$LC_DEFAULT]} $_part ($mntpoint) ${cmsg_Em[$LC_DEFAULT]} $dir_install$mntpoint"
-#			msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
-#			log_exec mkdir -p "$dir_install${mntpoint}"
-#			log_exec mount "$_part" "$dir_install${mntpoint}"
-#			evaluate_retval "$?"
-#		fi
-#	done
-
+	for i in "${!Amntpoint[@]}"; do
+		_part="$i"
+		mntpoint="$(sh_splitarray "${Amntpoint[$i]}" 1)"
+		fstype="$(sh_splitarray "${Amntpoint[$i]}" 2)"
+		if [[ -n "$mntpoint" && "$mntpoint" = "/" ]]; then
+			continue
+		fi
+		if [[ "$fstype" = "swap" ]]; then
+			continue
+		fi
+		if [[ -n "$mntpoint" ]]; then
+			last_msg="${cmsg_MontandoParticao[$LC_DEFAULT]} $_part ($mntpoint) ${cmsg_Em[$LC_DEFAULT]} $dir_install$mntpoint"
+			msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
+			mkdir -p "$dir_install${mntpoint}"
+			mount "$_part" "$dir_install${mntpoint}"
+			evaluate_retval "$?"
+		fi
+	done
 	return 0
 }
 
@@ -1175,8 +1222,7 @@ sh_chroot_maybe_add_mount() {
 }
 
 sh_mount_bind() {
-#	mount "$@" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
-  log_exec mount "$@"
+	mount "$@" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
 }
 
 sh_init_bind() {
@@ -1187,7 +1233,7 @@ sh_init_bind() {
 		last_msg="${cmsg_MontandoAmbiente[$LC_DEFAULT]} chroot"
 		msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
 		for i in /proc /sys /dev /dev/pts /dev/shm /run /tmp; do
-      log_exec mkdir -p "$dir_install$i"
+			mkdir -p "$dir_install$i" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
 		done
 
 		sh_mount_bind proc "${dir_install}/proc" -t proc -o nosuid,noexec,nodev &&
@@ -1400,7 +1446,7 @@ sh_initrd_adjust() {
 		mensagem "Aguarde, ajustando e gerando initrd"
 		#	sed -i '/#HOOKS=/a $newtext' "$dir_install/etc/mkinitcpio.conf"
 		#	sed -i -E 's/memdisk/autodetect/'"$dir_install/etc/mkinitcpio.conf"
-		# sed -i -E 's/archiso?.*?\s//' "$dir_install/etc/mkinitcpio.conf"
+		# 	sed -i -E 's/archiso?.*?\s//' "$dir_install/etc/mkinitcpio.conf"
 		sed -i 's/HOOKS/#HOOKS/g' "$dir_install/etc/mkinitcpio.conf" >/dev/null 2>&1
 		echo "$newtext" >>"$dir_install/etc/mkinitcpio.conf" >/dev/null 2>&1
 		sh_chroot_job "Aguarde, ajustando e gerando initrd" "mkinitcpio -P"
@@ -1473,18 +1519,22 @@ sh_mkefiroaming() {
 }
 
 sh_remove_packages() {
-  local apackages=('plymouth-theme-community')
+  local apackages=('plymouth' 'plymouth-theme-community')
 
   for pkg in ${apackaes[@]}; do
     sh_chroot_job "Removing package: $pkg" "sudo pacman -Rdd $pkg --noconfirm" "$err_not_fatal"
   done
 }
 
-sh_enable_disable_services() {
-  local service
-  local ServicesToMasking=('manjaro-live' 'plymouth-start')
-  local ServicesToEnable=('systemd-timesyncd')
-  local ServicesToDisable=('manjaro-live'
+sh_disable_services() {
+  local masking=('manjaro-live'
+                 'plymouth-start'
+                  'plymouth-quit'
+                  'plymouth-quit-wait'
+                  'plymouth-read-write'
+                  'plymouth-reboot'
+                  'plymouth-show-log-comm')
+  local services=('manjaro-live'
                   'avahi-daemon'
                   'community-livecd-key'
                   'cups'
@@ -1499,14 +1549,11 @@ sh_enable_disable_services() {
                   'plymouth-show-log-comm'
                   'sddm-plymouth')
 
-  for service in ${ServicesToDisable[@]}; do
+  for service in ${services[@]}; do
     sh_chroot_job "Disabling service: $service" "systemctl disable ${service}.service" "$err_not_fatal"
   done
-  for service in ${ServicesToMasking[@]}; do
-    sh_chroot_job "Masking service: $service" "systemctl mask ${service}.service" "$err_not_fatal"
-  done
-  for service in ${ServicesToEnable[@]}; do
-    sh_chroot_job "Enabling service: $service" "systemctl enable ${service}.service" "$err_not_fatal"
+  for mask in ${masking[@]}; do
+    sh_chroot_job "Masking service: $mask" "systemctl mask ${mask}.service" "$err_not_fatal"
   done
 }
 
@@ -1514,19 +1561,12 @@ sh_clean_issue() {
   local fileconf="$dir_install/etc/issue"
 
   if [[ "$fileconf" ]]; then
-    sh_cmd_job "Renaming $fileconf" "mv -f ${fileconf} ${fileconf}.bak" "$err_not_fatal"
-    sh_cmd_job "Renaming $fileconf" "mv -f ${fileconf}.pro ${fileconf}" "$err_not_fatal"
+    sh_cmd_job "Removing $fileconf" "mv -f $fileconf $fileconf.bak" "$err_not_fatal"
   fi
 }
 
 sh_finishInstall() {
-	if confmulti \
-"*** INSTALL ***" \
-"\n$cfinish\n\n" \
-"Start Date time  : $start_datetime\n" \
-"Finish Date Time : $end_datetime\n" \
-"Time elapsed     : ${GREEN}$(sh_time_elapsed)\n" \
-"\n${YELLOW}Deseja Reiniciar agorar?"; then
+	if confmulti "*** INSTALL ***" \ "\n$cfinish" \ "\nDeseja Reiniciar agorar?"; then
 		sh_stop_bind
 		sh_stop_mount
     reboot
@@ -1592,7 +1632,7 @@ sh_partitions_with_parted() {
 		mkpart primary fat32 1MiB 100MiB set 1 bios on name 1 BIOS \
 		mkpart primary fat32 100MiB 200MiB set 2 esp on name 2 EFI \
 		mkpart primary linux-swap 200MiB 2GB name 3 SWAP \
-		mkpart primary "${AConfDisk[_FILESYSTEM]}" 2GB 100% name 4 ROOT \
+		mkpart primary ext4 2GB 100% name 4 ROOT \
 		align-check optimal 1
 	evaluate_retval
 	udevadm settle >/dev/null 2>&1 # Wait for pending udev events.
@@ -1923,8 +1963,6 @@ sh_mkparted() {
 	local cpart=''
 	local CSCRIPT=''
 
-	[[ -z "$xmkfs" ]] && xmkfs="${AConfDisk[_FILESYSTEM]}"
-
 	last_msg="${cmsg_TestandoDisco[$LC_DEFAULT]} ${_DEVICE}"
 	msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
 	if ! sh_testDisk; then
@@ -1964,16 +2002,12 @@ sh_mkparted() {
 			withswap=$false
 		else
 			if ! ((LAUTOMATICA)); then
-        if [[ "$xmkfs" != 'btrfs' ]]; then
-  				if ! infoconf "${cmsg_Disco[$LC_DEFAULT]}" "$(fdisk -l "$_DEVICE")" \
-  					"${YELLOW}${cmsg_CriandoParticoes[$LC_DEFAULT]} ${_DEVICE}" \
-  					"${cmsg_DesejaCriarParticaoSwap[LC_DEFAULT]}"; then
-  					withswap=$false
-	  			fi
-		  	else
-		  		withswap=$false
-        fi
-	  	fi
+				if ! infoconf "${cmsg_Disco[$LC_DEFAULT]}" "$(fdisk -l "$_DEVICE")" \
+					"${YELLOW}${cmsg_CriandoParticoes[$LC_DEFAULT]} ${_DEVICE}" \
+					"${cmsg_DesejaCriarParticaoSwap[LC_DEFAULT]}"; then
+					withswap=$false
+				fi
+			fi
 		fi
 
 		if ! ((LAUTOMATICA)); then
@@ -1986,6 +2020,10 @@ sh_mkparted() {
 			fi
 		fi
 		nchoice=$true
+	fi
+
+	if ! ((LAUTOMATICA)); then
+		xmkfs="ext4"
 	fi
 
 	if ((nchoice)); then
@@ -2143,8 +2181,8 @@ sh_backup_partitions() {
 
 		cdatetime=$(sh_diahora)
 		filetmp="$tmpdir/${device}.$cdatetime.dump"
-		log_exec mkdir -p "$tmpdir"
-		log_exec sfdisk -d "$disk" >"$filetmp"
+		mkdir -p "$tmpdir" 2>&1 | tee -i -a "$BOOTLOG" >$LOGGER
+		sfdisk -d "$disk" >"$filetmp" 2>/dev/null
 		#  info "BACKUP DA TABELA DE PARTICOES"    \
 		#         "Dispositivo : $disk"              \
 		#         "  Backup on : ${filetmp}"         \
@@ -2487,22 +2525,10 @@ sh_check_util_fs() {
 }
 
 sh_make_fs() {
+	local i
 	local _PART
 	local format
 	local fstype
-	local i
-
-  declare -A fsparms=(
-				[ext2]="-F   -L ROOT"
-				[ext3]="-F   -L ROOT"
-				[ext4]="-F   -L ROOT"
-				[btrfs]="-f  -L ROOT"
-				[f2fs]="-f   -l ROOT"
-				[xfs]="-f    -L ROOT"
-				[jfs]="-f    -L ROOT"
-				[vfat]="-F32 -n EFI"
-				[reiserfs]="-f -l ROOT"
-			)
 
 	sh_check_util_fs
 	for i in "${!Amntpoint[@]}"; do
@@ -2513,19 +2539,61 @@ sh_make_fs() {
 		if [[ "$format" = "1" ]]; then
 			last_msg="${cmsg_FormatandoParticao[$LC_DEFAULT]} ${_PART} FS ${fstype,,}"
 			msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
+			declare -A fsparms=(
+				[ext2]="-F -L ROOT"
+				[ext3]="-F -L ROOT"
+				[ext4]="-F -L ROOT"
+				[btrfs]="-f -L ROOT"
+				[f2fs]="-f -l ROOT"
+				[xfs]="-f -L ROOT"
+				[jfs]="-f -L ROOT"
+				[vfat]="-F32 -n EFI"
+				[reiserfs]="-f -l ROOT"
+			)
 			if [[ "$fstype" = "swap" ]]; then
 				mkswap "$_PART" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
-			elif [[ "$fstype" = "btrfs" ]]; then
-				log_exec mkfs.$fstype ${fsparms[$fstype]} $_PART
-				log_exec mkdir -p $dir_install
-        log_exec mount $_PART $dir_install
-        log_exec btrfs subvolume create $dir_install/@
-        log_exec btrfs subvolume create $dir_install/@home
-        log_exec btrfs subvolume create $dir_install/@cache
-        log_exec btrfs subvolume create $dir_install/@log
-        log_exec umount $_PART
 			else
-				log_exec mkfs.$fstype ${fsparms[$fstype]} $_PART
+				mkfs.$fstype ${fsparms[$fstype]} $_PART 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
+			fi
+			evaluate_retval "${PIPESTATUS[0]}"
+		fi
+	done
+
+	if ((LVM)); then
+		sh_make_fsLvm
+	fi
+}
+
+sh_make_fs() {
+	local _PART
+	local format
+	local fstype
+	local i
+
+	sh_check_util_fs
+	for i in "${!Amntpoint[@]}"; do
+		_PART="$i"
+		fstype="$(sh_splitarray "${Amntpoint[$i]}" 2)"
+		format="$(sh_splitarray "${Amntpoint[$i]}" 3)"
+
+		if [[ "$format" = "1" ]]; then
+			last_msg="${cmsg_FormatandoParticao[$LC_DEFAULT]} ${_PART} FS ${fstype,,}"
+			msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
+			declare -A fsparms=(
+				[ext2]="-F   -L ROOT"
+				[ext3]="-F   -L ROOT"
+				[ext4]="-F   -L ROOT"
+				[btrfs]="-f  -L ROOT"
+				[f2fs]="-f   -l ROOT"
+				[xfs]="-f    -L ROOT"
+				[jfs]="-f    -L ROOT"
+				[vfat]="-F32 -n EFI"
+				[reiserfs]="-f -l ROOT"
+			)
+			if [[ "$fstype" = "swap" ]]; then
+				mkswap "$_PART" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
+			else
+				mkfs.$fstype ${fsparms[$fstype]} $_PART 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
 			fi
 			evaluate_retval "${PIPESTATUS[0]}"
 		fi
@@ -3251,13 +3319,6 @@ sh_confadduser() {
 				fi
 				sh_confadduser
 			fi
-
-			if [[ -z "${AsUser[chostname]}" ]]; then
-				if ! conf "*** ROOT ***" "\n${cmsg_adduser5[$LC_DEFAULT]}"; then
-					die "*** ROOT *** " "${cmsg_adduserCancel[$LC_DEFAULT]}"
-				fi
-				sh_confadduser
-			fi
 			LEXTRA=$true
 			;;
 		esac
@@ -3305,7 +3366,7 @@ sh_choosefstype() {
 	Afs[swap]="Linux swap"
 
 	[[ -z "$oldfstype" ]] && oldfstype=$_FILESYSTEM
-	[[ -z "$oldfstype" ]] && oldfstype="${AConfDisk[_FILESYSTEM]}" # nada ainda ?
+	[[ -z "$oldfstype" ]] && oldfstype='ext4' # nada ainda ?
 
 	for x in "${!Afs[@]}"; do
 		[[ "$oldfstype" = "$x" ]] && Aflag[$x]='on' || Aflag[$x]='off'
@@ -3405,7 +3466,7 @@ sh_make_fstab() {
 		last_msg="${cmsg_Gerando[$LC_DEFAULT]} fstab pass1 ${cmsg_Em[$LC_DEFAULT]} $dir_install"
 		msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
 
-		echo "tmpfs   /tmp     	  tmpfs		defaults,nosuid,nodev	0 0" >"$dir_install/etc/fstab"
+		echo "tmpfs    /tmp     	tmpfs		defaults,nosuid,nodev	0 0" >"$dir_install/etc/fstab"
 		echo "devpts	/dev/pts		devpts	gid=5,mode=620				0 0" >>"$dir_install/etc/fstab"
 
 		for i in "${!Amntpoint[@]}"; do
@@ -3422,16 +3483,7 @@ sh_make_fstab() {
 				continue
 			fi
 			if [ -n "$mntpoint" ]; then
-  			if [[ "$fstype" = "btrfs" ]]; then
-    			{
-	  			echo "UUID=$(blkid -o value -s UUID "${_part}")  /             ${fstype,,}   subvol=/@,defaults,noatime,ssd,compress-force=zstd,commit=10 0 $fsorder"
-	  			echo "UUID=$(blkid -o value -s UUID "${_part}")  /home         ${fstype,,}   subvol=/@home,defaults,noatime,ssd,compress-force=zstd,commit=10 0 $fsorder"
-	  			echo "UUID=$(blkid -o value -s UUID "${_part}")  /var/cache    ${fstype,,}   subvol=/@cache,defaults,noatime,ssd,compress-force=zstd,commit=10 0 $fsorder"
-	  			echo "UUID=$(blkid -o value -s UUID "${_part}")  /var/log      ${fstype,,}   subvol=/@log,defaults,noatime,ssd,compress-force=zstd,commit=10 0 $fsorder"
-	  			} >>"$dir_install/etc/fstab"
-        else
-  				echo "UUID=$(blkid -o value -s UUID "${_part}")  ${mntpoint}   ${fstype,,}   defaults 0 $fsorder" >>"$dir_install/etc/fstab"
-  		  fi
+				echo "UUID=$(blkid -o value -s UUID "${_part}")  ${mntpoint}   ${fstype,,}   defaults 0 $fsorder" >>"$dir_install/etc/fstab"
 			fi
 		done
 		evaluate_retval "$?"
@@ -3439,7 +3491,7 @@ sh_make_fstab() {
 		last_msg="${cmsg_Gerando[$LC_DEFAULT]} fstab pass1 ${cmsg_Em[$LC_DEFAULT]} $dir_install"
 		msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
 
-		echo "tmpfs   /tmp     	  tmpfs		defaults,nosuid,nodev	0 0" >"$dir_install/etc/fstab"
+		echo "tmpfs    /tmp     	tmpfs		defaults,nosuid,nodev	0 0" >"$dir_install/etc/fstab"
 		echo "devpts	/dev/pts		devpts	gid=5,mode=620				0 0" >>"$dir_install/etc/fstab"
 
 		for i in "${!Amntpoint[@]}"; do
@@ -3483,7 +3535,7 @@ sh_update_Xkeymap() {
 	fi
 	last_msg="${cmsg_Ajustando[$LC_DEFAULT]} ${cmsg_Teclado[$LC_DEFAULT],,} ${AConfLocale[_KEYMAP]} (X11) ${cmsg_Em[$LC_DEFAULT]} $dir_install"
 	msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
-	[[ ! -d "$dirconf" ]] && log_exec mkdir -p "$dirconf"
+	[[ ! -d "$dirconf" ]] && mkdir -p "$dirconf"
 	[[ ! -e "$fileconf" ]] && cat >"$fileconf" <<-EOF
 		Section "InputClass"
 		   Identifier "Keyboard Br Abnt2"
@@ -3590,7 +3642,7 @@ pt_BR() {
 	cmsg021='Formatar partição'
 	yeslabel='Sim'
 	nolabel='Não'
-	cfinish="Instalação finalizada!\nReboot para iniciar com $cdistro Linux.\nBugs? $xemail"
+	cfinish="Instalação finalizada!\nReboot para iniciar com $cdistro Linux.\n\nBugs? $xemail"
 	cgrubsuccess='GRUB instalado com sucesso!'
 	ccancelgrub='Instalação do GRUB cancelada!'
 	cmsgInstalar_GRUB='Instalar GRUB'
@@ -3670,7 +3722,7 @@ en_US() {
 	cmsg021='Format partition'
 	yeslabel='Yes'
 	nolabel='No'
-	cfinish="Install Complete!\nReboot to start with $cdistro Linux. \nBugs? $xemail"
+	cfinish="Install Complete!\nReboot to start with $cdistro Linux. \n\nBugs? $xemail"
 	cgrubsuccess='GRUB successfully installed!'
 	ccancelgrub='Installing grub canceled!'
 	cmsgInstalar_GRUB='Install GRUB'
@@ -4647,12 +4699,6 @@ sh_setLanguage() {
 		"Le mot de passe root ne peut pas être vide ! De nouveau?"
 		"¡La contraseña raíz no puede estar vacía! ¿Otra vez?"
 		"La password di root non può essere vuota! Di nuovo?")'
-		'cmsg_adduser5=("Hostname não pode ser vazio! Novamente?"
-		"Hostname cannot be empty! Again?"
-		"Hostname darf nicht leer sein! Wieder?"
-		"Le nom de hôte ne peut pas être vide ! Encore?"
-		"¡El nombre de host no puede estar vacío! ¿De nuevo?"
-		"Il nome host non può essere vuoto! Ancora?")'
 		'cmsg_adduserCancel=("Cadastro de usuário cancelado"
 		"Canceled user registration"
 		"Abgebrochene Benutzerregistrierung"
@@ -4720,9 +4766,9 @@ sh_mknode_lo() {
 		if [[ -e /dev/loop"$i" ]]; then
 			continue
 		fi
-		log_exec mknod -m 0660 /dev/loop"$i" b 7 "$i"
-		log_exec chown --reference=/dev/loop0 /dev/loop"$i"
-		log_exec chmod --reference=/dev/loop0 /dev/loop"$i"
+		mknod -m 0660 /dev/loop"$i" b 7 "$i"
+		chown --reference=/dev/loop0 /dev/loop"$i"
+		chmod --reference=/dev/loop0 /dev/loop"$i"
 		loDevice=/dev/loop"$i"
 		break
 	done
@@ -4743,9 +4789,9 @@ sh_mknode_sr() {
 		fi
 
 		srDevice=/dev/sr"$number"
-		log_exec mknod -m 0660 /dev/sr"$number" b 7 "$i"
-		log_exec chown --reference=/dev/loop0 /dev/sr"$number"
-		log_exec chmod --reference=/dev/loop0 /dev/sr"$number"
+		mknod -m 0660 /dev/sr"$number" b 7 "$i"
+		chown --reference=/dev/loop0 /dev/sr"$number"
+		chmod --reference=/dev/loop0 /dev/sr"$number"
 		break
 	done
 	echo "$srDevice"
@@ -4889,17 +4935,16 @@ sh_checklive() {
 	fi
 
 	if ! $liveOS; then
-		[[ -d "/run/liveiso/bootmnt" ]] || log_exec mkdir -p "/run/liveiso/bootmnt"
-		[[ -d "/run/liveiso/airootfs" ]] || log_exec mkdir -p "/run/liveiso/airootfs"
+		[[ -d "/run/liveiso/bootmnt" ]] || mkdir -p "/run/liveiso/bootmnt"
+		[[ -d "/run/liveiso/airootfs" ]] || mkdir -p "/run/liveiso/airootfs"
 
 		loDevice=$(losetup -f)
 		if ! [[ -e "$loDevice" ]]; then
 			loDevice=$(sh_mknode_lo)
 		fi
-#		losetup -P "$loDevice" "$iso" >/dev/null 2>&1
-#		mount "$loDevice" "/run/liveiso/bootmnt" >/dev/null 2>&1
-		log_exec losetup -P "$loDevice" "$iso"
-		log_exec mount "$loDevice" "/run/liveiso/bootmnt"
+		#		losetup -d "$loDevice"  > /dev/null 2>&1
+		losetup -P "$loDevice" "$iso" >/dev/null 2>&1
+		mount "$loDevice" "/run/liveiso/bootmnt" >/dev/null 2>&1
 
 		#		if ! [[ -e "$srDevice" ]]; then
 		#			srDevice=$(sh_mknode_sr)
@@ -5028,18 +5073,14 @@ parseinit() {
 
 sh_checkDependencies() {
 	local d
-	local errorFound=false
+	local errorFound=0
 	declare -a missing
 
 	for d in "${DEPENDENCIES[@]}"; do
-		if [[ -z $(command -v "$d") ]]; then
-		  missing+=("$d")
-		  errorFound=true
-		  printf '%s\n' "${red}${cmsg_ERRO[$LC_DEFAULT]}${reset}: ${cmsg_CommandNotFound[$LC_DEFAULT]} ${cyan}'$d'${reset}"
-    fi
+		[[ -z $(command -v "$d") ]] && missing+=("$d") && errorFound=1 && printf '%s\n' "${red}${cmsg_ERRO[$LC_DEFAULT]}${reset}: ${cmsg_CommandNotFound[$LC_DEFAULT]} ${cyan}'$d'${reset}"
 	done
-	if $errorFound; then
-    echo "${yellow}--------------${cmsg_ImpossivelContinuar[$LC_DEFAULT]}-------------${reset}"
+	if ((errorFound)); then
+		echo "${yellow}--------------${cmsg_ImpossivelContinuar[$LC_DEFAULT]}-------------${reset}"
 		echo "${cmsg_ImpossivelContinuar1[$LC_DEFAULT]}" >&2
 		echo "${cmsg_ImpossivelContinuar2[$LC_DEFAULT]} \$PATH" >&2
 		echo "${yellow}-----------------------------------------------${reset}"
@@ -5058,24 +5099,7 @@ sh_cancelLiveInstall() {
 	sh_main_menu "$@"
 }
 
-sh_time_elapsed() {
-  local end_time=$(date +%s)                # Obtém o tempo de término em segundos desde a época Unix
-  local duration=$((end_time - start_time)) # Calcula a duração em segundos
-  local hours=$((duration / 3600))
-  local minutes=$(((duration % 3600) / 60))
-  local seconds=$((duration % 60))
-
-  # Formatar os valores para terem sempre dois dígitos
-  hours=$(printf "%02d" $hours)
-  minutes=$(printf "%02d" $minutes)
-  seconds=$(printf "%02d" $seconds)
-  echo "$hours:$minutes:$seconds"
-}
-
 sh_install() {
-  local start_datetime
-  local end_datetime
-
 	if ((LAUTOMATICA)); then
 		confmulti "${cmsgInstalacao_Automatica^^}" "\n${BOLD}$cmsgNeste_modo_a_instalacao_sera_automatizada" \
 			"bastando escolher o disco destino" "\n\n${BOLD}${WHITE}$cmsgDeseja_continuar_e_escolher_o_disco_destino?" || sh_cancelLiveInstall "$@"
@@ -5114,8 +5138,6 @@ sh_install() {
 		"${cmsg_OuPeloTerminal[LC_DEFAULT]}                : ${BLUE}(ctrl+alt+f8)${RESET}" \
 		"\n\n${BOLD}${WHITE}${cmsg_descInstalar[$LC_DEFAULT]}?" || sh_cancelLiveInstall "$@"
 
-  start_time=$(date +%s) # Obtém o tempo de início em segundos desde a época Unix
-  start_datetime=$(date)
 	sh_make_fs || sh_cancelLiveInstall "$@"
 	sh_disk_part_info
 	sh_validate_filesystem || sh_cancelLiveInstall "$@"
@@ -5132,9 +5154,8 @@ sh_install() {
 	sh_update_timezone
   sh_remove_packages
 	sh_grubinstall || sh_cancelLiveInstall "$@"
-  sh_enable_disable_services
+  sh_disable_services
   sh_clean_issue
-  end_datetime=$(date)
 	sh_finishInstall
 	zeravar
 }
@@ -5244,9 +5265,9 @@ sh_main_menu() {
 }
 
 sh_disablePrintk() {
-  if [[ -w /proc/sys/kernel/printk ]]; then
-    echo 0 >/proc/sys/kernel/printk
-  fi
+	if [[ -w /proc/sys/kernel/printk ]]; then
+		echo 0 >/proc/sys/kernel/printk
+	fi
 }
 
 sh_enablePrintk() {

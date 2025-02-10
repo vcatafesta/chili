@@ -79,11 +79,13 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="1.0.0-20250208"
+declare APPDESC="Wrapper config resolution with xrandr, umc e cvt"
+declare _VERSION_="1.2.08-20250208"
 declare distro="$(uname -n)"
-declare DEPENDENCIES=(xrandr tput dialog awk grep sed cvt umc)
+declare DEPENDENCIES=(tput dialog awk grep sed xrandr cvt umc)
 declare sep='\xe2\x94\x82'
 declare dialogRcFile="$HOME/.dialogrc"
+declare ccabec="$APP - $_VERSION_ - $APPDESC"
 
 cleanup() {
 	rm -f ""
@@ -272,8 +274,13 @@ sh_getoutput() {
 
 	#	aOutput=('VGA-1' 'DVI-1' 'HDMI-1')
 	#	mapfile -t aOutput <<< "$(xrandr  | grep " connected " | awk '{ print$1 }')"	#conectado
-	mapfile -t aOutput <<<"$(xrandr | grep "connected " | awk '{ print$1 }')"  #todos
-	mapfile -t aConnect <<<"$(xrandr | grep "connected " | awk '{ print$2 }')" #todos
+  echo "$red"
+	if xrandr 1>/dev/null; then
+  	mapfile -t aOutput <<<"$(xrandr | grep "connected " | awk '{ print$1 }')"  #todos
+  	mapfile -t aConnect <<<"$(xrandr | grep "connected " | awk '{ print$2 }')" #todos
+  else
+    die "fatal"
+  fi
 
 	for x in "${aOutput[@]}"; do
 		arr[n++]="$x"
@@ -286,8 +293,8 @@ sh_getoutput() {
 			--stdout \
 			--colors \
 			--clear \
-			--backtitle "Chili resolution" \
-			--title "Chili resolution" \
+			--backtitle "$ccabec" \
+			--title "Menu VIDEO DEVICE" \
 			--menu '\nChoose device output for set:' \
 			0 0 0 \
 			"${arr[@]}")
@@ -325,8 +332,8 @@ sh_setrand() {
 			--stdout \
 			--colors \
 			--clear \
-			--backtitle "Chili resolution" \
-			--title "Chili resolution" \
+			--backtitle "$ccabec" \
+			--title "Menu CHOOSE RESOLUTION" \
 			--ok-label "Add" \
 			--extra-button --extra-label "Remove" \
 			--menu '\nChoose resolution for set:' \
@@ -362,7 +369,5 @@ sh_setEnvironment
 sh_setconf
 sh_setvarcolors
 sh_checkDependencies
-exit
-
 sh_getoutput
 sh_setrand

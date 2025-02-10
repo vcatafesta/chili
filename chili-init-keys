@@ -82,28 +82,14 @@ distro="$(uname -n)"
 MostraErro() {
   echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
 }
-trap 'MostraErro "${APP[$FUNCNAME][$LINENO]}" "${BASH_COMMAND}" "$?"; exit 1' ERR
+#trap 'MostraErro "${APP[$FUNCNAME][$LINENO]}" "${BASH_COMMAND}" "$?"; exit 1' ERR
 
 # /usr/share/pacman/keyrings
-#!/bin/bash
 
-# Sincronizar pacotes necessários
-sudo pacman -Sy --needed \
-  archlinux-keyring \
-  manjaro-keyring \
-  biglinux-keyring \
-  community-keyring \
-  chili-keyring \
-  ubuntu-keyring \
-  debian-archive-keyring \
-  alpine-keyring \
-  gnome-keyring \
-  debian-ports-archive-keyring \
-  deepin-polkit-agent-ext-gnomekeyring
+sudo rm -rf /etc/pacman.d/gnupg/* 1>/dev/null
 
 # Inicializar e popular o banco de chaves
-sudo pacman-key --init
-sudo pacman-key --populate
+sudo pacman-key --init 1>/dev/null
 
 # Adicionar e assinar chaves específicas
 keys=(
@@ -112,11 +98,28 @@ keys=(
 )
 
 for key in "${keys[@]}"; do
-  sudo pacman-key --recv-keys "$key"
-  sudo pacman-key --lsign-key "$key"
+  sudo pacman-key --recv-keys "$key" 1>/dev/null
+  sudo pacman-key --lsign-key "$key" 1>/dev/null
 done
 
+# Sincronizar pacotes necessários
+#sudo pacman -Sy --needed --quiet \
+#  archlinux-keyring \
+#  manjaro-keyring \
+#  biglinux-keyring \
+#  community-keyring \
+#  chili-keyring \
+#  ubuntu-keyring \
+#  debian-archive-keyring \
+#  alpine-keyring \
+#  gnome-keyring \
+#  debian-ports-archive-keyring \
+#  deepin-polkit-agent-ext-gnomekeyring
+
+sudo pacman-key --init 1>/dev/null
+sudo pacman-key --populate 1>/dev/null
+
 # Listar informações das chaves
-sudo pacman-key --list-keys
-sudo pacman-key --list-sigs
-sudo pacman-key --finger
+#sudo pacman-key --list-keys
+#sudo pacman-key --list-sigs
+#sudo pacman-key --finger
