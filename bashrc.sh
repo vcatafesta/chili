@@ -76,28 +76,28 @@ msg_run() {
 }
 
 msg_info() {
-  local msg="$1"
-  local caller_function="${FUNCNAME[1]}"      # Nome da função que chamou a função atual
-  local caller_line="${BASH_LINENO[1]}"       # Número da linha que chamou a função atual
-  msg="$(sed 's/<[^>]*>//g' <<<"$msg")"       # Remove as tags HTML
-  #echo -e "${blue}==>${green}[${caller_function}:${caller_line}]=>${yellow}info   : ${cyan}${msg}${reset}"
-  echo -e "${caller_function}=>${yellow}info   : ${cyan}${msg}${reset}"
+	local msg="$1"
+	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
+	#echo -e "${blue}==>${green}[${caller_function}:${caller_line}]=>${yellow}info   : ${cyan}${msg}${reset}"
+	echo -e "${caller_function}=>${yellow}info   : ${cyan}${msg}${reset}"
 }
 
 msg_warning() {
 	local msg="$1"
-  local caller_function="${FUNCNAME[1]}"      # Nome da função que chamou a função atual
-  local caller_line="${BASH_LINENO[1]}"       # Número da linha que chamou a função atual
-	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
-  echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
+	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
+	echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
 }
 
 msg_warn() {
 	local msg="$1"
-  local caller_function="${FUNCNAME[1]}"      # Nome da função que chamou a função atual
-  local caller_line="${BASH_LINENO[1]}"       # Número da linha que chamou a função atual
-	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
-  echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
+	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
+	echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
 }
 
 replicate() {
@@ -1226,7 +1226,6 @@ fileinfo() { for i in "${@}"; do
 	qemu-img info $i
 	echo
 done; }
-export -f fr
 export -f chili-qemurunfile
 
 #qemu-system-x86_64 -net nic,model=virtio -net bridge,br=br0 -hda void.img
@@ -2719,14 +2718,79 @@ makebash() {
 		#system
 		declare APP="\${0##*/}"
 		declare _VERSION_="1.0.0-$(date +'%Y%m%d')"
+		declare APPDESC="$APP - Wraper for "
 		declare distro="\$(uname -n)"
 		declare DEPENDENCIES=(tput)
-		source /usr/share/fetch/core.sh
+		declare dialogRcFile="$HOME/.dialogrc"
 
-		MostraErro() {
-		  echo "erro: \${red}\$1\${reset} => comando: \${cyan}'\$2'\${reset} => result=\${yellow}\$3\${reset}"
-		}
+		cleanup() { rm -f "$dialogRcFile"; }
+		#trap cleanup EXIT
+		MostraErro() { echo "erro: \${red}\$1\${reset} => comando: \${cyan}'\$2'\${reset} => result=\${yellow}\$3\${reset}";}
 		trap 'MostraErro "\$APP[\$FUNCNAME][\$LINENO]" "\$BASH_COMMAND" "\$?"; exit 1' ERR
+
+		sh_create_dialogrc() {
+		  cat > "\$dialogRcFile" <<EOF_DIALOGRC
+		screen_color = (white,black,off)
+		dialog_color = (white,black,off)
+		title_color = (cyan,black,on)
+		border_color = dialog_color
+		shadow_color = (black,black,on)
+		button_inactive_color = dialog_color
+		button_key_inactive_color = dialog_color
+		button_label_inactive_color = dialog_color
+		button_active_color = (white,cyan,on)
+		button_key_active_color = button_active_color
+		button_label_active_color = (black,cyan,on)
+		tag_key_selected_color = (white,cyan,on)
+		item_selected_color = tag_key_selected_color
+		form_text_color = (BLUE,black,ON)
+		form_item_readonly_color = (green,black,on)
+		itemhelp_color = (white,cyan,off)
+		inputbox_color = dialog_color
+		inputbox_border_color = dialog_color
+		searchbox_color = dialog_color
+		searchbox_title_color = title_color
+		searchbox_border_color = border_color
+		position_indicator_color = title_color
+		menubox_color = dialog_color
+		menubox_border_color = border_color
+		item_color = dialog_color
+		tag_color = title_color
+		tag_selected_color = button_label_active_color
+		tag_key_color = button_key_inactive_color
+		check_color = dialog_color
+		check_selected_color = button_active_color
+		uarrow_color = screen_color
+		darrow_color = screen_color
+		form_active_text_color = button_active_color
+		gauge_color = title_color
+		border2_color = dialog_color
+		searchbox_border2_color = dialog_color
+		menubox_border2_color = dialog_color
+		separate_widget = ''
+		tab_len = 0
+		visit_items = off
+		use_shadow = off
+		use_colors = on
+		EOF_DIALOGRC
+		  export DIALOGRC="\$dialogRcFile"
+		}
+
+		# Testa se o terminal suporta caracteres gráficos estendidos
+		sh_ascii_lines() {
+		  #Isso força o dialog a usar caracteres ASCII básicos para as bordas.
+		  #if [[ "\$LANG" =~ 'UTF-8' ]]; then
+		  if [[ "\$(printf '\u250C')" =~ "┌" ]]; then
+		    export NCURSES_NO_UTF8_ACS=1  # Terminal suporta ACS
+		  else
+		    export NCURSES_NO_UTF8_ACS=0  # Terminal NÃO suporta ACS
+		  fi
+		  }
+
+		sh_setEnvironment() {
+		  [[ ! -e "\$dialogRcFile" ]] && sh_create_dialogrc
+		  sh_ascii_lines
+		}
 
 	EOF
 	sudo chmod +x $prg

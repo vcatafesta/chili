@@ -112,7 +112,7 @@ sh_create_dialogrc() {
 		button_label_active_color = (black,cyan,on)
 		tag_key_selected_color = (white,cyan,on)
 		item_selected_color = tag_key_selected_color
-		form_text_color = (black,green,on)
+    form_text_color = (BLUE,black,ON)
 		form_item_readonly_color = (green,black,on)
 		itemhelp_color = (white,cyan,off)
 		inputbox_color = dialog_color

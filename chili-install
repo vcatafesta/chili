@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: seg 10 fev 2025 03:37:03 UTC
+#  Updated: seg 10 fev 2025 11:15:53 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -97,7 +97,7 @@ button_key_active_color = button_active_color
 button_label_active_color = (black,cyan,on)
 tag_key_selected_color = (white,cyan,on)
 item_selected_color = tag_key_selected_color
-form_text_color = (black,green,on)
+form_text_color = (BLUE,black,ON)
 form_item_readonly_color = (green,black,on)
 itemhelp_color = (white,cyan,off)
 inputbox_color = dialog_color
@@ -1001,8 +1001,8 @@ sh_execcopia() {
 			[[ "$PERCENTAGEM" -gt 100 ]] && PERCENTAGEM=100
 			${DIALOG} --colors \
 				--title $TITLE \
-				--gauge "$MSG           							\nFalta ${RED}${REVERSE}$((100 - PERCENTAGEM))%${RESET} para completar a tarefa \Zb\Z1${PONT:nval:1}\ZB\Zn \
-           							\n\nDestino    : ${YELLOW}${REVERSE}${AConfDisk[_DEVICE]}$dir_install${RESET}
+				--gauge "$MSG           							\nFalta ${BOLD}${YELLOW}$((100 - PERCENTAGEM))%${RESET} para completar a tarefa \Zb\Z1${PONT:nval:1}\ZB\Zn \
+           							\n\nDestino    : ${BOLD}${YELLOW}${AConfDisk[_DEVICE]}$dir_install${RESET}
            							\nDisponivel : ${DISPONIVEL}MB\
            							\nTotal      :	${TOTALGB}MB\
            							\nCopiado    : ${GREEN}${REVERSE}${COPIADOMB}MB${RESET}\
@@ -1175,8 +1175,7 @@ sh_chroot_maybe_add_mount() {
 }
 
 sh_mount_bind() {
-#	mount "$@" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
-  log_exec mount "$@"
+  mount "$@" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
 }
 
 sh_init_bind() {
@@ -1526,7 +1525,7 @@ sh_finishInstall() {
 "Start Date time  : $start_datetime\n" \
 "Finish Date Time : $end_datetime\n" \
 "Time elapsed     : ${GREEN}$(sh_time_elapsed)\n" \
-"\n${YELLOW}Deseja Reiniciar agorar?"; then
+"\n${BOLD}${YELLOW}Deseja Reiniciar agorar?"; then
 		sh_stop_bind
 		sh_stop_mount
     reboot
@@ -2496,6 +2495,8 @@ sh_make_fs() {
 				[ext2]="-F   -L ROOT"
 				[ext3]="-F   -L ROOT"
 				[ext4]="-F   -L ROOT"
+				[exfat]="    -L ROOT"
+				[ntfs]="-f   -L ROOT"
 				[btrfs]="-f  -L ROOT"
 				[f2fs]="-f   -l ROOT"
 				[xfs]="-f    -L ROOT"
@@ -2903,10 +2904,12 @@ sh_make_fsLvm() {
 				[ext2]="-F   -L $label"
 				[ext3]="-F   -L $label"
 				[ext4]="-F   -L $label"
-				[btrfs]="-f   -L $label"
+				[exfat]="    -L $label"
+				[ntfs]="-f   -L $label"
+				[btrfs]="-f  -L $label"
 				[f2fs]="-f   -l $label"
-				[xfs]="-f   -L $label"
-				[jfs]="-f   -L $label"
+				[xfs]="-f    -L $label"
+				[jfs]="-f    -L $label"
 				[vfat]="-F32 -n EFI"
 				[reiserfs]="-f   -l $label"
 			)
@@ -3299,10 +3302,12 @@ sh_choosefstype() {
 	Afs[f2fs]="Flash-Friendly Filesystem"
 	Afs[ext3]="Linux ext3 (journal)"
 	Afs[ext2]="Linux ext2 (no journaling)"
-	Afs[btrfs]="Oracle Btrfs"
+	Afs[btrfs]="Linux B-tree File System"
 	Afs[ext4]="Linux ext4 (journal)"
 	Afs[vfat]="FAT32 (EFI)"
 	Afs[swap]="Linux swap"
+	Afs[exfat]="Extended File Allocation Table - NOT for Linux FS"
+	Afs[ntfs]="New Technology File System - NOT for Linux FS"
 
 	[[ -z "$oldfstype" ]] && oldfstype=$_FILESYSTEM
 	[[ -z "$oldfstype" ]] && oldfstype="${AConfDisk[_FILESYSTEM]}" # nada ainda ?
@@ -3414,7 +3419,12 @@ sh_make_fstab() {
 			fstype="$(sh_splitarray "${Amntpoint[$i]}" 2)"
 			format="$(sh_splitarray "${Amntpoint[$i]}" 3)"
 
-			if [[ "$fstype" = "f2fs" || "$fstype" = "btrfs" || "$fstype" = "xfs" || "$fstype" = "reiserfs" ]]; then
+      if [[ "$fstype" = "f2fs"  || \
+        "$fstype" = "btrfs"     || \
+        "$fstype" = "xfs"       || \
+        "$fstype" = "reiserfs"  || \
+        "$fstype" = "ntfs"      || \
+        "$fstype" = "exfat" ]]; then
 				fsorder=0
 			fi
 			if [ "$fstype" = "swap" ]; then
