@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: seg 10 fev 2025 11:15:53 -04
+#  Updated: qua 12 fev 2025 16:02:58 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -41,11 +41,11 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob  # Habilita padrões estendidos
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="4.2.10.20250210"
+declare -r _VERSION_="4.2.12.20250212"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
-declare -i njobs=50
+declare -i njobs=53
 declare -i LAUTO=1
 declare -i LINSTALL=0
 declare -i LCHROOT=0
@@ -1054,9 +1054,11 @@ sh_mount_fs() {
             log_exec mkdir -p $dir_install/home
             log_exec mkdir -p $dir_install/var/cache
             log_exec mkdir -p $dir_install/var/log
+            log_exec mkdir -p $dir_install/swapfc
             log_exec mount -o subvol=@home   $_part $dir_install/home
             log_exec mount -o subvol=@cache  $_part $dir_install/var/cache
             log_exec mount -o subvol=@log    $_part $dir_install/var/log
+            log_exec mount -o subvol=@swapfc $_part $dir_install/swapfc
           else
     				log_exec mount "$_part" "$dir_install"
           fi
@@ -1472,19 +1474,25 @@ sh_mkefiroaming() {
 }
 
 sh_remove_packages() {
-  local apackages=('plymouth-theme-community')
+  local aPackagesToRemove=('manjaro-live-systemd' 'community-livecd-key')
 
-  for pkg in ${apackaes[@]}; do
-    sh_chroot_job "Removing package: $pkg" "sudo pacman -Rdd $pkg --noconfirm" "$err_not_fatal"
+  for pkg in ${aPackagesToRemove[@]}; do
+    sh_chroot_job "Removing package: $pkg" "pacman -Rdd $pkg --noconfirm" "$err_not_fatal"
   done
 }
 
 sh_enable_disable_services() {
   local service
   local ServicesToMasking=('manjaro-live' 'plymouth-start')
-  local ServicesToEnable=('systemd-timesyncd')
+  local ServicesToEnable=('systemd-timesyncd' 'pre-systemd-swap' 'systemd-swap')
   local ServicesToDisable=('manjaro-live'
                   'avahi-daemon'
+                  'mirrors-live'
+                  'pacman-init'
+                  'ufw'
+                  'fstrim.timer'
+                  'big-btrfs-balance'
+                  'auto-unlock-pacman'
                   'community-livecd-key'
                   'cups'
                   'docker'
@@ -1507,6 +1515,10 @@ sh_enable_disable_services() {
   for service in ${ServicesToEnable[@]}; do
     sh_chroot_job "Enabling service: $service" "systemctl enable ${service}.service" "$err_not_fatal"
   done
+}
+
+sh_pacman_key_init() {
+  sh_chroot_job "Initializing keys" "pacman-key --init; pacman-key --populate" "$err_not_fatal"
 }
 
 sh_clean_issue() {
@@ -1974,6 +1986,10 @@ sh_mkparted() {
         fi
 	  	fi
 		fi
+
+    if [[ "$xmkfs" == 'btrfs' ]]; then
+      withswap=$false
+    fi
 
 		if ! ((LAUTOMATICA)); then
 			if ! conf "${YELLOW}${cwarning[$LC_DEFAULT]}" \
@@ -2524,6 +2540,7 @@ sh_make_fs() {
         log_exec btrfs subvolume create $dir_install/@home
         log_exec btrfs subvolume create $dir_install/@cache
         log_exec btrfs subvolume create $dir_install/@log
+        log_exec btrfs subvolume create $dir_install/@swapfc
         log_exec umount $_PART
 			else
 				log_exec mkfs.$fstype ${fsparms[$fstype]} $_PART
@@ -3438,6 +3455,7 @@ sh_make_fstab() {
 	  			echo "UUID=$(blkid -o value -s UUID "${_part}")  /home         ${fstype,,}   subvol=/@home,defaults,noatime,ssd,compress-force=zstd,commit=10 0 $fsorder"
 	  			echo "UUID=$(blkid -o value -s UUID "${_part}")  /var/cache    ${fstype,,}   subvol=/@cache,defaults,noatime,ssd,compress-force=zstd,commit=10 0 $fsorder"
 	  			echo "UUID=$(blkid -o value -s UUID "${_part}")  /var/log      ${fstype,,}   subvol=/@log,defaults,noatime,ssd,compress-force=zstd,commit=10 0 $fsorder"
+	  			echo "UUID=$(blkid -o value -s UUID "${_part}")  /swapfc       ${fstype,,}   subvol=/@swapfc,defaults,noatime 0 $fsorder"
 	  			} >>"$dir_install/etc/fstab"
         else
   				echo "UUID=$(blkid -o value -s UUID "${_part}")  ${mntpoint}   ${fstype,,}   defaults 0 $fsorder" >>"$dir_install/etc/fstab"
@@ -5143,6 +5161,7 @@ sh_install() {
   sh_remove_packages
 	sh_grubinstall || sh_cancelLiveInstall "$@"
   sh_enable_disable_services
+  #sh_pacman_key_init
   sh_clean_issue
   end_datetime=$(date)
 	sh_finishInstall
