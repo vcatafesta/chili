@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  chili-fr
+#  chili-fr - Wrapper lite para o qemu
 #  Created: 2019/12/13 - 00:00
 #  Altered: 2024/10/03 - 00:00
-#  Updated: ter 28 jan 2025 00:48:03 -04
+#  Updated: sex 14 fev 2025 00:51:31 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -42,7 +42,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 
 #system
 readonly APP="${0##*/}"
-readonly VERSION='1.28.01-20250128'
+readonly VERSION='1.2.14-20250214'
 readonly APPDESC='Wrapper lite para o qemu'
 readonly -a DEPENDENCIES=(
 	'tput'
@@ -563,8 +563,8 @@ function sh_usage {
 uso: ${orange}$APP${reset} [Opções]
 ${cyan}$(gettext "Opções"):${reset}
   ${rst}-b|--bridge ${orange}<bridge_name>         ${cyan}# inicia rede em modo bridge - ex: -b br0 (default: NAT)
-  ${rst}-c|--create-bridge ${orange}<bridge_name>  ${cyan}# criar bridge - ex: -c br0
-  ${rst}-r|--remove-bridge ${orange}<bridge_name>  ${cyan}# remover bridge - ex: -r br0
+  ${rst}-c|--create_bridge ${orange}<bridge_name>  ${cyan}# criar bridge - ex: -c br0
+  ${rst}-r|--remove_bridge ${orange}<bridge_name>  ${cyan}# remover bridge - ex: -r br0
   ${rst}-d|--drive ${orange}<drive_path>           ${cyan}# anexa disco externo - ex: -d /dev/sdX (default: none)
   ${rst}-m|--memory ${orange}<mem>                 ${cyan}# memória inicial de convidado - ex: -m 16G (default: 8GB)
   ${rst}-v|--vdisk ${orange}<filename.img|qcow2>   ${cyan}# usa um disco virtual interno - ( default: none)
@@ -618,10 +618,10 @@ sh_setup() {
 	msg_info "Setando permissões no diretórios de trabalho"
 	sudo chmod 1777 "$HOME_DIR/" &>/dev/null
 	msg_info "Criando arquivos de bloco no diretórios de trabalho"
-	sudo qemu-img create $HOME_DIR/hda.img -f raw 32G &>/dev/null
-	sudo qemu-img create $HOME_DIR/hdb.img -f raw 32G &>/dev/null
-	sudo qemu-img create $HOME_DIR/hdc.img -f raw 32G &>/dev/null
-	sudo qemu-img create $HOME_DIR/hdd.img -f raw 32G &>/dev/null
+	sudo qemu-img create $HOME_DIR/vdisk/hda.img -f raw 32G &>/dev/null
+	sudo qemu-img create $HOME_DIR/vdisk/hdb.img -f raw 32G &>/dev/null
+	sudo qemu-img create $HOME_DIR/vdisk/hdc.img -f raw 32G &>/dev/null
+	sudo qemu-img create $HOME_DIR/vdisk/hdd.img -f raw 32G &>/dev/null
 
 	sh_start_vdagentd
 }
@@ -634,7 +634,7 @@ sh_create_vdisk_file() {
 	sudo chown $USER:$USER "$HOME_DIR/" -R &>/dev/null
 
 	while true; do
-		replicate "================== DISCOS VIRTUAIS DISPONÍVEIS em $HOME_DIR ===================" 1
+		replicate "================== DISCOS VIRTUAIS DISPONÍVEIS em $HOME_DIR/vdisk ===================" 1
 		echo -n $green
 		ls -lh $HOME_DIR/vdisk
 		echo -n $rst
@@ -798,7 +798,7 @@ fi
 sh_checkDependencies
 
 OPTIONS=m:ub:Vnhd:sg:v:i:N:c:r:
-LONGOPTIONS=memory:,uefi,bridge:,version,nocolor,help,drive:,spice,video:,image:,network:,create-bridge,remove-bridge,cvdisk,rvdisk,vdisk
+LONGOPTIONS=memory:,uefi,bridge:,version,nocolor,help,drive:,spice,video:,image:,network:,create_bridge:,remove_bridge:,cvdisk,rvdisk,vdisk
 opts=($(getopt --options="$OPTIONS" --longoptions="$LONGOPTIONS" --name "$0" -- "$@"))
 eval set -- "${opts[*]}"
 
@@ -818,9 +818,9 @@ while test ${#opts[*]} -gt 0; do
 			shift
 		fi
 		;;
-	-c | --create-bridge)
+  -c| --create_bridge)
 		if [[ -z "$2" ]]; then
-			die "Argumento inválido para --create-bridge, falta nome para bridge" >&2
+			die "Argumento inválido para --create_bridge, falta nome para bridge" >&2
 		else
 			if [[ " $(get_bridge_interfaces) " =~ " $2 " ]]; then
 				die "Argumento inválido para ${cyan}--bridge-create${red}. BRIDGE ${cyan}$2 ${red}já existe" >&2
@@ -831,22 +831,15 @@ while test ${#opts[*]} -gt 0; do
 			fi
 		fi
 		;;
-	-r | --remove-bridge)
+	-r | --remove_bridge)
 		if [[ " $(get_bridge_interfaces) " =~ " $2 " ]]; then
 			bridge_name="$2"
 			remove_bridge_and_tap "$bridge_name"
 			shift
 		else
-			die "${red}Erro:${rst} \
-Argumento inválido para ${cyan}--remove-bridge${reset}. \
-$(
-				bridges=$(get_bridge_interfaces)
-				[[ -n $bridges ]] && Válidos são: \
-					echo "${yellow}$bridges" ||
-					echo "${yellow}nenhuma bridge disponível"
-			)
-${reset}" >&2
-		fi
+      #die "${red}Erro:${rst} Argumento inválido para ${cyan}--remove_bridge${reset}. ${yellow}$(get_bridge_interfaces || echo 'nenhuma bridge disponível')${reset}" >&2
+      die "${red}Erro:${rst} Argumento inválido para ${cyan}--remove_bridge${reset}. $(bridges=$(get_bridge_interfaces); [[ -n $bridges ]] && echo "Válidas são: ${yellow}$bridges" || echo "${yellow}nenhuma bridge disponível")${reset}" >&2
+    fi
 		;;
 	-b | --bridge)
 		if [[ " $(get_bridge_interfaces) " =~ " $2 " ]]; then
@@ -877,7 +870,12 @@ ${reset}" >&2
 			vdisk=true
 			shift
 		else
-			die "Argumento inválido para ${cyan}--vdisk${red}. Válidos são: ${yellow}$(get_raw_images)${reset}" >&2
+      replicate "================== DISCOS VIRTUAIS DISPONÍVEIS em $HOME_DIR/vdisk ===================" 1
+      echo -n $green
+      ls -lh $HOME_DIR/vdisk
+      echo -n $rst
+      replicate '='
+			die "Argumento inválido para ${cyan}--vdisk ${rst}Válidos são: ${yellow}$(get_raw_images)${rst}" >&2
 		fi
 		;;
 	--cvdisk)

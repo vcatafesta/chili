@@ -1473,11 +1473,15 @@ sh_mkefiroaming() {
 	return 0
 }
 
-sh_remove_packages() {
+sh_install_remove_packages() {
   local aPackagesToRemove=('manjaro-live-systemd' 'community-livecd-key')
+  local aPackagesToInstall=('biglinux-systemd-swap')
 
   for pkg in ${aPackagesToRemove[@]}; do
     sh_chroot_job "Removing package: $pkg" "pacman -Rdd $pkg --noconfirm" "$err_not_fatal"
+  done
+  for pkg in ${aPackagesToInstall[@]}; do
+    sh_chroot_job "Istalling package: $pkg" "pacman -S $pkg --noconfirm" "$err_not_fatal"
   done
 }
 
@@ -5158,7 +5162,7 @@ sh_install() {
 	sh_update_keymap
 	sh_update_Xkeymap
 	sh_update_timezone
-  sh_remove_packages
+  sh_install_remove_packages
 	sh_grubinstall || sh_cancelLiveInstall "$@"
   sh_enable_disable_services
   #sh_pacman_key_init
