@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: qua 12 fev 2025 16:02:58 -04
+#  Updated: sex 14 fev 2025 16:50:42 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -41,7 +41,7 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob  # Habilita padrões estendidos
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="4.2.12.20250212"
+declare -r _VERSION_="4.2.14.20250214"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
@@ -1418,7 +1418,7 @@ GRUB_DEFAULT=saved
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="${xdistro^}"
 GRUB_TIMEOUT_STYLE=menu
-GRUB_CMDLINE_LINUX_DEFAULT="loglevel=4 libata.noacpi=1 acpi=force apm=power-off nowatchdog tsc=nowatchdog cryptomgr.notests no_timer_check rcupdate.rcu_expedited=1 nouveau.modeset=1 rw nosoftlockup audit=0 nomce skew_tick=1 intremap=off intel_pstate=active amd_pstate=passive cpuidle.governor=teo split_lock_detect=off clearcpuid=514 transparent_hugepage=never loglevel=3 systemd.show_status=auto rd.udev.log_level=3 apparmor=1 security=apparmor vconsole.font=Uni2-Fixed16 intel_iommu=on tdx=on nvme_load=yes"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=4 libata.noacpi=1 acpi=force apm=power-off nowatchdog tsc=nowatchdog cryptomgr.notests no_timer_check rcupdate.rcu_expedited=1 nouveau.modeset=1 rw nosoftlockup audit=0 nomce skew_tick=1 intremap=off intel_pstate=active amd_pstate=passive cpuidle.governor=teo split_lock_detect=off clearcpuid=514 transparent_hugepage=never loglevel=3 systemd.show_status=auto rd.udev.log_level=3 apparmor=1 security=apparmor vconsole.font=Uni2-Fixed16 intel_iommu=on tdx=on nvme_load=yes"
 GRUB_CMDLINE_LINUX=""
 GRUB_PRELOAD_MODULES="part_gpt part_msdos lvm"
 GRUB_TIMEOUT_STYLE=menu
@@ -1502,13 +1502,14 @@ sh_enable_disable_services() {
                   'docker'
                   'nginx'
                   'vboxservice'
-                  'plymouth-start'
-                  'plymouth-quit'
-                  'plymouth-quit-wait'
-                  'plymouth-read-write'
-                  'plymouth-reboot'
-                  'plymouth-show-log-comm'
                   'sddm-plymouth')
+
+#                  'plymouth-start'
+#                  'plymouth-quit'
+#                  'plymouth-quit-wait'
+#                  'plymouth-read-write'
+#                  'plymouth-reboot'
+#                  'plymouth-show-log-comm'
 
   for service in ${ServicesToDisable[@]}; do
     sh_chroot_job "Disabling service: $service" "systemctl disable ${service}.service" "$err_not_fatal"
