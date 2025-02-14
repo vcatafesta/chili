@@ -5,7 +5,7 @@
 #  chili-fr - Wrapper lite para o qemu
 #  Created: 2019/12/13 - 00:00
 #  Altered: 2024/10/03 - 00:00
-#  Updated: sex 14 fev 2025 00:51:31 -04
+#  Updated: sex 14 fev 2025 02:22:31 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -329,10 +329,6 @@ sh_checkDependencies() {
 	done
 
 	aBlock_files+=('/usr/share/edk2/x64/OVMF_VARS.4m.fd')
-	#aBlock_files+=('/archlive/qemu/hda.img')
-	#aBlock_files+=('/archlive/qemu/hdb.img')
-	#aBlock_files+=('/archlive/qemu/hdc.img')
-	#aBlock_files+=('/archlive/qemu/hdd.img')
 	for d in "${aBlock_files[@]}"; do
 		if [[ ! -e "$d" ]]; then
 			log_err "Check: ${red}ERROR${reset}: $(gettext "Não foi possível encontrar o arquivo") ${cyan}'$d'${reset}"
@@ -352,6 +348,24 @@ sh_checkDependencies() {
 			sh_setup
 		fi
 	fi
+}
+
+sh_checkVdiskFiles() {
+	local aBlock_files=()
+	local d
+	local errorFound=false
+	declare -a missing
+
+	aBlock_files+=($HOME_DIR/vdisk/vda.img)
+	aBlock_files+=($HOME_DIR/vdisk/vdb.img)
+	aBlock_files+=($HOME_DIR/vdisk/vdc.img)
+	aBlock_files+=($HOME_DIR/vdisk/vdd.img)
+	for d in "${aBlock_files[@]}"; do
+		if [[ ! -e "$d" ]]; then
+			sh_createVdiskFiles
+			errorFound=true
+		fi
+	done
 }
 
 ######################################################################################################
@@ -602,6 +616,26 @@ EOF
 	exit 0
 }
 
+sh_createVdiskFiles() {
+  local aBlockDisk=(vda.img vdb.img vdc.img vdd.img)
+  local file
+
+  if [[ ! -d "$HOME_DIR/" ]]; then
+    msg_info "Criando diretórios de trabalho"
+    mkdir -p "$HOME_DIR/" &>/dev/null
+  fi
+
+  msg_info "Setando permissões no diretórios de trabalho"
+  sudo chmod 1777 "$HOME_DIR/" &>/dev/null
+
+  for file in "${aBlockDisk[@]}"; do
+    if [[ ! -e $HOME_DIR/vdisk/$file ]]; then
+      msg_info "Criando disco virtual '$file' no diretórios de trabalho"
+      qemu-img create $HOME_DIR/vdisk/$file -f raw 32G &>/dev/null
+    fi
+  done
+}
+
 sh_setup() {
 	msg_info "Instalando necessários pacotes"
 	sudo pacman -S --needed --quiet --noconfirm \
@@ -613,16 +647,7 @@ sh_setup() {
 		virt-viewer \
 		libvirt
 
-	msg_info "Criando diretórios de trabalho"
-	mkdir -p "$HOME_DIR/" &>/dev/null
-	msg_info "Setando permissões no diretórios de trabalho"
-	sudo chmod 1777 "$HOME_DIR/" &>/dev/null
-	msg_info "Criando arquivos de bloco no diretórios de trabalho"
-	sudo qemu-img create $HOME_DIR/vdisk/hda.img -f raw 32G &>/dev/null
-	sudo qemu-img create $HOME_DIR/vdisk/hdb.img -f raw 32G &>/dev/null
-	sudo qemu-img create $HOME_DIR/vdisk/hdc.img -f raw 32G &>/dev/null
-	sudo qemu-img create $HOME_DIR/vdisk/hdd.img -f raw 32G &>/dev/null
-
+  sh_createVdiskFiles
 	sh_start_vdagentd
 }
 
@@ -796,6 +821,7 @@ if [[ $1 == @(-V|--version) ]]; then
 fi
 
 sh_checkDependencies
+sh_checkVdiskFiles
 
 OPTIONS=m:ub:Vnhd:sg:v:i:N:c:r:
 LONGOPTIONS=memory:,uefi,bridge:,version,nocolor,help,drive:,spice,video:,image:,network:,create_bridge:,remove_bridge:,cvdisk,rvdisk,vdisk
