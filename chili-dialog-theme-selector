@@ -5,7 +5,7 @@
 #  chili-dialog-theme-selector - Seletor de temas para o Dialog
 #  Created: 2025/02/03 - 00:54
 #  Altered: 2025/02/03 - 00:54
-#  Updated: sáb 08 fev 2025 20:04:45 -04
+#  Updated: sáb 15 fev 2025 03:08:22 -04
 #
 #  Copyright (c) 2025-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -33,6 +33,20 @@
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
 export TEXTDOMAIN=chili-dialog-theme-selector
+
+#debug
+export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
+#set -x
+#set -e
+shopt -s extglob
+
+#system
+declare APP="${0##*/}"
+declare _VERSION_='3.02.15.20250215'
+declare APPDESC="Seletor de temas para o Dialog"
+declare ccabec="Chili Linux - $APP - v$_VERSION_ - $APPDESC"
+declare ctitle="Menu de Temas"
+declare DEPENDENCIES=(dialog setfont tput)
 
 # Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
@@ -64,20 +78,6 @@ light_blue=$(tput setaf 12)
 light_magenta=$(tput setaf 13)
 light_cyan=$(tput setaf 14)
 bright_white=$(tput setaf 15)
-
-#debug
-export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset}'
-#set -x
-#set -e
-shopt -s extglob
-
-#system
-declare APP="${0##*/}"
-declare _VERSION_="1.2.08-20250208"
-declare distro="$(uname -n)"
-declare DEPENDENCIES=(tput dialog)
-declare ccabec="$APP - Seletor de temas para o Dialog"
-declare ctitle="Menu de Temas"
 
 MostraErro() {
 	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
@@ -1901,16 +1901,20 @@ for key in "${!themes[@]}"; do
 	((count++))
 done
 
-theme_choice=$(dialog \
-              --colors \
-              --title "$ctitle" \
-              --backtitle "$ccabec" \
-              --menu "Escolha o tema desejado" 0 60 20 "${theme_list[@]}" 2>&1 >/dev/tty)
+while true; do
+	theme_choice=$(dialog \
+	  --default-item "$theme_choice" \
+		--colors \
+		--title "$ctitle" \
+		--backtitle "$ccabec" \
+		--menu "Escolha o tema desejado" 0 60 20 "${theme_list[@]}" 2>&1 >/dev/tty)
 
-# Salvar o tema escolhido no arquivo .dialogrc
-if [ -n "$theme_choice" ]; then
-	echo "${themes[$theme_choice]}" >"$HOME/.dialogrc"
-	dialog --msgbox "Tema '$theme_choice' aplicado com sucesso!" 0 0
-else
-	dialog --msgbox "Nenhum tema escolhido!" 0 0
-fi
+	# Salvar o tema escolhido no arquivo .dialogrc
+	if [ -n "$theme_choice" ]; then
+		echo "${themes[$theme_choice]}" >"$HOME/.dialogrc"
+		dialog --msgbox "Tema '$theme_choice' aplicado com sucesso!" 0 0
+	else
+#		dialog --msgbox "Nenhum tema escolhido!" 0 0
+		exit 0
+	fi
+done

@@ -370,6 +370,8 @@ sh_bashrc_configure() {
 	alias stop=st
 	alias restart="systemctl restart"
 	alias status="systemctl status"
+	#alias ativos="systemctl list-units --type=service | grep -E 'docker|containerd'
+	alias ativos="systemctl list-units --type=service"
 	#	alias reload="systemctl reload"
 	alias disable="systemctl disable"
 	alias enable="systemctl enable"
