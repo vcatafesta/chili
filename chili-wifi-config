@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  chili-wifi-config
+#  chili-wifi-config - Wrapper configuração wifi para o NetworkManager
 #  Created: 2025/02/06 - 04:53
 #  Altered: 2025/02/06 - 04:53
 #  Updated: sex 07 fev 2025 13:53:54 -04
@@ -73,7 +73,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare APPDESC="Wrapper para o NetworkManager Cli"
+declare APPDESC="Wrapper configuração wifi para o NetworkManager"
 declare _VERSION_="1.2.07-20250207"
 declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput dialog)

@@ -521,6 +521,7 @@ sh_bashrc_configure() {
 	alias r='echo $OLDPWD'
 	alias c="cd /sources"
 	alias ddel="find -name $1 | xargs rm -fvR"
+  alias ssh-live='ssh-keygen -R 172.30.255.140; ssh live@172.30.255.140'
 }
 
 function debug() {
@@ -1780,6 +1781,7 @@ gpull() {
 	git config credential.helper store
 	#	sudo git config pull.ff only
 	#	sudo git pull
+  git branch --set-upstream-to=origin/main main
 	git pull --no-ff
 }
 export -f gpull
@@ -1794,7 +1796,7 @@ gpush() {
 
 	log_wait_msg "${red}Iniciando git push in ${yellow}${mainbranch}'${reset}"
 	#export GIT_CURL_VERBOSE=1
-	git fetch upstream
+	#git fetch upstream
 	git checkout "$mainbranch"
 	git merge upstream/"${mainbranch}"
 	git config --global http.postBuffer 524288000

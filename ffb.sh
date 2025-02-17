@@ -11,8 +11,8 @@ ffb() {
 	local blue="\033[1;34m"
 	local reset="\033[0m"
 
-	# Comando find para localizar os maiores arquivos
-	resultado=$(find "$filepath" -type f -exec du -h {} + 2>/dev/null | sort -rh | head -n "$num_arquivos")
+  # Comando find para localizar os maiores arquivos
+  resultado=$(find "$filepath" -type d -name .git -prune -o -type f -exec du -h {} + 2>/dev/null | sort -rh | head -n "$num_arquivos")
 
 	# Exibir o resultado formatado
 	echo -e "=== Resultado ==="

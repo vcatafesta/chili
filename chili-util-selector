@@ -2,7 +2,7 @@
 #shellcheck disable=SC2145,SC2001,SC2188,SC2015,SC2155,SC2317,SC2320,SC2291,SC2034,SC2120,SC2086,SC2319
 #shellcheck disable=SC2016,SC2154,SC2207,SC2166,SC2128,SC2059,SC2140,SC2031,SC2030,SC2036,SC2119,SC2027
 
-#  chili-setfont - utilitario para exibibir e definir fonte do console
+#  chili-util-selector - Seletor de utilitarios do chili-utils
 #  Created: 2022/12/24
 #  Altered: 2024/04/12
 #  Updated: sáb 15 fev 2025 02:49:14 -04
@@ -32,7 +32,7 @@
 ##############################################################################
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
-export TEXTDOMAIN=chili-setfont
+export TEXTDOMAIN=chili-util-selector
 
 #debug
 export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
@@ -42,11 +42,13 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_='3.02.15.20250215'
-declare APPDESC="utilitario para exibibir e definir fonte do console"
-declare ccabec="Chili Linux - $APP - v$_VERSION_ - $APPDESC"
+declare _VERSION_='1.02.17.20250217'
+declare APPDESC="Seletor de utilitarios do chili-utils"
+declare ccabec="\Z1$APP - \Z2v$_VERSION_ - \Z3$APPDESC - \Z5https://chililinux.com"
+declare ctitle="MENU de Utilitários"
 declare DEPENDENCIES=(dialog setfont tput)
 declare dialogRcFile="$HOME/.dialogrc"
+declare sep='\xe2\x94\x82'
 
 cleanup() {
 	rm -f "$dialogRcFile"
@@ -115,6 +117,15 @@ sh_ascii_lines() {
 sh_setEnvironment() {
 	[[ ! -e "$dialogRcFile" ]] && sh_create_dialogrc
 	sh_ascii_lines
+  cLB1=$(gettext "Use as teclas")
+  cLB2=$(gettext "PARA CIMA")
+  cLB3=$(gettext "e")
+  cLB4=$(gettext "PARA BAIXO")
+  cLB5=$(gettext "para navegar")
+  cLB6=$(gettext "Use")
+  cLB7=$(gettext "para alternar entre os botões")
+  cLB8=$(gettext "para selecionar")
+  cmsg_LABEL="$cLB1${RED} ↑ $cLB2$RESET $cLB3 ${RED}↓ $cLB4$RESET $cLB5\n$cLB6${RED} TAB${RESET} $cLB7${RED} ENTER${RESET} $cLB8"
 }
 
 function sh_setvarcolors() {
@@ -142,6 +153,19 @@ function sh_setvarcolors() {
 		yellow="\e[1;33m"
 		orange="\e[1;33m"
 	fi
+	# dialog colors
+	REVERSE="\Zr"
+	UNDERLINE="\Zu"
+	BOLD="\Zb"
+	RESET="\Zn"
+	BLACK="\Z0"
+	YELLOW="\Z3"
+	WHITE="\Z7"
+	BLUE="\Z4"
+	CYAN="\Z6"
+	RED="\Z1"
+	GREEN="\Z2"
+	MAGENTA="\Z5"
 }
 
 function die() {
@@ -158,21 +182,25 @@ function msg() {
 	return 0
 }
 
-function erro() {
+erro() {
 	local msg=$1
 	shift
 	printf '%s\n' "${yellow}=> ${bold}${yellow}$msg${reset}"
 	return 1
 }
 
-function check_deps() {
-	local errorFound=0
+check_deps() {
+	local errorFound=false
 	declare -a missing
 
 	for d in "${DEPENDENCIES[@]}"; do
-		[[ -z $(command -v "$d") ]] && missing+=("$d") && errorFound=1 && printf '%s\n' "${red}ERRO${reset}: não encontrei o comando ${orange}'$d'${reset}"
+		if [[ -z $(command -v "$d") ]]; then
+			missing+=("$d")
+			errorFound=true
+			printf '%s\n' "${red}ERRO${reset}: não encontrei o comando ${orange}'$d'${reset}"
+		fi
 	done
-	if ((errorFound)); then
+	if $errorFound; then
 		erro "============ IMPOSSÍVEL CONTINUAR ============"
 		msg "Esse script precisa dos comandos listados acima"
 		msg "Instale-os e/ou verifique se estão no seu \$PATH"
@@ -181,55 +209,54 @@ function check_deps() {
 	fi
 }
 
-function sh_setfont() {
-	local arrdir=('/usr/share/consolefonts' '/usr/share/kbd/consolefonts')
-	local array
-	local fonts
-	local font
-	local xglob="$*"
-	local x
-	local i
+sh_chooseutil() {
+	local -A aUtils=()
+	local -a aUtil_list=()
 
-	[[ $# -lt 1 ]] && xglob="*.gz"
-	for i in "${arrdir[@]}"; do
-		if test -d "$i"; then
-			pushd "$i" &>/dev/null || die "ERRO: no access $i"
-			mapfile -t fonts <<<"$(printf "%s\n" $xglob)"
-			popd &>/dev/null || return 1
-		fi
+	aUtils+=(['chili-fr']='Wrapper lite para o qemu')
+	aUtils+=(['chili-runimage']='Wrapper lite para o qemu')
+	aUtils+=(['chili-dialog-theme-selector']='Seletor de temas para o Dialog')
+	aUtils+=(['chili-init-keys']='Utilitário para gerenciar chaves utilizando o pacman-key')
+	aUtils+=(['chili-systemd-services']='Wrapper para o systemctl')
+	aUtils+=(['chili-maketar']='Utilitário para criar backup tar de diretórios')
+	aUtils+=(['chili-parted']='Wrapper parted para particionamento de disco')
+	aUtils+=(['chili-xrandr']='Wrapper config resolution using xrandr, umc e cvt')
+	aUtils+=(['chili-locale_config']='Wraper para o localectl para ajustar o idioma')
+	aUtils+=(['chili-glibc-version']='Mostra a versão da libc')
+	aUtils+=(['chili-chroot']='chroot util compatible with all likeunix')
+	aUtils+=(['chili-wifi-config']='Wrapper configuração wifi para o NetworkManager')
+	aUtils+=(['chili-clonedisk']='Utilitário para clonar disco')
+	aUtils+=(['chili-efivar']='Listar variáveis uefi')
+
+	for key in "${!aUtils[@]}"; do
+		aUtil_list+=("$key" "${aUtils[$key]}")
+    if ((nlen < ${#key})); then
+      nlen=${#key}
+    fi
 	done
 
-	if [[ ${#fonts[*]} -eq 0 ]]; then
-		die "no fonts found in:" "\n${arrdir[0]}\n${arrdir[1]}"
+  ((nlen += 5))
+	util_choice=$(dialog \
+		--default-item "$util_choice" \
+		--colors \
+		--clear \
+		--title "$ctitle" \
+		--backtitle "$ccabec" \
+		--ok-label "Executar APP" \
+		--cancel-label "Sair" \
+		--menu "$cmsg_LABEL\n\n\
+$(printf "%${nlen}s$sep%-30s %${nlen}s" "NOME APP" "DESCRIÇÃO APP")" \
+		0 0 20 "${aUtil_list[@]}" 2>&1 >/dev/tty)
+
+	if [ -n "$util_choice" ]; then
+		clear
+		exec sudo "$util_choice"
+	else
+		exit 0
 	fi
-
-	for i in "${fonts[@]}"; do
-		x="$i"
-		x="${i%%.gz*}"
-		x="${x%%.psf*}"
-		x="${x%%.psfu*}"
-		array+=("$x")
-		array+=("$i")
-	done
-
-	while :; do
-		font=$(dialog \
-			--default-item "$font" \
-			--backtitle "$ccabec" \
-			--title "Menu de Fontes - /usr/share/kbd/consolefonts" \
-			--menu "Escolha uma fonte:" \
-			0 0 14 \
-			"${array[@]}" 2>&1 >/dev/tty)
-
-		if [[ $? -eq 1 ]]; then
-			exit
-		fi
-		echo -e "Fonte escolhida: $font"
-		setfont "$font"
-	done
 }
 
 sh_setvarcolors
 sh_setEnvironment
 check_deps
-sh_setfont "$@"
+sh_chooseutil "$@"

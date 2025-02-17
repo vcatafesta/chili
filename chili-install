@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: sáb 15 fev 2025 02:27:17 -04
+#  Updated: sáb 15 fev 2025 22:22:00 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -236,6 +236,16 @@ sh_setEnvironment() {
 	COL=$((COLUMNS - 8))
 	SET_COL="\\033[${COL}G" # at the $COL char
 	CURS_ZERO="\\033[0G"
+  COL_NC='\e[0m' # No Color
+  COL_LIGHT_GREEN='\e[1;32m'
+  COL_LIGHT_RED='\e[1;31m'
+  TICK="${white}[${COL_LIGHT_GREEN}✓${COL_NC}${white}]"
+  CROSS="${white}[${COL_LIGHT_RED}✗${COL_NC}${white}]"
+  INFO="[i]"
+  # shellcheck disable=SC2034
+  DONE="${COL_LIGHT_GREEN} done!${COL_NC}"
+  OVER="\\r\\033[K"
+  DOTPREFIX="  ${black}::${reset} "
 }
 
 sh_confDistro() {
@@ -315,7 +325,7 @@ sh_confDistro() {
 	site="${Adistro[ptcom]}"
 	xemail="${Adistro[contato]}"
 	chostname="${Adistro[chost]}"
-	ccabec="${Adistro[cdistro]} install ${_VERSION_}"
+	ccabec="${Adistro[cdistro]} install ${_VERSION_} [$(whoami)]"
 	ctitle="${Adistro[cdistro]} install"
 	welcome="Welcome to the ${ctitle}"
 	url_release="http://${site}/releases"
@@ -427,7 +437,7 @@ sh_getdevicefrompartition() {
 }
 
 function scrend() {
-	exit "$1"
+  exit "$1"
 }
 
 function sh_setVarColors() {
@@ -524,6 +534,18 @@ DOT() {
 sh_diahora() {
 	DIAHORA=$(date +"%d%m%Y-%T" | sed 's/://g')
 	printf "%s\n" "$DIAHORA"
+}
+
+sh_disablePrintk() {
+  if [[ -w /proc/sys/kernel/printk ]]; then
+    echo 0 >/proc/sys/kernel/printk
+  fi
+}
+
+sh_enablePrintk() {
+	if [[ -w /proc/sys/kernel/printk ]]; then
+		echo 4 >/proc/sys/kernel/printk
+	fi
 }
 
 evaluate_retval() {
@@ -662,6 +684,10 @@ log_error() {
 		echo -e "   ${FAILURE_PREFIX}${*}"
 	fi
 	return 0
+}
+
+log_err() {
+  printf " %b %s\\n" "${CROSS}" "${*}"
 }
 
 log_msg() {
@@ -1050,15 +1076,14 @@ sh_mount_fs() {
 				msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
   			if [[ -n "$mntpoint" && "$mntpoint" = "/" ]]; then
     			if [[ "$fstype" = "btrfs" ]]; then
-            log_exec mount -o subvol=@       $_part $dir_install
-            log_exec mkdir -p $dir_install/home
-            log_exec mkdir -p $dir_install/var/cache
-            log_exec mkdir -p $dir_install/var/log
-            log_exec mkdir -p $dir_install/swapfc
-            log_exec mount -o subvol=@home   $_part $dir_install/home
-            log_exec mount -o subvol=@cache  $_part $dir_install/var/cache
-            log_exec mount -o subvol=@log    $_part $dir_install/var/log
-            log_exec mount -o subvol=@swapfc $_part $dir_install/swapfc
+            log_exec mount -o compress=zstd,subvol=@       $_part $dir_install
+            for dir in home var/cache var/log swapfc; do
+              [[ -d "$dir_install/$dir" ]] || log_exec mkdir -p "$dir_install/$dir"
+            done
+            log_exec mount -o compress=zstd,subvol=@home   "$_part" "$dir_install/home"
+            log_exec mount -o compress=zstd,subvol=@cache  "$_part" "$dir_install/var/cache"
+            log_exec mount -o compress=zstd,subvol=@log    "$_part" "$dir_install/var/log"
+            log_exec mount -o compress=zstd,subvol=@swapfc "$_part" "$dir_install/swapfc"
           else
     				log_exec mount "$_part" "$dir_install"
           fi
@@ -1418,7 +1443,7 @@ GRUB_DEFAULT=saved
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="${xdistro^}"
 GRUB_TIMEOUT_STYLE=menu
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=4 libata.noacpi=1 acpi=force apm=power-off nowatchdog tsc=nowatchdog cryptomgr.notests no_timer_check rcupdate.rcu_expedited=1 nouveau.modeset=1 rw nosoftlockup audit=0 nomce skew_tick=1 intremap=off intel_pstate=active amd_pstate=passive cpuidle.governor=teo split_lock_detect=off clearcpuid=514 transparent_hugepage=never loglevel=3 systemd.show_status=auto rd.udev.log_level=3 apparmor=1 security=apparmor vconsole.font=Uni2-Fixed16 intel_iommu=on tdx=on nvme_load=yes"
+GRUB_CMDLINE_LINUX_DEFAULT="splash loglevel=4 libata.noacpi=1 acpi=force apm=power-off nowatchdog tsc=nowatchdog cryptomgr.notests no_timer_check rcupdate.rcu_expedited=1 nouveau.modeset=1 rw nosoftlockup audit=0 nomce skew_tick=1 intremap=off intel_pstate=active amd_pstate=passive cpuidle.governor=teo split_lock_detect=off clearcpuid=514 transparent_hugepage=never loglevel=3 systemd.show_status=auto rd.udev.log_level=3 apparmor=1 security=apparmor vconsole.font=Uni2-Fixed16 intel_iommu=on tdx=on nvme_load=yes"
 GRUB_CMDLINE_LINUX=""
 GRUB_PRELOAD_MODULES="part_gpt part_msdos lvm btrfs"
 GRUB_TIMEOUT_STYLE=menu
@@ -2600,9 +2625,30 @@ sh_format() {
 
 sh_checkroot() {
 	if [[ "$(id -u)" != "0" ]]; then
-		alerta "$cdistro Linux installer" "${RED}${REVERSE}You should run this script as root!"
-		scrend 0
+    #alerta "$cdistro Linux installer" "${RED}${REVERSE}You should run this script as root!"
+    #scrend 0
+    elevate_to_root
 	fi
+  ccabec+='root'
+}
+
+elevate_to_root() {
+  # Verifica se o usuário atual é root
+  if [[ $EUID -ne 0 ]]; then
+    log_err "Este script precisa ser executado como root. Elevando privilégios..."
+    # Tenta se tornar root sem sudo (caso esteja em root shell)
+    if command -v su >/dev/null 2>&1; then
+      log_msg "Privilégio elevado. Prosseguindo..."
+      exec su -c "$0 $*"
+    fi
+
+    # Se `su` não estiver disponível, usa sudo (se configurado para não pedir senha)
+    if command -v sudo >/dev/null 2>&1; then
+      log_msg "Privilégio elevado. Prosseguindo..."
+      exec sudo bash "$0" "$@"
+    fi
+    die "Erro: Não foi possível elevar para root. Execute manualmente como root."
+  fi
 }
 
 sh_getparamfile() {
@@ -4998,74 +5044,6 @@ sh_checklive() {
 	LIVECD=$(sh_testlive)
 }
 
-sh_initlanguage() {
-	sh_checklive "$iso"
-	while true; do
-		i18=$(${DIALOG} \
-			--stdout --keep-tite --aspect 20 --clear \
-			--default-item "$LC_DEFAULT" \
-			--backtitle "$ccabec" \
-			--colors \
-			--clear \
-			--title "${welcome[$LC_DEFAULT]}" \
-			--ok-label "${cmsg_Aceitar[$LC_DEFAULT]}" \
-			--cancel-label "${cmsg_Exit[$LC_DEFAULT]}" \
-			--menu "\n${escolhaIdioma[$LC_DEFAULT]}:" \
-			0 80 0 \
-			0 'Português' \
-			1 'English' \
-			2 'Deutsch' \
-			3 'Français' \
-			4 'Español' \
-			5 'Italiano')
-
-		exit_status=$?
-		case $exit_status in
-		"$D_ESC")
-			sh_stop_bind
-			sh_stop_mount
-			scrend 1
-			;;
-		"$D_CANCEL")
-			sh_stop_bind
-			sh_stop_mount
-			scrend 0
-			;;
-		esac
-		case $i18 in
-		0) pt_BR ;;
-		1) en_US ;;
-		esac
-		LC_DEFAULT="$i18"
-		LOCALE="${Alocale[$i18]}"
-		LIVECD=$(sh_testlive)
-		sh_main_menu "$@"
-	done
-}
-
-parseinit() {
-	while test $# -gt 0; do
-		case "$1" in
-		-q | --quiet) quiet=1 ;;
-		-h | -H | --help)
-			sh_usage
-			exit $(($# ? 0 : 1))
-			;;
-		-i | -I | --iso)
-			shift
-			(($# < 1)) && die "ERRO: opcao -i, -I, --iso requer argumento/parâmetro. use -h for help"
-			[[ ! -e $1 ]] && die "ERRO: arquivo $1 não localizado. use -h for help"
-			iso="$1"
-			sh_initlanguage "$iso"
-			;;
-		-*) die "operação não suportada: $1 - use -h for help" ;;
-		*) sh_initlanguage ;;
-		esac
-		shift
-	done
-	sh_initlanguage
-}
-
 sh_checkDependencies() {
 	local d
 	local errorFound=false
@@ -5284,16 +5262,69 @@ sh_main_menu() {
 	done
 }
 
-sh_disablePrintk() {
-  if [[ -w /proc/sys/kernel/printk ]]; then
-    echo 0 >/proc/sys/kernel/printk
-  fi
+sh_initlanguage() {
+	sh_checklive "$iso"
+	while true; do
+		i18=$(${DIALOG} \
+			--stdout \
+			--keep-tite \
+			--aspect 20 \
+			--clear \
+			--default-item "$LC_DEFAULT" \
+			--backtitle "$ccabec" \
+			--colors \
+			--title "${welcome[$LC_DEFAULT]}" \
+			--ok-label "${cmsg_Aceitar[$LC_DEFAULT]}" \
+			--cancel-label "${cmsg_Exit[$LC_DEFAULT]}" \
+			--menu "\n${escolhaIdioma[$LC_DEFAULT]}:" \
+			0 80 0 \
+			0 'Português' \
+			1 'English' \
+			2 'Deutsch' \
+			3 'Français' \
+			4 'Español' \
+			5 'Italiano')
+
+		exit_status=$?
+		case $exit_status in
+		"$D_ESC" | "$D_CANCEL")
+			sh_stop_bind
+			sh_stop_mount
+			scrend 1
+			;;
+		esac
+		case $i18 in
+		0) pt_BR ;;
+		1) en_US ;;
+		esac
+		LC_DEFAULT="$i18"
+		LOCALE="${Alocale[$i18]}"
+		LIVECD=$(sh_testlive)
+		sh_main_menu "$@"
+	done
 }
 
-sh_enablePrintk() {
-	if [[ -w /proc/sys/kernel/printk ]]; then
-		echo 4 >/proc/sys/kernel/printk
-	fi
+parseinit() {
+	while test $# -gt 0; do
+		case "$1" in
+		-q | --quiet) quiet=1 ;;
+		-h | -H | --help)
+			sh_usage
+			exit $(($# ? 0 : 1))
+			;;
+		-i | -I | --iso)
+			shift
+			(($# < 1)) && die "ERRO: opcao -i, -I, --iso requer argumento/parâmetro. use -h for help"
+			[[ ! -e $1 ]] && die "ERRO: arquivo $1 não localizado. use -h for help"
+			iso="$1"
+			sh_initlanguage "$iso"
+			;;
+		-*) die "operação não suportada: $1 - use -h for help" ;;
+		*) sh_initlanguage ;;
+		esac
+		shift
+	done
+	sh_initlanguage
 }
 
 sh_setEnvironment

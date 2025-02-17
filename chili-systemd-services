@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  chili-systemd-services
+#  chili-systemd-services - Wrapper para o systemctl
 #  Created: 2025/02/04 - 22:23
 #  Altered: 2025/02/04 - 22:23
 #

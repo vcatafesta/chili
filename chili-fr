@@ -5,7 +5,7 @@
 #  chili-fr - Wrapper lite para o qemu
 #  Created: 2019/12/13 - 00:00
 #  Altered: 2024/10/03 - 00:00
-#  Updated: sex 14 fev 2025 02:22:31 -04
+#  Updated: dom 16 fev 2025 16:09:29 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -42,7 +42,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 
 #system
 readonly APP="${0##*/}"
-readonly VERSION='1.2.14-20250214'
+readonly VERSION='1.2.16-20250216'
 readonly APPDESC='Wrapper lite para o qemu'
 readonly -a DEPENDENCIES=(
 	'tput'
@@ -88,6 +88,7 @@ declare -i lastcol=$(tput cols)
 declare -i Prow=0
 declare -i Pcol=0
 declare -a qemu_options=()
+declare -a avdisk_names=()
 trap cleanup_working_dir EXIT
 
 function cleanup_working_dir {
@@ -252,21 +253,22 @@ export -f msg_warning
 
 msg_warn() {
 	local msg="$1"
-	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
-	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
-	msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
+	#local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	#local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	#msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
 	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
-	echo -e "  =>${yellow}warning: ${cyan}${msg}${reset}"
+	#echo -e "  =>${yellow}warning: ${cyan}${msg}${reset}"
+	printf "%s\n" "${yellow}[WARN] ${cyan}$msg${rst}"
 }
 export -f msg_warn
 
 msg_info() {
-	echo -e "${yellow}[INFO] ${cyan}$1${reset}"
+	printf "%s\n" "${green}[INFO] ${cyan}$1${rst}"
 }
 
 # Função para exibir mensagens informativas
 msg_err() {
-	echo -e "${red}[ERRO] ${cyan}$1${reset}"
+  printf "%s\n" "${red}[ERRO] ${cyan}$1${rst}"
 }
 
 replicate() {
@@ -759,8 +761,11 @@ chili-fr() {
 	fi
 
   if $vdisk; then
-  	msg_info "Anexando disco virtual: ${yellow}$HOME_DIR/vdisk/${vdisk_name}"
-	  qemu_options+=(-drive file=$HOME_DIR/vdisk/${vdisk_name},format=raw)
+
+    for vdsk in "${avdisk_names[@]}"; do
+    	msg_info "Anexando disco virtual: ${yellow}$HOME_DIR/vdisk/${vdsk}"
+	    qemu_options+=(-drive file=$HOME_DIR/vdisk/${vdsk},format=raw)
+    done
   else
 		msg_warn "Parametro --vdisk não informado, iniciando sem disco virtual..."
   fi
@@ -810,7 +815,16 @@ chili-fr() {
 }
 export -f chili-fr
 
+sh_copyright() {
+  echo -n $orange
+  echo "$APP - $APPDESC"
+  echo 'Copyleft (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>'
+  echo 'Copyleft (c) 2019-2025, ChiliLinux Team <https://chililinux.com>'
+  echo $rst
+}
+
 sh_setvarcolors
+sh_copyright
 
 # Display usage information if no arguments are passed
 if [[ $# -eq 0 || $1 == @(-h|--help) ]]; then
@@ -870,7 +884,7 @@ while test ${#opts[*]} -gt 0; do
 	-b | --bridge)
 		if [[ " $(get_bridge_interfaces) " =~ " $2 " ]]; then
 			iface_bridge="$2"
-			msg_info "Parametro -b/--bridge detectado: tentando usar bridge '$iface_bridge'"
+			msg_info "Parametro --bridge detectado: tentando usar bridge '$iface_bridge'"
 			bridge=true
 			shift
 		else
@@ -879,7 +893,7 @@ while test ${#opts[*]} -gt 0; do
 		;;
 	-s | --spice)
 		spice=true
-		log_msg "Parametro -s/--spice detectado: tentando usar spice..."
+		log_msg "Parametro --spice detectado: tentando usar spice..."
 		;;
 	-g | --video)
 		if [[ $2 =~ ^(virtio-vga|virtio-gpu-pci|qxl-vga|VGA|cirrus-vga|ati-vga|virtio-gpu-pci|bochs-display|ramfb)?$ ]]; then
@@ -892,7 +906,8 @@ while test ${#opts[*]} -gt 0; do
 	-v | --vdisk)
 		if [[ " $(get_raw_images) " =~ " $2 " ]]; then
 			vdisk_name="$2"
-			msg_info "Parametro -v/--vdisk detectado: tentando usar virtual disk '$vdisk_name'"
+			avdisk_names+=("$vdisk_name")
+			msg_info "Parametro --vdisk detectado: tentando usar virtual disk '$vdisk_name'"
 			vdisk=true
 			shift
 		else

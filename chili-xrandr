@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  chili-xrandr
+#  chili-xrandr - Wrapper config resolution using xrandr, umc e cvt
 #  Created: 2019/07/15 - 23:02
 #  Altered: 2025/02/08 - 10:13
 #  Updated: 2025/02/08 - 10:36
@@ -79,7 +79,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare APPDESC="Wrapper config resolution with xrandr, umc e cvt"
+declare APPDESC="Wrapper config resolution using xrandr, umc e cvt"
 declare _VERSION_="1.2.08-20250208"
 declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput dialog awk grep sed xrandr cvt umc)

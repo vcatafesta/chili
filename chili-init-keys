@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2034
 #
-#  chili-init-keys - Utilitário para gerenciar e inicializar chaves de assinatura utilizando o pacman
+#  chili-init-keys - Utilitário para gerenciar chaves utilizando o pacman-key
 #  Created: 2024/09/23 - 16:19 -04
 #  Altered: 2024/09/23 - 16:19 -04
 #  Updated: 2024/12/25 - 07:12 -04 - added chili-keyring
@@ -32,7 +32,7 @@
 ##############################################################################
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
-export TEXTDOMAIN=chili-init-keys-manjaro
+export TEXTDOMAIN=chili-init-keys
 
 # Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
@@ -80,35 +80,149 @@ declare DEPENDENCIES=(tput)
 distro="$(uname -n)"
 
 MostraErro() {
-  echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
+	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
 }
 #trap 'MostraErro "${APP[$FUNCNAME][$LINENO]}" "${BASH_COMMAND}" "$?"; exit 1' ERR
 
-# /usr/share/pacman/keyrings
+die() {
+	local msg=$1
+	shift
+	printf "  %b %s\\n" "${CROSS}" "${bold}${red}${msg}"
+	exit 1
+}
 
-sudo rm -rf /etc/pacman.d/gnupg/* 1>/dev/null
+log_err() {
+	printf "  %b %s\\n" "${CROSS}" "${*}"
+}
+
+log_msg() {
+	local retval="${PIPESTATUS[0]}"
+
+	if [[ $retval -eq 0 ]]; then
+		printf "  %b %s\\n" "${TICK}" "${*}"
+	else
+		printf "  %b %s\\n" "${CROSS}" "${*}"
+	fi
+}
+
+msg_raw() {
+	local msg="$1"
+	# Remove tags HTML, se existirem
+	#msg="$(sed 's/<[^>]*>//g' <<< "$msg")"
+
+	# Verifica se existe ':' na mensagem
+	if [[ "$msg" == *:* ]]; then
+		# Divide a string antes e depois do primeiro ':'
+		local before_colon="${msg%%:*}:"
+		local after_colon="${msg#*: }"
+		# Aplica as cores
+		msg="${cyan}${before_colon} ${red}${after_colon}${reset}"
+	else
+		# Se não houver ':', aplica apenas a cor padrão
+		msg="${yellow}${cyan}${msg}${reset}"
+	fi
+	echo -e "$msg"
+}
+export -f msg_raw
+
+msg() {
+	local msg="$1"
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	echo -e "  =>${cyan}running: ${yellow}${msg}${reset}"
+}
+export -f msg
+
+msg_ok() {
+	local msg="$1"
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	echo -e "  =>${cyan}feito: ${green}${msg}${reset}"
+}
+export -f msg_ok
+
+msg_run() {
+	local msg="$1"
+	echo -e "==>${cyan}running: ${yellow}${msg}${reset}"
+	eval "$msg"
+}
+export -f msg_run
+
+msg_info() {
+	local msg="$1"
+	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	#echo -e "${caller_function}=>${yellow}info   : ${cyan}${msg}${reset}"
+	echo -e "  =>${yellow}info   : ${cyan}${msg}${reset}"
+}
+export -f msg_info
+
+msg_warning() {
+	local msg="$1"
+	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
+	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
+	echo -e "  =>${yellow}warning: ${cyan}${msg}${reset}"
+}
+export -f msg_warning
+
+msg_warn() {
+	local msg="$1"
+	#local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	#local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	#msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
+	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
+	#echo -e "  =>${yellow}warning: ${cyan}${msg}${reset}"
+	printf "%s\n" "${yellow}[WARN] ${cyan}$msg${rst}"
+}
+export -f msg_warn
+
+msg_info() {
+	printf "%s\n" "${green}[INFO] ${cyan}$1${rst}"
+}
+
+# Função para exibir mensagens informativas
+msg_err() {
+	printf "%s\n" "${red}[ERRO] ${cyan}$1${rst}"
+}
+
+replicate() {
+	local char=${1:-'#'}
+	local nsize=${2:-$(tput cols)}
+	local line
+	printf -v line "%*s" "$nsize" && echo -e "${blue}${line// /$char}${reset}"
+}
+export -f replicate
+
+msg_run 'sudo rm -rf /etc/pacman.d/gnupg/* 1>/dev/null'
 
 # Inicializar e popular o banco de chaves
-sudo pacman-key --init 1>/dev/null
+msg_run 'sudo pacman-key --init 1>/dev/null'
 
 # Adicionar e assinar chaves específicas
 keys=(
-  AECEEE84E52BBFAA9F1C9DF01EA0CEEEB09B44A3  #talesam@gmail.com
-  A0D5A8312A83940ED8B04B0F4BAC871802E960F1  #vcatafesta@gmail.com
+	AECEEE84E52BBFAA9F1C9DF01EA0CEEEB09B44A3 #talesam@gmail.com
+	A0D5A8312A83940ED8B04B0F4BAC871802E960F1 #vcatafesta@gmail.com
+	0AA022108998AA79A5C4997C45EC44879815E2A6 #bigbruno@gmail.com
+	099D22B956B9ED89263112F700859BF076EAE71F #rruscher@gmail.com
 )
 
 for key in "${keys[@]}"; do
-  sudo pacman-key --recv-keys "$key" 1>/dev/null
-  sudo pacman-key --lsign-key "$key" 1>/dev/null
+	msg_run 'sudo pacman-key --recv-keys "$key" 1>/dev/null'
+	msg_run 'sudo pacman-key --lsign-key "$key" 1>/dev/null'
+#	msg_run 'sudo pacman-key --finger    "$key" 1>/dev/null'
 done
 
+msg_run 'sudo pacman -U https://repo.biglinux.com.br/stable/x86_64/biglinux-keyring-20220827-3-any.pkg.tar.zst --noconfirm 1>/dev/null'
+msg_run 'sudo pacman -U https://repo.communitybig.org/stable/x86_64/community-keyring-20250101-2045-x86_64.pkg.tar.zst --noconfirm 1>/dev/null'
+msg_run 'sudo pacman -U https://repo.chililinux.com/stable/x86_64/chili-keyring-20250108-1849-any.pkg.tar.zst --noconfirm 1>/dev/null'
+
 # Sincronizar pacotes necessários
-#sudo pacman -Sy --needed --quiet \
-#  archlinux-keyring \
-#  manjaro-keyring \
-#  biglinux-keyring \
-#  community-keyring \
-#  chili-keyring \
+msg_run 'sudo pacman -Sy --needed --quiet \
+  archlinux-keyring \
+  manjaro-keyring \
+  biglinux-keyring \
+  community-keyring \
+  chili-keyring'
 #  ubuntu-keyring \
 #  debian-archive-keyring \
 #  alpine-keyring \
@@ -116,8 +230,8 @@ done
 #  debian-ports-archive-keyring \
 #  deepin-polkit-agent-ext-gnomekeyring
 
-sudo pacman-key --init 1>/dev/null
-sudo pacman-key --populate 1>/dev/null
+msg_run 'sudo pacman-key --init 1>/dev/null'
+msg_run 'sudo pacman-key --populate 1>/dev/null'
 
 # Listar informações das chaves
 #sudo pacman-key --list-keys
