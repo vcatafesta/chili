@@ -1,0 +1,80 @@
+{linux}-workdir=/tmp/.hbmk
+{win}-workdir=c:\lixo\.hbmk
+
+-w0
+-es2
+#additional path to search for libraries
+#-L./ 
+
+{win}-prgflag= -i..\include;
+#{win}-prgflag= -ic:\sci\include
+{win}-cflag= -cpp -w0 
+#{win}-i\sci\include
+{mingw|mingw64}-ldflag=-Wl,--allow-multiple-definition 
+
+{linux}-prgflag= -i../include;
+{linux}-i../include
+{linux}-i../../include
+#{linux}-ldflag=-Wl,--allow-multiple-definition -Wno-unused-local-typedefs -Wno-unused-result
+#{linux}-cflag=-cpp
+#{linux}-cflag=-Wall
+{linux}-cflag=-Wno-unused-result
+{linux}-cflag=-Wno-unused-value
+{linux}-cflag=-Wno-unused-variable
+{linux}-cflag=-Wno-unused-function
+{linux}-cflag=-Wno-unused-label
+-ldflag=-Wl,--allow-multiple-definition
+
+#clang
+{clang}-cflag=-Wzero-as-null-pointer-constant
+{clang}-cflag=-Wno-conversion
+{clang}-cflag=-Wold-style-cast
+#{clang}-cflag=-fno-color-diagnostics
+{clang}-cflag=-fno-caret-diagnostics
+{clang}-cflag=-fno-show-source-location
+#disable all diagnostics
+{clang}-cflag=-w
+
+
+hbct.hbc
+hbmemio.hbc
+hbhpdf.hbc
+hbblink.hbc
+hbct.hbc
+hbxpp.hbc
+xhb.hbc
+hboslib.hbc
+hbgt.hbc
+{win}hbwin.hbc
+hbnf.hbc
+hbgzio.hbc
+hbmemio.hbc
+#{linux}letodb.hbc
+{linux}hbcups.hbc
+#{win}/github/hwgui/hwgui.hbc
+
+#-lsciapilinux
+{linux}-lncurses
+#Bibliotecas
+#-lz
+-lpng
+-lhbblink
+-lhbct
+-lhbxpp
+-lxhb
+-lhboslib
+-lhbgt
+{win}-lhbwin
+-lhbnf
+-lhbgzio
+-lhbmemio
+
+#sci.hbc
+hbmzip.hbc
+hbmisc.hbc
+hbnetio.hbc
+rddsql.hbc
+hbunix.hbc
+#gtwvg.hbc
+#hbsqlit3.hbc
+#hbicu.hbc
