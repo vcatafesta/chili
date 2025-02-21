@@ -177,6 +177,28 @@ pathappend() {
 }
 export -f pathremove pathprepend pathappend
 
+#uso: set_path ~/bin ~/scripts
+set_path(){
+  # Check if user id is 1000 or higher
+  [ "$(id -u)" -ge 1000 ] || return
+
+ if [ $# -eq 0 ]; then
+    echo "Uso: ${cyan}set_path ~/bin ~/scripts ${reset}"
+    echo "     ${cyan}set_path ~/usr/local/bin ${reset}"
+    return
+  fi
+
+  for i in "$@"; do
+    # Check if the directory exists
+    [ -d "$i" ] || continue
+    # Check if it is not already in your $PATH.
+    echo "$PATH" | grep -Eq "(^|:)$i(:|$)" && continue
+    # Then append it to $PATH and export it
+    export PATH="${PATH}:$i"
+  done
+}
+export -f set_path
+
 sh_bashrc_configure() {
 	#alias sc="sudo sftp -P 65002 u356719782@185.211.7.40:/home/u356719782/domains/chililinux.com/public_html/packages/core/"
 	#alias hs="sudo ssh -X -p 65002 u356719782@185.211.7.40"
@@ -254,6 +276,9 @@ sh_bashrc_configure() {
 	export ROOTDIR=${PWD#/}
 	export ROOTDIR=/${ROOTDIR%%/*}
 	export PATH=".:/usr/bin:/usr/sbin:/bin:/sbin:/usr/local/bin:/usr/local/sbin:$HOME/bin:$HOME/.local/bin:$HOME/sbin:$HOME/.cargo/bin:/github/chili:/github/void-installer"
+  export MANPATH="/usr/share/man:/usr/local/share/man"
+  export ROOTPATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
+  export INFODIR="/usr/share/info:/usr/local/share/info"
 	export CDPATH=".:..:~"
 	#export LD_LIBRARY_PATH=/lib:/usr/lib
 	export VISUAL=nano
@@ -1773,16 +1798,41 @@ gcommit() {
 export -f gcommit
 
 gpull() {
-	local red=$(tput bold)$(tput setaf 196)
-	local cyan=$(tput setaf 6)
-	local reset=$(tput sgr0)
+  local red=$(tput bold)$(tput setaf 196)
+  local cyan=$(tput setaf 6)
+  local blue=$(tput setaf 4)
+  local reset=$(tput sgr0)
+  local mainbranch="main"
 
-	log_wait_msg "${blue}Iniciando git pull ${reset}"
-	git config credential.helper store
-	#	sudo git config pull.ff only
-	#	sudo git pull
-  git branch --set-upstream-to=origin/main main
-	git pull --no-ff
+  # Mensagem inicial
+  echo "${blue}Iniciando git pull...${reset}"
+
+  # Configura o credential helper para armazenar as credenciais
+  git config credential.helper store
+
+  # Troca para o branch principal
+  echo "${cyan}Trocando para o branch $mainbranch...${reset}"
+  git checkout "$mainbranch" || {
+    echo "${red}Erro: Não foi possível trocar para o branch $mainbranch.${reset}"
+    return 1
+  }
+
+  # Verifica se o upstream está configurado
+  if git remote | grep -q upstream; then
+    echo "${cyan}Upstream detectado. Mesclando alterações do upstream...${reset}"
+    git pull --no-ff upstream "$mainbranch" || {
+      echo "${red}Erro: Não foi possível mesclar as alterações do upstream.${reset}"
+      return 1
+    }
+  else
+    echo "${cyan}Upstream não detectado. Mesclando alterações do origin...${reset}"
+    git pull --no-ff origin "$mainbranch" || {
+      echo "${red}Erro: Não foi possível mesclar as alterações do origin.${reset}"
+      return 1
+    }
+  fi
+
+  echo "${blue}Git pull concluído com sucesso!${reset}"
 }
 export -f gpull
 
@@ -1823,24 +1873,66 @@ gpush() {
 }
 export -f gpush
 
-gaddupstream() {
-	local remote="$1"
-	local red=$(tput bold)$(tput setaf 196)
-	local cyan=$(tput setaf 6)
-	local reset=$(tput sgr0)
-	local mainbranch="$(getbranch)"
+gitaddupstream() {
+  local remote="$1"
+  local red=$(tput bold)$(tput setaf 196)
+  local cyan=$(tput setaf 6)
+	local yellow=$(tput bold)$(tput setaf 3)
+  local reset=$(tput sgr0)
+  local mainbranch="$(git symbolic-ref --short HEAD 2>/dev/null || echo "main")"
 
-	if test $# -eq 0; then
-		echo "uso: ${cyan}gaddupstream <repositorio>${reset}"
-		echo "     ${cyan}gaddupstream https://github.com/biglinux/big-store${reset}"
-		echo "branchs locais:"
-		git remote -v
-		return 1
-	fi
-	git remote add upstream $remote
-	git remote -v
+  if test $# -eq 0; then
+    echo "==>  ${yellow}A função gitaddupstream automatiza a sincronização de um repositório Git local com um repositório upstream,"
+    echo "     adicionando o remote, buscando, mesclando e enviando as alterações para manter seu fork atualizado. 🚀${reset}"
+    echo "uso: ${cyan}gitaddupstream <repositorio-upstream>${reset}"
+    echo " ex: ${cyan}gitaddupstream https://github.com/chililinux/chili-utils${reset}"
+    echo "remotes:"
+    git remote -v
+    return 1
+  fi
+
+  # Adicione o repositório original como um remote:
+  echo "${cyan}Adicionando upstream...${reset}"
+  git remote add upstream "$remote" || {
+    echo "${red}Erro: Não foi possível adicionar o upstream.${reset}"
+    return 1
+  }
+
+  # Verifique os remotes:
+  echo "${cyan}Remotes configurados:${reset}"
+  git remote -v
+
+  # Busque as alterações do upstream:
+  echo "${cyan}Buscando alterações do upstream...${reset}"
+  git fetch upstream || {
+    echo "${red}Erro: Não foi possível buscar alterações do upstream.${reset}"
+    return 1
+  }
+
+  # Certifique-se de que está no branch correto:
+  echo "${cyan}Trocando para o branch principal ($mainbranch)...${reset}"
+  git checkout "$mainbranch" || {
+    echo "${red}Erro: Não foi possível trocar para o branch $mainbranch.${reset}"
+    return 1
+  }
+
+  # Mescle as alterações do upstream:
+  echo "${cyan}Mesclando alterações do upstream...${reset}"
+  git merge upstream/"$mainbranch" --allow-unrelated-histories || {
+    echo "${red}Erro: Não foi possível mesclar as alterações. Resolva os conflitos manualmente.${reset}"
+    return 1
+  }
+
+  # Envie as alterações para o seu repositório no GitHub:
+  echo "${cyan}Enviando alterações para o repositório remoto...${reset}"
+  git push origin "$mainbranch" || {
+    echo "${red}Erro: Não foi possível enviar as alterações para o repositório remoto.${reset}"
+    return 1
+  }
+
+  echo "${cyan}Upstream atualizado com sucesso!${reset}"
 }
-export -f gaddupstream
+export -f gitaddupstream
 
 grmupstream() {
 	local remote="$1"
