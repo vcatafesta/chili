@@ -1873,7 +1873,7 @@ gpush() {
 }
 export -f gpush
 
-gitaddupstream() {
+chili-gitaddupstream() {
   local remote="$1"
   local red=$(tput bold)$(tput setaf 196)
   local cyan=$(tput setaf 6)
@@ -1932,7 +1932,8 @@ gitaddupstream() {
 
   echo "${cyan}Upstream atualizado com sucesso!${reset}"
 }
-export -f gitaddupstream
+export -f chili-gitaddupstream
+alias gitaddupstream=chili-gitaddupstream
 
 grmupstream() {
 	local remote="$1"

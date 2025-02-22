@@ -5,7 +5,7 @@
 #  chili-fr - Wrapper lite para o qemu
 #  Created: 2019/12/13 - 00:00
 #  Altered: 2024/10/03 - 00:00
-#  Updated: dom 16 fev 2025 16:09:29 -04
+#  Updated: sáb 22 fev 2025 01:24:52 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -42,7 +42,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 
 #system
 readonly APP="${0##*/}"
-readonly VERSION='1.2.16-20250216'
+readonly VERSION='1.2.22-20250222'
 readonly APPDESC='Wrapper lite para o qemu'
 readonly -a DEPENDENCIES=(
 	'tput'
@@ -365,7 +365,7 @@ sh_checkVdiskFiles() {
 	for d in "${aBlock_files[@]}"; do
 		if [[ ! -e "$d" ]]; then
 			sh_createVdiskFiles
-			errorFound=true
+			break
 		fi
 	done
 }
@@ -622,9 +622,9 @@ sh_createVdiskFiles() {
   local aBlockDisk=(vda.img vdb.img vdc.img vdd.img)
   local file
 
-  if [[ ! -d "$HOME_DIR/" ]]; then
+  if [[ ! -d "$HOME_DIR/vdisk/" ]]; then
     msg_info "Criando diretórios de trabalho"
-    mkdir -p "$HOME_DIR/" &>/dev/null
+    mkdir -p "$HOME_DIR/vdisk/" &>/dev/null
   fi
 
   msg_info "Setando permissões no diretórios de trabalho"
