@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: sáb 15 fev 2025 22:22:00 -04
+#  Updated: seg 24 fev 2025 01:02:49 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -41,7 +41,7 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob  # Habilita padrões estendidos
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="4.2.15.20250215"
+declare -r _VERSION_="4.2.24.20250224"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
@@ -223,8 +223,10 @@ sh_setEnvironment() {
 	RESET="\Zn"
 	BLACK="\Z0"
 	YELLOW="\Z3"
+	AMARELO="\Zb\Z3"
 	WHITE="\Z7"
 	BLUE="\Z4"
+	AZUL="\Zb\Z4"
 	CYAN="\Z6"
 	RED="\Z1"
 	GREEN="\Z2"
@@ -1027,7 +1029,7 @@ sh_execcopia() {
 			[[ "$PERCENTAGEM" -gt 100 ]] && PERCENTAGEM=100
 			${DIALOG} --colors \
 				--title $TITLE \
-				--gauge "$MSG           							\nFalta ${BOLD}${YELLOW}$((100 - PERCENTAGEM))%${RESET} para completar a tarefa \Zb\Z1${PONT:nval:1}\ZB\Zn \
+				--gauge "$MSG           							\nFalta ${BOLD}${YELLOW}$((100 - PERCENTAGEM))%${RESET} para completar a tarefa ${AZUL}${PONT:nval:1}\ZB\Zn \
            							\n\nDestino    : ${BOLD}${YELLOW}${AConfDisk[_DEVICE]}$dir_install${RESET}
            							\nDisponivel : ${DISPONIVEL}MB\
            							\nTotal      :	${TOTALGB}MB\
@@ -1499,21 +1501,53 @@ sh_mkefiroaming() {
 }
 
 sh_install_remove_packages() {
-  local aPackagesToRemove=('manjaro-live-systemd' 'community-livecd-key')
-  local aPackagesToInstall=('biglinux-systemd-swap')
+#  local aPackagesToRemove=('manjaro-live-systemd' 'community-livecd-key')
+#  local aPackagesToInstall=('biglinux-systemd-swap')
+  local aPackagesRoot_install=()
+  local aPackagesRoot_remove=()
+  local aFilesToRemove=()
+  local pkg
+  local cfile
 
-  for pkg in ${aPackagesToRemove[@]}; do
-    sh_chroot_job "Removing package: $pkg" "pacman -Rdd $pkg --noconfirm" "$err_not_fatal"
+# for pkg in ${aPackagesToRemove[@]}; do
+#    sh_chroot_job "Removing package: $pkg" "pacman -Rdd $pkg --noconfirm" "$err_not_fatal"
+#  done
+
+#  for pkg in ${aPackagesToInstall[@]}; do
+#    sh_chroot_job "Installing package: $pkg" "pacman -S $pkg --noconfirm" "$err_not_fatal"
+#  done
+
+  if [[ -e "$dir_install"/etc/Root-install ]]; then
+    mapfile -t aPackagesRoot_install < "$dir_install/etc/Root-install"
+    if [[ ${#aPackagesRoot_install[@]} -gt 0 ]]; then
+      for pkg in "${aPackagesRoot_install[@]}"; do
+        sh_chroot_job "Installing package from Root-install: $pkg" "pacman -S $pkg --noconfirm" "$err_not_fatal"
+      done
+    fi
+  fi
+
+  if [[ -e "$dir_install"/etc/Root-remove ]]; then
+    mapfile -t aPackagesRoot_remove < "$dir_install/etc/Root-remove"
+    if [[ ${#aPackagesRoot_remove[@]} -gt 0 ]]; then
+      for pkg in "${aPackagesRoot_remove[@]}"; do
+        sh_chroot_job "Removing package from Root-remove: $pkg" "pacman -Rns $pkg --noconfirm" "$err_not_fatal"
+      done
+    fi
+  fi
+
+  aFilesToRemove=("$dir_install/*.txt"
+    "$dir_install/*.conf"
+    "$dir_install/*.gpg"
+    "$dir_install/.manjaro-tools"
+    "$dir_install/etc/Root-install"
+    "$dir_install/etc/Root-remove"
+    )
+
+  for cfile in ${aFilesToRemove[@]}; do
+    if [[ -e "$cfile" ]]; then
+      sh_cmd_job "Removendo arquivos absoletos =>" "rm -f $cfile" "$err_not_fatal"
+    fi
   done
-
-  for pkg in ${aPackagesToInstall[@]}; do
-    sh_chroot_job "Istalling package: $pkg" "pacman -S $pkg --noconfirm" "$err_not_fatal"
-  done
-
-  sh_cmd_job "Removendo desnecessários arquivos" "rm -f $dir_install/*.txt" "$err_not_fatal"
-  sh_cmd_job "Removendo desnecessários arquivos" "rm -f $dir_install/*.conf" "$err_not_fatal"
-  sh_cmd_job "Removendo desnecessários arquivos" "rm -f $dir_install/*.gpg" "$err_not_fatal"
-  sh_cmd_job "Removendo desnecessários arquivos" "rm -f $dir_install/.manjaro-tools" "$err_not_fatal"
 }
 
 sh_enable_disable_services() {
@@ -2158,6 +2192,13 @@ sh_chooseTimezone() {
       fi
     fi
   fi
+
+	if notconf "*** TIMEZONE ***" \
+	  "${cmsg_LayoutAtual[$LC_DEFAULT]} : ${AMARELO}${AConfLocale[_TIMEZONE]}${RESET}" \
+	  "\n\n${cmsgSetTimezoneLayout[$LC_DEFAULT]}?"; then
+  	LTIMEZONE=$true
+		return 0
+	fi
 
 	sorted_list=$(for key in "${!Atimezone[@]}"; do echo "$key|${Atimezone[$key]}"; done | sort -t\| -k2 -k1)
 	while IFS='|' LC_ALL=C read -r -a fields; do
@@ -3435,7 +3476,9 @@ sh_chooseKeymap() {
 	local nchoice
 	local item
 
-	if notconf "*** ${cmsg_Teclado[$LC_DEFAULT]^^} ***" "${cmsg_LayoutAtual[$LC_DEFAULT]} : \Zb\Z1${AConfLocale[_KEYMAP]}${RESET}" "\n\n${cmsgSetKeyboardLayout[$LC_DEFAULT]}?"; then
+	if notconf "*** ${cmsg_Teclado[$LC_DEFAULT]^^} ***" \
+	  "${cmsg_LayoutAtual[$LC_DEFAULT]} : ${AMARELO}${AConfLocale[_KEYMAP]}${RESET}" \
+	  "\n\n${cmsgSetKeyboardLayout[$LC_DEFAULT]}?"; then
 		LKEYMAP=$true
 		return 0
 	fi
@@ -3728,7 +3771,7 @@ pt_BR() {
 	cmsgDeseja_continuar_e_escolher_o_disco_destino='Deseja continuar e escolher o disco destino'
 	cmsg_Error_not_fatal='Erro não fatal. Para mais detalhes veja o log'
 	cmsg_InstalacaoAbortada='Instalação abortada'
-	cmsg_LABEL="Use as teclas ${RED}↑ PARA CIMA ${RESET}e ${RED}↓ PARA BAIXO ${RESET}para navegar.\nUse ${RED}TAB ${RESET}para alternar entre os botões e ${RED}ENTER ${RESET}para selecionar."
+	cmsg_LABEL="Use as teclas ${AZUL}↑ PARA CIMA ${RESET}e ${AZUL}↓ PARA BAIXO ${RESET}para navegar.\nUse ${AZUL}TAB ${RESET}para alternar entre os botões e ${AZUL}ENTER ${RESET}para selecionar."
 	cmsg_Configurar="Configurar"
 	cmsg_info_disco="Info disco"
 }
@@ -3808,7 +3851,7 @@ en_US() {
 	cmsgDeseja_continuar_e_escolher_o_disco_destino='Do you want to continue and choose the destination disk'
 	cmsg_Error_not_fatal='Non-fatal error. For more details see the log'
 	cmsg_InstalacaoAbortada='Installation aborted'
-	cmsg_LABEL="Use the ${RED}UP ${RESET}and ${RED}DOWN ${RESET}keys to navigate.\nUse ${RED}TAB ${RESET}to toggle between buttons and ${RED}ENTER ${RESET}to select."
+	cmsg_LABEL="Use the ${AZUL}UP ${RESET}and ${AZUL}DOWN ${RESET}keys to navigate.\nUse ${AZUL}TAB ${RESET}to toggle between buttons and ${AZUL}ENTER ${RESET}to select."
 	cmsg_Configurar="Setup"
 	cmsg_info_disco="Disk info"
 }
@@ -3821,18 +3864,20 @@ sh_setLanguage() {
 			"fr_FR"
 			"es_ES"
 			"it_IT")'
-		'cmsg_LABEL=("Use as teclas ${RED}↑ PARA CIMA ${RESET}e ${RED}↓ PARA BAIXO ${RESET}para navegar.\nUse ${RED}TAB ${RESET}para alternar entre os botões e ${RED}ENTER ${RESET}para selecionar."
-			"Use the ${RED}UP ${RESET}and ${RED}DOWN ${RESET}keys to navigate.\nUse ${RED}TAB ${RESET}to toggle between buttons and ${RED}ENTER ${RESET}to select."
-			"Verwenden Sie die Tasten ${RED}UP ${RESET}und ${RED}DOWN${RESET}, um zu navigieren.\nVerwenden Sie ${RED}TAB${RESET}, um zwischen den Schaltflächen zu wechseln, und ${RED}ENTER ${RESET}auswählen."
-			"Utilisez les touches ${RED}HAUT ${RESET}et ${RED}BAS ${RESET}pour naviguer.\nUtilisez ${RED}TAB ${RESET}pour basculer entre les boutons et ${RED}ENTRÉE ${RESET}pour sélectionner"
-			"Use las teclas ${RED}ARRIBA ${RESET}y ${RED}ABAJO ${RESET}para navegar.\nUse ${RED}TAB ${RESET}para cambiar entre botones y ${RED}ENTER ${RESET}para seleccionar."
-			"Usa i tasti ${RED}SU ${RESET}e ${RED}GIÙ ${RESET}per navigare.\nUsa ${RED}TAB ${RESET}per spostarti tra i pulsanti e ${RED}ENTER ${RESET}selezionare.")'
-		'cmsg_LBL_check=("Use as teclas ${RED}PARA CIMA ${RESET}e ${RED}PARA BAIXO ${RESET}para navegar.\nUse ${RED}BARRA DE ESPAÇO ${RESET}para selecionar.\nUse ${RED}TAB ${RESET}para alternar entre os botões e ${RED}ENTER ${RESET}para aceitar."
-			"Use the ${RED}UP ${RESET}and ${RED}DOWN ${RESET}keys to navigate.\nUse ${RED}TAB ${RESET}to toggle between buttons and ${RED}ENTER ${RESET}to select."
-			"Verwenden Sie die Tasten ${RED}UP ${RESET}und ${RED}DOWN${RESET}, um zu navigieren.\nVerwenden Sie ${RED}TAB${RESET}, um zwischen den Schaltflächen zu wechseln, und ${RED}ENTER ${RESET}auswählen."
-			"Utilisez les touches ${RED}HAUT ${RESET}et ${RED}BAS ${RESET}pour naviguer.\nUtilisez ${RED}TAB ${RESET}pour basculer entre les boutons et ${RED}ENTRÉE ${RESET}pour sélectionner"
-			"Use las teclas ${RED}ARRIBA ${RESET}y ${RED}ABAJO ${RESET}para navegar.\nUse ${RED}TAB ${RESET}para cambiar entre botones y ${RED}ENTER ${RESET}para seleccionar."
-			"Usa i tasti ${RED}SU ${RESET}e ${RED}GIÙ ${RESET}per navigare.\nUsa ${RED}TAB ${RESET}per spostarti tra i pulsanti e ${RED}ENTER ${RESET}selezionare.")'
+		'cmsg_LABEL=("Use as teclas ${AZUL}↑ PARA CIMA ${RESET}e ${AZUL}↓ PARA BAIXO ${RESET}para navegar.\nUse ${AZUL}TAB ${RESET}para alternar entre os botões e ${AZUL}ENTER ${RESET}para selecionar."
+			"Use the ${AZUL}UP ${RESET}and ${AZUL}DOWN ${RESET}keys to navigate.\nUse ${AZUL}TAB ${RESET}to toggle between buttons and ${AZUL}ENTER ${RESET}to select."
+			"Verwenden Sie die Tasten ${AZUL}UP ${RESET}und ${AZUL}DOWN${RESET}, um zu navigieren.\nVerwenden Sie ${AZUL}TAB${RESET}, um zwischen den Schaltflächen zu wechseln, und ${AZUL}ENTER ${RESET}auswählen."
+			"Utilisez les touches ${AZUL}HAUT ${RESET}et ${AZUL}BAS ${RESET}pour naviguer.\nUtilisez ${AZUL}TAB ${RESET}pour basculer entre les boutons et ${AZUL}ENTRÉE ${RESET}pour sélectionner"
+			"Use las teclas ${AZUL}ARRIBA ${RESET}y ${AZUL}ABAJO ${RESET}para navegar.\nUse ${AZUL}TAB ${RESET}para cambiar entre botones y ${AZUL}ENTER ${RESET}para seleccionar."
+			"Usa i tasti ${AZUL}SU ${RESET}e ${AZUL}GIÙ ${RESET}per navigare.\nUsa ${AZUL}TAB ${RESET}per spostarti tra i pulsanti e ${AZUL}ENTER ${RESET}selezionare.")'
+
+		'cmsg_LBL_check=("Use as teclas ${AZUL}PARA CIMA ${RESET}e ${AZUL}PARA BAIXO ${RESET}para navegar.\nUse ${AZUL}BARRA DE ESPAÇO ${RESET}para selecionar.\nUse ${AZUL}TAB ${RESET}para alternar entre os botões e ${AZUL}ENTER ${RESET}para aceitar."
+			"Use the ${AZUL}UP ${RESET}and ${AZUL}DOWN ${RESET}keys to navigate.\nUse ${AZUL}TAB ${RESET}to toggle between buttons and ${AZUL}ENTER ${RESET}to select."
+			"Verwenden Sie die Tasten ${AZUL}UP ${RESET}und ${AZUL}DOWN${RESET}, um zu navigieren.\nVerwenden Sie ${AZUL}TAB${RESET}, um zwischen den Schaltflächen zu wechseln, und ${AZUL}ENTER ${RESET}auswählen."
+			"Utilisez les touches ${AZUL}HAUT ${RESET}et ${AZUL}BAS ${RESET}pour naviguer.\nUtilisez ${AZUL}TAB ${RESET}pour basculer entre les boutons et ${AZUL}ENTRÉE ${RESET}pour sélectionner"
+			"Use las teclas ${AZUL}ARRIBA ${RESET}y ${AZUL}ABAJO ${RESET}para navegar.\nUse ${AZUL}TAB ${RESET}para cambiar entre botones y ${AZUL}ENTER ${RESET}para seleccionar."
+			"Usa i tasti ${AZUL}SU ${RESET}e ${AZUL}GIÙ ${RESET}per navigare.\nUsa ${AZUL}TAB ${RESET}per spostarti tra i pulsanti e ${AZUL}ENTER ${RESET}selezionare.")'
+
 		'cmsg_Tarball_Corrompido=("\n${RED}Aparentemente o tarball rootfs ${_TARBALL_ROOTFS} está corrompido.\n\n${BOLD}${WHITE}Testar a integridade e reiniciar a instalação ?"
 			"\n${RED}Apparently the rootfs tarball ${_TARBALL_ROOTFS} is corrupted.\n\n${BOLD}${WHITE}Test integrity and restart installation ?"
 			"\n${RED}Anscheinend ist der rootfs-Tarball ${_TARBALL_ROOTFS} beschädigt.\n\n${BOLD}${WHITE}Integrität testen und Installation neu starten?"
@@ -4409,6 +4454,12 @@ sh_setLanguage() {
 		"Le disque sélectionné contient des partitions montées"
 		"El disco seleccionado contiene particiones montadas"
 		"Il disco selezionato contiene partizioni montate")'
+		'cmsgSetTimezoneLayout=("Escolher outro timezone"
+		"Choose another timezone"
+		"Wählen Sie eine andere Zeitzone"
+		"Choisissez un autre fuseau horaire"
+		"Elige otra zona horaria"
+		"Scegli un altro fuso orario")'
 		'cmsgSetKeyboardLayout=("Escolher outro layout de teclado"
 		"Choose another keyboard layout"
 		"Wählen Sie ein anderes Tastaturlayout"
@@ -4757,7 +4808,7 @@ sh_setLanguage() {
 		"Mot de passe WiFi"
 		"Contraseña de wifi"
 		"Password Wi-Fi")'
-		'cmsg_mkfs=("↓ é recomendável ${RED}${REVERSE}ext4${RESET} ↓"
+		'cmsg_mkfs=("↓ é recomendável ${AMARELO}ext4${RESET} ↓"
 		"↓ ext4 is recommended ↓"
 		"↓ ext4 wird empfohlen ↓"
 		"↓ ext4 est recommandé ↓"
@@ -5095,8 +5146,10 @@ sh_install() {
   local end_datetime
 
 	if ((LAUTOMATICA)); then
-		confmulti "${cmsgInstalacao_Automatica^^}" "\n${BOLD}$cmsgNeste_modo_a_instalacao_sera_automatizada" \
-			"bastando escolher o disco destino" "\n\n${BOLD}${WHITE}$cmsgDeseja_continuar_e_escolher_o_disco_destino?" || sh_cancelLiveInstall "$@"
+		confmulti "${cmsgInstalacao_Automatica^^}" \
+		  "\n${BOLD}$cmsgNeste_modo_a_instalacao_sera_automatizada" \
+			"bastando escolher o disco destino" \
+			"\n\n${AMARELO}$cmsgDeseja_continuar_e_escolher_o_disco_destino?" || sh_cancelLiveInstall "$@"
 	fi
 	LIVECD=$(sh_testlive)
 	! ((LIVECD)) && { [[ -n "$iso" ]] && { sh_checklive "$iso"; }; }
@@ -5159,7 +5212,7 @@ sh_install() {
 }
 
 sh_chooseKeymap() {
-	if notconf "*** ${cmsg_Teclado[$LC_DEFAULT]^^} ***" "${cmsg_LayoutAtual[$LC_DEFAULT]} : \Zb\Z1${AConfLocale[_KEYMAP]}${RESET}" "\n\n${cmsgSetKeyboardLayout[$LC_DEFAULT]}?"; then
+	if notconf "*** ${cmsg_Teclado[$LC_DEFAULT]^^} ***" "${cmsg_LayoutAtual[$LC_DEFAULT]} : ${AMARELO}${AConfLocale[_KEYMAP]}${RESET}" "\n\n${cmsgSetKeyboardLayout[$LC_DEFAULT]}?"; then
 		LKEYMAP=$true
 		return 0
 	fi
