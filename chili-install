@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: seg 24 fev 2025 01:02:49 -04
+#  Updated: ter 25 fev 2025 02:02:42 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -38,10 +38,10 @@
 export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 #set -x
 #set -e
-shopt -s extglob  # Habilita padrões estendidos
+shopt -s extglob # Habilita padrões estendidos
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="4.2.24.20250224"
+declare -r _VERSION_="5.2.25.20250225"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
@@ -76,14 +76,15 @@ declare -gA Alanguage=([pt_BR]=0 [en_US]=1 [de_DE]=2 [fr_FR]=3 [es_ES]=4 [it_IT]
 declare -gA Alocale=([0]=pt_BR [1]=en_US [2]=de_DE [3]=fr_FR [4]=es_ES [5]=it_IT)
 declare -r DEPENDENCIES=(awk cat cut dialog dd grep lsblk parted sed sfdisk tee tput pv whiptail which tr)
 declare dialogRcFile="$HOME/.dialogrc"
+declare _WINDOWMANAGER=('tty')
 
 cleanup() {
-  rm -f "$dialogRcFile"
+	rm -f "$dialogRcFile"
 }
 #trap cleanup EXIT
 
 sh_create_dialogrc() {
-  cat > "$dialogRcFile" <<EOF
+	cat >"$dialogRcFile" <<EOF
 screen_color = (white,black,off)
 dialog_color = (white,black,off)
 title_color = (cyan,black,on)
@@ -127,22 +128,22 @@ visit_items = off
 use_shadow = off
 use_colors = on
 EOF
-  export DIALOGRC="$dialogRcFile"
+	export DIALOGRC="$dialogRcFile"
 }
 
 # Testa se o terminal suporta caracteres gráficos estendidos
 sh_ascii_lines() {
-  #Isso força o dialog a usar caracteres ASCII básicos para as bordas.
-  #if [[ "$LANG" =~ 'UTF-8' ]]; then
-  if [[ "$(printf '\u250C')" =~ "┌" ]]; then
-    export NCURSES_NO_UTF8_ACS=1  # Terminal suporta ACS
-  else
-    export NCURSES_NO_UTF8_ACS=0  # Terminal NÃO suporta ACS
-  fi
+	#Isso força o dialog a usar caracteres ASCII básicos para as bordas.
+	#if [[ "$LANG" =~ 'UTF-8' ]]; then
+	if [[ "$(printf '\u250C')" =~ "┌" ]]; then
+		export NCURSES_NO_UTF8_ACS=1 # Terminal suporta ACS
+	else
+		export NCURSES_NO_UTF8_ACS=0 # Terminal NÃO suporta ACS
+	fi
 }
 
 sh_setEnvironment() {
-  [[ ! -e "$dialogRcFile" ]] && sh_create_dialogrc
+	[[ ! -e "$dialogRcFile" ]] && sh_create_dialogrc
 	sh_ascii_lines
 	pt_BR
 	: "${DIALOG=${DIALOG:-"dialog"}}"
@@ -188,9 +189,11 @@ sh_setEnvironment() {
 	: "${LGRUB=}"
 	: "${LKEYMAP=}"
 	: "${LWM=}"
+	: "${LCUSTOM=$false}"
 	: "${LWIFI=}"
 	: "${LMIRROR=}"
 	: "${LSOURCE=}"
+	: "${LWM=}"
 	: "${LEXTRA=}"
 	: "${LTIMEZONE=}"
 	: "${LFILE=}"
@@ -238,89 +241,89 @@ sh_setEnvironment() {
 	COL=$((COLUMNS - 8))
 	SET_COL="\\033[${COL}G" # at the $COL char
 	CURS_ZERO="\\033[0G"
-  COL_NC='\e[0m' # No Color
-  COL_LIGHT_GREEN='\e[1;32m'
-  COL_LIGHT_RED='\e[1;31m'
-  TICK="${white}[${COL_LIGHT_GREEN}✓${COL_NC}${white}]"
-  CROSS="${white}[${COL_LIGHT_RED}✗${COL_NC}${white}]"
-  INFO="[i]"
-  # shellcheck disable=SC2034
-  DONE="${COL_LIGHT_GREEN} done!${COL_NC}"
-  OVER="\\r\\033[K"
-  DOTPREFIX="  ${black}::${reset} "
+	COL_NC='\e[0m' # No Color
+	COL_LIGHT_GREEN='\e[1;32m'
+	COL_LIGHT_RED='\e[1;31m'
+	TICK="${white}[${COL_LIGHT_GREEN}✓${COL_NC}${white}]"
+	CROSS="${white}[${COL_LIGHT_RED}✗${COL_NC}${white}]"
+	INFO="[i]"
+	# shellcheck disable=SC2034
+	DONE="${COL_LIGHT_GREEN} done!${COL_NC}"
+	OVER="\\r\\033[K"
+	DOTPREFIX="  ${black}::${reset} "
 }
 
 sh_confDistro() {
 	if [[ "$xdistro" = @(mazonos|MAZON) ]]; then
 		Adistro+=([cdistro]='MazonOs'
-		          [chost]='mazonos'
-		          [contato]='root@mazonos.com'
-		          [ptcom]='mazonos.com'
-		          [calias]='mazonos'
-		          [cnick]='mazon'
-		          [cliveuser]='mazon'
-		          [cgroups]='audio,video'
-		          )
+			[chost]='mazonos'
+			[contato]='root@mazonos.com'
+			[ptcom]='mazonos.com'
+			[calias]='mazonos'
+			[cnick]='mazon'
+			[cliveuser]='mazon'
+			[cgroups]='audio,video'
+		)
 	elif [[ "$xdistro" = @(venom) ]]; then
 		Adistro+=([cdistro]='Venom'
-		          [chost]="${xdistro}live"
-		          [contato]='root@venomlinux.org'
-		          [ptcom]='venomlinux.org'
-		          [calias]="$xdistro"
-		          [cnick]="$xdistro"
-		          [cliveuser]="$xdistro"
-		          [cgroups]='wheel,audio,video,users'
-		          )
+			[chost]="${xdistro}live"
+			[contato]='root@venomlinux.org'
+			[ptcom]='venomlinux.org'
+			[calias]="$xdistro"
+			[cnick]="$xdistro"
+			[cliveuser]="$xdistro"
+			[cgroups]='wheel,audio,video,users'
+		)
 	elif [[ "$xdistro" = @(mint) ]]; then
 		Adistro+=([cdistro]='Mint'
-		          [chost]="${xdistro}live"
-		          [contato]='root@linuxmint.com'
-		          [ptcom]='linuxmint.com'
-		          [calias]="$xdistro"
-		          [cnick]="$xdistro"
-		          [cliveuser]="$xdistro"
-		          [cgroups]='audio,video,users'
-		          )
+			[chost]="${xdistro}live"
+			[contato]='root@linuxmint.com'
+			[ptcom]='linuxmint.com'
+			[calias]="$xdistro"
+			[cnick]="$xdistro"
+			[cliveuser]="$xdistro"
+			[cgroups]='audio,video,users'
+		)
 	elif [[ "$xdistro" = @(chili|chililinux) ]]; then
 		Adistro+=([cdistro]='Chili'
-		          [chost]="chililinux"
-		          [contato]='https://t.me/chililinux'
-		          [ptcom]='chililinux.com'
-		          [calias]="chili"
-		          [cnick]="chili"
-		          [cliveuser]="live"
-		          [cgroups]='wheel,audio,video,users'
-		          )
-  elif [[ "$xdistro" = @(bigcommunity|communitybig) ]]; then
-    Adistro+=([cdistro]='BigCommunity'
-              [chost]="bigcommunity"
-              [contato]='https://t.me/BigLinuxCommunity'
-              [ptcom]='communitybig.org'
-              [calias]="bigcommunity"
-              [cnick]="bigcommunity"
-              [cliveuser]="live"
-              [cgroups]='wheel,audio,video,users'
-              )
-  elif [[ "$xdistro" = @(biglinux) ]]; then
-    Adistro+=([cdistro]='BigLinux'
-              [chost]="biglinux"
-              [contato]='root@biglinux.com.br'
-              [ptcom]='biglinux.com.br'
-              [calias]="biglinux"
-              [cnick]="biglinux"
-              [cliveuser]="live"
-              [cgroups]='wheel,audio,video,users'
-              )
+			[chost]="chililinux"
+			[contato]='https://t.me/chililinux'
+			[ptcom]='chililinux.com'
+			[calias]="chili"
+			[cnick]="chili"
+			[cliveuser]="live"
+			[cgroups]='wheel,audio,video,users'
+		)
+	elif [[ "$xdistro" = @(bigcommunity|communitybig) ]]; then
+		Adistro+=([cdistro]='BigCommunity'
+			[chost]="bigcommunity"
+			[contato]='https://t.me/BigLinuxCommunity'
+			[ptcom]='communitybig.org'
+			[calias]="bigcommunity"
+			[cnick]="bigcommunity"
+			[cliveuser]="live"
+			[cgroups]='wheel,audio,video,users'
+		)
+	elif [[ "$xdistro" = @(biglinux) ]]; then
+		Adistro+=([cdistro]='BigLinux'
+			[chost]="biglinux"
+			[contato]='root@biglinux.com.br'
+			[ptcom]='biglinux.com.br'
+			[calias]="biglinux"
+			[cnick]="biglinux"
+			[cliveuser]="live"
+			[cgroups]='wheel,audio,video,users'
+		)
 	else
 		Adistro+=([cdistro]='Unknown'
-		          [chost]="linux"
-		          [contato]='root@linuxfoundation.org'
-		          [ptcom]='linuxfoundation.org'
-		          [calias]="linux"
-		          [cnick]="linux"
-		          [cliveuser]="live"
-		          [cgroups]='audio,video,users'
-		          )
+			[chost]="linux"
+			[contato]='root@linuxfoundation.org'
+			[ptcom]='linuxfoundation.org'
+			[calias]="linux"
+			[cnick]="linux"
+			[cliveuser]="live"
+			[cgroups]='audio,video,users'
+		)
 	fi
 	# common vars
 	cdistro="${Adistro[cdistro]}"
@@ -333,18 +336,18 @@ sh_confDistro() {
 	url_release="http://${site}/releases"
 	url_distro="http://${site}/releases/"
 
-  sh_setUser
+	sh_setUser
 }
 
 sh_setUser() {
-  if [[ ! "$xdistro" =~ (bigcommunity|communitybig|biglinux) ]]; then
-  	AsUser[cuser]=$(sh_getusernameloggeduserbyid)
-  	AsUser[cfullname]=$(sh_getfullusernameloggeduserbyid)
-  	AsUser[cpass]="${Adistro[cliveuser]}"
-  	AsUser[cpassroot]=root
-  fi
-  AsUser[cgroups]="${Adistro[cgroups]}"
-  AsUser[chostname]="$chostname"
+	if [[ ! "$xdistro" =~ (bigcommunity|communitybig|biglinux) ]]; then
+		AsUser[cuser]=$(sh_getusernameloggeduserbyid)
+		AsUser[cfullname]=$(sh_getfullusernameloggeduserbyid)
+		AsUser[cpass]="${Adistro[cliveuser]}"
+		AsUser[cpassroot]=root
+	fi
+	AsUser[cgroups]="${Adistro[cgroups]}"
+	AsUser[chostname]="$chostname"
 }
 
 sh_touchConf() {
@@ -373,7 +376,10 @@ sh_touchConf() {
 		declare -p AConfWifi
 		declare -p AConfFde
 		declare -p Adistro
-	} | sed 's/declare -/&g/' >>"$app_conf"
+		declare -p _SOURCE
+		declare -p _WINDOWMANAGER
+		#	} | sed 's/declare -/&g/' >>"$app_conf"
+	} | sed -E 's/declare -/&g/; s/^declare -g-* /declare -g /' >>"$app_conf"
 }
 
 sh_loadconf() {
@@ -412,7 +418,7 @@ sh_loadSavedConfig() {
 	else
 		die "${cmsg_falhaAbertura[$LC_DEFAULT]} $app_conf!"
 	fi
-  sh_setUser
+	sh_setUser
 }
 
 sh_getfullusernameloggeduser() {
@@ -439,7 +445,7 @@ sh_getdevicefrompartition() {
 }
 
 function scrend() {
-  exit "$1"
+	exit "$1"
 }
 
 function sh_setVarColors() {
@@ -539,9 +545,9 @@ sh_diahora() {
 }
 
 sh_disablePrintk() {
-  if [[ -w /proc/sys/kernel/printk ]]; then
-    echo 0 >/proc/sys/kernel/printk
-  fi
+	if [[ -w /proc/sys/kernel/printk ]]; then
+		echo 0 >/proc/sys/kernel/printk
+	fi
 }
 
 sh_enablePrintk() {
@@ -606,8 +612,8 @@ sh_chroot_job() {
 }
 
 fmt() {
-  printf "${bold}${yellow}%03d/%03d${reset}" "$ncounter" "$njobs"
-  return $?
+	printf "${bold}${yellow}%03d/%03d${reset}" "$ncounter" "$njobs"
+	return $?
 }
 
 unfmt() {
@@ -649,12 +655,12 @@ log_success_msg() {
 }
 
 timespec() {
-  local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
-  local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
 
-#	STAMP="$(date +"%b %d %T %:z") $(hostname)"
+	#	STAMP="$(date +"%b %d %T %:z") $(hostname)"
 	STAMP="$(date +"%b %d %T %:z") [$caller_function][$caller_line]"
-  echo "$STAMP"
+	echo "$STAMP"
 }
 
 msg() {
@@ -689,7 +695,7 @@ log_error() {
 }
 
 log_err() {
-  printf " %b %s\\n" "${CROSS}" "${*}"
+	printf " %b %s\\n" "${CROSS}" "${*}"
 }
 
 log_msg() {
@@ -708,10 +714,10 @@ log_msg() {
 }
 
 log_exec() {
-  {
-    echo "[${FUNCNAME[1]:-shell}:${BASH_LINENO[0]:-unknown}] Executando: $*"
-    "$@" 2>&1
-  } | tee -i -a "$BOOTLOG" >"$LOGGER"
+	{
+		echo "[${FUNCNAME[1]:-shell}:${BASH_LINENO[0]:-unknown}] Executando: $*"
+		"$@" 2>&1
+	} | tee -i -a "$BOOTLOG" >"$LOGGER"
 }
 
 mensagem() {
@@ -938,14 +944,14 @@ sh_make_user() {
 
 	sh_update_sudoers
 
-  if [[ -d "$dir_install/home/$cliveuser/" ]]; then
-    if [[ "$cliveuser" != "$cuser" ]]; then
-	   	sh_chroot_job "Adjusting legacy settings pass 2" "cd /home/$cuser; cp -Rpva /home/$cliveuser/. . ; chown $cuser:$cuser /home/$cuser/. -R" "$err_not_fatal" "$err_not_fatal"
-    fi
-  fi
-  if [[ "$cliveuser" != "$cuser" ]]; then
-    sh_chroot_job "Deleting live user" "userdel --remove --force $cliveuser" "$err_not_fatal" "$err_not_fatal"
-  fi
+	if [[ -d "$dir_install/home/$cliveuser/" ]]; then
+		if [[ "$cliveuser" != "$cuser" ]]; then
+			sh_chroot_job "Adjusting legacy settings pass 2" "cd /home/$cuser; cp -Rpva /home/$cliveuser/. . ; chown $cuser:$cuser /home/$cuser/. -R" "$err_not_fatal" "$err_not_fatal"
+		fi
+	fi
+	if [[ "$cliveuser" != "$cuser" ]]; then
+		sh_chroot_job "Deleting live user" "userdel --remove --force $cliveuser" "$err_not_fatal" "$err_not_fatal"
+	fi
 }
 
 sh_update_sudoers() {
@@ -1005,16 +1011,16 @@ sh_execcopia() {
 
 	#rsync -crav "$ORIGEM" "$DESTINO" 1>&2 >"$log" &
 	#export CPPID=$!
-  rsync -aAXv "$ORIGEM" "$DESTINO" \
-  --exclude=/proc \
-  --exclude=/sys \
-  --exclude=/dev \
-  --exclude=/run \
-  --exclude=/tmp \
-  --exclude=/mnt \
-  --exclude=/media \
-  --exclude=/lost+found \
-  1>&2 >"$log" &
+	rsync -aAXv "$ORIGEM" "$DESTINO" \
+		--exclude=/proc \
+		--exclude=/sys \
+		--exclude=/dev \
+		--exclude=/run \
+		--exclude=/tmp \
+		--exclude=/mnt \
+		--exclude=/media \
+		--exclude=/lost+found \
+		1>&2 >"$log" &
 	export CPPID=$!
 
 	#  trap sh_trapErro 2 15
@@ -1067,7 +1073,7 @@ sh_mount_fs() {
 	local fstype
 
 	if ! ((LVM)); then
-    log_exec mkdir -p $dir_install
+		log_exec mkdir -p $dir_install
 		for i in "${!Amntpoint[@]}"; do
 			_part="$i"
 			mntpoint="$(sh_splitarray "${Amntpoint[$i]}" 1)"
@@ -1076,20 +1082,20 @@ sh_mount_fs() {
 			if [[ -n "$mntpoint" && "$mntpoint" = "/" ]]; then
 				last_msg="${cmsg_MontandoParticao[$LC_DEFAULT]} $_part ($mntpoint) ${cmsg_Em[$LC_DEFAULT]} $dir_install"
 				msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
-  			if [[ -n "$mntpoint" && "$mntpoint" = "/" ]]; then
-    			if [[ "$fstype" = "btrfs" ]]; then
-            log_exec mount -o compress=zstd,subvol=@       $_part $dir_install
-            for dir in home var/cache var/log swapfc; do
-              [[ -d "$dir_install/$dir" ]] || log_exec mkdir -p "$dir_install/$dir"
-            done
-            log_exec mount -o compress=zstd,subvol=@home   "$_part" "$dir_install/home"
-            log_exec mount -o compress=zstd,subvol=@cache  "$_part" "$dir_install/var/cache"
-            log_exec mount -o compress=zstd,subvol=@log    "$_part" "$dir_install/var/log"
-            log_exec mount -o compress=zstd,subvol=@swapfc "$_part" "$dir_install/swapfc"
-          else
-    				log_exec mount "$_part" "$dir_install"
-          fi
-        fi
+				if [[ -n "$mntpoint" && "$mntpoint" = "/" ]]; then
+					if [[ "$fstype" = "btrfs" ]]; then
+						log_exec mount -o compress=zstd,subvol=@ $_part $dir_install
+						for dir in home var/cache var/log swapfc; do
+							[[ -d "$dir_install/$dir" ]] || log_exec mkdir -p "$dir_install/$dir"
+						done
+						log_exec mount -o compress=zstd,subvol=@home "$_part" "$dir_install/home"
+						log_exec mount -o compress=zstd,subvol=@cache "$_part" "$dir_install/var/cache"
+						log_exec mount -o compress=zstd,subvol=@log "$_part" "$dir_install/var/log"
+						log_exec mount -o compress=zstd,subvol=@swapfc "$_part" "$dir_install/swapfc"
+					else
+						log_exec mount "$_part" "$dir_install"
+					fi
+				fi
 				evaluate_retval "$?"
 				break
 			fi
@@ -1133,24 +1139,24 @@ sh_mount_fs() {
 		done
 	fi
 
-#	for i in "${!Amntpoint[@]}"; do
-#		_part="$i"
-#		mntpoint="$(sh_splitarray "${Amntpoint[$i]}" 1)"
-#		fstype="$(sh_splitarray "${Amntpoint[$i]}" 2)"
-#		if [[ -n "$mntpoint" && "$mntpoint" = "/" ]]; then
-#			continue
-#		fi
-#		if [[ "$fstype" = "swap" ]]; then
-#			continue
-#		fi
-#		if [[ -n "$mntpoint" ]]; then
-#			last_msg="${cmsg_MontandoParticao[$LC_DEFAULT]} $_part ($mntpoint) ${cmsg_Em[$LC_DEFAULT]} $dir_install$mntpoint"
-#			msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
-#			log_exec mkdir -p "$dir_install${mntpoint}"
-#			log_exec mount "$_part" "$dir_install${mntpoint}"
-#			evaluate_retval "$?"
-#		fi
-#	done
+	#	for i in "${!Amntpoint[@]}"; do
+	#		_part="$i"
+	#		mntpoint="$(sh_splitarray "${Amntpoint[$i]}" 1)"
+	#		fstype="$(sh_splitarray "${Amntpoint[$i]}" 2)"
+	#		if [[ -n "$mntpoint" && "$mntpoint" = "/" ]]; then
+	#			continue
+	#		fi
+	#		if [[ "$fstype" = "swap" ]]; then
+	#			continue
+	#		fi
+	#		if [[ -n "$mntpoint" ]]; then
+	#			last_msg="${cmsg_MontandoParticao[$LC_DEFAULT]} $_part ($mntpoint) ${cmsg_Em[$LC_DEFAULT]} $dir_install$mntpoint"
+	#			msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
+	#			log_exec mkdir -p "$dir_install${mntpoint}"
+	#			log_exec mount "$_part" "$dir_install${mntpoint}"
+	#			evaluate_retval "$?"
+	#		fi
+	#	done
 
 	return 0
 }
@@ -1204,7 +1210,7 @@ sh_chroot_maybe_add_mount() {
 }
 
 sh_mount_bind() {
-  mount "$@" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
+	mount "$@" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
 }
 
 sh_init_bind() {
@@ -1215,7 +1221,7 @@ sh_init_bind() {
 		last_msg="${cmsg_MontandoAmbiente[$LC_DEFAULT]} chroot"
 		msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
 		for i in /proc /sys /dev /dev/pts /dev/shm /run /tmp; do
-      log_exec mkdir -p "$dir_install$i"
+			log_exec mkdir -p "$dir_install$i"
 		done
 
 		sh_mount_bind proc "${dir_install}/proc" -t proc -o nosuid,noexec,nodev &&
@@ -1459,9 +1465,9 @@ EOF
 		echo "GRUB_THEME=/boot/grub/themes/Vimix/theme.txt" >>"$dir_install/etc/default/grub"
 	elif [[ "$xdistro" = @(mint) ]]; then
 		echo "GRUB_THEME=/boot/grub/themes/linuxmint/theme.txt" >>"$dir_install/etc/default/grub"
-  elif [[ "$xdistro" = @(bigcommunity|communitybig) ]]; then
+	elif [[ "$xdistro" = @(bigcommunity|communitybig) ]]; then
 		echo "GRUB_THEME=/boot/grub/themes/community/theme.txt" >>"$dir_install/etc/default/grub"
-  elif [[ "$xdistro" = @(biglinux) ]]; then
+	elif [[ "$xdistro" = @(biglinux) ]]; then
 		echo "GRUB_THEME=/boot/grub/themes/biglinux/theme.txt" >>"$dir_install/etc/default/grub"
 	else
 		echo "GRUB_THEME=/boot/grub/themes/chili/theme.txt" >>"$dir_install/etc/default/grub"
@@ -1473,11 +1479,11 @@ EOF
 		echo "GRUB_DISABLE_OS_PROBER=true" >>"$dir_install/etc/default/grub"
 	fi
 
-  {
-	  echo "set menu_color_normal=white/blue"
-  	echo "set menu_color_highlight=white/red"
-    echo "# End /etc/default/grub"
-  } >>"$dir_install/boot/grub/grub.cfg"
+	{
+		echo "set menu_color_normal=white/blue"
+		echo "set menu_color_highlight=white/red"
+		echo "# End /etc/default/grub"
+	} >>"$dir_install/boot/grub/grub.cfg"
 
 	sh_chroot_job "${cmsg_Instalando[$LC_DEFAULT]} GRUB i386-pc ${cmsg_Em[$LC_DEFAULT]} $_BOOTLOADER" \
 		"grub-install $_BOOTLOADER --target=i386-pc --recheck"
@@ -1500,118 +1506,134 @@ sh_mkefiroaming() {
 	return 0
 }
 
-sh_install_remove_packages() {
-#  local aPackagesToRemove=('manjaro-live-systemd' 'community-livecd-key')
-#  local aPackagesToInstall=('biglinux-systemd-swap')
-  local aPackagesRoot_install=()
-  local aPackagesRoot_remove=()
-  local aFilesToRemove=()
-  local pkg
-  local cfile
+sh_install_hyprland() {
+  local aPackagesToInstall=('comm-hyprland')
 
-# for pkg in ${aPackagesToRemove[@]}; do
-#    sh_chroot_job "Removing package: $pkg" "pacman -Rdd $pkg --noconfirm" "$err_not_fatal"
-#  done
-
-#  for pkg in ${aPackagesToInstall[@]}; do
-#    sh_chroot_job "Installing package: $pkg" "pacman -S $pkg --noconfirm" "$err_not_fatal"
-#  done
-
-  if [[ -e "$dir_install"/etc/Root-install ]]; then
-    mapfile -t aPackagesRoot_install < "$dir_install/etc/Root-install"
-    if [[ ${#aPackagesRoot_install[@]} -gt 0 ]]; then
-      for pkg in "${aPackagesRoot_install[@]}"; do
-        sh_chroot_job "Installing package from Root-install: $pkg" "pacman -S $pkg --noconfirm" "$err_not_fatal"
-      done
-    fi
-  fi
-
-  if [[ -e "$dir_install"/etc/Root-remove ]]; then
-    mapfile -t aPackagesRoot_remove < "$dir_install/etc/Root-remove"
-    if [[ ${#aPackagesRoot_remove[@]} -gt 0 ]]; then
-      for pkg in "${aPackagesRoot_remove[@]}"; do
-        sh_chroot_job "Removing package from Root-remove: $pkg" "pacman -Rns $pkg --noconfirm" "$err_not_fatal"
-      done
-    fi
-  fi
-
-  aFilesToRemove=("$dir_install/*.txt"
-    "$dir_install/*.conf"
-    "$dir_install/*.gpg"
-    "$dir_install/.manjaro-tools"
-    "$dir_install/etc/Root-install"
-    "$dir_install/etc/Root-remove"
-    )
-
-  for cfile in ${aFilesToRemove[@]}; do
-    if [[ -e "$cfile" ]]; then
-      sh_cmd_job "Removendo arquivos absoletos =>" "rm -f $cfile" "$err_not_fatal"
-    fi
+  for pkg in ${aPackagesToInstall[@]}; do
+    sh_chroot_job "Aguarde, instalando meta pacote: $pkg" "pacman -S $pkg --noconfirm" "$err_not_fatal"
   done
+}
+
+sh_install_windowmaker() {
+  local aPackagesToInstall=('comm-wmaker')
+
+  for pkg in ${aPackagesToInstall[@]}; do
+    sh_chroot_job "Aguarde, instalando meta package: $pkg" "pacman -S $pkg --noconfirm" "$err_not_fatal"
+  done
+}
+
+sh_install_remove_packages() {
+	#  local aPackagesToRemove=('manjaro-live-systemd' 'community-livecd-key')
+	#  local aPackagesToInstall=('biglinux-systemd-swap')
+	local aPackagesRoot_install=()
+	local aPackagesRoot_remove=()
+	local aFilesToRemove=()
+	local pkg
+	local cfile
+
+	# for pkg in ${aPackagesToRemove[@]}; do
+	#    sh_chroot_job "Removing package: $pkg" "pacman -Rdd $pkg --noconfirm" "$err_not_fatal"
+	#  done
+
+	#  for pkg in ${aPackagesToInstall[@]}; do
+	#    sh_chroot_job "Installing package: $pkg" "pacman -S $pkg --noconfirm" "$err_not_fatal"
+	#  done
+
+	if [[ -e "$dir_install"/etc/Root-install ]]; then
+		mapfile -t aPackagesRoot_install <"$dir_install/etc/Root-install"
+		if [[ ${#aPackagesRoot_install[@]} -gt 0 ]]; then
+			for pkg in "${aPackagesRoot_install[@]}"; do
+				sh_chroot_job "Installing package from Root-install: $pkg" "pacman -S $pkg --noconfirm" "$err_not_fatal"
+			done
+		fi
+	fi
+
+	if [[ -e "$dir_install"/etc/Root-remove ]]; then
+		mapfile -t aPackagesRoot_remove <"$dir_install/etc/Root-remove"
+		if [[ ${#aPackagesRoot_remove[@]} -gt 0 ]]; then
+			for pkg in "${aPackagesRoot_remove[@]}"; do
+				sh_chroot_job "Removing package from Root-remove: $pkg" "pacman -Rns $pkg --noconfirm" "$err_not_fatal"
+			done
+		fi
+	fi
+
+	aFilesToRemove=("$dir_install/*.txt"
+		"$dir_install/*.conf"
+		"$dir_install/*.gpg"
+		"$dir_install/.manjaro-tools"
+		"$dir_install/etc/Root-install"
+		"$dir_install/etc/Root-remove"
+	)
+
+	for cfile in ${aFilesToRemove[@]}; do
+		if [[ -e "$cfile" ]]; then
+			sh_cmd_job "Removendo arquivos absoletos =>" "rm -f $cfile" "$err_not_fatal"
+		fi
+	done
 }
 
 sh_enable_disable_services() {
-  local service
-  local ServicesToMasking=('manjaro-live' 'plymouth-start')
-  local ServicesToEnable=('sshd' 'cronie' 'ModemManager' 'NetworkManager' 'systemd-timesyncd' 'pre-systemd-swap' 'systemd-swap')
-  local ServicesToDisable=('manjaro-live'
-                  'wpa_supplicant'
-                  'avahi-daemon'
-                  'mirrors-live'
-                  'pacman-init'
-                  'ufw'
-                  'fstrim.timer'
-                  'big-btrfs-balance'
-                  'auto-unlock-pacman'
-                  'community-livecd-key'
-                  'cups'
-                  'docker'
-                  'containerd'
-                  'nginx'
-                  'vboxservice'
-                  'sddm-plymouth'
-                  'plymouth-start'
-                  'plymouth-quit'
-                  'plymouth-quit-wait'
-                  'plymouth-read-write'
-                  'plymouth-reboot'
-                  'plymouth-show-log-comm')
+	local service
+	local ServicesToMasking=('manjaro-live' 'plymouth-start')
+	local ServicesToEnable=('sshd' 'cronie' 'ModemManager' 'NetworkManager' 'systemd-timesyncd' 'pre-systemd-swap' 'systemd-swap')
+	local ServicesToDisable=('manjaro-live'
+		'wpa_supplicant'
+		'avahi-daemon'
+		'mirrors-live'
+		'pacman-init'
+		'ufw'
+		'fstrim.timer'
+		'big-btrfs-balance'
+		'auto-unlock-pacman'
+		'community-livecd-key'
+		'cups'
+		'docker'
+		'containerd'
+		'nginx'
+		'vboxservice'
+		'sddm-plymouth'
+		'plymouth-start'
+		'plymouth-quit'
+		'plymouth-quit-wait'
+		'plymouth-read-write'
+		'plymouth-reboot'
+		'plymouth-show-log-comm')
 
-  for service in ${ServicesToDisable[@]}; do
-    sh_chroot_job "Disabling service: $service" "systemctl disable ${service}.service" "$err_not_fatal"
-  done
-  for service in ${ServicesToMasking[@]}; do
-    sh_chroot_job "Masking service: $service" "systemctl mask ${service}.service" "$err_not_fatal"
-  done
-  for service in ${ServicesToEnable[@]}; do
-    sh_chroot_job "Enabling service: $service" "systemctl enable ${service}.service" "$err_not_fatal"
-  done
+	for service in ${ServicesToDisable[@]}; do
+		sh_chroot_job "Disabling service: $service" "systemctl disable ${service}.service" "$err_not_fatal"
+	done
+	for service in ${ServicesToMasking[@]}; do
+		sh_chroot_job "Masking service: $service" "systemctl mask ${service}.service" "$err_not_fatal"
+	done
+	for service in ${ServicesToEnable[@]}; do
+		sh_chroot_job "Enabling service: $service" "systemctl enable ${service}.service" "$err_not_fatal"
+	done
 }
 
 sh_pacman_key_init() {
-  sh_chroot_job "Initializing keys" "pacman-key --init; pacman-key --populate" "$err_not_fatal"
+	sh_chroot_job "Initializing keys" "pacman-key --init; pacman-key --populate" "$err_not_fatal"
 }
 
 sh_clean_issue() {
-  local fileconf="$dir_install/etc/issue"
+	local fileconf="$dir_install/etc/issue"
 
-  if [[ "$fileconf" ]]; then
-    sh_cmd_job "Renaming $fileconf" "mv -f ${fileconf} ${fileconf}.bak" "$err_not_fatal"
-    sh_cmd_job "Renaming $fileconf" "mv -f ${fileconf}.pro ${fileconf}" "$err_not_fatal"
-  fi
+	if [[ "$fileconf" ]]; then
+		sh_cmd_job "Renaming $fileconf" "mv -f ${fileconf} ${fileconf}.bak" "$err_not_fatal"
+		sh_cmd_job "Renaming $fileconf" "mv -f ${fileconf}.pro ${fileconf}" "$err_not_fatal"
+	fi
 }
 
 sh_finishInstall() {
 	if confmulti \
-"*** INSTALL ***" \
-"\n$cfinish\n\n" \
-"Start Date time  : $start_datetime\n" \
-"Finish Date Time : $end_datetime\n" \
-"Time elapsed     : ${GREEN}$(sh_time_elapsed)\n" \
-"\n${BOLD}${YELLOW}Deseja Reiniciar agorar?"; then
+		"*** INSTALL ***" \
+		"\n$cfinish\n\n" \
+		"Start Date time  : $start_datetime\n" \
+		"Finish Date Time : $end_datetime\n" \
+		"Time elapsed     : ${GREEN}$(sh_time_elapsed)\n" \
+		"\n${BOLD}${YELLOW}Deseja Reiniciar agorar?"; then
 		sh_stop_bind
 		sh_stop_mount
-    reboot
+		reboot
 	fi
 	return 0
 }
@@ -2046,21 +2068,21 @@ sh_mkparted() {
 			withswap=$false
 		else
 			if ! ((LAUTOMATICA)); then
-        if [[ "$xmkfs" != 'btrfs' ]]; then
-  				if ! infoconf "${cmsg_Disco[$LC_DEFAULT]}" "$(fdisk -l "$_DEVICE")" \
-  					"${YELLOW}${cmsg_CriandoParticoes[$LC_DEFAULT]} ${_DEVICE}" \
-  					"${cmsg_DesejaCriarParticaoSwap[LC_DEFAULT]}"; then
-  					withswap=$false
-	  			fi
-		  	else
-		  		withswap=$false
-        fi
-	  	fi
+				if [[ "$xmkfs" != 'btrfs' ]]; then
+					if ! infoconf "${cmsg_Disco[$LC_DEFAULT]}" "$(fdisk -l "$_DEVICE")" \
+						"${YELLOW}${cmsg_CriandoParticoes[$LC_DEFAULT]} ${_DEVICE}" \
+						"${cmsg_DesejaCriarParticaoSwap[LC_DEFAULT]}"; then
+						withswap=$false
+					fi
+				else
+					withswap=$false
+				fi
+			fi
 		fi
 
-    if [[ "$xmkfs" == 'btrfs' ]]; then
-      withswap=$false
-    fi
+		if [[ "$xmkfs" == 'btrfs' ]]; then
+			withswap=$false
+		fi
 
 		if ! ((LAUTOMATICA)); then
 			if ! conf "${YELLOW}${cwarning[$LC_DEFAULT]}" \
@@ -2145,6 +2167,111 @@ sh_timedatectl() {
 	return 1
 }
 
+sh_choosewm() {
+	declare -A aFlag
+	declare -A aWm
+	local x
+
+	if [[ "$_SOURCE" = "local" ]]; then
+		alerta "$ccabec" "Instalação escolhida foi via local/ISO, não é necessário alterar nada aqui"
+		_WINDOWMANAGER='tty'
+		LWM=$true
+		return
+	fi
+
+	aWm[tty]="${cmsg_tty[LC_DEFAULT]}"
+#	aWm[awesome]="Awesome"
+#	aWm[blackbox]="Blackbox"
+#	aWm[bspwm]="Tiling window manager based on binary space partitioning"
+#	aWm[dwm]="Dwm"
+#	aWm[enlightenment]="Enlightenment desktop shell"
+#	aWm[fluxbox]="Fluxbox"
+	aWm[hyprland]="A highly customizable dynamic tiling Wayland compositor"
+#	aWm[i3wm]="i3wm"
+#	aWm[lxde]="The 'Lightweight X11 Desktop Environment'"
+#	aWm[lxqt]="The 'Lightweight Qt Desktop Environment'"
+#	aWm[mate]="Mate"
+#	aWm[openbox]="Openbox"
+#	aWm[plasma]="Kde Plasma-Desktop"
+#	aWm[sway]="Sway"
+#	aWm[twm]="Twm"
+	aWm[windowmaker]="An X11 window manager with a NEXTSTEP look and feel"
+
+	for x in "${!aWm[@]}"; do
+		aFlag[$x]='off'
+	done
+
+	for x in "${_WINDOWMANAGER[@]}"; do
+		aFlag[$x]='on'
+	done
+
+#		awesome "${aWm[awesome]}" "${aFlag[awesome]}" \
+#		bspwm "${aWm[bspwm]}" "${aFlag[bspwm]}" \
+#		dwm "${aWm[dwm]}" "${aFlag[dwm]}" \
+#		blackbox "${aWm[blackbox]}" "${aFlag[blackbox]}" \
+#		fluxbox "${aWm[fluxbox]}" "${aFlag[fluxbox]}" \
+#		enlightenment "${aWm[enlightenment]}" "${aFlag[enlightenment]}" \
+#		i3wm "${aWm[i3wm]}" "${aFlag[i3wm]}" \
+#		lxde "${aWm[lxde]}" "${aFlag[lxde]}" \
+#		lxqt "${aWm[lxqt]}" "${aFlag[lxqt]}" \
+#		mate "${aWm[mate]}" "${aFlag[mate]}" \
+#		openbox "${aWm[openbox]}" "${aFlag[openbox]}" \
+#		sway "${aWm[sway]}" "${aFlag[sway]}" \
+#		twm "${aWm[twm]}" "${aFlag[twm]}" \
+	wm=$(${DIALOG} \
+		--title "=== ${cmsg_Wm[$LC_DEFAULT]^^} ===" \
+		--default-item "$_WINDOWMANAGER" \
+		--colors \
+		--backtitle "$ccabec" \
+		--cancel-label "${cmsg_ButtonBack[$LC_DEFAULT]}" \
+		--ok-label "${cmsg_Aceitar[$LC_DEFAULT]}" \
+		--checklist "${cmsg_MENU[$LC_DEFAULT]}" \
+		0 0 0 \
+		tty "${aWm[tty]}" "${aFlag[tty]}" \
+		hyprland "${aWm[hyprland]}" "${aFlag[hyprland]}" \
+		windowmaker "${aWm[windowmaker]}" "${aFlag[windowmaker]}" \
+		2>&1 >/dev/tty)
+
+	exit_status=$?
+	case $exit_status in
+	"$D_ESC" | "$D_CANCEL")
+		return
+		;;
+	esac
+	HYPRLAND=$false
+#	if conf "=== ${cmsg_Wm[LC_DEFAULT]^^} ===" \
+#		"\n${BOLD}${WHITE}$(gettext "Uma instalação customizada irá instalar pacotes extras e também")" \
+#		"\n$(gettext "fazer diversas configurações, evitando faze-las manualmente posteriormente.")\n" \
+#		"\n${BOLD}${RED}$(gettext "Customizar a instalação?")\n\n"; then
+#		LCUSTOM=true
+#	else
+#		LCUSTOM=false
+#	fi
+	_WINDOWMANAGER=($(strtoarray "$wm"))
+	if grep -qi hyprland <<<"${_WINDOWMANAGER[@]}"; then
+		HYPRLAND=$true
+	fi
+	LWM=$true
+}
+
+function pcount() {
+	local -i nargs="$#"
+	echo $nargs
+	[[ nargs -gt 0 ]] && return 0 || return 1
+}
+
+strtoarray() {
+	local anew
+	IFS=' ' read -r -a anew <<<"$1"
+	echo "${anew[@]}"
+}
+
+lenarraystr() {
+	local new=$1
+	read -ra ADDR <<<"$new"
+	echo "${#ADDR[@]}"
+}
+
 sh_update_timezone() {
 	last_msg="${cmsg_Ajustando[$LC_DEFAULT]} timezone pass1 ${cmsg_Em[$LC_DEFAULT]} $dir_install/etc/rc.local"
 	msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
@@ -2181,22 +2308,22 @@ sh_chooseTimezone() {
 	[[ -z "${AConfLocale[_TIMEZONE]}" ]] && AConfLocale[_TIMEZONE]='America/Sao_Paulo'
 	defaultitem="${AConfLocale[_TIMEZONE]#*/}"
 
-  if ! ((LTIMEZONE)); then
-    _localtime=$(sh_timedatectl) && defaultitem="${_localtime#*/}"
-    if [[ -z "${Atimezone[$defaultitem]}" ]]; then
-      if [[ "$_localtime" == 'Etc/UTC' ]]; then
-        defaultitem="${AConfLocale[_TIMEZONE]#*/}"
-        Atimezone["$defaultitem"]="${AConfLocale[_TIMEZONE]}"
-      else
-        Atimezone["$defaultitem"]="$_localtime"
-      fi
-    fi
-  fi
+	if ! ((LTIMEZONE)); then
+		_localtime=$(sh_timedatectl) && defaultitem="${_localtime#*/}"
+		if [[ -z "${Atimezone[$defaultitem]}" ]]; then
+			if [[ "$_localtime" == 'Etc/UTC' ]]; then
+				defaultitem="${AConfLocale[_TIMEZONE]#*/}"
+				Atimezone["$defaultitem"]="${AConfLocale[_TIMEZONE]}"
+			else
+				Atimezone["$defaultitem"]="$_localtime"
+			fi
+		fi
+	fi
 
 	if notconf "*** TIMEZONE ***" \
-	  "${cmsg_LayoutAtual[$LC_DEFAULT]} : ${AMARELO}${AConfLocale[_TIMEZONE]}${RESET}" \
-	  "\n\n${cmsgSetTimezoneLayout[$LC_DEFAULT]}?"; then
-  	LTIMEZONE=$true
+		"${cmsg_LayoutAtual[$LC_DEFAULT]} : ${AMARELO}${AConfLocale[_TIMEZONE]}${RESET}" \
+		"\n\n${cmsgSetTimezoneLayout[$LC_DEFAULT]}?"; then
+		LTIMEZONE=$true
 		return 0
 	fi
 
@@ -2585,19 +2712,19 @@ sh_make_fs() {
 	local fstype
 	local i
 
-  declare -A fsparms=(
-				[ext2]="-F   -L ROOT"
-				[ext3]="-F   -L ROOT"
-				[ext4]="-F   -L ROOT"
-				[exfat]="    -L ROOT"
-				[ntfs]="-f   -L ROOT"
-				[btrfs]="-f  -L ROOT"
-				[f2fs]="-f   -l ROOT"
-				[xfs]="-f    -L ROOT"
-				[jfs]="-f    -L ROOT"
-				[vfat]="-F32 -n EFI"
-				[reiserfs]="-f -l ROOT"
-			)
+	declare -A fsparms=(
+		[ext2]="-F   -L ROOT"
+		[ext3]="-F   -L ROOT"
+		[ext4]="-F   -L ROOT"
+		[exfat]="    -L ROOT"
+		[ntfs]="-f   -L ROOT"
+		[btrfs]="-f  -L ROOT"
+		[f2fs]="-f   -l ROOT"
+		[xfs]="-f    -L ROOT"
+		[jfs]="-f    -L ROOT"
+		[vfat]="-F32 -n EFI"
+		[reiserfs]="-f -l ROOT"
+	)
 
 	sh_check_util_fs
 	for i in "${!Amntpoint[@]}"; do
@@ -2613,13 +2740,13 @@ sh_make_fs() {
 			elif [[ "$fstype" = "btrfs" ]]; then
 				log_exec mkfs.$fstype ${fsparms[$fstype]} $_PART
 				log_exec mkdir -p $dir_install
-        log_exec mount $_PART $dir_install
-        log_exec btrfs subvolume create $dir_install/@
-        log_exec btrfs subvolume create $dir_install/@home
-        log_exec btrfs subvolume create $dir_install/@cache
-        log_exec btrfs subvolume create $dir_install/@log
-        log_exec btrfs subvolume create $dir_install/@swapfc
-        log_exec umount $_PART
+				log_exec mount $_PART $dir_install
+				log_exec btrfs subvolume create $dir_install/@
+				log_exec btrfs subvolume create $dir_install/@home
+				log_exec btrfs subvolume create $dir_install/@cache
+				log_exec btrfs subvolume create $dir_install/@log
+				log_exec btrfs subvolume create $dir_install/@swapfc
+				log_exec umount $_PART
 			else
 				log_exec mkfs.$fstype ${fsparms[$fstype]} $_PART
 			fi
@@ -2666,30 +2793,30 @@ sh_format() {
 
 sh_checkroot() {
 	if [[ "$(id -u)" != "0" ]]; then
-    #alerta "$cdistro Linux installer" "${RED}${REVERSE}You should run this script as root!"
-    #scrend 0
-    elevate_to_root
+		#alerta "$cdistro Linux installer" "${RED}${REVERSE}You should run this script as root!"
+		#scrend 0
+		elevate_to_root
 	fi
-  ccabec+='root'
+	ccabec+='root'
 }
 
 elevate_to_root() {
-  # Verifica se o usuário atual é root
-  if [[ $EUID -ne 0 ]]; then
-    log_err "Este script precisa ser executado como root. Elevando privilégios..."
-    # Tenta se tornar root sem sudo (caso esteja em root shell)
-    if command -v su >/dev/null 2>&1; then
-      log_msg "Privilégio elevado. Prosseguindo..."
-      exec su -c "$0 $*"
-    fi
+	# Verifica se o usuário atual é root
+	if [[ $EUID -ne 0 ]]; then
+		log_err "Este script precisa ser executado como root. Elevando privilégios..."
+		# Tenta se tornar root sem sudo (caso esteja em root shell)
+		if command -v su >/dev/null 2>&1; then
+			log_msg "Privilégio elevado. Prosseguindo..."
+			exec su -c "$0 $*"
+		fi
 
-    # Se `su` não estiver disponível, usa sudo (se configurado para não pedir senha)
-    if command -v sudo >/dev/null 2>&1; then
-      log_msg "Privilégio elevado. Prosseguindo..."
-      exec sudo bash "$0" "$@"
-    fi
-    die "Erro: Não foi possível elevar para root. Execute manualmente como root."
-  fi
+		# Se `su` não estiver disponível, usa sudo (se configurado para não pedir senha)
+		if command -v sudo >/dev/null 2>&1; then
+			log_msg "Privilégio elevado. Prosseguindo..."
+			exec sudo bash "$0" "$@"
+		fi
+		die "Erro: Não foi possível elevar para root. Execute manualmente como root."
+	fi
 }
 
 sh_getparamfile() {
@@ -3477,8 +3604,8 @@ sh_chooseKeymap() {
 	local item
 
 	if notconf "*** ${cmsg_Teclado[$LC_DEFAULT]^^} ***" \
-	  "${cmsg_LayoutAtual[$LC_DEFAULT]} : ${AMARELO}${AConfLocale[_KEYMAP]}${RESET}" \
-	  "\n\n${cmsgSetKeyboardLayout[$LC_DEFAULT]}?"; then
+		"${cmsg_LayoutAtual[$LC_DEFAULT]} : ${AMARELO}${AConfLocale[_KEYMAP]}${RESET}" \
+		"\n\n${cmsgSetKeyboardLayout[$LC_DEFAULT]}?"; then
 		LKEYMAP=$true
 		return 0
 	fi
@@ -3537,12 +3664,12 @@ sh_make_fstab() {
 			fstype="$(sh_splitarray "${Amntpoint[$i]}" 2)"
 			format="$(sh_splitarray "${Amntpoint[$i]}" 3)"
 
-      if [[ "$fstype" = "f2fs"  || \
-        "$fstype" = "btrfs"     || \
-        "$fstype" = "xfs"       || \
-        "$fstype" = "reiserfs"  || \
-        "$fstype" = "ntfs"      || \
-        "$fstype" = "exfat" ]]; then
+			if [[ "$fstype" = "f2fs" ||
+				"$fstype" = "btrfs" ||
+				"$fstype" = "xfs" ||
+				"$fstype" = "reiserfs" ||
+				"$fstype" = "ntfs" ||
+				"$fstype" = "exfat" ]]; then
 				fsorder=0
 			fi
 			if [ "$fstype" = "swap" ]; then
@@ -3550,17 +3677,17 @@ sh_make_fstab() {
 				continue
 			fi
 			if [ -n "$mntpoint" ]; then
-  			if [[ "$fstype" = "btrfs" ]]; then
-    			{
-	  			echo "UUID=$(blkid -o value -s UUID "${_part}")  /             ${fstype,,}   subvol=/@,defaults,noatime,ssd,compress-force=zstd,commit=10 0 $fsorder"
-	  			echo "UUID=$(blkid -o value -s UUID "${_part}")  /home         ${fstype,,}   subvol=/@home,defaults,noatime,ssd,compress-force=zstd,commit=10 0 $fsorder"
-	  			echo "UUID=$(blkid -o value -s UUID "${_part}")  /var/cache    ${fstype,,}   subvol=/@cache,defaults,noatime,ssd,compress-force=zstd,commit=10 0 $fsorder"
-	  			echo "UUID=$(blkid -o value -s UUID "${_part}")  /var/log      ${fstype,,}   subvol=/@log,defaults,noatime,ssd,compress-force=zstd,commit=10 0 $fsorder"
-	  			echo "UUID=$(blkid -o value -s UUID "${_part}")  /swapfc       ${fstype,,}   subvol=/@swapfc,defaults,noatime 0 $fsorder"
-	  			} >>"$dir_install/etc/fstab"
-        else
-  				echo "UUID=$(blkid -o value -s UUID "${_part}")  ${mntpoint}   ${fstype,,}   defaults 0 $fsorder" >>"$dir_install/etc/fstab"
-  		  fi
+				if [[ "$fstype" = "btrfs" ]]; then
+					{
+						echo "UUID=$(blkid -o value -s UUID "${_part}")  /             ${fstype,,}   subvol=/@,defaults,noatime,ssd,compress-force=zstd,commit=10 0 $fsorder"
+						echo "UUID=$(blkid -o value -s UUID "${_part}")  /home         ${fstype,,}   subvol=/@home,defaults,noatime,ssd,compress-force=zstd,commit=10 0 $fsorder"
+						echo "UUID=$(blkid -o value -s UUID "${_part}")  /var/cache    ${fstype,,}   subvol=/@cache,defaults,noatime,ssd,compress-force=zstd,commit=10 0 $fsorder"
+						echo "UUID=$(blkid -o value -s UUID "${_part}")  /var/log      ${fstype,,}   subvol=/@log,defaults,noatime,ssd,compress-force=zstd,commit=10 0 $fsorder"
+						echo "UUID=$(blkid -o value -s UUID "${_part}")  /swapfc       ${fstype,,}   subvol=/@swapfc,defaults,noatime 0 $fsorder"
+					} >>"$dir_install/etc/fstab"
+				else
+					echo "UUID=$(blkid -o value -s UUID "${_part}")  ${mntpoint}   ${fstype,,}   defaults 0 $fsorder" >>"$dir_install/etc/fstab"
+				fi
 			fi
 		done
 		evaluate_retval "$?"
@@ -3642,38 +3769,38 @@ sh_update_keymap() {
 			# End /etc/sysconfig/console
 		EOF
 	elif [[ "$xdistro" = @(bigcommunity|communitybig|biglinux) ]]; then
-	  fileconf="$dir_install/etc/vconsole.conf"
-    KEYMAP="${AConfLocale[_KEYMAP]}"
-    KEYMAP_before="${KEYMAP%-*}"
-    KEYMAP_after="${KEYMAP#*-}"
+		fileconf="$dir_install/etc/vconsole.conf"
+		KEYMAP="${AConfLocale[_KEYMAP]}"
+		KEYMAP_before="${KEYMAP%-*}"
+		KEYMAP_after="${KEYMAP#*-}"
 		{
-      echo "# Written by systemd-localed(8) or systemd-firstboot(1), read by systemd-localed"
-      echo "# and systemd-vconsole-setup(8). Use localectl(1) to update this file."
-		  echo "KEYMAP=$KEYMAP"
-      echo "FONT=Uni2-Fixed16"
-      echo "XKBLAYOUT=$KEYMAP_before"
-      echo "XKBMODEL=$KEYMAP_after"
-    } > "$fileconf"
+			echo "# Written by systemd-localed(8) or systemd-firstboot(1), read by systemd-localed"
+			echo "# and systemd-vconsole-setup(8). Use localectl(1) to update this file."
+			echo "KEYMAP=$KEYMAP"
+			echo "FONT=Uni2-Fixed16"
+			echo "XKBLAYOUT=$KEYMAP_before"
+			echo "XKBMODEL=$KEYMAP_after"
+		} >"$fileconf"
 
-    LANG="${LOCALE}.UTF-8"
-    {
-      echo "LANG=$LANG"
-      echo "LANGUAGE=$LANG"
-      echo "LC_TYPE=$LANG"
-      echo "LC_NUMERIC=$LANG"
-      echo "LC_TIME=$LANG"
-      echo "LC_COLLATE=$LANG"
-      echo "LC_MONETARY=$LANG"
-      echo "LC_MESSAGES=$LANG"
-      echo "LC_PAPER=$LANG"
-      echo "LC_NAME=$LANG"
-      echo "LC_ADDRESS=$LANG"
-      echo "LC_TELEPHONE=$LANG"
-      echo "LC_MEASUREMENT=$LANG"
-      echo "LC_IDENTIFICATION=$LANG"
-      echo "LC_ALL=$LANG"
-    } > "$dir_install/etc/locale.conf"
-    cp -f "$dir_install/etc/locale.conf" "$dir_install/etc/environment"
+		LANG="${LOCALE}.UTF-8"
+		{
+			echo "LANG=$LANG"
+			echo "LANGUAGE=$LANG"
+			echo "LC_TYPE=$LANG"
+			echo "LC_NUMERIC=$LANG"
+			echo "LC_TIME=$LANG"
+			echo "LC_COLLATE=$LANG"
+			echo "LC_MONETARY=$LANG"
+			echo "LC_MESSAGES=$LANG"
+			echo "LC_PAPER=$LANG"
+			echo "LC_NAME=$LANG"
+			echo "LC_ADDRESS=$LANG"
+			echo "LC_TELEPHONE=$LANG"
+			echo "LC_MEASUREMENT=$LANG"
+			echo "LC_IDENTIFICATION=$LANG"
+			echo "LC_ALL=$LANG"
+		} >"$dir_install/etc/locale.conf"
+		cp -f "$dir_install/etc/locale.conf" "$dir_install/etc/environment"
 	else
 		fileconf="$dir_install/etc/rc.conf"
 		[[ ! -e "$fileconf" ]] && >|"$fileconf"
@@ -4838,16 +4965,16 @@ sh_getLocale() {
 	LC_DEFAULT="${Alanguage[pt_BR]}"
 	LOCALE="pt_BR"
 
-  if [[ -z "$LANG" ]]; then
-  	if lc=$(grep _ <(locale -a) | head -1 | cut -c1-5); then
-  		LOCALE="$lc"
-	  	LC_DEFAULT="${Alanguage[$lc]}"
-  	fi
-  else
-    lc=$( echo $LANG | cut -c1-5)
-    LOCALE="$lc"
-	  LC_DEFAULT="${Alanguage[$lc]}"
-  fi
+	if [[ -z "$LANG" ]]; then
+		if lc=$(grep _ <(locale -a) | head -1 | cut -c1-5); then
+			LOCALE="$lc"
+			LC_DEFAULT="${Alanguage[$lc]}"
+		fi
+	else
+		lc=$(echo $LANG | cut -c1-5)
+		LOCALE="$lc"
+		LC_DEFAULT="${Alanguage[$lc]}"
+	fi
 }
 
 sh_mknode_lo() {
@@ -4896,19 +5023,19 @@ sh_copyfilesboot() {
 	declare -g bootmnt
 	declare -g airootfs
 
-  isArchLike=$([[ "$id_like" == "arch" ]] && echo true || echo false)
-  if $isArchLike && $liveOS; then
-    bootmnt="/boot"
-	  #airootfs="/run/miso/bootmnt/boot"
-    sh_cmd_job "Aguarde, copiando kernel e initrd" "cp -Rpva $bootmnt/* $dir_install/boot/" "$err_not_fatal"
+	isArchLike=$([[ "$id_like" == "arch" ]] && echo true || echo false)
+	if $isArchLike && $liveOS; then
+		bootmnt="/boot"
+		#airootfs="/run/miso/bootmnt/boot"
+		sh_cmd_job "Aguarde, copiando kernel e initrd" "cp -Rpva $bootmnt/* $dir_install/boot/" "$err_not_fatal"
 		sh_chroot_job "Aguarde, gerando initrd" "mkinitcpio -P" "$err_not_fatal"
 		sh_chroot_job "Aguarde, atualizando grub" "update-grub" "$err_not_fatal"
-    return 0
-  fi
+		return 0
+	fi
 
 	if ! test -e "$MEDIUM/boot/vmlinuz*"; then
-    bootmnt="/run/liveiso/bootmnt/"
-	  airootfs="/run/liveiso/airootfs/boot/"
+		bootmnt="/run/liveiso/bootmnt/"
+		airootfs="/run/liveiso/airootfs/boot/"
 		if [[ -n "$BOOT" ]]; then
 			sh_cmd_job "Aguarde, copiando kernel e initrd" "cp -Rpva $bootmnt/$BOOT/boot/x86_64/* $dir_install/boot/" "$err_not_fatal"
 		else
@@ -4928,60 +5055,60 @@ sh_copyfilesboot() {
 }
 
 detect_arch_distro_name() {
-  # Define o diretório base onde as distribuições são montadas
-  local base_dir="/run/miso/bootmnt"
-  local distro_dir
-  local distro
+	# Define o diretório base onde as distribuições são montadas
+	local base_dir="/run/miso/bootmnt"
+	local distro_dir
+	local distro
 
-  # Tenta encontrar o diretório da distribuição dentro do diretório base
-  for distro_dir in "$base_dir"/*/x86_64/; do
-    # Verifica se o caminho é um diretório e segue o padrão esperado
-    if [ -d "$distro_dir" ]; then
-      # Extrai o nome da distribuição a partir do caminho
-      distro=$(basename $(dirname "$distro_dir"))
+	# Tenta encontrar o diretório da distribuição dentro do diretório base
+	for distro_dir in "$base_dir"/*/x86_64/; do
+		# Verifica se o caminho é um diretório e segue o padrão esperado
+		if [ -d "$distro_dir" ]; then
+			# Extrai o nome da distribuição a partir do caminho
+			distro=$(basename $(dirname "$distro_dir"))
 
-      # Verifica se o nome da distribuição é válido
-      if [[ "$distro" != "x86_64" ]]; then
-        # Retorna o caminho completo encontrado
-        echo "$distro"
-        break
-      fi
-    fi
-  done
+			# Verifica se o nome da distribuição é válido
+			if [[ "$distro" != "x86_64" ]]; then
+				# Retorna o caminho completo encontrado
+				echo "$distro"
+				break
+			fi
+		fi
+	done
 
-  # Caso não encontre nenhum diretório válido, retorna o default e foda-se
-  if [ -z "$distro" ]; then
-    echo 'archlinux'
-  fi
+	# Caso não encontre nenhum diretório válido, retorna o default e foda-se
+	if [ -z "$distro" ]; then
+		echo 'archlinux'
+	fi
 }
 export -f detect_arch_distro_name
 
 detect_distro_path() {
-  # Define o diretório base onde as distribuições são montadas
-  local base_dir="/run/miso/bootmnt"
-  local distro_dir
-  local distro
+	# Define o diretório base onde as distribuições são montadas
+	local base_dir="/run/miso/bootmnt"
+	local distro_dir
+	local distro
 
-  # Tenta encontrar o diretório da distribuição dentro do diretório base
-  for distro_dir in "$base_dir"/*/x86_64/; do
-    # Verifica se o caminho é um diretório e segue o padrão esperado
-    if [ -d "$distro_dir" ]; then
-      # Extrai o nome da distribuição a partir do caminho
-      distro=$(basename $(dirname "$distro_dir"))
+	# Tenta encontrar o diretório da distribuição dentro do diretório base
+	for distro_dir in "$base_dir"/*/x86_64/; do
+		# Verifica se o caminho é um diretório e segue o padrão esperado
+		if [ -d "$distro_dir" ]; then
+			# Extrai o nome da distribuição a partir do caminho
+			distro=$(basename $(dirname "$distro_dir"))
 
-      # Verifica se o nome da distribuição é válido
-      if [[ "$distro" != "x86_64" ]]; then
-        # Retorna o caminho completo encontrado
-        echo "$distro_dir"
-        break
-      fi
-    fi
-  done
+			# Verifica se o nome da distribuição é válido
+			if [[ "$distro" != "x86_64" ]]; then
+				# Retorna o caminho completo encontrado
+				echo "$distro_dir"
+				break
+			fi
+		fi
+	done
 
-  # Caso não encontre nenhum diretório válido, retorna o default e foda-se
-  if [ -z "$distro" ]; then
-    echo '/run/miso/bootmnt/manjaro/x86_64/'
-  fi
+	# Caso não encontre nenhum diretório válido, retorna o default e foda-se
+	if [ -z "$distro" ]; then
+		echo '/run/miso/bootmnt/manjaro/x86_64/'
+	fi
 }
 export -f detect_distro_path
 
@@ -4997,29 +5124,29 @@ sh_checklive() {
 		else
 			# detect live OS
 			if [[ -e "/run/liveiso/bootmnt/chili/x86_64/airootfs.sfs" ]]; then
-			  export LIVE_DIR="/run/liveiso/bootmnt/chili/x86_64/airootfs.sfs"
+				export LIVE_DIR="/run/liveiso/bootmnt/chili/x86_64/airootfs.sfs"
 				export ROOTSQFS="$LIVE_DIR"
 				export MEDIUM="/run/liveiso/airootfs"
-		    xdistro=$(uname -n)
-		    id_like='lfs'
-			  liveOS=true
+				xdistro=$(uname -n)
+				id_like='lfs'
+				liveOS=true
 			elif [[ -e "/lib/initramfs/medium/filesystem/root.sfs" ]]; then
-			  export LIVE_DIR="/lib/initramfs/medium/filesystem/root.sfs"
+				export LIVE_DIR="/lib/initramfs/medium/filesystem/root.sfs"
 				export ROOTSQFS="$LIVE_DIR"
 				export MEDIUM="/lib/initramfs/system"
 				xdistro=$(grep ^ /lib/initramfs/medium/isolinux/venomlive)
-		    id_like='venom'
+				id_like='venom'
 				liveOS=true
-      else
-        local path_iso="$(detect_distro_path)"
-			  if [[ -e "$path_iso/rootfs.sfs" ]]; then
-  			  export LIVE_DIR="$path_iso/rootfs.sfs"
-	  			export ROOTSQFS="$LIVE_DIR"
-		  		export MEDIUM="/" # overlayfs consolidado com livefs.sfs, desktopfs.sfs e rootfs.sfs
-          xdistro=${path_iso#/run/miso/bootmnt/}  # Remove a parte inicial
-          xdistro=${xdistro%%/*}                  # Remove tudo após a primeira barra
-		      id_like='arch'
-  				liveOS=true
+			else
+				local path_iso="$(detect_distro_path)"
+				if [[ -e "$path_iso/rootfs.sfs" ]]; then
+					export LIVE_DIR="$path_iso/rootfs.sfs"
+					export ROOTSQFS="$LIVE_DIR"
+					export MEDIUM="/"                      # overlayfs consolidado com livefs.sfs, desktopfs.sfs e rootfs.sfs
+					xdistro=${path_iso#/run/miso/bootmnt/} # Remove a parte inicial
+					xdistro=${xdistro%%/*}                 # Remove tudo após a primeira barra
+					id_like='arch'
+					liveOS=true
 				fi
 			fi
 		fi
@@ -5033,8 +5160,8 @@ sh_checklive() {
 		if ! [[ -e "$loDevice" ]]; then
 			loDevice=$(sh_mknode_lo)
 		fi
-#		losetup -P "$loDevice" "$iso" >/dev/null 2>&1
-#		mount "$loDevice" "/run/liveiso/bootmnt" >/dev/null 2>&1
+		#		losetup -P "$loDevice" "$iso" >/dev/null 2>&1
+		#		mount "$loDevice" "/run/liveiso/bootmnt" >/dev/null 2>&1
 		log_exec losetup -P "$loDevice" "$iso"
 		log_exec mount "$loDevice" "/run/liveiso/bootmnt"
 
@@ -5049,27 +5176,27 @@ sh_checklive() {
 		if [[ -e "/run/liveiso/bootmnt/chili/" ]]; then
 			export LIVE_DIR="/run/liveiso/bootmnt/chili/x86_64/airootfs.sfs"
 			export BOOT="chili"
-	    id_like='lfs'
+			id_like='lfs'
 			xdistro=chili
 		elif [[ -e "/run/liveiso/bootmnt/arch/" ]]; then
 			export LIVE_DIR="/run/liveiso/bootmnt/arch/x86_64/airootfs.sfs"
 			export BOOT="arch"
-      id_like='arch'
+			id_like='arch'
 			xdistro=arch
 		elif [[ -e "/run/liveiso/bootmnt/manjaro/" ]]; then
 			export LIVE_DIR="/run/liveiso/bootmnt/manjaro/x86_64/rootfs.sfs"
 			export BOOT="manjaro"
-	    id_like='arch'
-  		xdistro=manjaro
+			id_like='arch'
+			xdistro=manjaro
 		elif [[ -e "/run/liveiso/bootmnt/rootfs/filesystem.sfs" ]]; then
 			export LIVE_DIR="/run/liveiso/bootmnt/rootfs/filesystem.sfs"
 			export BOOT="venom"
-      id_like='venom'
+			id_like='venom'
 			xdistro=venom
 		elif [[ -e "/run/liveiso/bootmnt/casper/filesystem.squashfs" ]]; then
 			export LIVE_DIR="/run/liveiso/bootmnt/casper/filesystem.squashfs"
 			export BOOT="casper"
-	    id_like='debian'
+			id_like='debian'
 			xdistro=mint
 		fi
 		export ROOTSQFS="$LIVE_DIR"
@@ -5083,7 +5210,7 @@ sh_checklive() {
 				return 1
 			fi
 			xdistro=$(grep ^ /run/liveiso/bootmnt/isolinux/venomlive)
-	    id_like='venom'
+			id_like='venom'
 		fi
 
 		if ! test -e "$MEDIUM/boot/vmlinuz*"; then
@@ -5102,13 +5229,13 @@ sh_checkDependencies() {
 
 	for d in "${DEPENDENCIES[@]}"; do
 		if [[ -z $(command -v "$d") ]]; then
-		  missing+=("$d")
-		  errorFound=true
-		  printf '%s\n' "${red}${cmsg_ERRO[$LC_DEFAULT]}${reset}: ${cmsg_CommandNotFound[$LC_DEFAULT]} ${cyan}'$d'${reset}"
-    fi
+			missing+=("$d")
+			errorFound=true
+			printf '%s\n' "${red}${cmsg_ERRO[$LC_DEFAULT]}${reset}: ${cmsg_CommandNotFound[$LC_DEFAULT]} ${cyan}'$d'${reset}"
+		fi
 	done
 	if $errorFound; then
-    echo "${yellow}--------------${cmsg_ImpossivelContinuar[$LC_DEFAULT]}-------------${reset}"
+		echo "${yellow}--------------${cmsg_ImpossivelContinuar[$LC_DEFAULT]}-------------${reset}"
 		echo "${cmsg_ImpossivelContinuar1[$LC_DEFAULT]}" >&2
 		echo "${cmsg_ImpossivelContinuar2[$LC_DEFAULT]} \$PATH" >&2
 		echo "${yellow}-----------------------------------------------${reset}"
@@ -5128,26 +5255,65 @@ sh_cancelLiveInstall() {
 }
 
 sh_time_elapsed() {
-  local end_time=$(date +%s)                # Obtém o tempo de término em segundos desde a época Unix
-  local duration=$((end_time - start_time)) # Calcula a duração em segundos
-  local hours=$((duration / 3600))
-  local minutes=$(((duration % 3600) / 60))
-  local seconds=$((duration % 60))
+	local end_time=$(date +%s)                # Obtém o tempo de término em segundos desde a época Unix
+	local duration=$((end_time - start_time)) # Calcula a duração em segundos
+	local hours=$((duration / 3600))
+	local minutes=$(((duration % 3600) / 60))
+	local seconds=$((duration % 60))
 
-  # Formatar os valores para terem sempre dois dígitos
-  hours=$(printf "%02d" $hours)
-  minutes=$(printf "%02d" $minutes)
-  seconds=$(printf "%02d" $seconds)
-  echo "$hours:$minutes:$seconds"
+	# Formatar os valores para terem sempre dois dígitos
+	hours=$(printf "%02d" $hours)
+	minutes=$(printf "%02d" $minutes)
+	seconds=$(printf "%02d" $seconds)
+	echo "$hours:$minutes:$seconds"
+}
+
+sh_install_wm() {
+	_ONLY_TTY=$false
+	if [[ "${#_WINDOWMANAGER[@]}" -eq 1 ]]; then
+		if [[ "${_WINDOWMANAGER}" = 'tty' ]]; then
+			_ONLY_TTY=$true
+			:
+		else
+			#sh_update_Xkeymap
+			#sh_X11minimal
+			:
+		fi
+	else
+		#sh_update_Xkeymap
+		#sh_X11minimal
+		:
+	fi
+
+	for x in "${_WINDOWMANAGER[@]}"; do
+		case "$x" in
+		"tty") : ;;
+		"hyprland") sh_install_hyprland ;;
+		"windowmaker") sh_install_windowmaker ;;
+		"awesome");;
+		"bspwm");;
+		"blackbox");;
+		"dwm");;
+		"enlightenment");;
+		"fluxbox") ;;
+		"openbox");;
+		"i3wm");;
+		"sway");;
+		"twm");;
+		"mate");;
+		"lxde");;
+		"lxqt");;
+		esac
+	done
 }
 
 sh_install() {
-  local start_datetime
-  local end_datetime
+	local start_datetime
+	local end_datetime
 
 	if ((LAUTOMATICA)); then
 		confmulti "${cmsgInstalacao_Automatica^^}" \
-		  "\n${BOLD}$cmsgNeste_modo_a_instalacao_sera_automatizada" \
+			"\n${BOLD}$cmsgNeste_modo_a_instalacao_sera_automatizada" \
 			"bastando escolher o disco destino" \
 			"\n\n${AMARELO}$cmsgDeseja_continuar_e_escolher_o_disco_destino?" || sh_cancelLiveInstall "$@"
 	fi
@@ -5178,6 +5344,7 @@ sh_install() {
 	fi
 
 	! ((LKEYMAP)) && { sh_chooseKeymap || sh_cancelLiveInstall "$@"; }
+	! ((LWM)) && { sh_choosewm || sh_cancelLiveInstall "$@"; }
 	! ((LEXTRA)) && { sh_confadduser || sh_cancelLiveInstall "$@"; }
 	display_config
 	conf "${cmsg_ConfSalva[LC_DEFAULT]^^}" "$SETUP " \
@@ -5185,8 +5352,8 @@ sh_install() {
 		"${cmsg_OuPeloTerminal[LC_DEFAULT]}                : ${BLUE}(ctrl+alt+f8)${RESET}" \
 		"\n\n${BOLD}${WHITE}${cmsg_descInstalar[$LC_DEFAULT]}?" || sh_cancelLiveInstall "$@"
 
-  start_time=$(date +%s) # Obtém o tempo de início em segundos desde a época Unix
-  start_datetime=$(date)
+	start_time=$(date +%s) # Obtém o tempo de início em segundos desde a época Unix
+	start_datetime=$(date)
 	sh_make_fs || sh_cancelLiveInstall "$@"
 	sh_disk_part_info
 	sh_validate_filesystem || sh_cancelLiveInstall "$@"
@@ -5201,12 +5368,13 @@ sh_install() {
 	sh_update_keymap
 	sh_update_Xkeymap
 	sh_update_timezone
-  sh_install_remove_packages
+	sh_install_remove_packages
+  sh_install_wm
 	sh_grubinstall || sh_cancelLiveInstall "$@"
-  sh_enable_disable_services
-  #sh_pacman_key_init
-  sh_clean_issue
-  end_datetime=$(date)
+	sh_enable_disable_services
+	#sh_pacman_key_init
+	sh_clean_issue
+	end_datetime=$(date)
 	sh_finishInstall
 	zeravar
 }
@@ -5266,7 +5434,7 @@ sh_main_menu() {
 			--extra-button --extra-label "${cmsg_Definicoes[$LC_DEFAULT]}" \
 			--title "$_APP_ - ${cmsg_MenuInstalacao[$LC_DEFAULT]} $(sh_getparamfile)" \
 			--menu "\n${cmsg_LABEL[$LC_DEFAULT]}" \
-			23 00 23 \
+			24 00 23 \
 			Auto "$cmsgInstalacao_Automatica" \
 			"${cmsg_Disco[$LC_DEFAULT]}" "${cmsg_descDisco[LC_DEFAULT]}" \
 			"BootLoader" "${cmsg_descBootLoader[LC_DEFAULT]}" \
@@ -5274,6 +5442,7 @@ sh_main_menu() {
 			"${cmsg_Teclado[$LC_DEFAULT]}" "${cmsg_descTeclado[LC_DEFAULT]}" \
 			"Timezone" "${cmsg_descTimezone[LC_DEFAULT]}" \
 			"Wifi" "${cmsg_descWifi[LC_DEFAULT]}" \
+			"Wm" "${cmsg_descWm[LC_DEFAULT]}" \
 			"Extra" "${cmsg_descExtra[LC_DEFAULT]}" \
 			"${cmsg_Instalar[$LC_DEFAULT]}" "${cmsg_descInstalar[$LC_DEFAULT]}" \
 			"Fde" "Full-Disk Encryption + Lvm (optional)" \
@@ -5302,9 +5471,10 @@ sh_main_menu() {
 		"BootLoader") sh_setBootLoader && [ -n "$LGRUB" ] && DEFITEM="FileSystem" ;;
 		"FileSystem") sh_choosePartition && [ -n "$LPARTITION" ] && DEFITEM="${cmsg_Teclado[$LC_DEFAULT]}" ;;
 		"${cmsg_Teclado[$LC_DEFAULT]}") sh_chooseKeymap && [ -n "$LKEYMAP" ] && DEFITEM="Timezone" ;;
-		"Timezone") sh_chooseTimezone && [ -n "$LTIMEZONE" ] && DEFITEM="Extra" ;;
-		"Extra") sh_confadduser && [ -n "$LEXTRA" ] && DEFITEM="Wifi" ;;
-		"Wifi") bash chili-wifi-config && DEFITEM="${cmsg_Instalar[$LC_DEFAULT]}" ;;
+		"Timezone") sh_chooseTimezone && [ -n "$LTIMEZONE" ] && DEFITEM="Wifi" ;;
+		"Wifi") bash chili-wifi-config && DEFITEM="Wm" ;;
+		"Wm") sh_choosewm && [ -n "$LWM" ] && DEFITEM="Extra" ;;
+		"Extra") sh_confadduser && [ -n "$LEXTRA" ] && DEFITEM="${cmsg_Instalar[$LC_DEFAULT]}" ;;
 		"${cmsg_Instalar[$LC_DEFAULT]}") sh_install ;;
 		"Fde") sh_confLvm && [ -n "$LFDE" ] && DEFITEM="${cmsg_Instalar[$LC_DEFAULT]}" ;;
 		"Lvm") sh_confLvm && [ -n "$LVM" ] && DEFITEM="${cmsg_Instalar[$LC_DEFAULT]}" ;;
