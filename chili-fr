@@ -5,7 +5,7 @@
 #  chili-fr - Wrapper lite para o qemu
 #  Created: 2019/12/13 - 00:00
 #  Altered: 2024/10/03 - 00:00
-#  Updated: sáb 22 fev 2025 01:24:52 -04
+#  Updated: ter 25 fev 2025 10:07:25 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -42,7 +42,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 
 #system
 readonly APP="${0##*/}"
-readonly VERSION='1.2.22-20250222'
+readonly VERSION='1.2.25-20250225'
 readonly APPDESC='Wrapper lite para o qemu'
 readonly -a DEPENDENCIES=(
 	'tput'
@@ -735,7 +735,9 @@ chili-fr() {
 	# Forçar UEFI, se solicitado
 	if $uefi; then
 		msg_info "Forçando inicialização UEFI..."
-		qemu_options+=(-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF.4m.fd)
+    cp /usr/share/edk2-ovmf/x64/OVMF_VARS.4m.fd $HOME/
+  	qemu_options+=(-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF.4m.fd)
+    qemu_options+=(-drive if=pflash,format=raw,file=$HOME/OVMF_VARS.fd)
 	else
 		msg_warn "Parametro --uefi não informado, usando BIOS Legacy (padrão)..."
 	fi
@@ -748,20 +750,27 @@ chili-fr() {
 	qemu_options+=(-m ${xmem})
 	qemu_options+=(-k pt-br)
 
+  bootindex=1  # Índice de boot inicial
 	format=$(file -b --mime-type "${img}")
 	if [[ "${format}" == "application/x-iso9660-image" ]]; then
 		qemu_options+=(-boot d)
 		qemu_options+=(-cdrom "${img}")
 	elif [[ "${img}" == *.qcow2 ]]; then
-		qemu_options+=(-drive file="${img}",if=none,id=disk1,format=qcow2)
-		qemu_options+=(-device ide-hd,drive=disk1,bootindex=1)
+		qemu_options+=(-drive file="${img}",if=none,id=disk${bootindex},format=qcow2)
+		qemu_options+=(-device ide-hd,drive=disk1,bootindex=${bootindex})
+    ((bootindex++))
+  elif [[ "${img}" == /dev/* ]]; then
+    qemu_options+=(-drive file="${img}",if=none,id=device${bootindex},format=raw)
+    qemu_options+=(-device ide-hd,drive=device1,bootindex=${bootindex})
+    msg_info "Adicionando dispositivo físico ${dev} com bootindex=${bootindex}"
+    ((bootindex++))
 	else
-		qemu_options+=(-drive file="${img}",if=none,id=disk1,format=raw)
-		qemu_options+=(-device ide-hd,drive=disk1,bootindex=1)
+		qemu_options+=(-drive file="${img}",if=none,id=disk${bootindex},format=raw)
+		qemu_options+=(-device ide-hd,drive=disk1,bootindex=${bootindex})
+    ((bootindex++))
 	fi
 
   if $vdisk; then
-
     for vdsk in "${avdisk_names[@]}"; do
     	msg_info "Anexando disco virtual: ${yellow}$HOME_DIR/vdisk/${vdsk}"
 	    qemu_options+=(-drive file=$HOME_DIR/vdisk/${vdsk},format=raw)

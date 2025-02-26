@@ -89,12 +89,12 @@ else
 fi
 
 for iso in ${files}; do
-	if ! md5sum -c ${iso}.md5 1>/dev/null; then
-		echo "[$((count++))]=>$green Iso file: $iso"
+	if ! md5sum -c ${iso}.md5 &>/dev/null; then
+		#		echo "[$((count++))]=>$green Iso file: $iso"
 		md5sum $iso >$iso.md5
-		echo "     $green md5 file: $iso.md5"
-		continue
-	else
-  	echo -n $green;	cat $iso.md5 ; echo -n $reset
-  fi
+	#  	echo -n $green;	cat $iso.md5 ; echo -n $reset
+	#		echo "     $green md5 file: $iso.md5"
+	#		continue
+	fi
+	echo -n $((count++))' => '$green; cat $iso.md5;	echo -n $reset
 done

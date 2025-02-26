@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: ter 25 fev 2025 02:02:42 -04
+#  Updated: ter 25 fev 2025 23:13:48 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -1451,7 +1451,49 @@ GRUB_DEFAULT=saved
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="${xdistro^}"
 GRUB_TIMEOUT_STYLE=menu
-GRUB_CMDLINE_LINUX_DEFAULT="splash loglevel=4 libata.noacpi=1 acpi=force apm=power-off nowatchdog tsc=nowatchdog cryptomgr.notests no_timer_check rcupdate.rcu_expedited=1 nouveau.modeset=1 rw nosoftlockup audit=0 nomce skew_tick=1 intremap=off intel_pstate=active amd_pstate=passive cpuidle.governor=teo split_lock_detect=off clearcpuid=514 transparent_hugepage=never loglevel=3 systemd.show_status=auto rd.udev.log_level=3 apparmor=1 security=apparmor vconsole.font=Uni2-Fixed16 intel_iommu=on tdx=on nvme_load=yes"
+#GRUB_CMDLINE_LINUX_DEFAULT="splash loglevel=4 libata.noacpi=1 acpi=force apm=power-off nowatchdog tsc=nowatchdog cryptomgr.notests no_timer_check rcupdate.rcu_expedited=1 nouveau.modeset=1 rw nosoftlockup audit=0 nomce skew_tick=1 intremap=off intel_pstate=active amd_pstate=passive cpuidle.governor=teo split_lock_detect=off clearcpuid=514 transparent_hugepage=never loglevel=3 systemd.show_status=auto rd.udev.log_level=3 apparmor=1 security=apparmor vconsole.font=Uni2-Fixed16 intel_iommu=on tdx=on nvme_load=yes"
+GRUB_CMDLINE_LINUX_DEFAULT="splash \
+  plymouth.enable=1 \
+  loglevel=4 \
+  libata.noacpi=1 \
+  acpi=force \
+  apm=power-off \
+  nowatchdog \
+  tsc=nowatchdog \
+  cryptomgr.notests \
+  no_timer_check \
+  rcupdate.rcu_expedited=1 \
+  intel_pstate=active \
+  amd_pstate=active \
+  cpuidle.governor=teo \
+  split_lock_detect=off \
+  clearcpuid=514 \
+  transparent_hugepage=never \
+  skew_tick=1 \
+  intremap=off \
+  nosoftlockup \
+  audit=0 \
+  nomce \
+  systemd.show_status=auto \
+  rd.udev.log_level=3 \
+  apparmor=1 \
+  security=apparmor \
+  vconsole.font=Uni2-Fixed16 \
+  intel_iommu=on \
+  amd_iommu=on \
+  tdx=on \
+  nvme_load=yes \
+  nouveau.modeset=1 \
+  i915.modeset=1 \
+  amdgpu.modeset=1 \
+  radeon.si_support=0 \
+  radeon.cik_support=0 \
+  amdgpu.si_support=1 \
+  amdgpu.cik_support=1 \
+  nvidia.modeset=1 \
+  nvidia_drm.modeset=1 \
+  DEEPIN_GFXMODE= \
+  module_blacklist="
 GRUB_CMDLINE_LINUX=""
 GRUB_PRELOAD_MODULES="part_gpt part_msdos lvm btrfs"
 GRUB_TIMEOUT_STYLE=menu
@@ -1572,10 +1614,30 @@ sh_install_remove_packages() {
 	done
 }
 
+sh_tuning_tcp() {
+  sh_cmd_job "Criando arquivo modprobe bbr =>" "echo 'tcp_bbr' > $dir_install/etc/modules-load.d/bbr.conf"
+  sh_cmd_job "Criando arquivo sysctl bbr =>"   "echo 'net.ipv4.tcp_congestion_control = bbr' > $dir_install/etc/sysctl.d/99-network-tuning.conf"
+}
+
+sh_change_pam_d() {
+  sh_cmd_job "Alterando arquivo /etc/pam.d/login =>" \
+    "echo 'session    required     pam_limits.so' >> $dir_install/etc/pam.d/login"
+
+  sh_cmd_job "Criando arquivo /etc/pam.d/polkit-1 =>" \
+    "echo '
+#%PAM-1.0
+
+auth       include      system-auth
+account    include      system-auth
+password   include      system-auth
+session    include      system-auth
+session    required     pam_limits.so' > $dir_install/etc/pam.d/polkit-1"
+}
+
 sh_enable_disable_services() {
 	local service
 	local ServicesToMasking=('manjaro-live' 'plymouth-start')
-	local ServicesToEnable=('sshd' 'cronie' 'ModemManager' 'NetworkManager' 'systemd-timesyncd' 'pre-systemd-swap' 'systemd-swap')
+	local ServicesToEnable=('sshd' 'cronie' 'ModemManager' 'NetworkManager' 'systemd-timesyncd' 'pre-systemd-swap' 'systemd-swap' 'serial-getty@ttyS0')
 	local ServicesToDisable=('manjaro-live'
 		'wpa_supplicant'
 		'avahi-daemon'
@@ -5368,6 +5430,8 @@ sh_install() {
 	sh_update_keymap
 	sh_update_Xkeymap
 	sh_update_timezone
+  sh_tuning_tcp
+  sh_change_pam_d
 	sh_install_remove_packages
   sh_install_wm
 	sh_grubinstall || sh_cancelLiveInstall "$@"
