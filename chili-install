@@ -1552,7 +1552,7 @@ sh_install_hyprland() {
   local aPackagesToInstall=('comm-hyprland')
 
   for pkg in ${aPackagesToInstall[@]}; do
-    sh_chroot_job "Aguarde, instalando meta pacote: $pkg" "pacman -S $pkg --noconfirm" "$err_not_fatal"
+    sh_chroot_job "Aguarde, instalando meta pacote: $pkg" "pacman -S $pkg --noconfirm --overwrite \*" "$err_not_fatal"
   done
 }
 
@@ -1560,7 +1560,7 @@ sh_install_windowmaker() {
   local aPackagesToInstall=('comm-wmaker')
 
   for pkg in ${aPackagesToInstall[@]}; do
-    sh_chroot_job "Aguarde, instalando meta package: $pkg" "pacman -S $pkg --noconfirm" "$err_not_fatal"
+    sh_chroot_job "Aguarde, instalando meta package: $pkg" "pacman -S $pkg --noconfirm --overwrite \*" "$err_not_fatal"
   done
 }
 

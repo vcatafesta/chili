@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  chili-create-iso-md5
+#  chili-make-md5-iso
 #  Created: 2025/02/10 - 11:46
 #  Altered: 2025/02/10 - 11:46
 #
@@ -31,7 +31,7 @@
 ##############################################################################
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
-export TEXTDOMAIN=chili-create-iso-md5
+export TEXTDOMAIN=chili-make-md5-iso
 
 # Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
