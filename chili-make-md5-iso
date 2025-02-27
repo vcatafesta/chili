@@ -75,26 +75,36 @@ declare APP="${0##*/}"
 declare _VERSION_="1.0.0-20250210"
 declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput)
-source /usr/share/fetch/core.sh
 
-MostraErro() {
-	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
+msg() {
+  echo -e "$1"
 }
-trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
+
+# Inicializa a variável de contagem
+count=1
 
 if [[ $# -eq 0 ]]; then
-	files="*.iso"
+  files=(*.iso)
 else
-	files="$@"
+  files=("$@")
 fi
 
-for iso in ${files}; do
-	if ! md5sum -c ${iso}.md5 &>/dev/null; then
-		#		echo "[$((count++))]=>$green Iso file: $iso"
-		md5sum $iso >$iso.md5
-	#  	echo -n $green;	cat $iso.md5 ; echo -n $reset
-	#		echo "     $green md5 file: $iso.md5"
-	#		continue
-	fi
-	echo -n $((count++))' => '$green; cat $iso.md5;	echo -n $reset
+# Verifica se há arquivos na lista
+[[ "${#files[@]}" -lt 1 ]] && {
+  msg '${red}<files not found>${reset}'
+  exit 1
+}
+
+for iso in "${files[@]}"; do
+  if [[ ! -f "$iso" ]]; then
+    msg "${red}<file not found: $iso${reset}"
+    continue
+  fi
+  if ! md5sum -c "${iso}.md5" &>/dev/null; then
+    msg "${yellow}[$count] => Generating new MD5 for: $iso${reset}"
+    md5sum "$iso" > "${iso}.md5"
+  fi
+  echo -n $((count++))' => '$green; cat $iso.md5; echo -n $reset
+  ((count++))
 done
+
