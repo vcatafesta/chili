@@ -5,7 +5,7 @@
 #  chili-init-keys - Utilitário para gerenciar chaves utilizando o pacman-key
 #  Created: 2024/09/23 - 16:19 -04
 #  Altered: 2024/09/23 - 16:19 -04
-#  Updated: 2024/12/25 - 07:12 -04 - added chili-keyring
+#  Updated: qui 27 fev 2025 22:26:04 -04
 #
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -73,10 +73,9 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="1.0.1-2024125"
+declare _VERSION_="1.02.27-20250227"
 declare distro
 declare DEPENDENCIES=(tput)
-#source /usr/share/fetch/core.sh
 distro="$(uname -n)"
 
 MostraErro() {
@@ -212,12 +211,12 @@ for key in "${keys[@]}"; do
 #	msg_run 'sudo pacman-key --finger    "$key" 1>/dev/null'
 done
 
-msg_run 'sudo pacman -U https://repo.biglinux.com.br/stable/x86_64/biglinux-keyring-20220827-3-any.pkg.tar.zst --noconfirm 1>/dev/null'
-msg_run 'sudo pacman -U https://repo.communitybig.org/stable/x86_64/community-keyring-20250101-2045-x86_64.pkg.tar.zst --noconfirm 1>/dev/null'
-msg_run 'sudo pacman -U https://repo.chililinux.com/stable/x86_64/chili-keyring-20250108-1849-any.pkg.tar.zst --noconfirm 1>/dev/null'
+#msg_run 'sudo pacman -U https://repo.biglinux.com.br/stable/x86_64/biglinux-keyring-20220827-3-any.pkg.tar.zst --noconfirm 1>/dev/null'
+#msg_run 'sudo pacman -U https://repo.communitybig.org/stable/x86_64/community-keyring-20250101-2045-x86_64.pkg.tar.zst --noconfirm 1>/dev/null'
+#msg_run 'sudo pacman -U https://repo.chililinux.com/stable/x86_64/chili-keyring-20250108-1849-any.pkg.tar.zst --noconfirm 1>/dev/null'
 
 # Sincronizar pacotes necessários
-msg_run 'sudo pacman -Sy --needed --quiet \
+msg_run 'sudo pacman -Sy --needed --quiet --noconfirm \
   archlinux-keyring \
   manjaro-keyring \
   biglinux-keyring \

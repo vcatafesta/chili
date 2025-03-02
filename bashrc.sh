@@ -1245,6 +1245,7 @@ usage:
 EOF
 	fi
 }
+export -f chili-qemurunfile
 
 chili-qemufilerun() { chili-qemurunfile $@; }
 filerun() { chili-qemurunfile $@; }
@@ -1256,7 +1257,6 @@ fileinfo() { for i in "${@}"; do
 	qemu-img info $i
 	echo
 done; }
-export -f chili-qemurunfile
 
 #qemu-system-x86_64 -net nic,model=virtio -net bridge,br=br0 -hda void.img
 

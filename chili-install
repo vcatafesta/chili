@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: ter 25 fev 2025 23:13:48 -04
+#  Updated: sáb 01 mar 2025 17:44:55 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -41,7 +41,7 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob # Habilita padrões estendidos
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="5.2.25.20250225"
+declare -r _VERSION_="5.3.1.20250301"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
@@ -1431,13 +1431,13 @@ sh_initrd_adjust() {
 	local newtext="HOOKS=(base udev memdisk autodetect modconf block filesystems keyboard fsck)"
 
 	if [[ "$BOOT" == "arch" ]]; then
-		mensagem "Aguarde, ajustando e gerando initrd"
+		mensagem "Aguarde, ajustando e gerando initramfs"
 		#	sed -i '/#HOOKS=/a $newtext' "$dir_install/etc/mkinitcpio.conf"
 		#	sed -i -E 's/memdisk/autodetect/'"$dir_install/etc/mkinitcpio.conf"
 		# sed -i -E 's/archiso?.*?\s//' "$dir_install/etc/mkinitcpio.conf"
 		sed -i 's/HOOKS/#HOOKS/g' "$dir_install/etc/mkinitcpio.conf" >/dev/null 2>&1
 		echo "$newtext" >>"$dir_install/etc/mkinitcpio.conf" >/dev/null 2>&1
-		sh_chroot_job "Aguarde, ajustando e gerando initrd" "mkinitcpio -P"
+		sh_chroot_job "Aguarde, ajustando e gerando initramfs" "mkinitcpio -P"
 	fi
 }
 
@@ -1548,20 +1548,56 @@ sh_mkefiroaming() {
 	return 0
 }
 
+sh_insert_in_chroot_installer() {
+	local cuser="${AsUser[cuser]}"
+  sed -i '/^IN_CHROOT_INSTALLER=/!s#$#\nIN_CHROOT_INSTALLER=true#' "$dir_install"/etc/environment
+  sed -i "/^IN_CHROOT_INSTALLER_USER=/!s#$#\nIN_CHROOT_INSTALLER_USER=${cuser}#" "$dir_install"/etc/environment
+}
+
+sh_remove_in_chroot_installer() {
+	local cuser="${AsUser[cuser]}"
+  sed -i '/^IN_CHROOT_INSTALLER=/d' "$dir_install"/etc/environment
+  sed -i "/^IN_CHROOT_INSTALLER_USER=/!s#$#\nIN_CHROOT_INSTALLER_USER=${cuser}#" "$dir_install"/etc/environment
+}
+
+sh_install_i3wm() {
+  local aPackagesToInstall=('comm-i3wm')
+
+  sh_insert_in_chroot_installer
+  for pkg in ${aPackagesToInstall[@]}; do
+    sh_chroot_job "Aguarde alguns poucos minutos, instalando meta pacote: $pkg" "pacman -S $pkg --noconfirm --overwrite \*" "$err_not_fatal"
+  done
+  sh_remove_in_chroot_installer
+}
+
+sh_install_enlightenment() {
+  local aPackagesToInstall=('comm-enlightenment')
+
+  sh_insert_in_chroot_installer
+  for pkg in ${aPackagesToInstall[@]}; do
+    sh_chroot_job "Aguarde alguns poucos minutos, instalando meta pacote: $pkg" "pacman -S $pkg --noconfirm --overwrite \*" "$err_not_fatal"
+  done
+  sh_remove_in_chroot_installer
+}
+
 sh_install_hyprland() {
   local aPackagesToInstall=('comm-hyprland')
 
+  sh_insert_in_chroot_installer
   for pkg in ${aPackagesToInstall[@]}; do
-    sh_chroot_job "Aguarde, instalando meta pacote: $pkg" "pacman -S $pkg --noconfirm --overwrite \*" "$err_not_fatal"
+    sh_chroot_job "Aguarde alguns poucos minutos, instalando meta pacote: $pkg" "pacman -S $pkg --noconfirm --overwrite \*" "$err_not_fatal"
   done
+  sh_remove_in_chroot_installer
 }
 
 sh_install_windowmaker() {
   local aPackagesToInstall=('comm-wmaker')
 
+  sh_insert_in_chroot_installer
   for pkg in ${aPackagesToInstall[@]}; do
-    sh_chroot_job "Aguarde, instalando meta package: $pkg" "pacman -S $pkg --noconfirm --overwrite \*" "$err_not_fatal"
+    sh_chroot_job "Aguarde alguns poucos minutos, instalando meta package: $pkg" "pacman -S $pkg --noconfirm --overwrite \*" "$err_not_fatal"
   done
+  sh_remove_in_chroot_installer
 }
 
 sh_install_remove_packages() {
@@ -2242,14 +2278,15 @@ sh_choosewm() {
 	fi
 
 	aWm[tty]="${cmsg_tty[LC_DEFAULT]}"
+  aWm[enlightenment]="Enlightenment desktop shell"
+	aWm[hyprland]="A highly customizable dynamic tiling Wayland compositor"
+	aWm[i3wm]="i3 is a tiling window manager inspired by wmii"
+	aWm[windowmaker]="An X11 window manager with a NEXTSTEP look and feel"
 #	aWm[awesome]="Awesome"
 #	aWm[blackbox]="Blackbox"
 #	aWm[bspwm]="Tiling window manager based on binary space partitioning"
 #	aWm[dwm]="Dwm"
-#	aWm[enlightenment]="Enlightenment desktop shell"
 #	aWm[fluxbox]="Fluxbox"
-	aWm[hyprland]="A highly customizable dynamic tiling Wayland compositor"
-#	aWm[i3wm]="i3wm"
 #	aWm[lxde]="The 'Lightweight X11 Desktop Environment'"
 #	aWm[lxqt]="The 'Lightweight Qt Desktop Environment'"
 #	aWm[mate]="Mate"
@@ -2257,7 +2294,6 @@ sh_choosewm() {
 #	aWm[plasma]="Kde Plasma-Desktop"
 #	aWm[sway]="Sway"
 #	aWm[twm]="Twm"
-	aWm[windowmaker]="An X11 window manager with a NEXTSTEP look and feel"
 
 	for x in "${!aWm[@]}"; do
 		aFlag[$x]='off'
@@ -2272,8 +2308,6 @@ sh_choosewm() {
 #		dwm "${aWm[dwm]}" "${aFlag[dwm]}" \
 #		blackbox "${aWm[blackbox]}" "${aFlag[blackbox]}" \
 #		fluxbox "${aWm[fluxbox]}" "${aFlag[fluxbox]}" \
-#		enlightenment "${aWm[enlightenment]}" "${aFlag[enlightenment]}" \
-#		i3wm "${aWm[i3wm]}" "${aFlag[i3wm]}" \
 #		lxde "${aWm[lxde]}" "${aFlag[lxde]}" \
 #		lxqt "${aWm[lxqt]}" "${aFlag[lxqt]}" \
 #		mate "${aWm[mate]}" "${aFlag[mate]}" \
@@ -2290,7 +2324,9 @@ sh_choosewm() {
 		--checklist "${cmsg_MENU[$LC_DEFAULT]}" \
 		0 0 0 \
 		tty "${aWm[tty]}" "${aFlag[tty]}" \
+		enlightenment "${aWm[enlightenment]}" "${aFlag[enlightenment]}" \
 		hyprland "${aWm[hyprland]}" "${aFlag[hyprland]}" \
+		i3wm "${aWm[i3wm]}" "${aFlag[i3wm]}" \
 		windowmaker "${aWm[windowmaker]}" "${aFlag[windowmaker]}" \
 		2>&1 >/dev/tty)
 
@@ -3990,7 +4026,7 @@ en_US() {
 	nolabel='No'
 	cfinish="Install Complete!\nReboot to start with $cdistro Linux. \nBugs? $xemail"
 	cgrubsuccess='GRUB successfully installed!'
-	ccancelgrub='Installing grub canceled!'
+	ccancelgrub='Installing GRUB canceled!'
 	cmsgInstalar_GRUB='Install GRUB'
 	cmsgAlterar_FSTAB='Change FSTAB'
 	cinitbind='Enter chroot environment (after installation)'
@@ -4001,7 +4037,7 @@ en_US() {
 	cmsgusermanager='User management'
 	cmsgadduser='Please wait, creating user'
 	cmsgaddhost='Please wait, setting hostname'
-	cmsgwaitgrub='Please wait, installing grub to disk'
+	cmsgwaitgrub='Please wait, installing GRUB to disk'
 	cmsg_all_ready='All ready to begin the installation. Do you confirm?'
 	cmsg_nec_dismount='Need to dismount partition to repartition automatically.'
 	cwarning='** WARNING **'
@@ -4021,7 +4057,7 @@ en_US() {
 	cmsg_extracting='Wait, Extracting files...'
 	cmsg_part_disk='View disk partitions'
 	cmsg_prepare_disk='Wait, preparing the disk:'
-	cmsg_install_grub_disk='Installing BIOS grub on disk'
+	cmsg_install_grub_disk='Installing BIOS GRUB on disk'
 	cmsg_Detectada_particao_EFI='Detected EFI partition'
 	cmsg_Deseja_instalar_o_GRUB_EFI='Do you want to install EFI grub'
 	cmsg_Sim_EFI='Yes=EFI'
@@ -4030,12 +4066,12 @@ en_US() {
 	cmsg_Desmontando_particao='Unmounting partition'
 	cmsg_Formatando_particao='Formatting partition'
 	cmsg_Montando_particao='Mounting partition'
-	cmsg_Instalando_GRUB_EFI_na_particao='Installing EFI grub on partition'
+	cmsg_Instalando_GRUB_EFI_na_particao='Installing EFI GRUB on partition'
 	cmsgInstalacao_Automatica='Automatized Installation'
 	cmsgInstalacao_Automatica_cancelada='Installation canceled'
 	cmsgErro_na_formatacao='Error in formatting'
 	cmsgErro_na_inclusao_do_usuario='Error adding user'
-	cmsgGerando_arquivo_configuracao_do_grub='Generating Grub configuration file'
+	cmsgGerando_arquivo_configuracao_do_grub='Generating GRUB configuration file'
 	cmsgNeste_modo_a_instalacao_sera_automatizada='In this mode an installation will be automated'
 	cmsgDeseja_continuar_e_escolher_o_disco_destino='Do you want to continue and choose the destination disk'
 	cmsg_Error_not_fatal='Non-fatal error. For more details see the log'
@@ -5090,7 +5126,7 @@ sh_copyfilesboot() {
 		bootmnt="/boot"
 		#airootfs="/run/miso/bootmnt/boot"
 		sh_cmd_job "Aguarde, copiando kernel e initrd" "cp -Rpva $bootmnt/* $dir_install/boot/" "$err_not_fatal"
-		sh_chroot_job "Aguarde, gerando initrd" "mkinitcpio -P" "$err_not_fatal"
+		sh_chroot_job "Aguarde, gerando initramfs" "mkinitcpio -P" "$err_not_fatal"
 		sh_chroot_job "Aguarde, atualizando grub" "update-grub" "$err_not_fatal"
 		return 0
 	fi
@@ -5109,8 +5145,8 @@ sh_copyfilesboot() {
 			local krn_version=$(file $krn_file | grep -oP '(?<=version\s)\S+')
 			sh_cmd_job "Aguarde, copiando arquivos do kernel e initrd" "cp -Rpva $bootmnt/boot/* $dir_install/boot/" "$err_not_fatal"
 			sh_cmd_job "Aguarde, copiando kernel" "install -m 644 -o root $krn_file $dir_install/boot/vmlinuz-$krn_version" "$err_not_fatal"
-			sh_chroot_job "Aguarde, gerando initrd" "update-initramfs -d -c -u -k $krn_version" "$err_not_fatal"
-			sh_chroot_job "Aguarde, gerando initrd" "rm -rf /etc/default/grub.d/" "$err_not_fatal"
+			sh_chroot_job "Aguarde, gerando initrd pass 1" "update-initramfs -d -c -u -k $krn_version" "$err_not_fatal"
+			sh_chroot_job "Aguarde, gerando initrd pass 2" "rm -rf /etc/default/grub.d/" "$err_not_fatal"
 		fi
 	fi
 	return 0
@@ -5350,16 +5386,16 @@ sh_install_wm() {
 	for x in "${_WINDOWMANAGER[@]}"; do
 		case "$x" in
 		"tty") : ;;
+		"enlightenment") sh_install_enlightenment ;;
 		"hyprland") sh_install_hyprland ;;
+		"i3wm") sh_install_i3wm ;;
 		"windowmaker") sh_install_windowmaker ;;
 		"awesome");;
 		"bspwm");;
 		"blackbox");;
 		"dwm");;
-		"enlightenment");;
 		"fluxbox") ;;
 		"openbox");;
-		"i3wm");;
 		"sway");;
 		"twm");;
 		"mate");;
