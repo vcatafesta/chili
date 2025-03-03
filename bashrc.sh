@@ -326,6 +326,8 @@ sh_bashrc_configure() {
 	fi
 	alias l=dir
 	alias dirt="la -h -ls -Sr -rt --color=auto"
+	alias lla="la -la --color=auto"
+	alias lls="la -ls --color=auto"
 	#	alias dir="ls -h -ls -X --color=auto"
 	alias ed=nano
 	alias ED=nano
