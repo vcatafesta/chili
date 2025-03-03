@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: dom 02 mar 2025 21:46:40 -04
+#  Updated: dom 03 mar 2025 00:31:08 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -41,7 +41,7 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob # Habilita padrões estendidos
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="5.3.2.20250302"
+declare -r _VERSION_="5.3.3.20250303"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
@@ -77,6 +77,7 @@ declare -gA Alocale=([0]=pt_BR [1]=en_US [2]=de_DE [3]=fr_FR [4]=es_ES [5]=it_IT
 declare -r DEPENDENCIES=(awk cat cut dialog dd grep lsblk parted sed sfdisk tee tput pv whiptail which tr)
 declare dialogRcFile="$HOME/.dialogrc"
 declare _WINDOWMANAGER=('tty')
+declare _WM_TO_INSTALL=()
 
 cleanup() {
 	rm -f "$dialogRcFile"
@@ -593,6 +594,19 @@ sh_cmd_job() {
 	msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
 	eval "$cjob" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
 	lretval="${PIPESTATUS[0]}"
+	evaluate_retval "$lretval" "$erro_fatal"
+	return "$lretval"
+}
+
+sh_msg_job() {
+	local cmsg="$1"
+	local cjob="$2"
+	local erro_fatal="$3"
+	local lretval=0
+
+  last_msg="$cmsg"
+  msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
+	lretval=0
 	evaluate_retval "$lretval" "$erro_fatal"
 	return "$lretval"
 }
@@ -1571,42 +1585,22 @@ sh_remove_in_chroot_installer() {
   sed -i '/^IN_CHROOT_INSTALLER_USER=/d' "$env_file"
 }
 
-sh_install_i3wm() {
-  local aPackagesToInstall=('comm-i3wm')
+sh_install_all_wm() {
+  local pkg
+  local count=1
+
+  # Verifica se a variável _WM_TO_INSTALL está vazia
+  if [[ ${#_WM_TO_INSTALL[@]} -eq 0 ]]; then
+    sh_msg_job "Nenhum meta pacote de WM para instalar."
+    return
+  fi
 
   sh_insert_in_chroot_installer
-  for pkg in ${aPackagesToInstall[@]}; do
-    sh_chroot_job "Aguarde alguns poucos minutos, instalando meta pacote: $pkg" "pacman -S $pkg --noconfirm --overwrite \*" "$err_not_fatal"
-  done
-  sh_remove_in_chroot_installer
-}
-
-sh_install_enlightenment() {
-  local aPackagesToInstall=('comm-enlightenment')
-
-  sh_insert_in_chroot_installer
-  for pkg in ${aPackagesToInstall[@]}; do
-    sh_chroot_job "Aguarde alguns poucos minutos, instalando meta pacote: $pkg" "pacman -S $pkg --noconfirm --overwrite \*" "$err_not_fatal"
-  done
-  sh_remove_in_chroot_installer
-}
-
-sh_install_hyprland() {
-  local aPackagesToInstall=('comm-hyprland')
-
-  sh_insert_in_chroot_installer
-  for pkg in ${aPackagesToInstall[@]}; do
-    sh_chroot_job "Aguarde alguns poucos minutos, instalando meta pacote: $pkg" "pacman -S $pkg --noconfirm --overwrite \*" "$err_not_fatal"
-  done
-  sh_remove_in_chroot_installer
-}
-
-sh_install_windowmaker() {
-  local aPackagesToInstall=('comm-wmaker')
-
-  sh_insert_in_chroot_installer
-  for pkg in ${aPackagesToInstall[@]}; do
-    sh_chroot_job "Aguarde alguns poucos minutos, instalando meta package: $pkg" "pacman -S $pkg --noconfirm --overwrite \*" "$err_not_fatal"
+  for pkg in "${_WM_TO_INSTALL[@]}"; do
+    sh_chroot_job "Aguarde alguns poucos minutos, instalando meta pacote #${count}: $pkg" \
+                  "pacman -Sy $pkg --noconfirm --overwrite \*" \
+                  "$err_not_fatal"
+    ((++count))
   done
   sh_remove_in_chroot_installer
 }
@@ -2292,7 +2286,7 @@ sh_choosewm() {
   aWm[enlightenment]="Enlightenment desktop shell"
 	aWm[hyprland]="A highly customizable dynamic tiling Wayland compositor"
 	aWm[i3wm]="i3 is a tiling window manager inspired by wmii"
-	aWm[windowmaker]="An X11 window manager with a NEXTSTEP look and feel"
+	aWm[wmaker]="An X11 window manager with a NEXTSTEP look and feel"
 #	aWm[awesome]="Awesome"
 #	aWm[blackbox]="Blackbox"
 #	aWm[bspwm]="Tiling window manager based on binary space partitioning"
@@ -2338,7 +2332,7 @@ sh_choosewm() {
 		enlightenment "${aWm[enlightenment]}" "${aFlag[enlightenment]}" \
 		hyprland "${aWm[hyprland]}" "${aFlag[hyprland]}" \
 		i3wm "${aWm[i3wm]}" "${aFlag[i3wm]}" \
-		windowmaker "${aWm[windowmaker]}" "${aFlag[windowmaker]}" \
+		wmaker "${aWm[wmaker]}" "${aFlag[wmaker]}" \
 		2>&1 >/dev/tty)
 
 	exit_status=$?
@@ -5394,13 +5388,14 @@ sh_install_wm() {
 		:
 	fi
 
+	_WM_TO_INSTALL=()
 	for x in "${_WINDOWMANAGER[@]}"; do
 		case "$x" in
 		"tty") : ;;
-		"enlightenment") sh_install_enlightenment ;;
-		"hyprland") sh_install_hyprland ;;
-		"i3wm") sh_install_i3wm ;;
-		"windowmaker") sh_install_windowmaker ;;
+		"enlightenment") _WM_TO_INSTALL+=(comm-enlightenment) ;;
+		"hyprland")  _WM_TO_INSTALL+=(comm-hyprland) ;;
+		"i3wm")  _WM_TO_INSTALL+=(comm-i3wm) ;;
+		"wmaker") _WM_TO_INSTALL+=(comm-wmaker) ;;
 		"awesome");;
 		"bspwm");;
 		"blackbox");;
@@ -5414,6 +5409,7 @@ sh_install_wm() {
 		"lxqt");;
 		esac
 	done
+	sh_install_all_wm
 }
 
 sh_install() {
