@@ -749,6 +749,7 @@ sh_start_vdagentd() {
 
 chili-fr() {
 	local img="$1"
+#	local img="($@)"
 	local random_port="$(shuf -i 4444-45000 -n 1)"
 	local random_spice_port="$(shuf -i 5900-5910 -n 1)"
   local cache_type
