@@ -629,7 +629,7 @@ ${cyan}Forma de uso mais comum:${rst}
 ${cyan}acesso a vm/convidado via ssh:${rst}
   $ ${reset} ssh live@vsock/555             ${cyan}# via vsock ${rst}
   $ ${reset} ssh live@127.0.0.1 -p 60022    ${cyan}# via redicionamento ${rst}
-  $ ${reset} ssh <ip_vm>                    ${cyan}# via bridge (caso ativa com -b) ${rst}
+  $ ${reset} ssh <ip_vm>                    ${cyan}# via bridge (caso vm iniciada com -b) ${rst}
   ${reset}
 EOF
 	exit 0

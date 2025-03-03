@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: sáb 01 mar 2025 17:44:55 -04
+#  Updated: dom 02 mar 2025 21:46:40 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -41,7 +41,7 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob # Habilita padrões estendidos
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="5.3.1.20250301"
+declare -r _VERSION_="5.3.2.20250302"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
@@ -1549,15 +1549,26 @@ sh_mkefiroaming() {
 }
 
 sh_insert_in_chroot_installer() {
-	local cuser="${AsUser[cuser]}"
-  sed -i '/^IN_CHROOT_INSTALLER=/!s#$#\nIN_CHROOT_INSTALLER=true#' "$dir_install"/etc/environment
-  sed -i "/^IN_CHROOT_INSTALLER_USER=/!s#$#\nIN_CHROOT_INSTALLER_USER=${cuser}#" "$dir_install"/etc/environment
+  local cuser="${AsUser[cuser]}"
+  local env_file="$dir_install/etc/environment"
+
+  # Garante que a variável IN_CHROOT_INSTALLER exista ou seja adicionada
+  grep -q '^IN_CHROOT_INSTALLER=' "$env_file" &&
+    sed -i 's/^IN_CHROOT_INSTALLER=.*/IN_CHROOT_INSTALLER=true/' "$env_file" ||
+    echo "IN_CHROOT_INSTALLER=true" >> "$env_file"
+
+  # Garante que a variável IN_CHROOT_INSTALLER_USER exista ou seja adicionada
+   grep -q '^IN_CHROOT_INSTALLER_USER=' "$env_file" &&
+    sed -i "s/^IN_CHROOT_INSTALLER_USER=.*/IN_CHROOT_INSTALLER_USER=${cuser}/" "$env_file" ||
+    echo "IN_CHROOT_INSTALLER_USER=${cuser}" >> "$env_file"
 }
 
 sh_remove_in_chroot_installer() {
-	local cuser="${AsUser[cuser]}"
-  sed -i '/^IN_CHROOT_INSTALLER=/d' "$dir_install"/etc/environment
-  sed -i "/^IN_CHROOT_INSTALLER_USER=/!s#$#\nIN_CHROOT_INSTALLER_USER=${cuser}#" "$dir_install"/etc/environment
+  local env_file="$dir_install/etc/environment"
+
+  # Remove as linhas que começam com IN_CHROOT_INSTALLER ou IN_CHROOT_INSTALLER_USER
+  sed -i '/^IN_CHROOT_INSTALLER=/d' "$env_file"
+  sed -i '/^IN_CHROOT_INSTALLER_USER=/d' "$env_file"
 }
 
 sh_install_i3wm() {
