@@ -183,11 +183,16 @@ log_err() {
 
 log_msg() {
 	local retval="${PIPESTATUS[0]}"
+	local pcount=$#
 
+	((pcount >= 2)) && {
+		retval=$1
+		shift
+	}
 	if [[ $retval -eq 0 ]]; then
-		printf "  %b %s\\n" "${TICK}" "${*}"
+		printf " %b %s\\n" "${TICK}" "${*}"
 	else
-		printf "  %b %s\\n" "${CROSS}" "${*}"
+		printf " %b %s\\n" "${CROSS}" "${*}"
 	fi
 }
 
@@ -237,7 +242,7 @@ msg_info() {
 	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
 	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
 	#echo -e "${caller_function}=>${yellow}info   : ${cyan}${msg}${reset}"
-	echo -e "  =>${yellow}info   : ${cyan}${msg}${reset}"
+	echo -e "${reset}  =>${yellow}info   : ${cyan}${msg}${reset}"
 }
 export -f msg_info
 
@@ -748,32 +753,40 @@ sh_start_vdagentd() {
 }
 
 chili-fr() {
-	local img="$1"
-#	local img="($@)"
+	#	local img="$1"
+	local params=("$@")
+	local img
 	local random_port="$(shuf -i 4444-45000 -n 1)"
 	local random_spice_port="$(shuf -i 5900-5910 -n 1)"
-  local cache_type
+	local cache_type
 	local bootindex
 	local media_type
+	local count=1
+	local devices=()
 
-	# Verificar se a imagem foi especificada
-	[[ -z "$img" ]] && {
-		sh_list_vdisks
-		die "Erro: Imagem/Device não especificada!"
-	}
-	if [[ ! -e "$img" ]]; then
-		[[ ! -e "$HOME_DIR/vdisk/$img" ]] && {
+	for img in "${params[@]}"; do
+		# Verificar se a imagem foi especificada
+		[[ -z "$img" ]] && {
 			sh_list_vdisks
-			die "Erro: Imagem/Device ${cyan}${img} ${red}não localizada, tente os listados acima!${reset}"
+			die "Erro: vdisk/iso/device #${count} não especificada!"
 		}
-		img="$HOME_DIR/vdisk/$img"
-	fi
+		if [[ ! -e "$img" ]]; then
+			[[ ! -e "$HOME_DIR/vdisk/$img" ]] && {
+				log_msg 1 "Check: ${yellow}device order #${count}: ${cyan}$img"
+				sh_list_vdisks
+				die "Erro: vdisk/iso/device #${count} ${cyan}${img} ${red}não localizada, tente os listados acima!${reset}"
+			}
+			img="$HOME_DIR/vdisk/$img"
+		fi
+		devices+=("$img")
+		log_msg true "Check: ${yellow}device order #${count}: ${cyan}$img"
+		((++count))
+	done
 
 	# Forçar UEFI, se solicitado
 	if $uefi; then
 		msg_info "Forçando inicialização UEFI..."
 		[[ ! -e $HOME_DIR/OVMF_VARS.4m.fd ]] && cp -f /usr/share/edk2-ovmf/x64/OVMF_VARS.4m.fd $HOME_DIR/
-#		cp -f /usr/share/edk2-ovmf/x64/OVMF_VARS.4m.fd $HOME_DIR/
 		qemu_options+=(-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.4m.fd)
 		qemu_options+=(-drive if=pflash,format=raw,file=$HOME_DIR/OVMF_VARS.4m.fd)
 	else
@@ -788,55 +801,61 @@ chili-fr() {
 	qemu_options+=(-m ${xmem})
 	qemu_options+=(-k pt-br)
 
-  #Modo	            Vantagens	                                              Desvantagens
-  #cache=none	      Seguro, evita inconsistências	                          Pode ser mais lento
-  #cache=writeback	Boa performance, mantém um nível aceitável de segurança	Risco de perda de dados em caso de falha
-  #cache=directsync	Segurança máxima (grava direto no disco)	              Muito mais lento
-  #cache=unsafe	    Máxima performance	                                    Pode corromper dados se houver falha
+	#Modo	            Vantagens	                                              Desvantagens
+	#cache=none	      Seguro, evita inconsistências	                          Pode ser mais lento
+	#cache=writeback	Boa performance, mantém um nível aceitável de segurança	Risco de perda de dados em caso de falha
+	#cache=directsync	Segurança máxima (grava direto no disco)	              Muito mais lento
+	#cache=unsafe	    Máxima performance	                                    Pode corromper dados se houver falha
 
-  cache_type='writeback'
+	cache_type='writeback'
 	bootindex=1 # Índice de boot inicial
-	media_type=$(file -b --mime-type "${img}")
-	qemu_options+=(-boot menu=on)
-	if [[ "${media_type}" == "application/x-iso9660-image" ]]; then
-    msg_info "Anexando iso image #${bootindex}: ${yellow}${img}"
-    qemu_options+=(-drive file="${img}",if=none,id=cdrom${bootindex},media=cdrom)
-    qemu_options+=(-device ide-cd,drive=cdrom${bootindex},bootindex=${bootindex})
-		((bootindex++))
-	elif [[ "${img}" == *.qcow2 ]]; then
-		qemu_options+=(-drive file="${img}",if=none,id=disk${bootindex},format=qcow2,cache=${cache_type})
-    qemu_options+=(-device virtio-blk,drive=disk${bootindex},bootindex=${bootindex})
-		((bootindex++))
-  elif [[ "${img}" == /dev/* ]]; then
-    qemu_options+=(-drive file="${img}",if=none,id=disk${bootindex},format=raw,cache=${cache_type})
-    qemu_options+=(-device virtio-blk,drive=disk${bootindex},bootindex=${bootindex})
-    msg_info "Anexando dispositivo físico #${bootindex}: ${yellow}${img}"
-    ((bootindex++))
-	else
-		qemu_options+=(-drive file="${img}",if=none,id=disk${bootindex},format=raw,cache=${cache_type})
-    qemu_options+=(-device virtio-blk,drive=disk${bootindex},bootindex=${bootindex})
-		((bootindex++))
-	fi
+
+	for img in "${devices[@]}"; do
+		media_type=$(file -b --mime-type "${img}")
+		qemu_options+=(-boot menu=on)
+		if [[ "${media_type}" == "application/x-iso9660-image" ]]; then
+			msg_info "Anexando   iso #${bootindex}: ${yellow}${img}"
+			qemu_options+=(-drive file="${img}",if=none,id=cdrom${bootindex},media=cdrom)
+			qemu_options+=(-device ide-cd,drive=cdrom${bootindex},bootindex=${bootindex})
+			((bootindex++))
+		elif [[ "${img}" == *.qcow2 ]]; then
+			msg_info "Anexando vdisk #${bootindex}: ${yellow}${img}"
+			qemu_options+=(-drive file="${img}",if=none,id=disk${bootindex},format=qcow2,cache=${cache_type})
+			qemu_options+=(-device virtio-blk,drive=disk${bootindex},bootindex=${bootindex})
+			((bootindex++))
+		elif [[ "${img}" == /dev/* ]]; then
+			qemu_options+=(-drive file="${img}",if=none,id=disk${bootindex},format=raw,media=disk,cache=${cache_type})
+			qemu_options+=(-device virtio-blk,drive=disk${bootindex},bootindex=${bootindex})
+			msg_info "Anexando device #${bootindex}: ${yellow}${img}"
+			((bootindex++))
+		else
+			msg_info "Anexando vdisk #${bootindex}: ${yellow}${img}"
+			qemu_options+=(-drive file="${img}",if=none,id=disk${bootindex},format=raw,cache=${cache_type})
+			qemu_options+=(-device virtio-blk,drive=disk${bootindex},bootindex=${bootindex})
+			((bootindex++))
+		fi
+	done
 
 	if $vdisk; then
 		for vdsk in "${avdisk_names[@]}"; do
-      [[ ! -e "$vdsk" ]] && vdsk="$HOME_DIR/vdisk/$vdsk"
-      [[ ! -e "$vdsk" ]] && continue
+			[[ ! -e "$vdsk" ]] && vdsk="$HOME_DIR/vdisk/$vdsk"
+			[[ ! -e "$vdsk" ]] && continue
 
 			if [[ "${vdsk}" == *.img ]]; then
-  			msg_info "Anexando vdisk #${bootindex}: ${yellow}${vdsk}"
+				msg_info "Anexando vdisk #${bootindex}: ${yellow}${vdsk}"
 				qemu_options+=(-drive file="${vdsk}",if=none,id=disk${bootindex},format=raw,cache=${cache_type})
 				qemu_options+=(-device virtio-blk,drive=disk${bootindex},bootindex=${bootindex})
 				((bootindex++))
 			elif [[ "${vdsk}" == *.qcow2 ]]; then
 				msg_info "Anexando vdisk #${bootindex}: ${yellow}${vdsk}"
-  			qemu_options+=(-drive file="${vdsk}",if=none,id=disk${bootindex},format=qcow2,cache=${cache_type})
+				qemu_options+=(-drive file="${vdsk}",if=none,id=disk${bootindex},format=qcow2,cache=${cache_type})
 				qemu_options+=(-device virtio-blk,drive=disk${bootindex},bootindex=${bootindex})
 				((bootindex++))
 			fi
 		done
 	else
-		msg_warn "Parametro --vdisk não informado, iniciando sem disco virtual..."
+#		msg_warn "Parametro --vdisk não informado, iniciando sem disco virtual..."
+		:
 	fi
 
 	qemu_options+=(-name "chili-fr $*",process=archiso_0)

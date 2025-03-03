@@ -216,7 +216,6 @@ sh_chooseutil() {
 	aUtils+=(['chili-fr']='Wrapper lite para o qemu')
 	aUtils+=(['chili-runimage']='Wrapper lite para o qemu')
 	aUtils+=(['chili-dialog-theme-selector']='Seletor de temas para o Dialog')
-	aUtils+=(['chili-init-keys']='Utilitário para gerenciar chaves utilizando o pacman-key')
 	aUtils+=(['chili-systemd-services']='Wrapper para o systemctl')
 	aUtils+=(['chili-maketar']='Utilitário para criar backup tar de diretórios')
 	aUtils+=(['chili-parted']='Wrapper parted para particionamento de disco')
@@ -227,6 +226,8 @@ sh_chooseutil() {
 	aUtils+=(['chili-wifi-config']='Wrapper configuração wifi para o NetworkManager')
 	aUtils+=(['chili-clonedisk']='Utilitário para clonar disco')
 	aUtils+=(['chili-efivar']='Listar variáveis uefi')
+	aUtils+=(['chili-make-pacman-conf']='Utility to add repositories to pacman.conf and manage keys')
+	aUtils+=(['chili-init-keys']='Utility for managing keys using pacman-key')
 
 	for key in "${!aUtils[@]}"; do
 		aUtil_list+=("$key" "${aUtils[$key]}")

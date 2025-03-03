@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2034
 #
-#  chili-init-keys - Utility for managing keys using pacman-key
+#  chili-make-pacman-conf - Utility to add repositories to pacman.conf and manage keys.
 #  Created: 2024/09/23 - 16:19 -04
 #  Altered: 2024/09/23 - 16:19 -04
-#  Updated: seg 03 mar 2025 12:17:45 -04
+#  Updated: seg 03 mar 2025 11:21:30 -04
 #
-#  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
+#  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 ##############################################################################
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
-export TEXTDOMAIN=chili-init-keys
+export TEXTDOMAIN=chili-make-pacman-conf
 
 # Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
@@ -84,15 +84,13 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare APPDESC="Utility for managing keys using pacman-key"
+declare APPDESC="Utility to add repositories to pacman.conf and manage keys."
 declare _VERSION_="1.03.03-20250303"
 declare distro
 declare DEPENDENCIES=(tput)
 distro="$(uname -n)"
 
-MostraErro() {
-	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
-}
+MostraErro() { echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"; }
 #trap 'MostraErro "${APP[$FUNCNAME][$LINENO]}" "${BASH_COMMAND}" "$?"; exit 1' ERR
 
 die() {
@@ -138,15 +136,13 @@ export -f msg_raw
 
 msg() {
 	local msg="$1"
-	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
-	echo -e "  =>${cyan}running: ${yellow}${msg}${reset}"
+	echo -e "==>${cyan}running: ${yellow}${msg}${reset}"
 }
 export -f msg
 
 msg_ok() {
 	local msg="$1"
-	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
-	echo -e "  =>${cyan}feito: ${green}${msg}${reset}"
+	echo -e "==>${cyan}   done: ${green}${msg}${reset}"
 }
 export -f msg_ok
 
@@ -162,7 +158,7 @@ msg_info() {
 	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
 	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
 	#echo -e "${caller_function}=>${yellow}info   : ${cyan}${msg}${reset}"
-	echo -e "  =>${yellow}info   : ${cyan}${msg}${reset}"
+	echo -e "==>${yellow}info   : ${cyan}${msg}${reset}"
 }
 export -f msg_info
 
@@ -204,6 +200,8 @@ replicate() {
 }
 export -f replicate
 
+###################################################################################################
+
 sh_checkroot() {
 	if [[ "$(id -u)" != "0" ]]; then
 		elevate_to_root "$@"
@@ -227,6 +225,44 @@ elevate_to_root() {
 	die "Error: Unable to elevate privileges. Run manually as root."
 }
 
+sh_add_repo_into_pacman_conf() {
+	CONF_FILE="/etc/pacman.conf"
+
+	msg "Adding repositories to /etc/pacman.conf ..."
+	add_repo() {
+		local repo_name="$1"
+		shift
+		local servers=("$@")
+
+		# Se o repositório já estiver presente, não adiciona
+		if grep -q "^\[$repo_name\]" "$CONF_FILE"; then
+			return
+		fi
+
+		echo -e "\n[$repo_name]" >>"$CONF_FILE"
+		for server in "${servers[@]}"; do
+			echo "Server = $server" >>"$CONF_FILE"
+		done
+	}
+
+	# Faz backup antes de modificar
+	cp "$CONF_FILE" "$CONF_FILE.bak"
+
+	# Adiciona os repositórios, se necessário
+	add_repo "community-stable" "https://repo.communitybig.org/stable/\$arch"
+	add_repo "community-testing" "https://repo.communitybig.org/testing/\$arch"
+	add_repo "community-extra" "https://repo.communitybig.org/extra/\$arch"
+	add_repo "chili-stable" "https://repo.chililinux.com/stable/\$arch" "https://repo2.chililinux.com/stable/\$arch"
+	add_repo "chili-testing" "https://repo.chililinux.com/testing/\$arch" "https://repo2.chililinux.com/testing/\$arch"
+	add_repo "chili-extra" "https://repo.chililinux.com/extra/\$arch" "https://repo2.chililinux.com/extra/\$arch"
+	add_repo "chili-aur" "https://repo.chililinux.com/aur/\$arch" "https://repo2.chililinux.com/aur/\$arch"
+
+	msg_ok "Repositories added (if they didn't already exist)."
+
+	# Atualiza os repositórios
+	msg_run 'sudo pacman -Sy &>/dev/null'
+}
+
 sh_usage() {
   cat <<-EOF
   ${bold}${cyan}${0##*/} v${_VERSION_}${rst}
@@ -246,6 +282,7 @@ EOF
 }
 
 sh_main() {
+	msg "Removing pacman GPG keys..."
 	msg_run 'sudo rm -rf /etc/pacman.d/gnupg/* &>/dev/null'
 
 	# Inicializar e popular o banco de chaves
@@ -284,7 +321,6 @@ sh_main() {
 
 	msg_run 'sudo pacman-key --init &>/dev/null'
 	msg_run 'sudo pacman-key --populate &>/dev/null'
-	msg_ok "All done"
 
 	# Listar informações das chaves
 	#sudo pacman-key --list-keys
@@ -305,4 +341,5 @@ for arg in "$@"; do
 done
 
 sh_checkroot
+sh_add_repo_into_pacman_conf
 sh_main
