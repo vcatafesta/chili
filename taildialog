@@ -3,8 +3,8 @@
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
 #  t
-#  Created: 2025/03/03 - 18:35
-#  Altered: 2025/03/03 - 18:35
+#  Created: 2025/03/02 - 18:45
+#  Altered: 2025/03/02 - 18:45
 #
 #  Copyright (c) 2025-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -72,7 +72,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="1.0.0-20250303"
+declare _VERSION_="1.0.0-20250302"
 declare APPDESC="bash - Wraper for "
 declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput)
@@ -147,24 +147,8 @@ sh_setEnvironment() {
   sh_ascii_lines
 }
 
-check_uefi() {
-  if [ -d "/sys/firmware/efi" ]; then
-    echo "true"  # Saída capturada
-    return 0     # Código de saída
-  else
-    echo "false" # Saída capturada
-    return 1     # Código de saída
-  fi
-}
-
-if LEFI=$(check_uefi); then
-  echo "LEFI: $LEFI"  # Exibe "true" ou "false"
-  echo "O sistema está em UEFI."
-else
-  echo "LEFI: $LEFI"
-  echo "O sistema está em BIOS (Legacy)."
-fi
-
-if $LEFI; then
-  echo ok
-fi
+tmpfile=$(mktemp)
+(mkinitcpio -P 2>&1 | tee "$tmpfile") &
+dialog --tailbox "$tmpfile" 20 80
+wait
+rm -f "$tmpfile"

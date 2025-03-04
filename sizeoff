@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  t
-#  Created: 2025/03/03 - 18:35
-#  Altered: 2025/03/03 - 18:35
+#  sizeof
+#  Created: 2025/03/03 - 23:30
+#  Altered: 2025/03/03 - 23:30
 #
 #  Copyright (c) 2025-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -31,7 +31,7 @@
 ##############################################################################
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
-export TEXTDOMAIN=t
+export TEXTDOMAIN=sizeof
 
 # Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
@@ -147,24 +147,6 @@ sh_setEnvironment() {
   sh_ascii_lines
 }
 
-check_uefi() {
-  if [ -d "/sys/firmware/efi" ]; then
-    echo "true"  # Saída capturada
-    return 0     # Código de saída
-  else
-    echo "false" # Saída capturada
-    return 1     # Código de saída
-  fi
-}
-
-if LEFI=$(check_uefi); then
-  echo "LEFI: $LEFI"  # Exibe "true" ou "false"
-  echo "O sistema está em UEFI."
-else
-  echo "LEFI: $LEFI"
-  echo "O sistema está em BIOS (Legacy)."
-fi
-
-if $LEFI; then
-  echo ok
-fi
+du -s --exclude=/run/miso --exclude=/proc --exclude=/sys \
+       --exclude=/dev --exclude=/run --exclude=/mnt \
+       --exclude=/media --exclude=/tmp / 2>/dev/null | cut -f1

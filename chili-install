@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: dom 03 mar 2025 00:31:08 -04
+#  Updated: ter 04 mar 2025 02:21:37 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -41,7 +41,7 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob # Habilita padrões estendidos
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="5.3.3.20250303"
+declare -r _VERSION_="5.3.4.20250304"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
@@ -74,10 +74,41 @@ declare -gA AConfLocale=([_TIMEZONE]='America/Sao_Paulo' [_KEYMAP]='br-abnt2' [_
 declare -gA AConfWifi=([_NETWORK]='wifi_ssid' [_PASSWORD]='wifi_password')
 declare -gA Alanguage=([pt_BR]=0 [en_US]=1 [de_DE]=2 [fr_FR]=3 [es_ES]=4 [it_IT]=5)
 declare -gA Alocale=([0]=pt_BR [1]=en_US [2]=de_DE [3]=fr_FR [4]=es_ES [5]=it_IT)
-declare -r DEPENDENCIES=(awk cat cut dialog dd grep lsblk parted sed sfdisk tee tput pv whiptail which tr)
 declare dialogRcFile="$HOME/.dialogrc"
 declare _WINDOWMANAGER=('tty')
 declare _WM_TO_INSTALL=()
+declare TARGET_EFI=x86_64-efi
+declare -a DEPENDENCIES=(
+  awk
+  dialog
+  whiptail
+  grep
+  lsblk
+  sfdisk
+  parted
+  sed
+  tput
+  pv
+  gettext
+  find
+  curl
+  )
+
+declare -A PACKAGEDEP=(
+  ['awk']='gawk'
+  ['dialog']='dialog'
+  ['whiptail']='libnewt'
+  ['grep']='grep'
+  ['lsblk']='util-linux'
+  ['sfdisk']='util-linux'
+  ['parted']='parted'
+  ['sed']='sed'
+  ['tput']='ncurses'
+  ['pv']='pv'
+  ['gettext']='gettext'
+  ['find']='findutils'
+  ['curl']='curl'
+)
 
 cleanup() {
 	rm -f "$dialogRcFile"
@@ -511,18 +542,40 @@ sh_setLogPrefix() {
 }
 
 sh_getBootEFI() {
-	if [ -e /sys/firmware/efi/systab ]; then
-		TARGET_EFI=x86_64-efi
+	if [ -d "/sys/firmware/efi" ]; then
 		[[ "$(</sys/firmware/efi/fw_platform_size)" -eq 32 ]] && TARGET_EFI=i386-efi
-		return 0
+		echo "true" # Saída capturada
+		return 0    # Código de saída
+	else
+		echo "false" # Saída capturada
+		return 1     # Código de saída
 	fi
-	return 1
 }
 
 replicate() {
-	local Var
-	printf -v Var %"$2s" " "
-	echo "${Var// /$1}"
+  local char=${1:-'#'}
+  local nsize=${2:-$(tput cols)}
+  local line
+  printf -v line "%*s" "$nsize" && echo -e "${blue}${line// /$char}${reset}"
+}
+export -f replicate
+
+readconf() {
+  local msg="$1"
+  local color="${2:-${yellow}}"
+
+  echo -n -e "$color"
+  if [[ $LC_DEFAULT -eq 0 ]]; then
+    read -r -p "$msg [S/n]"
+  else
+    read -r -p "$msg [Y/n]"
+  fi
+  echo -n -e "$reset"
+  case "${REPLY^}" in
+  [SY]) return 0 ;;
+  "") return 0 ;;
+  *) return 1 ;;
+  esac
 }
 
 padr() {
@@ -588,15 +641,29 @@ sh_cmd_job() {
 	local cmsg="$1"
 	local cjob="$2"
 	local erro_fatal="$3"
+	local pipe_test="${4:-0}"
 	local lretval=0
 
 	last_msg="$cmsg"
 	msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
 	eval "$cjob" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER"
-	lretval="${PIPESTATUS[0]}"
+	lretval="${PIPESTATUS[$pipe_test]}"
 	evaluate_retval "$lretval" "$erro_fatal"
 	return "$lretval"
 }
+
+msg_info() {
+  local msg="$1"
+  local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+  local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+  msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
+  #echo -e "${blue}==>${green}[${caller_function}:${caller_line}]=>${yellow}info   : ${cyan}${msg}${reset}"
+  #echo -e "${caller_function}=>${yellow}info   : ${cyan}${msg}${reset}"
+  #echo -e "==>${yellow}[INFO]   : ${cyan}${msg}${reset}"
+  printf "==>%b%-10s%s\n" "${yellow}" "[INFO]" "${cyan}$msg${reset}"
+
+}
+export -f msg_info
 
 sh_msg_job() {
 	local cmsg="$1"
@@ -604,8 +671,8 @@ sh_msg_job() {
 	local erro_fatal="$3"
 	local lretval=0
 
-  last_msg="$cmsg"
-  msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
+	last_msg="$cmsg"
+	msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
 	lretval=0
 	evaluate_retval "$lretval" "$erro_fatal"
 	return "$lretval"
@@ -982,15 +1049,19 @@ sh_update_sudoers() {
 }
 
 sh_execcopia() {
-	ORIGEM="$MEDIUM/"
+	ORIGEM="$MEDIUM"
 	DESTINO="$dir_install/"
 	DEST="$dir_install"
 	PONT='|/—\' # Ponteiros de um hélice do lado direito
 	nVal=0
 
-	sizeof() { du -s "$1" 2>/dev/null | cut -f1; }
-	running() { ps "$1" | grep "$1" >/dev/null; }
-
+#  sizeof() { du -s "$1" 2>/dev/null | cut -f1; }
+  sizeof() {
+    du -s --exclude=/run/miso --exclude=/proc --exclude=/sys \
+          --exclude=/dev --exclude=/run --exclude=/mnt \
+          --exclude=/media --exclude=/tmp "$1" 2>/dev/null | cut -f1
+  }
+  running() { ps "$1" | grep "$1" >/dev/null; }
 	TITLE="INSTALL"
 	#	INTERVALO=0.001
 	INTERVALO=0.5
@@ -1003,6 +1074,7 @@ sh_execcopia() {
 	#	TOTAL=$((TOTAL/1024))
 	#  TOTALGB=$((TOTAL/1024))
 	TOTAL=$(sizeof "$ORIGEM")
+	TOTAL=$((TOTAL + 1024000))
 	TOTALGB=$((TOTAL / 1024))
 	DISPONIVEL=$(df | grep "${DEST}" | awk '{print $4}' | head -1)
 	DISPONIVEL=$((DISPONIVEL / 1024))
@@ -1026,6 +1098,7 @@ sh_execcopia() {
 	#rsync -crav "$ORIGEM" "$DESTINO" 1>&2 >"$log" &
 	#export CPPID=$!
 	rsync -aAXv "$ORIGEM" "$DESTINO" \
+		--exclude=/run/miso \
 		--exclude=/proc \
 		--exclude=/sys \
 		--exclude=/dev \
@@ -1052,7 +1125,7 @@ sh_execcopia() {
 				--gauge "$MSG           							\nFalta ${BOLD}${YELLOW}$((100 - PERCENTAGEM))%${RESET} para completar a tarefa ${AZUL}${PONT:nval:1}\ZB\Zn \
            							\n\nDestino    : ${BOLD}${YELLOW}${AConfDisk[_DEVICE]}$dir_install${RESET}
            							\nDisponivel : ${DISPONIVEL}MB\
-           							\nTotal      :	${TOTALGB}MB\
+           							\nTotal      :	${TOTALGB}MB (+- 1GB)\
            							\nCopiado    : ${GREEN}${REVERSE}${COPIADOMB}MB${RESET}\
            							\nArquivo    :	${LASTFILE}\
            							\n" 13 130 0 <<<$PERCENTAGEM
@@ -1153,24 +1226,19 @@ sh_mount_fs() {
 		done
 	fi
 
-	#	for i in "${!Amntpoint[@]}"; do
-	#		_part="$i"
-	#		mntpoint="$(sh_splitarray "${Amntpoint[$i]}" 1)"
-	#		fstype="$(sh_splitarray "${Amntpoint[$i]}" 2)"
-	#		if [[ -n "$mntpoint" && "$mntpoint" = "/" ]]; then
-	#			continue
-	#		fi
-	#		if [[ "$fstype" = "swap" ]]; then
-	#			continue
-	#		fi
-	#		if [[ -n "$mntpoint" ]]; then
-	#			last_msg="${cmsg_MontandoParticao[$LC_DEFAULT]} $_part ($mntpoint) ${cmsg_Em[$LC_DEFAULT]} $dir_install$mntpoint"
-	#			msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
-	#			log_exec mkdir -p "$dir_install${mntpoint}"
-	#			log_exec mount "$_part" "$dir_install${mntpoint}"
-	#			evaluate_retval "$?"
-	#		fi
-	#	done
+	for i in "${!Amntpoint[@]}"; do
+		_part="$i"
+		mntpoint="$(sh_splitarray "${Amntpoint[$i]}" 1)"
+		fstype="$(sh_splitarray "${Amntpoint[$i]}" 2)"
+		[[ -n "$mntpoint" && "$mntpoint" = "/" || "$fstype" = "swap" ]] && continue
+		if [[ -n "$mntpoint" ]]; then
+			last_msg="${cmsg_MontandoParticao[$LC_DEFAULT]} $_part ($mntpoint) ${cmsg_Em[$LC_DEFAULT]} $dir_install$mntpoint"
+			msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
+			log_exec mkdir -p "$dir_install${mntpoint}"
+			log_exec mount "$_part" "$dir_install${mntpoint}"
+			evaluate_retval "$?"
+		fi
+	done
 
 	return 0
 }
@@ -1543,66 +1611,69 @@ EOF
 
 	sh_chroot_job "${cmsg_Instalando[$LC_DEFAULT]} GRUB i386-pc ${cmsg_Em[$LC_DEFAULT]} $_BOOTLOADER" \
 		"grub-install $_BOOTLOADER --target=i386-pc --recheck"
-	if ((LEFI)); then
+
+	if LEFI=$(sh_getBootEFI); then
 		sh_chroot_job "${cmsg_Instalando[$LC_DEFAULT]} GRUB EFI ${cmsg_Em[$LC_DEFAULT]} $_BOOTLOADER" \
 			"grub-install $_BOOTLOADER --target=$TARGET_EFI --efi-directory=/boot/efi --boot-directory=/boot --bootloader-id=$cnick --recheck"
+		sh_mkefiroaming
 	fi
-	sh_mkefiroaming
 	sh_chroot_job "$cmsgGerando_arquivo_configuracao_do_grub" "grub-mkconfig -o /boot/grub/grub.cfg"
 }
 
 sh_mkefiroaming() {
 	# Caminho de inicialização padrão/reserva
-	if [[ -e "$dir_install/boot/efi/EFI/chili/grubx64.efi" ]]; then
+	if [[ -e "$dir_install/boot/efi/EFI/$cnick/grubx64.efi" ]]; then
 		sh_cmd_job "Criando diretorio: $dir_install/boot/efi/EFI/BOOT" \
-			"mkdir -p $dir_install/boot/efi/EFI/BOOT" "$err_not_fatal"
+			"mkdir -p $dir_install/boot/efi/EFI/BOOT" \
+			"$err_not_fatal"
 		sh_cmd_job "Copiando caminho de inicialização padrão/reserva para: $dir_install/boot/efi" \
-			"cp $dir_install/boot/efi/EFI/chili/grubx64.efi $dir_install/boot/efi/EFI/BOOT/BOOTX64.EFI" "$err_not_fatal"
+			"cp $dir_install/boot/efi/EFI/$cnick/grubx64.efi $dir_install/boot/efi/EFI/BOOT/BOOTX64.EFI" \
+			"$err_not_fatal"
 	fi
 	return 0
 }
 
 sh_insert_in_chroot_installer() {
-  local cuser="${AsUser[cuser]}"
-  local env_file="$dir_install/etc/environment"
+	local cuser="${AsUser[cuser]}"
+	local env_file="$dir_install/etc/environment"
 
-  # Garante que a variável IN_CHROOT_INSTALLER exista ou seja adicionada
-  grep -q '^IN_CHROOT_INSTALLER=' "$env_file" &&
-    sed -i 's/^IN_CHROOT_INSTALLER=.*/IN_CHROOT_INSTALLER=true/' "$env_file" ||
-    echo "IN_CHROOT_INSTALLER=true" >> "$env_file"
+	# Garante que a variável IN_CHROOT_INSTALLER exista ou seja adicionada
+	grep -q '^IN_CHROOT_INSTALLER=' "$env_file" &&
+		sed -i 's/^IN_CHROOT_INSTALLER=.*/IN_CHROOT_INSTALLER=true/' "$env_file" ||
+		echo "IN_CHROOT_INSTALLER=true" >>"$env_file"
 
-  # Garante que a variável IN_CHROOT_INSTALLER_USER exista ou seja adicionada
-   grep -q '^IN_CHROOT_INSTALLER_USER=' "$env_file" &&
-    sed -i "s/^IN_CHROOT_INSTALLER_USER=.*/IN_CHROOT_INSTALLER_USER=${cuser}/" "$env_file" ||
-    echo "IN_CHROOT_INSTALLER_USER=${cuser}" >> "$env_file"
+	# Garante que a variável IN_CHROOT_INSTALLER_USER exista ou seja adicionada
+	grep -q '^IN_CHROOT_INSTALLER_USER=' "$env_file" &&
+		sed -i "s/^IN_CHROOT_INSTALLER_USER=.*/IN_CHROOT_INSTALLER_USER=${cuser}/" "$env_file" ||
+		echo "IN_CHROOT_INSTALLER_USER=${cuser}" >>"$env_file"
 }
 
 sh_remove_in_chroot_installer() {
-  local env_file="$dir_install/etc/environment"
+	local env_file="$dir_install/etc/environment"
 
-  # Remove as linhas que começam com IN_CHROOT_INSTALLER ou IN_CHROOT_INSTALLER_USER
-  sed -i '/^IN_CHROOT_INSTALLER=/d' "$env_file"
-  sed -i '/^IN_CHROOT_INSTALLER_USER=/d' "$env_file"
+	# Remove as linhas que começam com IN_CHROOT_INSTALLER ou IN_CHROOT_INSTALLER_USER
+	sed -i '/^IN_CHROOT_INSTALLER=/d' "$env_file"
+	sed -i '/^IN_CHROOT_INSTALLER_USER=/d' "$env_file"
 }
 
 sh_install_all_wm() {
-  local pkg
-  local count=1
+	local pkg
+	local count=1
 
-  # Verifica se a variável _WM_TO_INSTALL está vazia
-  if [[ ${#_WM_TO_INSTALL[@]} -eq 0 ]]; then
-    sh_msg_job "Nenhum meta pacote de WM para instalar."
-    return
-  fi
+	# Verifica se a variável _WM_TO_INSTALL está vazia
+	if [[ ${#_WM_TO_INSTALL[@]} -eq 0 ]]; then
+		sh_msg_job "Nenhum meta pacote de WM para instalar."
+		return
+	fi
 
-  sh_insert_in_chroot_installer
-  for pkg in "${_WM_TO_INSTALL[@]}"; do
-    sh_chroot_job "Aguarde alguns poucos minutos, instalando meta pacote #${count}: $pkg" \
-                  "pacman -Sy $pkg --noconfirm --overwrite \*" \
-                  "$err_not_fatal"
-    ((++count))
-  done
-  sh_remove_in_chroot_installer
+	sh_insert_in_chroot_installer
+	for pkg in "${_WM_TO_INSTALL[@]}"; do
+		sh_chroot_job "Aguarde alguns poucos minutos, instalando meta pacote #${count}: $pkg" \
+			"pacman -Sy $pkg --noconfirm --overwrite \*" \
+			"$err_not_fatal"
+		((++count))
+	done
+	sh_remove_in_chroot_installer
 }
 
 sh_install_remove_packages() {
@@ -1656,16 +1727,16 @@ sh_install_remove_packages() {
 }
 
 sh_tuning_tcp() {
-  sh_cmd_job "Criando arquivo modprobe bbr =>" "echo 'tcp_bbr' > $dir_install/etc/modules-load.d/bbr.conf"
-  sh_cmd_job "Criando arquivo sysctl bbr =>"   "echo 'net.ipv4.tcp_congestion_control = bbr' > $dir_install/etc/sysctl.d/99-network-tuning.conf"
+	sh_cmd_job "Criando arquivo modprobe bbr =>" "echo 'tcp_bbr' > $dir_install/etc/modules-load.d/bbr.conf"
+	sh_cmd_job "Criando arquivo sysctl bbr =>" "echo 'net.ipv4.tcp_congestion_control = bbr' > $dir_install/etc/sysctl.d/99-network-tuning.conf"
 }
 
 sh_change_pam_d() {
-  sh_cmd_job "Alterando arquivo /etc/pam.d/login =>" \
-    "echo 'session    required     pam_limits.so' >> $dir_install/etc/pam.d/login"
+	sh_cmd_job "Alterando arquivo /etc/pam.d/login =>" \
+		"echo 'session    required     pam_limits.so' >> $dir_install/etc/pam.d/login"
 
-  sh_cmd_job "Criando arquivo /etc/pam.d/polkit-1 =>" \
-    "echo '
+	sh_cmd_job "Criando arquivo /etc/pam.d/polkit-1 =>" \
+		"echo '
 #%PAM-1.0
 
 auth       include      system-auth
@@ -2283,22 +2354,22 @@ sh_choosewm() {
 	fi
 
 	aWm[tty]="${cmsg_tty[LC_DEFAULT]}"
-  aWm[enlightenment]="Enlightenment desktop shell"
+	aWm[enlightenment]="Enlightenment desktop shell"
 	aWm[hyprland]="A highly customizable dynamic tiling Wayland compositor"
 	aWm[i3wm]="i3 is a tiling window manager inspired by wmii"
 	aWm[wmaker]="An X11 window manager with a NEXTSTEP look and feel"
-#	aWm[awesome]="Awesome"
-#	aWm[blackbox]="Blackbox"
-#	aWm[bspwm]="Tiling window manager based on binary space partitioning"
-#	aWm[dwm]="Dwm"
-#	aWm[fluxbox]="Fluxbox"
-#	aWm[lxde]="The 'Lightweight X11 Desktop Environment'"
-#	aWm[lxqt]="The 'Lightweight Qt Desktop Environment'"
-#	aWm[mate]="Mate"
-#	aWm[openbox]="Openbox"
-#	aWm[plasma]="Kde Plasma-Desktop"
-#	aWm[sway]="Sway"
-#	aWm[twm]="Twm"
+	#	aWm[awesome]="Awesome"
+	#	aWm[blackbox]="Blackbox"
+	#	aWm[bspwm]="Tiling window manager based on binary space partitioning"
+	#	aWm[dwm]="Dwm"
+	#	aWm[fluxbox]="Fluxbox"
+	#	aWm[lxde]="The 'Lightweight X11 Desktop Environment'"
+	#	aWm[lxqt]="The 'Lightweight Qt Desktop Environment'"
+	#	aWm[mate]="Mate"
+	#	aWm[openbox]="Openbox"
+	#	aWm[plasma]="Kde Plasma-Desktop"
+	#	aWm[sway]="Sway"
+	#	aWm[twm]="Twm"
 
 	for x in "${!aWm[@]}"; do
 		aFlag[$x]='off'
@@ -2308,17 +2379,17 @@ sh_choosewm() {
 		aFlag[$x]='on'
 	done
 
-#		awesome "${aWm[awesome]}" "${aFlag[awesome]}" \
-#		bspwm "${aWm[bspwm]}" "${aFlag[bspwm]}" \
-#		dwm "${aWm[dwm]}" "${aFlag[dwm]}" \
-#		blackbox "${aWm[blackbox]}" "${aFlag[blackbox]}" \
-#		fluxbox "${aWm[fluxbox]}" "${aFlag[fluxbox]}" \
-#		lxde "${aWm[lxde]}" "${aFlag[lxde]}" \
-#		lxqt "${aWm[lxqt]}" "${aFlag[lxqt]}" \
-#		mate "${aWm[mate]}" "${aFlag[mate]}" \
-#		openbox "${aWm[openbox]}" "${aFlag[openbox]}" \
-#		sway "${aWm[sway]}" "${aFlag[sway]}" \
-#		twm "${aWm[twm]}" "${aFlag[twm]}" \
+	#		awesome "${aWm[awesome]}" "${aFlag[awesome]}" \
+	#		bspwm "${aWm[bspwm]}" "${aFlag[bspwm]}" \
+	#		dwm "${aWm[dwm]}" "${aFlag[dwm]}" \
+	#		blackbox "${aWm[blackbox]}" "${aFlag[blackbox]}" \
+	#		fluxbox "${aWm[fluxbox]}" "${aFlag[fluxbox]}" \
+	#		lxde "${aWm[lxde]}" "${aFlag[lxde]}" \
+	#		lxqt "${aWm[lxqt]}" "${aFlag[lxqt]}" \
+	#		mate "${aWm[mate]}" "${aFlag[mate]}" \
+	#		openbox "${aWm[openbox]}" "${aFlag[openbox]}" \
+	#		sway "${aWm[sway]}" "${aFlag[sway]}" \
+	#		twm "${aWm[twm]}" "${aFlag[twm]}" \
 	wm=$(${DIALOG} \
 		--title "=== ${cmsg_Wm[$LC_DEFAULT]^^} ===" \
 		--default-item "$_WINDOWMANAGER" \
@@ -2326,7 +2397,7 @@ sh_choosewm() {
 		--backtitle "$ccabec" \
 		--cancel-label "${cmsg_ButtonBack[$LC_DEFAULT]}" \
 		--ok-label "${cmsg_Aceitar[$LC_DEFAULT]}" \
-		--checklist "${cmsg_MENU[$LC_DEFAULT]}" \
+		--checklist "${cmsg_LBL_check[$LC_DEFAULT]}" \
 		0 0 0 \
 		tty "${aWm[tty]}" "${aFlag[tty]}" \
 		enlightenment "${aWm[enlightenment]}" "${aFlag[enlightenment]}" \
@@ -2342,14 +2413,14 @@ sh_choosewm() {
 		;;
 	esac
 	HYPRLAND=$false
-#	if conf "=== ${cmsg_Wm[LC_DEFAULT]^^} ===" \
-#		"\n${BOLD}${WHITE}$(gettext "Uma instalação customizada irá instalar pacotes extras e também")" \
-#		"\n$(gettext "fazer diversas configurações, evitando faze-las manualmente posteriormente.")\n" \
-#		"\n${BOLD}${RED}$(gettext "Customizar a instalação?")\n\n"; then
-#		LCUSTOM=true
-#	else
-#		LCUSTOM=false
-#	fi
+	#	if conf "=== ${cmsg_Wm[LC_DEFAULT]^^} ===" \
+	#		"\n${BOLD}${WHITE}$(gettext "Uma instalação customizada irá instalar pacotes extras e também")" \
+	#		"\n$(gettext "fazer diversas configurações, evitando faze-las manualmente posteriormente.")\n" \
+	#		"\n${BOLD}${RED}$(gettext "Customizar a instalação?")\n\n"; then
+	#		LCUSTOM=true
+	#	else
+	#		LCUSTOM=false
+	#	fi
 	_WINDOWMANAGER=($(strtoarray "$wm"))
 	if grep -qi hyprland <<<"${_WINDOWMANAGER[@]}"; then
 		HYPRLAND=$true
@@ -2898,12 +2969,28 @@ sh_checkroot() {
 	if [[ "$(id -u)" != "0" ]]; then
 		#alerta "$cdistro Linux installer" "${RED}${REVERSE}You should run this script as root!"
 		#scrend 0
-		elevate_to_root
+		elevate_to_root "$@"
 	fi
 	ccabec+='root'
 }
 
 elevate_to_root() {
+	log_err "This script must be run as root. Elevating privileges..."
+
+	# Tenta usar sudo primeiro (caso esteja configurado)
+	if command -v sudo >/dev/null 2>&1; then
+		exec sudo bash "$0" "$@"
+	fi
+
+	# Se sudo falhar, tenta su
+	if command -v su >/dev/null 2>&1; then
+		exec su -c "$0 $*"
+	fi
+
+	die "Error: Unable to elevate privileges. Run manually as root."
+}
+
+elevate_to_rootOLD() {
 	# Verifica se o usuário atual é root
 	if [[ $EUID -ne 0 ]]; then
 		log_err "Este script precisa ser executado como root. Elevando privilégios..."
@@ -5325,26 +5412,78 @@ sh_checklive() {
 	LIVECD=$(sh_testlive)
 }
 
-sh_checkDependencies() {
-	local d
-	local errorFound=false
-	declare -a missing
-
-	for d in "${DEPENDENCIES[@]}"; do
-		if [[ -z $(command -v "$d") ]]; then
-			missing+=("$d")
-			errorFound=true
-			printf '%s\n' "${red}${cmsg_ERRO[$LC_DEFAULT]}${reset}: ${cmsg_CommandNotFound[$LC_DEFAULT]} ${cyan}'$d'${reset}"
-		fi
-	done
-	if $errorFound; then
-		echo "${yellow}--------------${cmsg_ImpossivelContinuar[$LC_DEFAULT]}-------------${reset}"
-		echo "${cmsg_ImpossivelContinuar1[$LC_DEFAULT]}" >&2
-		echo "${cmsg_ImpossivelContinuar2[$LC_DEFAULT]} \$PATH" >&2
-		echo "${yellow}-----------------------------------------------${reset}"
-		die "${cmsg_ERRO[$LC_DEFAULT]}: ${cmsg_InstalacaoAbortada[$LC_DEFAULT]}..."
-	fi
+sh_setup_Packages() {
+  local packagesToInstall="${PACKAGEDEP[@]}"
+  msg_info "Tentando instalar necessários pacotes"
+  sudo pacman -Sy --needed --quiet --noconfirm "${PACKAGEDEP[@]}" 1>/dev/null
 }
+
+sh_checkUpdatePackages() {
+  local TMP_FILE="/tmp/$(basename "$0").restarted"
+
+  if [[ ! -f "$TMP_FILE" ]]; then
+    if conf "** UPDATE **" "É recomendado atualizar antes da instalação. \n\n${AMARELO}Deseja proceder ?"; then
+      sh_cmd_job "Aguarde alguns instantes, atualizando..." \
+        "pacman -Syu --needed --quiet --noconfirm" \
+        "$err_not_fatal"
+		  sh_msg_job "Reiniciando o script pela primeira vez..."
+      touch "$TMP_FILE"
+      exec "$0" "$@"
+    fi
+  fi
+}
+
+sh_check_internet() {
+  local url="https://chililinux.com"
+  local timeout=5  # Tempo limite em segundos
+  local pipe_test="1"
+
+  if sh_cmd_job "Aguarde 5s, testando internet..." \
+    "curl -s --head --request GET --max-time "$timeout" "$url" | grep -q '200 OK'" \
+    "$err_not_fatal" "$pipe_test"; then
+    return 0
+  else
+    if conf "** INTERNET **" \
+      "Parece que não há uma rota disponível para a internet. \n\n${AMARELO}Deseja configurar um wifi ?"; then
+      bash chili-wifi-config
+      return 0
+    fi
+    return 1
+  fi
+}
+
+sh_checkDependencies() {
+  local aBlock_files=()
+  local d
+  local errorFound=false
+  declare -a missing
+
+  for d in "${DEPENDENCIES[@]}"; do
+    if ! command -v "$d" &>/dev/null; then
+      log_err "${red}Error${reset}: $(gettext "Não foi possível encontrar o comando") ${cyan}'$d'${reset} -> $(gettext "instalar pacote") ${cyan}"${PACKAGEDEP[$d]}"${reset}"
+      missing+=("$d")
+      errorFound=true
+    else
+      log_msg "Check: ${cyan}$d"
+    fi
+  done
+  sleep 0.3
+
+  if $errorFound; then
+    replicate '='
+    echo "${yellow}             $(gettext "IMPOSSÍVEL CONTINUAR")"
+    echo "${black}$(gettext "Este script precisa dos comandos listados acima")"
+    echo "${black}$(gettext "Instale-os e/ou verifique se eles estão em seu") ${red}\$PATH${reset}"
+    replicate '='
+    if readconf "Deseja instalar os pacotes necessários ?"; then
+      sh_setup_Packages
+      sh_checkDependencies #overload
+    else
+      die "Encerrando..."
+    fi
+  fi
+}
+export -f sh_checkDependencies
 
 sh_testlive() {
 	[[ -e "$LIVE_DIR" ]] && echo $true || echo $false
@@ -5393,20 +5532,20 @@ sh_install_wm() {
 		case "$x" in
 		"tty") : ;;
 		"enlightenment") _WM_TO_INSTALL+=(comm-enlightenment) ;;
-		"hyprland")  _WM_TO_INSTALL+=(comm-hyprland) ;;
-		"i3wm")  _WM_TO_INSTALL+=(comm-i3wm) ;;
+		"hyprland") _WM_TO_INSTALL+=(comm-hyprland) ;;
+		"i3wm") _WM_TO_INSTALL+=(comm-i3wm) ;;
 		"wmaker") _WM_TO_INSTALL+=(comm-wmaker) ;;
-		"awesome");;
-		"bspwm");;
-		"blackbox");;
-		"dwm");;
+		"awesome") ;;
+		"bspwm") ;;
+		"blackbox") ;;
+		"dwm") ;;
 		"fluxbox") ;;
-		"openbox");;
-		"sway");;
-		"twm");;
-		"mate");;
-		"lxde");;
-		"lxqt");;
+		"openbox") ;;
+		"sway") ;;
+		"twm") ;;
+		"mate") ;;
+		"lxde") ;;
+		"lxqt") ;;
 		esac
 	done
 	sh_install_all_wm
@@ -5473,10 +5612,10 @@ sh_install() {
 	sh_update_keymap
 	sh_update_Xkeymap
 	sh_update_timezone
-  sh_tuning_tcp
-  sh_change_pam_d
+	sh_tuning_tcp
+	sh_change_pam_d
 	sh_install_remove_packages
-  sh_install_wm
+	sh_install_wm
 	sh_grubinstall || sh_cancelLiveInstall "$@"
 	sh_enable_disable_services
 	#sh_pacman_key_init
@@ -5665,6 +5804,8 @@ sh_checkroot
 sh_confDistro
 trap sh_trapErro 2 15
 sh_checkDependencies
+sh_check_internet
+sh_checkUpdatePackages
 sh_loadSavedConfig
 #sh_loadconf
 parseinit "$@"
