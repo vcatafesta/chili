@@ -1,0 +1,3 @@
+#!/bin/bash
+
+exec python /home/vcatafesta/bin/chili-getntpdatetime.py

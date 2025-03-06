@@ -5,7 +5,7 @@
 #  chili-fr - Wrapper lite para o qemu
 #  Created: 2019/12/13 - 00:00
 #  Altered: 2024/10/03 - 00:00
-#  Updated: sáb 01 mar 2025 17:30:28 -04
+#  Updated: qua 05 mar 2025 23:43:28 -03
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -42,7 +42,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 
 #system
 readonly APP="${0##*/}"
-readonly VERSION='2.3.1-20250301'
+readonly VERSION='2.3.5-20250305'
 readonly APPDESC='Wrapper lite para o qemu'
 readonly -a DEPENDENCIES=(
 	'tput'
@@ -342,10 +342,10 @@ sh_checkVdiskFiles() {
 	aBlock_files+=($HOME_DIR/vdisk/vdb.img)
 	aBlock_files+=($HOME_DIR/vdisk/vdc.img)
 	aBlock_files+=($HOME_DIR/vdisk/vdd.img)
-	aBlock_files+=($HOME_DIR/vdisk/vm1.qcow2)
-	aBlock_files+=($HOME_DIR/vdisk/vm2.qcow2)
-	aBlock_files+=($HOME_DIR/vdisk/vm3.qcow2)
-	aBlock_files+=($HOME_DIR/vdisk/vm4.qcow2)
+	aBlock_files+=($HOME_DIR/vdisk/hda.qcow2)
+	aBlock_files+=($HOME_DIR/vdisk/hdb.qcow2)
+	aBlock_files+=($HOME_DIR/vdisk/hdc.qcow2)
+	aBlock_files+=($HOME_DIR/vdisk/hdd.qcow2)
 	for d in "${aBlock_files[@]}"; do
 		if [[ ! -e "$d" ]]; then
 			sh_createVdiskFiles
@@ -642,7 +642,7 @@ EOF
 
 sh_createVdiskFiles() {
 	local aBlockDisk=(vda.img vdb.img vdc.img vdd.img)
-	local aBlockDiskQcow2=(vm1.qcow2 vm2.qcow2 vm3.qcow2 vm4.qcow2)
+	local aBlockDiskQcow2=(hda.qcow2 hdb.qcow2 hdc.qcow2 hdd.qcow2)
 	local file
 
 	if [[ ! -d "$HOME_DIR/vdisk/" ]]; then

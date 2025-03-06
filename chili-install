@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: qua 05 mar 2025 23:36:24 -03
+#  Updated: qui 06 mar 2025 14:45:00 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -41,7 +41,7 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob # Habilita padrões estendidos
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="5.3.5.20250305"
+declare -r _VERSION_="5.3.6.20250306"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
@@ -1604,7 +1604,8 @@ EOF
 	if ((LOSPROBER)); then
 		echo "GRUB_DISABLE_OS_PROBER=false" >>"$dir_install/etc/default/grub"
 	else
-		echo "GRUB_DISABLE_OS_PROBER=true" >>"$dir_install/etc/default/grub"
+#		echo "GRUB_DISABLE_OS_PROBER=true" >>"$dir_install/etc/default/grub"
+		echo "GRUB_DISABLE_OS_PROBER=false" >>"$dir_install/etc/default/grub"
 	fi
 
 	{
@@ -5425,7 +5426,7 @@ sh_setup_Packages() {
 sh_add_repo_into_pacman_conf() {
   CONF_FILE="/etc/pacman.conf"
 
-  sh_msg_job "Adding repositories to /etc/pacman.conf ..." \
+  sh_msg_job "Adding repositories to /etc/pacman.conf ..."
   add_repo() {
     local repo_name="$1"
     shift
@@ -5456,23 +5457,22 @@ sh_add_repo_into_pacman_conf() {
   sh_msg_job "Repositories added (if they didn't already exist)."
 
   # Atualiza os repositórios
-  sh_cmd_job "Aguarde alguns instantes, atualizando..." \
-             "pacman -Sy &>/dev/null" \
-             "$err_not_fatal"
+  #sh_cmd_job "Aguarde alguns instantes, sincronizando repositorios..." \
+  #           "pacman -Sy &>/dev/null" \
+  #           "$err_not_fatal"
 }
 
 sh_checkUpdatePackages() {
   local TMP_FILE="/tmp/$(basename "$0").restarted"
-  local PackagesToUpdate=(chili-install chili-utils gitrepo comm-base-config)
+  local PackagesToUpdate=('chili-install' 'chili-utils' 'gitrepo' 'comm-base-config')
 
   # adiciona repositorios inexistentes no /etc/pacman.conf
   sh_add_repo_into_pacman_conf
 
   if [[ ! -f "$TMP_FILE" ]]; then
-    if conf "** UPDATE **" "É recomendado atualizar os utilitários antes da instalação. \n\n${AMARELO}Deseja proceder ?"; then
-      sh_cmd_job "Aguarde alguns instantes, atualizando..." \
-        "pacman -Syu --needed --quiet --noconfirm ${PackagesToUpdate[@]}" \
-        "$err_not_fatal"
+    if conf "** UPDATE **" "É recomendado sincronizar e atualizar os utilitários antes da instalação. \n\n${AMARELO}Deseja proceder ?"; then
+      sh_msg_job "Aguarde alguns instantes, sincronizando e atualizando..."
+      pacman -Sy --needed --noconfirm "${PackagesToUpdate[@]}" --overwrite \* &>/dev/null
 		  sh_msg_job "Reiniciando o script pela primeira vez..."
       touch "$TMP_FILE"
       exec "$0" "$@"

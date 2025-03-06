@@ -228,6 +228,7 @@ sh_chooseutil() {
 	aUtils+=(['chili-efivar']='Listar variáveis uefi')
 	aUtils+=(['chili-make-pacman-conf']='Utility to add repositories to pacman.conf and manage keys')
 	aUtils+=(['chili-init-keys']='Utility for managing keys using pacman-key')
+	aUtils+=(['chili-syncdatetime']='Utilitario para sincronizar data e hora com servidor NTP')
 
 	for key in "${!aUtils[@]}"; do
 		aUtil_list+=("$key" "${aUtils[$key]}")

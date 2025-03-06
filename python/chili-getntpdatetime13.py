@@ -1,50 +1,16 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-#
-#  chili-getntpdatetime.py - atualiza a data e hora do sistema utilizando um servidor NTP,
-#  Este script Python atualiza a data e hora do sistema utilizando um servidor NTP,
-#  ajusta o fuso horário conforme necessário e exibe as informações atualizadas em uma interface gráfica GTK.
-#
-#  Created: 2019/08/22 - 12:05
-#  Altered: 2024/11/15 - 03:05
-#
-#  Copyright (c) 2019-2024, Vilmar Catafesta <vcatafesta@gmail.com>
-#  All rights reserved.
-#
-#  Redistribution and use in source and binary forms, with or without
-#  modification, are permitted provided that the following conditions
-#  are met:
-#  1. Redistributions of source code must retain the above copyright
-#     notice, this list of conditions and the following disclaimer.
-#  2. Redistributions in binary form must reproduce the above copyright
-#     notice, this list of conditions and the following disclaimer in the
-#     documentation and/or other materials provided with the distribution.
-#
-#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AS IS'' AND ANY EXPRESS OR
-#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-##############################################################################
 import gi
 import subprocess
 from datetime import datetime
 import pytz  # Para trabalhar com fusos horários
 import tzlocal  # Para obter o fuso horário local
-
 import os
+
 print("DISPLAY:", os.environ.get("DISPLAY"))
 print("XAUTHORITY:", os.environ.get("XAUTHORITY"))
 print("DBUS_SESSION_BUS_ADDRESS:", os.environ.get("DBUS_SESSION_BUS_ADDRESS"))
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-
 
 class TimeUpdater(Gtk.Window):
     def __init__(self):
@@ -85,16 +51,12 @@ class TimeUpdater(Gtk.Window):
         hbox_search = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         self.search_entry = Gtk.Entry()
         self.search_entry.set_placeholder_text("Buscar cidade/timezone")
-        self.search_entry.connect(
-            "activate", self.on_search_activate
-        )  # Acionar a pesquisa ao pressionar Enter
+        self.search_entry.connect("activate", self.on_search_activate)  # Acionar a pesquisa ao pressionar Enter
         hbox_search.pack_start(self.search_entry, True, True, 0)
 
         # Botão de buscar
         self.search_button = Gtk.Button(label="Buscar")
-        self.search_button.connect(
-            "clicked", self.on_search_activate
-        )  # Acionar a pesquisa ao clicar
+        self.search_button.connect("clicked", self.on_search_activate)  # Acionar a pesquisa ao clicar
         hbox_search.pack_start(self.search_button, False, False, 0)
 
         vbox.pack_start(hbox_search, False, False, 0)
@@ -130,11 +92,7 @@ class TimeUpdater(Gtk.Window):
     def update_timezone(self):
         """Seleciona automaticamente o timezone atual no ComboBox."""
         local_timezone = tzlocal.get_localzone()
-        tz_name = (
-            local_timezone.key
-            if hasattr(local_timezone, "key")
-            else str(local_timezone)
-        )
+        tz_name = local_timezone.key if hasattr(local_timezone, "key") else str(local_timezone)
         try:
             index = self.timezone_list.index(tz_name)
         except ValueError:
@@ -147,11 +105,14 @@ class TimeUpdater(Gtk.Window):
         """
         Callback da caixa de busca.
         Transforma espaços em underscores e procura um timezone que contenha o texto buscado.
+        A busca é feita por aproximação e complementa as variações:
+        'Porto Velho', 'porto_velho', 'porto velho' resultarão em 'Porto_Velho'.
         """
         search_text = self.search_entry.get_text().strip().lower().replace(" ", "_")
         found = False
         for idx, tz in enumerate(self.timezone_list):
-            if search_text in tz.lower():
+            # Compara ignorando diferenças entre espaços e underscores
+            if search_text in tz.lower().replace(" ", "_"):
                 self.timezone_combobox.set_active(idx)
                 self.timezone_label.set_text(f"Timezone atual: {tz}")
                 found = True
@@ -192,7 +153,7 @@ class TimeUpdater(Gtk.Window):
                 # Atualiza o relógio hardware
                 subprocess.run(["pkexec", "hwclock", "--systohc"], check=True)
 
-                # Exibe o resultado do timedatectl
+                # Exibe o resultado do timedatectl em uma msgbox
                 result = subprocess.run(["timedatectl"], capture_output=True, text=True)
                 self.show_message(
                     f"Timezone e data/hora atualizados com sucesso!\n{result.stdout}"
@@ -214,27 +175,6 @@ class TimeUpdater(Gtk.Window):
         )
         dialog.run()
         dialog.destroy()
-
-        # Atualizar a hora e o minuto dos SpinButtons
-        self.hour_spinner.set_value(datetime.now().hour)
-        self.minute_spinner.set_value(datetime.now().minute)
-
-        # Atualizar o calendário para a data atual
-        today = datetime.now()
-        self.calendar.select_month(today.month - 1, today.year)  # Mês é 0-indexado
-        self.calendar.select_day(today.day)
-
-        # Recarregar a lista de timezones, se necessário
-        self.populate_timezones()
-
-        # Atualizar o timezone atual
-        self.update_timezone()
-
-        # Atualizar o timezone no label
-        self.timezone_label.set_text(
-            f"Timezone atual: {self.timezone_combobox.get_active_text()}"
-        )
-
 
 if __name__ == "__main__":
     win = TimeUpdater()

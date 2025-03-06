@@ -1,2 +1,5 @@
 sudo timedatectl set-ntp false
+sudo timedatectl set-timezone Europe/Madrid
 sudo date --set "2023-02-02 15:30:00"
+sudo hwclock --systohc
+timedatectl
