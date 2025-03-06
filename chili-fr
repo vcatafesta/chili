@@ -812,7 +812,7 @@ chili-fr() {
 
 	for img in "${devices[@]}"; do
 		media_type=$(file -b --mime-type "${img}")
-		qemu_options+=(-boot menu=on)
+#		qemu_options+=(-boot menu=on)
 		if [[ "${media_type}" == "application/x-iso9660-image" ]]; then
 			msg_info "Anexando   iso #${bootindex}: ${yellow}${img}"
 			qemu_options+=(-drive file="${img}",if=none,id=cdrom${bootindex},media=cdrom)
