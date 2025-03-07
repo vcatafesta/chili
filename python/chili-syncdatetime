@@ -53,7 +53,7 @@ Fluxo geral de execução:
 Exemplos de execução:
 - Para definir o timezone como São Paulo (Brasil):
   python script.py America/Sao_Paulo
-- Para definir o timezone como Lisboa (Portugal):
+- Para definir o timezone como Madrid (Espanha):
   python script.py Europe/Lisbon
 - Para definir o timezone como Tóquio (Japão):
   python script.py Asia/Tokyo
@@ -164,10 +164,10 @@ class TimezoneManager:
 
     def show_usage(self):
         script_name = os.path.basename(sys.argv[0])  # Obtém apenas o nome do script
-        print(self.colorize(f"Uso: python {script_name} <Cidade/Região>", "yellow"))
+        print(self.colorize(f"Uso: python {script_name} <Região/Cidade>", "yellow"))
         print("\nExemplos de uso:")
         print(self.colorize(f"    {script_name} America/Sao_Paulo", "blue"))
-        print(self.colorize(f"    {script_name} Europe/Lisbon", "blue"))
+        print(self.colorize(f"    {script_name} Europe/Madrid", "blue"))
         print(self.colorize(f"    {script_name} Asia/Tokyo", "blue"))
         print(self.colorize(f"    {script_name} America/Porto_Velho", "blue"))
         print(self.colorize(f"    {script_name} Porto Velho", "blue"))
