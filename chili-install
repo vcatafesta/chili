@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: seg 10 mar 2025 00:43:39 -04
+#  Updated: seg 10 mar 2025 08:19:26 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -79,6 +79,8 @@ declare _SOURCE="network"
 declare _WINDOWMANAGER=('tty')
 declare _WM_TO_INSTALL=()
 declare TARGET_EFI=x86_64-efi
+declare isArchLike=false
+declare isReinstalledMkinitcpio=false
 declare -a DEPENDENCIES=(
 	awk
 	dialog
@@ -1884,6 +1886,27 @@ sh_install_all_wm() {
 	sh_remove_in_chroot_installer
 }
 
+# Função para instalação do pacote sem executar hook do mesmo
+sh_install_package_no_exec_hook() {
+	local PACKAGE_NAME="$1"
+	local PACKAGE_NAME
+	local TMP_DIR
+
+	[[ -z "$PACKAGE_NAME" ]] && return 1
+	if pacman -Sw "$PACKAGE_NAME" --noconfirm; then
+		# Seleciona o pacote mais recente no cache
+		PACKAGE=$(ls -1t /var/cache/pacman/pkg/"$PACKAGE_NAME"-*.pkg.tar.* | head -n 1)
+		[[ -z "$PACKAGE" ]] && return 1
+		# Cria um diretório temporário para extrair o pacote
+		TMP_DIR=$(mktemp -d /tmp/"$PACKAGE_NAME"-extract-XXXXXX)
+		if bsdtar -xf "$PACKAGE" -C "$TMP_DIR"; then
+			# Copia os arquivos extraídos para o sistema, excluindo metadados desnecessários
+			rsync -av --exclude='.BUILDINFO' --exclude='.INSTALL' --exclude='.MTREE' --exclude='.PKGINFO' "$TMP_DIR"/ /
+		fi
+	fi
+}
+export -f sh_install_package_no_exec_hook
+
 sh_install_remove_packages() {
 	#  local aPackagesToRemove=('manjaro-live-systemd' 'community-livecd-key')
 	#  local aPackagesToInstall=('biglinux-systemd-swap')
@@ -1905,7 +1928,19 @@ sh_install_remove_packages() {
 		mapfile -t aPackagesRoot_install <"$dir_install/etc/Root-install"
 		if [[ ${#aPackagesRoot_install[@]} -gt 0 ]]; then
 			for pkg in "${aPackagesRoot_install[@]}"; do
-				sh_chroot_job "Installing package from Root-install: $pkg" "pacman -S $pkg --noconfirm" "$err_not_fatal"
+				if [[ "$pkg" == 'mkinitcpio' ]]; then
+					isReinstalledMkinitcpio=true
+					#          sh_chroot_job_infobox "Installing package from Root-install without exec hooks: $pkg" \
+					#            "$(declare -f sh_install_package_no_exec_hook); sh_install_package_no_exec_hook "$pkg";" \
+					#            "$err_not_fatal"
+					sh_chroot_job_infobox "Installing package from Root-install: $pkg" \
+						"pacman -S $pkg --noconfirm" \
+						"$err_not_fatal"
+				else
+					sh_chroot_job_infobox "Installing package from Root-install: $pkg" \
+						"pacman -S $pkg --noconfirm" \
+						"$err_not_fatal"
+				fi
 			done
 		fi
 	fi
@@ -5417,7 +5452,7 @@ sh_copyfilesboot() {
 	local krn_file
 	local krn_version
 	local init_file
-	local isArchLike
+	#	local isArchLike
 	declare -g bootmnt
 	declare -g airootfs
 
@@ -5426,8 +5461,8 @@ sh_copyfilesboot() {
 		bootmnt="/boot"
 		#airootfs="/run/miso/bootmnt/boot"
 		sh_cmd_job "Aguarde, copiando kernel e initrd" "cp -Rpva $bootmnt/* $dir_install/boot/" "$err_not_fatal"
-		sh_chroot_job "Aguarde, gerando initramfs" "mkinitcpio -P" "$err_not_fatal"
-		sh_chroot_job "Aguarde, atualizando grub" "update-grub" "$err_not_fatal"
+		#		sh_chroot_job "Aguarde, gerando initramfs" "mkinitcpio -P" "$err_not_fatal"
+		#		sh_chroot_job "Aguarde, atualizando grub" "update-grub" "$err_not_fatal"
 		return 0
 	fi
 
@@ -5846,7 +5881,7 @@ sh_install() {
 		"${cmsg_OuPeloTerminal[LC_DEFAULT]}                : ${BLUE}(ctrl+alt+f8)${RESET}" \
 		"\n\n${BOLD}${WHITE}${cmsg_descInstalar[$LC_DEFAULT]}?" || sh_cancelLiveInstall "$@"
 
-	start_time=$(date +%s) # Obtém o tempo de início em segundos desde a época Unix
+	start_time=$(date +%s)
 	start_datetime=$(date)
 	sh_make_fs || sh_cancelLiveInstall "$@"
 	sh_disk_part_info
@@ -5865,6 +5900,12 @@ sh_install() {
 	sh_tuning_tcp
 	sh_change_pam_d
 	sh_install_remove_packages
+	if $isArchLike && $liveOS; then
+		if ! $isReinstalledMkinitcpio; then
+			sh_chroot_job "Aguarde, gerando initramfs" "mkinitcpio -P" "$err_not_fatal" || sh_cancelLiveInstall "$@"
+		fi
+		sh_chroot_job "Aguarde, atualizando grub" "update-grub" "$err_not_fatal" || sh_cancelLiveInstall "$@"
+	fi
 	sh_install_wm
 	sh_grubinstall || sh_cancelLiveInstall "$@"
 	sh_enable_disable_services
