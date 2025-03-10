@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  chili-create-iso-md5
-#  Created: 2025/02/10 - 11:46
-#  Altered: 2025/02/10 - 11:46
+#  chili-install_package_without_exec_hook
+#  Created: 2025/03/10 - 07:53
+#  Altered: 2025/03/10 - 07:53
 #
 #  Copyright (c) 2025-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -31,7 +31,7 @@
 ##############################################################################
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
-export TEXTDOMAIN=chili-create-iso-md5
+export TEXTDOMAIN=chili-install_package_without_exec_hook
 
 # Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
@@ -72,7 +72,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="1.0.0-20250210"
+declare _VERSION_="1.0.0-20250310"
 declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput)
 source /usr/share/fetch/core.sh
@@ -81,15 +81,41 @@ MostraErro() {
   echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
 }
 trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
+set -e
 
+# Mensagem inicial em azul e em negrito
+echo -e "${blue}${bold}Iniciando o script de instalação...${reset}"
 
-for iso in *.iso; do
-#  if [[ -e ${iso}.md5 ]]; then
-    if ! md5sum -c ${iso}.md5 2>/dev/null; then
-      echo "[$((count++))]=>$green Iso file: $iso"
-      md5sum $iso > $iso.md5
-      echo "     $green md5 file: $iso.md5"
-      continue
-    fi
-#  fi
-done
+# Baixar o pacote sem instalá-lo
+PACKAGE_NAME="$1"
+if [ -z "$PACKAGE_NAME" ]; then
+    echo -e "${red}Erro: O nome do pacote deve ser passado como parâmetro.${reset}"
+    echo -e "${yellow}Uso: $0 <nome_do_pacote>${reset}"
+    exit 1
+fi
+
+echo -e "${cyan}Baixando o pacote ${green}$PACKAGE_NAME${cyan}...${reset}"
+sudo pacman -Sw --noconfirm "$PACKAGE_NAME" 1>/dev/null
+
+# Seleciona o pacote mais recente no cache
+PACKAGE=$(ls -1t /var/cache/pacman/pkg/"$PACKAGE_NAME"-*.pkg.tar.* | head -n 1)
+if [ -z "$PACKAGE" ]; then
+    echo -e "${red}Erro: pacote $PACKAGE_NAME não encontrado no cache.${reset}"
+    exit 1
+fi
+echo -e "${green}Pacote encontrado: $PACKAGE${reset}"
+
+# Cria um diretório temporário para extrair o pacote
+TMP_DIR=$(mktemp -d /tmp/"$PACKAGE_NAME"-extract-XXXXXX)
+echo -e "${cyan}Extraindo o pacote para ${yellow}$TMP_DIR${reset}..."
+bsdtar -xf "$PACKAGE" -C "$TMP_DIR"
+
+# Copia os arquivos extraídos para o sistema, excluindo metadados desnecessários
+echo -e "${magenta}Copiando os arquivos para o sistema, ignorando arquivos desnecessários...${reset}"
+sudo rsync -av --exclude='.BUILDINFO' --exclude='.INSTALL' --exclude='.MTREE' --exclude='.PKGINFO' "$TMP_DIR"/ / 1>/dev/null
+
+# Remove o diretório temporário
+echo -e "${violet}Limpando diretório temporário...${reset}"
+rm -rf "$TMP_DIR"
+
+echo -e "${green}${bold}Instalação manual do pacote $PACKAGE_NAME concluída!${reset}"

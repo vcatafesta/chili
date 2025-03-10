@@ -9,7 +9,9 @@
 #HISTIGNORE=$'*([\t ])+([-%+,./0-9\:@A-Z_a-z])*([\t ])'
 #export TMPDIR=/tmp
 export TMPDIR=/dev/shm
-#trancastderr 2>&-
+#trancastdout 1>&-;
+#trancastderr 2>&-;
+#trancatudo   &>-;
 PROMPT_DIRTRIM=0
 export LC_ALL="pt_BR.UTF-8"
 export SBCL_HOME=/usr/lib/sbcl
@@ -324,6 +326,8 @@ sh_bashrc_configure() {
 	fi
 	alias l=dir
 	alias dirt="la -h -ls -Sr -rt --color=auto"
+	alias lla="la -la --color=auto"
+	alias lls="la -ls --color=auto"
 	#	alias dir="ls -h -ls -X --color=auto"
 	alias ed=nano
 	alias ED=nano
@@ -1243,6 +1247,7 @@ usage:
 EOF
 	fi
 }
+export -f chili-qemurunfile
 
 chili-qemufilerun() { chili-qemurunfile $@; }
 filerun() { chili-qemurunfile $@; }
@@ -1254,7 +1259,6 @@ fileinfo() { for i in "${@}"; do
 	qemu-img info $i
 	echo
 done; }
-export -f chili-qemurunfile
 
 #qemu-system-x86_64 -net nic,model=virtio -net bridge,br=br0 -hda void.img
 

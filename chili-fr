@@ -5,7 +5,7 @@
 #  chili-fr - Wrapper lite para o qemu
 #  Created: 2019/12/13 - 00:00
 #  Altered: 2024/10/03 - 00:00
-#  Updated: sáb 22 fev 2025 01:24:52 -04
+#  Updated: dom 09 mar 2025 18:10:08 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -42,7 +42,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 
 #system
 readonly APP="${0##*/}"
-readonly VERSION='1.2.22-20250222'
+readonly VERSION='2.3.9-20250309'
 readonly APPDESC='Wrapper lite para o qemu'
 readonly -a DEPENDENCIES=(
 	'tput'
@@ -173,7 +173,7 @@ sh_unsetvarcolors() {
 die() {
 	local msg=$1
 	shift
-	printf "  %b %s\\n" "${CROSS}" "${bold}${red}${msg}"
+	printf "  %b %s\\n" "${CROSS}" "${red}${msg}${reset}"
 	exit 1
 }
 
@@ -183,11 +183,16 @@ log_err() {
 
 log_msg() {
 	local retval="${PIPESTATUS[0]}"
+	local pcount=$#
 
+	((pcount >= 2)) && {
+		retval=$1
+		shift
+	}
 	if [[ $retval -eq 0 ]]; then
-		printf "  %b %s\\n" "${TICK}" "${*}"
+		printf " %b %s\\n" "${TICK}" "${*}"
 	else
-		printf "  %b %s\\n" "${CROSS}" "${*}"
+		printf " %b %s\\n" "${CROSS}" "${*}"
 	fi
 }
 
@@ -237,7 +242,7 @@ msg_info() {
 	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
 	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
 	#echo -e "${caller_function}=>${yellow}info   : ${cyan}${msg}${reset}"
-	echo -e "  =>${yellow}info   : ${cyan}${msg}${reset}"
+	echo -e "${reset}  =>${yellow}info   : ${cyan}${msg}${reset}"
 }
 export -f msg_info
 
@@ -268,7 +273,7 @@ msg_info() {
 
 # Função para exibir mensagens informativas
 msg_err() {
-  printf "%s\n" "${red}[ERRO] ${cyan}$1${rst}"
+	printf "%s\n" "${red}[ERRO] ${cyan}$1${rst}"
 }
 
 replicate() {
@@ -278,23 +283,6 @@ replicate() {
 	printf -v line "%*s" "$nsize" && echo -e "${blue}${line// /$char}${reset}"
 }
 export -f replicate
-
-send_telegram_message() {
-	local message="$1"
-	local parse_mode="$2"
-
-	# Define parse_mode como "MarkdownV2" se não for especificado
-	[[ -z $parse_mode ]] && parse_mode="HTML"
-
-	# Remove as tags HTML e exibe o resultado no terminal
-	echo -e "${red}$(sed 's/<[^>]*>//g' <<<"$message")${reset}"
-	# Envia a mensagem original com HTML para o Telegram
-	curl -s -X POST "https://api.telegram.org/bot${inputs_telegram_token}/sendMessage" \
-		-d chat_id="${inputs_telegram_chat_id}" \
-		-d text="$message" \
-		-d parse_mode="$parse_mode"
-}
-export -f send_telegram_message
 
 readconf() {
 	local msg="$1"
@@ -330,15 +318,6 @@ sh_checkDependencies() {
 		fi
 	done
 
-	aBlock_files+=('/usr/share/edk2/x64/OVMF_VARS.4m.fd')
-	for d in "${aBlock_files[@]}"; do
-		if [[ ! -e "$d" ]]; then
-			log_err "Check: ${red}ERROR${reset}: $(gettext "Não foi possível encontrar o arquivo") ${cyan}'$d'${reset}"
-			missing+=("$d")
-			errorFound=true
-		fi
-	done
-
 	if $errorFound; then
 		replicate '='
 		echo "${yellow}             $(gettext "IMPOSSÍVEL CONTINUAR")"
@@ -351,6 +330,7 @@ sh_checkDependencies() {
 		fi
 	fi
 }
+export -f sh_checkDependencies
 
 sh_checkVdiskFiles() {
 	local aBlock_files=()
@@ -362,12 +342,48 @@ sh_checkVdiskFiles() {
 	aBlock_files+=($HOME_DIR/vdisk/vdb.img)
 	aBlock_files+=($HOME_DIR/vdisk/vdc.img)
 	aBlock_files+=($HOME_DIR/vdisk/vdd.img)
+	aBlock_files+=($HOME_DIR/vdisk/hda.qcow2)
+	aBlock_files+=($HOME_DIR/vdisk/hdb.qcow2)
+	aBlock_files+=($HOME_DIR/vdisk/hdc.qcow2)
+	aBlock_files+=($HOME_DIR/vdisk/hdd.qcow2)
 	for d in "${aBlock_files[@]}"; do
 		if [[ ! -e "$d" ]]; then
 			sh_createVdiskFiles
 			break
 		fi
 	done
+}
+
+sh_checkOVMFFiles() {
+	local aBlock_files=()
+	local d
+	local errorFound=false
+	declare -a missing
+
+	aBlock_files+=('/usr/share/edk2/x64/OVMF_CODE.4m.fd')
+	aBlock_files+=('/usr/share/edk2/x64/OVMF_VARS.4m.fd')
+	for d in "${aBlock_files[@]}"; do
+		if [[ ! -e "$d" ]]; then
+			log_err "Check: ${red}ERROR${reset}: Não foi possível encontrar o arquivo ${cyan}'$d'${yellow} -> instalar pacote ${cyan}edk2-ovmf${reset}"
+			errorFound=true
+			break
+		else
+			true
+			log_msg "Check: ${cyan}$d"
+		fi
+	done
+
+	if $errorFound; then
+		replicate '='
+		echo "${yellow}             $(gettext "FALHA DO CHECK LIST FILE")"
+		echo "${black}$(gettext "Este script precisa dos arquivos para UEFI listados acima")"
+		echo "${black}$(gettext "Instale-os e/ou verifique se eles estão em ${yellow}/usr/share/edk2/x64/${reset}")"
+		echo "${black}$(gettext "Ao decidir não instalar, o UEFI poderá não funcionar corretamente.")${reset}"
+		replicate '='
+		if readconf "Deseja instalar o pacote e suprir arquivos necessários ?"; then
+			sudo pacman -S --quiet --noconfirm edk2-ovmf 1>/dev/null
+		fi
+	fi
 }
 
 ######################################################################################################
@@ -536,9 +552,10 @@ get_bridge_interfaces() {
 
 # Função para obter os arquivos RAW no diretório $HOME_DIR/vdisk/
 get_raw_images() {
-  local dir="${HOME_DIR:-$HOME}/vdisk"
-  # Lista os arquivos com extensão .img, removendo o caminho e separando por espaço
-  find "$dir" -maxdepth 1 -type f -name "*.img" -exec basename {} \; | tr '\n' ' ' | sed 's/ $//'
+	local dir="${HOME_DIR:-$HOME}/vdisk"
+	# Lista os arquivos com extensão .img, removendo o caminho e separando por espaço
+	#  find "$dir" -maxdepth 1 -type f -name "*.img" -exec basename {} \; | tr '\n' ' ' | sed 's/ $//'
+	find "$dir" -maxdepth 1 -type f \( -name "*.img" -o -name "*.qcow2" \) -exec basename {} \; | tr '\n' ' ' | sed 's/ $//'
 }
 
 supports_uefi() {
@@ -561,6 +578,7 @@ sh_version() {
 	cat <<-EOF
 		${bold}${cyan}${0##*/} v${VERSION}${rst}
 		${APPDESC}
+		${VERSION}
 		${bold}${black}Copyright (C) 2019-2025 ChiliLinux Team${black}
 
 		  Este é um software livre: você é livre para alterá-lo e redistribuí-lo.
@@ -613,29 +631,40 @@ ${cyan}Forma de uso mais comum:${rst}
   $ ${orange}$APP${reset} -v vdisk_name.img filename.iso ${rst}
   $ ${orange}$APP${reset} -u -v vdisk_name.img filename.iso ${rst}
   $ ${orange}$APP${reset} $HOME_DIR/vdisk/vdisk_name.img ${rst}
+${cyan}acesso a vm/convidado via ssh:${rst}
+  $ ${reset} ssh live@vsock/555             ${cyan}# via vsock ${rst}
+  $ ${reset} ssh live@127.0.0.1 -p 60022    ${cyan}# via redicionamento ${rst}
+  $ ${reset} ssh <ip_vm>                    ${cyan}# via bridge (caso vm iniciada com -b) ${rst}
   ${reset}
 EOF
 	exit 0
 }
 
 sh_createVdiskFiles() {
-  local aBlockDisk=(vda.img vdb.img vdc.img vdd.img)
-  local file
+	local aBlockDisk=(vda.img vdb.img vdc.img vdd.img)
+	local aBlockDiskQcow2=(hda.qcow2 hdb.qcow2 hdc.qcow2 hdd.qcow2)
+	local file
 
-  if [[ ! -d "$HOME_DIR/vdisk/" ]]; then
-    msg_info "Criando diretórios de trabalho"
-    mkdir -p "$HOME_DIR/vdisk/" &>/dev/null
-  fi
+	if [[ ! -d "$HOME_DIR/vdisk/" ]]; then
+		msg_info "Criando diretórios de trabalho"
+		mkdir -p "$HOME_DIR/vdisk/" &>/dev/null
+	fi
 
-  msg_info "Setando permissões no diretórios de trabalho"
-  sudo chmod 1777 "$HOME_DIR/" &>/dev/null
+	msg_info "Setando permissões no diretórios de trabalho"
+	sudo chmod 1777 "$HOME_DIR/" &>/dev/null
 
-  for file in "${aBlockDisk[@]}"; do
-    if [[ ! -e $HOME_DIR/vdisk/$file ]]; then
-      msg_info "Criando disco virtual '$file' no diretórios de trabalho"
-      qemu-img create $HOME_DIR/vdisk/$file -f raw 32G &>/dev/null
-    fi
-  done
+	for file in "${aBlockDisk[@]}"; do
+		if [[ ! -e $HOME_DIR/vdisk/$file ]]; then
+			msg_info "Criando disco virtual '$file' no diretórios de trabalho"
+			qemu-img create $HOME_DIR/vdisk/$file -f raw 32G &>/dev/null
+		fi
+	done
+	for file in "${aBlockDiskQcow2[@]}"; do
+		if [[ ! -e $HOME_DIR/vdisk/$file ]]; then
+			msg_info "Criando disco virtual '$file' no diretórios de trabalho"
+			qemu-img create -f qcow2 $HOME_DIR/vdisk/$file 32G &>/dev/null
+		fi
+	done
 }
 
 sh_setup() {
@@ -647,9 +676,10 @@ sh_setup() {
 		gettext \
 		spice-vdagent \
 		virt-viewer \
-		libvirt
+		libvirt \
+		seabios 1>/dev/null
 
-  sh_createVdiskFiles
+	sh_createVdiskFiles
 	sh_start_vdagentd
 }
 
@@ -661,11 +691,7 @@ sh_create_vdisk_file() {
 	sudo chown $USER:$USER "$HOME_DIR/" -R &>/dev/null
 
 	while true; do
-		replicate "================== DISCOS VIRTUAIS DISPONÍVEIS em $HOME_DIR/vdisk ===================" 1
-		echo -n $green
-		ls -lh $HOME_DIR/vdisk
-		echo -n $rst
-		replicate '='
+		sh_list_vdisks
 		get 10 10 "Entre com o nome do disco (sem extensão) - ex vda  : " cvdisk_name
 		get 11 10 "Entre com o tamanho do disco virtual em GB - ex 32 : " cvdisk_size
 
@@ -688,6 +714,14 @@ sh_create_vdisk_file() {
 	done
 }
 
+sh_list_vdisks() {
+	replicate "================== DISCOS VIRTUAIS DISPONÍVEIS em $HOME_DIR/vdisk ===================" 1
+	echo -n $green
+	ls -lh $HOME_DIR/vdisk
+	echo -n $rst
+	replicate '='
+}
+
 sh_remove_vdisk_file() {
 	msg_info "Criando diretórios de trabalho"
 	mkdir -p "$HOME_DIR/vdisk" &>/dev/null
@@ -695,11 +729,7 @@ sh_remove_vdisk_file() {
 	sudo chmod 1777 "$HOME_DIR/" &>/dev/null
 	sudo chown $USER:$USER "$HOME_DIR/" -R &>/dev/null
 
-	replicate "================== DISCOS VIRTUAIS DISPONÍVEIS em $HOME_DIR ===================" 1
-	echo -n $green
-	ls -lh $HOME_DIR/vdisk
-	echo -n $rst
-	replicate '='
+	sh_list_vdisks
 	get 10 10 "Entre com o nome do disco para remover - ex vda.img : " cvdisk_name
 
 	if test -e $HOME_DIR/vdisk/$cvdisk_name &>/dev/null; then
@@ -718,26 +748,49 @@ sh_remove_vdisk_file() {
 sh_start_vdagentd() {
 	if ! pgrep spice-vdagentd; then
 		msg_info "Ativando o serviço spice-vdaagentd"
-		sudo systemctl enable spice-vdagentd
-		sudo systemctl start spice-vdagentd
+		sudo systemctl enable -now spice-vdagentd &>/dev/null
 	fi
 }
 
 chili-fr() {
-	local img="$1"
+	#	local img="$1"
+	local params=("$@")
+	local img
 	local random_port="$(shuf -i 4444-45000 -n 1)"
 	local random_spice_port="$(shuf -i 5900-5910 -n 1)"
+	local cache_type
+	local bootindex
+	local media_type
+	local count=1
+	local devices=()
 
-	# Verificar se a imagem foi especificada
-	[[ -z "$img" ]] && { die "Erro: Imagem/Device não especificada!"; }
-	[[ ! -e "$img" ]] && { die "Erro: Imagem/Device ${cyan}${img} ${red}não encontrada!${reset}"; }
+	for img in "${params[@]}"; do
+		# Verificar se a imagem foi especificada
+		[[ -z "$img" ]] && {
+			sh_list_vdisks
+			die "Erro: vdisk/iso/device #${count} não especificada!"
+		}
+		if [[ ! -e "$img" ]]; then
+			[[ ! -e "$HOME_DIR/vdisk/$img" ]] && {
+				log_msg 1 "Check: ${yellow}device order #${count}: ${cyan}$img"
+				sh_list_vdisks
+				die "Erro: vdisk/iso/device #${count} ${cyan}${img} ${red}não localizada, tente os listados acima!${reset}"
+			}
+			img="$HOME_DIR/vdisk/$img"
+		fi
+		devices+=("$img")
+		log_msg true "Check: ${yellow}device order #${count}: ${cyan}$img"
+		((++count))
+	done
 
 	# Forçar UEFI, se solicitado
 	if $uefi; then
 		msg_info "Forçando inicialização UEFI..."
-		qemu_options+=(-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF.4m.fd)
+		[[ ! -e $HOME_DIR/OVMF_VARS.4m.fd ]] && cp -f /usr/share/edk2-ovmf/x64/OVMF_VARS.4m.fd $HOME_DIR/
+		qemu_options+=(-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.4m.fd)
+		qemu_options+=(-drive if=pflash,format=raw,file=$HOME_DIR/OVMF_VARS.4m.fd)
 	else
-		msg_warn "Parametro --uefi não informado, usando BIOS Legacy (padrão)..."
+		msg_warn "Parametro --uefi não informado, usando BIOS legacy (padrão)..."
 	fi
 
 	# Adicionar opções padrão do QEMU
@@ -748,27 +801,65 @@ chili-fr() {
 	qemu_options+=(-m ${xmem})
 	qemu_options+=(-k pt-br)
 
-	format=$(file -b --mime-type "${img}")
-	if [[ "${format}" == "application/x-iso9660-image" ]]; then
-		qemu_options+=(-boot d)
-		qemu_options+=(-cdrom "${img}")
-	elif [[ "${img}" == *.qcow2 ]]; then
-		qemu_options+=(-drive file="${img}",if=none,id=disk1,format=qcow2)
-		qemu_options+=(-device ide-hd,drive=disk1,bootindex=1)
+	#Modo	            Vantagens	                                              Desvantagens
+	#cache=none	      Seguro, evita inconsistências	                          Pode ser mais lento
+	#cache=writeback	Boa performance, mantém um nível aceitável de segurança	Risco de perda de dados em caso de falha
+	#cache=directsync	Segurança máxima (grava direto no disco)	              Muito mais lento
+	#cache=unsafe	    Máxima performance	                                    Pode corromper dados se houver falha
+
+	cache_type='writeback'
+	bootindex=1 # Índice de boot inicial
+
+	for img in "${devices[@]}"; do
+		media_type=$(file -b --mime-type "${img}")
+#		qemu_options+=(-boot menu=on)
+		if [[ "${media_type}" == "application/x-iso9660-image" ]]; then
+			msg_info "Anexando   iso #${bootindex}: ${yellow}${img}"
+			qemu_options+=(-drive file="${img}",if=none,id=cdrom${bootindex},media=cdrom)
+			qemu_options+=(-device ide-cd,drive=cdrom${bootindex},bootindex=${bootindex})
+			((bootindex++))
+		elif [[ "${img}" == *.qcow2 ]]; then
+			msg_info "Anexando vdisk #${bootindex}: ${yellow}${img}"
+			qemu_options+=(-drive file="${img}",if=none,id=disk${bootindex},format=qcow2,cache=${cache_type})
+			qemu_options+=(-device virtio-blk,drive=disk${bootindex},bootindex=${bootindex})
+			((bootindex++))
+		elif [[ "${img}" == /dev/* ]]; then
+			qemu_options+=(-drive file="${img}",if=none,id=disk${bootindex},format=raw,media=disk,cache=${cache_type})
+			qemu_options+=(-device virtio-blk,drive=disk${bootindex},bootindex=${bootindex})
+			msg_info "Anexando device #${bootindex}: ${yellow}${img}"
+			((bootindex++))
+		else
+			msg_info "Anexando vdisk #${bootindex}: ${yellow}${img}"
+#			qemu_options+=(-drive file="${img}",if=none,id=disk${bootindex},format=raw,cache=${cache_type})
+#			qemu_options+=(-device virtio-blk,drive=disk${bootindex},bootindex=${bootindex})
+      qemu_options+=(-drive file="${img}",if=none,id=disk${bootindex},format=raw)
+      qemu_options+=(-device ahci,id=sata${bootindex})
+      qemu_options+=(-device ide-hd,drive=disk${bootindex},bus=sata${bootindex}.0,bootindex=${bootindex})
+			((bootindex++))
+		fi
+	done
+
+	if $vdisk; then
+		for vdsk in "${avdisk_names[@]}"; do
+			[[ ! -e "$vdsk" ]] && vdsk="$HOME_DIR/vdisk/$vdsk"
+			[[ ! -e "$vdsk" ]] && continue
+
+			if [[ "${vdsk}" == *.img ]]; then
+				msg_info "Anexando vdisk #${bootindex}: ${yellow}${vdsk}"
+				qemu_options+=(-drive file="${vdsk}",if=none,id=disk${bootindex},format=raw,cache=${cache_type})
+				qemu_options+=(-device virtio-blk,drive=disk${bootindex},bootindex=${bootindex})
+				((bootindex++))
+			elif [[ "${vdsk}" == *.qcow2 ]]; then
+				msg_info "Anexando vdisk #${bootindex}: ${yellow}${vdsk}"
+				qemu_options+=(-drive file="${vdsk}",if=none,id=disk${bootindex},format=qcow2,cache=${cache_type})
+				qemu_options+=(-device virtio-blk,drive=disk${bootindex},bootindex=${bootindex})
+				((bootindex++))
+			fi
+		done
 	else
-		qemu_options+=(-drive file="${img}",if=none,id=disk1,format=raw)
-		qemu_options+=(-device ide-hd,drive=disk1,bootindex=1)
+#		msg_warn "Parametro --vdisk não informado, iniciando sem disco virtual..."
+		:
 	fi
-
-  if $vdisk; then
-
-    for vdsk in "${avdisk_names[@]}"; do
-    	msg_info "Anexando disco virtual: ${yellow}$HOME_DIR/vdisk/${vdsk}"
-	    qemu_options+=(-drive file=$HOME_DIR/vdisk/${vdsk},format=raw)
-    done
-  else
-		msg_warn "Parametro --vdisk não informado, iniciando sem disco virtual..."
-  fi
 
 	qemu_options+=(-name "chili-fr $*",process=archiso_0)
 	qemu_options+=(-device virtio-scsi-pci,id=scsi0)
@@ -778,11 +869,9 @@ chili-fr() {
 	qemu_options+=(-device hda-output,audiodev=snd0)
 	qemu_options+=(-global ICH9-LPC.disable_s3=1)
 	qemu_options+=(-machine type=q35,smm=on,accel=kvm,usb=on,pcspk-audiodev=snd0)
+	#	qemu_options+=(-device intel-iommu)
 	qemu_options+=(-device virtio-serial)
-
 	#video
-	#qemu_options+=(-vga vmware) # std cirrus qxl vmware virtio
-	#qemu_options+=(-display gtk) # sdl gtk curses none spice-app
 	qemu_options+=(-device "$videodevice")
 
 	if $spice; then
@@ -816,11 +905,11 @@ chili-fr() {
 export -f chili-fr
 
 sh_copyright() {
-  echo -n $orange
-  echo "$APP - $APPDESC"
-  echo 'Copyleft (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>'
-  echo 'Copyleft (c) 2019-2025, ChiliLinux Team <https://chililinux.com>'
-  echo $rst
+	echo -n $orange
+	echo "$APP - v${VERSION} - ${APPDESC}"
+	echo 'Copyleft (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>'
+	echo 'Copyleft (c) 2019-2025, ChiliLinux Team <https://chililinux.com>'
+	echo $rst
 }
 
 sh_setvarcolors
@@ -836,6 +925,7 @@ fi
 
 sh_checkDependencies
 sh_checkVdiskFiles
+sh_checkOVMFFiles
 
 OPTIONS=m:ub:Vnhd:sg:v:i:N:c:r:
 LONGOPTIONS=memory:,uefi,bridge:,version,nocolor,help,drive:,spice,video:,image:,network:,create_bridge:,remove_bridge:,cvdisk,rvdisk,vdisk
@@ -858,7 +948,7 @@ while test ${#opts[*]} -gt 0; do
 			shift
 		fi
 		;;
-  -c| --create_bridge)
+	-c | --create_bridge)
 		if [[ -z "$2" ]]; then
 			die "Argumento inválido para --create_bridge, falta nome para bridge" >&2
 		else
@@ -877,9 +967,12 @@ while test ${#opts[*]} -gt 0; do
 			remove_bridge_and_tap "$bridge_name"
 			shift
 		else
-      #die "${red}Erro:${rst} Argumento inválido para ${cyan}--remove_bridge${reset}. ${yellow}$(get_bridge_interfaces || echo 'nenhuma bridge disponível')${reset}" >&2
-      die "${red}Erro:${rst} Argumento inválido para ${cyan}--remove_bridge${reset}. $(bridges=$(get_bridge_interfaces); [[ -n $bridges ]] && echo "Válidas são: ${yellow}$bridges" || echo "${yellow}nenhuma bridge disponível")${reset}" >&2
-    fi
+			#die "${red}Erro:${rst} Argumento inválido para ${cyan}--remove_bridge${reset}. ${yellow}$(get_bridge_interfaces || echo 'nenhuma bridge disponível')${reset}" >&2
+			die "${red}Erro:${rst} Argumento inválido para ${cyan}--remove_bridge${reset}. $(
+				bridges=$(get_bridge_interfaces)
+				[[ -n $bridges ]] && echo "Válidas são: ${yellow}$bridges" || echo "${yellow}nenhuma bridge disponível"
+			)${reset}" >&2
+		fi
 		;;
 	-b | --bridge)
 		if [[ " $(get_bridge_interfaces) " =~ " $2 " ]]; then
@@ -904,18 +997,13 @@ while test ${#opts[*]} -gt 0; do
 		fi
 		;;
 	-v | --vdisk)
-		if [[ " $(get_raw_images) " =~ " $2 " ]]; then
+		if [[ " $(get_raw_images) " =~ " $2 " || -e "$2" ]]; then
 			vdisk_name="$2"
 			avdisk_names+=("$vdisk_name")
-			msg_info "Parametro --vdisk detectado: tentando usar virtual disk '$vdisk_name'"
 			vdisk=true
 			shift
 		else
-      replicate "================== DISCOS VIRTUAIS DISPONÍVEIS em $HOME_DIR/vdisk ===================" 1
-      echo -n $green
-      ls -lh $HOME_DIR/vdisk
-      echo -n $rst
-      replicate '='
+			sh_list_vdisks
 			die "Argumento inválido para ${cyan}--vdisk ${rst}Válidos são: ${yellow}$(get_raw_images)${rst}" >&2
 		fi
 		;;
@@ -998,18 +1086,28 @@ if [[ $# > 0 ]]; then
 			if $bridge; then
 				qemu_options+=(-netdev bridge,id="$netdev_id",br=$iface_bridge)
 			else
-				qemu_options+=(-netdev user,id="$netdev_id")
+			  if $spice; then
+  				qemu_options+=(-netdev user,id="$netdev_id")
+  			else
+  				qemu_options+=(-netdev user,id="$netdev_id",hostfwd=tcp::60022-:22)
+  		  fi
 			fi
 			qemu_options+=(-device "$netdevice",netdev="$netdev_id")
 		done
+		qemu_options+=(-device vhost-vsock-pci,id=vhost-vsock-pci0,guest-cid=555)
 	else
 		netdev_id="net0"
 		if $bridge; then
 			qemu_options+=(-netdev bridge,id="$netdev_id",br=$iface_bridge)
 		else
-			qemu_options+=(-netdev user,id="$netdev_id")
+	    if $spice; then
+  		  qemu_options+=(-netdev user,id="$netdev_id")
+  		else
+  		  qemu_options+=(-netdev user,id="$netdev_id",hostfwd=tcp::60022-:22)
+  		fi
 		fi
 		qemu_options+=(-device "$netdevice",netdev="$netdev_id")
+		qemu_options+=(-device vhost-vsock-pci,id=vhost-vsock-pci0,guest-cid=555)
 	fi
 
 	if $drive; then
@@ -1018,6 +1116,8 @@ if [[ $# > 0 ]]; then
 	fi
 	chili-fr "$@"
 else
-#	die "${opts[*]} $(gettext "falta parâmetro de imagem/disco/device"): ($(gettext "usar -h para ajuda"))"
-	die "$(gettext "falta parâmetro de imagem/disco/device"): ($(gettext "usar -h para ajuda"))"
+	#	die "${opts[*]} $(gettext "falta parâmetro de imagem/disco/device"): ($(gettext "usar -h para ajuda"))"
+	sh_list_vdisks
+	die "Erro: Falta parâmetro de imagem/disco/device. ${cyan}Tente os vdisks listados acima. ${yellow}(usar -h para ajuda)
+      ${reset}Ex. : ${green}$ ${reset}${APP} ${reset}vda.img"
 fi
