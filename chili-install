@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: qui 06 mar 2025 14:45:00 -04
+#  Updated: seg 10 mar 2025 00:43:39 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -41,7 +41,7 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob # Habilita padrões estendidos
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="5.3.6.20250306"
+declare -r _VERSION_="5.3.10.20250310"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
@@ -75,39 +75,40 @@ declare -gA AConfWifi=([_NETWORK]='wifi_ssid' [_PASSWORD]='wifi_password')
 declare -gA Alanguage=([pt_BR]=0 [en_US]=1 [de_DE]=2 [fr_FR]=3 [es_ES]=4 [it_IT]=5)
 declare -gA Alocale=([0]=pt_BR [1]=en_US [2]=de_DE [3]=fr_FR [4]=es_ES [5]=it_IT)
 declare dialogRcFile="$HOME/.dialogrc"
+declare _SOURCE="network"
 declare _WINDOWMANAGER=('tty')
 declare _WM_TO_INSTALL=()
 declare TARGET_EFI=x86_64-efi
 declare -a DEPENDENCIES=(
-  awk
-  dialog
-  whiptail
-  grep
-  lsblk
-  sfdisk
-  parted
-  sed
-  tput
-  pv
-  gettext
-  find
-  curl
-  )
+	awk
+	dialog
+	whiptail
+	grep
+	lsblk
+	sfdisk
+	parted
+	sed
+	tput
+	pv
+	gettext
+	find
+	curl
+)
 
 declare -A PACKAGEDEP=(
-  ['awk']='gawk'
-  ['dialog']='dialog'
-  ['whiptail']='libnewt'
-  ['grep']='grep'
-  ['lsblk']='util-linux'
-  ['sfdisk']='util-linux'
-  ['parted']='parted'
-  ['sed']='sed'
-  ['tput']='ncurses'
-  ['pv']='pv'
-  ['gettext']='gettext'
-  ['find']='findutils'
-  ['curl']='curl'
+	['awk']='gawk'
+	['dialog']='dialog'
+	['whiptail']='libnewt'
+	['grep']='grep'
+	['lsblk']='util-linux'
+	['sfdisk']='util-linux'
+	['parted']='parted'
+	['sed']='sed'
+	['tput']='ncurses'
+	['pv']='pv'
+	['gettext']='gettext'
+	['find']='findutils'
+	['curl']='curl'
 )
 
 cleanup() {
@@ -553,29 +554,29 @@ sh_getBootEFI() {
 }
 
 replicate() {
-  local char=${1:-'#'}
-  local nsize=${2:-$(tput cols)}
-  local line
-  printf -v line "%*s" "$nsize" && echo -e "${blue}${line// /$char}${reset}"
+	local char=${1:-'#'}
+	local nsize=${2:-$(tput cols)}
+	local line
+	printf -v line "%*s" "$nsize" && echo -e "${blue}${line// /$char}${reset}"
 }
 export -f replicate
 
 readconf() {
-  local msg="$1"
-  local color="${2:-${yellow}}"
+	local msg="$1"
+	local color="${2:-${yellow}}"
 
-  echo -n -e "$color"
-  if [[ $LC_DEFAULT -eq 0 ]]; then
-    read -r -p "$msg [S/n]"
-  else
-    read -r -p "$msg [Y/n]"
-  fi
-  echo -n -e "$reset"
-  case "${REPLY^}" in
-  [SY]) return 0 ;;
-  "") return 0 ;;
-  *) return 1 ;;
-  esac
+	echo -n -e "$color"
+	if [[ $LC_DEFAULT -eq 0 ]]; then
+		read -r -p "$msg [S/n]"
+	else
+		read -r -p "$msg [Y/n]"
+	fi
+	echo -n -e "$reset"
+	case "${REPLY^}" in
+	[SY]) return 0 ;;
+	"") return 0 ;;
+	*) return 1 ;;
+	esac
 }
 
 padr() {
@@ -653,14 +654,14 @@ sh_cmd_job() {
 }
 
 msg_info() {
-  local msg="$1"
-  local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
-  local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
-  msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
-  #echo -e "${blue}==>${green}[${caller_function}:${caller_line}]=>${yellow}info   : ${cyan}${msg}${reset}"
-  #echo -e "${caller_function}=>${yellow}info   : ${cyan}${msg}${reset}"
-  #echo -e "==>${yellow}[INFO]   : ${cyan}${msg}${reset}"
-  printf "==>%b%-10s%s\n" "${yellow}" "[INFO]" "${cyan}$msg${reset}"
+	local msg="$1"
+	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
+	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
+	#echo -e "${blue}==>${green}[${caller_function}:${caller_line}]=>${yellow}info   : ${cyan}${msg}${reset}"
+	#echo -e "${caller_function}=>${yellow}info   : ${cyan}${msg}${reset}"
+	#echo -e "==>${yellow}[INFO]   : ${cyan}${msg}${reset}"
+	printf "==>%b%-10s%s\n" "${yellow}" "[INFO]" "${cyan}$msg${reset}"
 
 }
 export -f msg_info
@@ -690,6 +691,205 @@ sh_chroot_job() {
 	lretval="${PIPESTATUS[0]}"
 	evaluate_retval "$lretval" "$erro_fatal"
 	[[ -z "$erro_fatal" ]] && return "$lretval" || return "$erro_fatal"
+}
+
+sh_chroot_job_msg() {
+	local cmsg="$1"
+	local cjob="$2"
+	local erro_fatal="$3"
+	local lretval=0
+
+	last_msg="$cmsg"
+	msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
+
+	# Executa o comando no chroot e redireciona a saída para o arquivo de log e logger
+	chroot "$dir_install" "$shell" -c "$cjob" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER" &
+	local pid_chroot=$! # Obtém o PID do processo chroot
+
+	# Exibe o log em tempo real usando dialog --tailbox (se estiver em modo gráfico)
+	if ((grafico)); then
+		dialog \
+			--title "Log de Instalação (Realtime)" \
+			--tailbox "$BOOTLOG" 20 80 \
+			--no-ok \          # Desabilita o botão "OK"
+		--no-cancel \       # Desabilita o botão "Cancelar"
+		--no-close &        # Impede que o usuário feche a janela
+		local pid_dialog=$! # Obtém o PID do dialog
+	fi
+
+	# Aguarda o término do processo chroot
+	wait "$pid_chroot"
+	lretval=$?
+
+	# Fecha o dialog após o término do chroot
+	if ((grafico)); then
+		kill "$pid_dialog" 2>/dev/null # Fecha o dialog
+		wait "$pid_dialog" 2>/dev/null # Aguarda o término do dialog
+	fi
+
+	evaluate_retval "$lretval" "$erro_fatal"
+	[[ -z "$erro_fatal" ]] && return "$lretval" || return "$erro_fatal"
+}
+
+sh_chroot_job_tailbox() {
+	local cmsg="$1"
+	local cjob="$2"
+	local erro_fatal="$3"
+	local lretval=0
+
+	last_msg="$cmsg"
+	msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
+
+	# Executa o comando no chroot e redireciona a saída para o arquivo de log e logger
+	chroot "$dir_install" "$shell" -c "$cjob" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER" &
+	local pid_chroot=$! # Obtém o PID do processo chroot
+
+	# Exibe o log em tempo real usando dialog --tailbox (se estiver em modo gráfico)
+	if ((grafico)); then
+		(
+			while kill -0 "$pid_chroot" 2>/dev/null; do
+				# Mantém o dialog aberto enquanto o processo chroot estiver em execução
+				dialog \
+					--title "Log de Instalação (Realtime)" \
+					--tailbox "$BOOTLOG" 20 80
+				sleep 1 # Evita que o loop consuma muita CPU
+			done
+		) &
+		local pid_dialog=$! # Obtém o PID do dialog
+	fi
+
+	# Aguarda o término do processo chroot
+	wait "$pid_chroot"
+	lretval=$?
+
+	# Fecha o dialog após o término do chroot
+	if ((grafico)); then
+		kill "$pid_dialog" 2>/dev/null # Fecha o dialog
+		wait "$pid_dialog" 2>/dev/null # Aguarda o término do dialog
+	fi
+
+	evaluate_retval "$lretval" "$erro_fatal"
+	[[ -z "$erro_fatal" ]] && return "$lretval" || return "$erro_fatal"
+}
+
+# Função para remover códigos de cor ANSI do log
+sanitize_log() {
+	sed 's/\x1b\[[0-9;]*m//g' "$BOOTLOG"
+}
+
+sh_chroot_job_infobox() {
+	local cmsg="$1"
+	local cjob="$2"
+	local erro_fatal="$3"
+	local lretval=0
+
+	#last_msg="$cmsg"
+	#msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
+	last_msg="$cmsg"
+	log_info_msg "$last_msg"
+
+	# Criar um log temporário exclusivo para evitar logs de outros processos
+	local tmp_log=$(mktemp)
+
+	# Executa o comando no chroot e redireciona a saída para um log temporário
+	chroot "$dir_install" "$shell" -c "$cjob" 2>&1 | tee -i -a "$BOOTLOG" "$tmp_log" >"$LOGGER" &
+	export pid_chroot=$! # Obtém o PID do processo chroot
+
+	# Exibe o log em tempo real usando dialog --infobox (sem botão de saída)
+	if ((grafico)); then
+		(
+			last_log_size=0 # Variável para armazenar o tamanho do log
+			while running "$pid_chroot" 2>/dev/null; do
+				# Verifica o tamanho atual do arquivo de log
+				current_log_size=$(stat --format="%s" "$tmp_log")
+
+				# Atualiza o dialog apenas se o log cresceu
+				if ((current_log_size > last_log_size)); then
+					# Sanitiza o log para remover códigos ANSI
+					sanitized_log=$(sed 's/\x1b\[[0-9;]*m//g' <"$tmp_log")
+
+					# Pega as últimas 13 linhas
+					new_lines=$(tail -n 13 <<<"$sanitized_log")
+
+					# Exibe as últimas 13 linhas no dialog
+					if [[ -n "$new_lines" ]]; then
+						${DIALOG} \
+							--no-collapse \
+							--colors \
+							--title "$cinfo" \
+							--title "$cmsg - Log (Realtime)" \
+							--backtitle "$ccabec" \
+							--infobox "${BOLD}$new_lines" \
+							15 100
+					fi
+
+					last_log_size=$current_log_size # Atualiza o tamanho do log
+				fi
+
+				sleep 0.3 # Reduz o consumo da CPU
+			done
+		) &
+		export pid_dialog=$! # Obtém o PID do dialog
+	fi
+
+	# Aguarda o término do processo chroot
+	wait "$pid_chroot"
+	lretval=$?
+
+	# Finaliza o dialog imediatamente após o término do chroot
+	#	if ((grafico)); then
+	#    kill "$pid_dialog" 2>/dev/null || kill -9 "$pid_dialog" 2>/dev/null
+	#    wait "$pid_dialog" 2>/dev/null
+	#	fi
+	if ((grafico)); then
+		kill "$pid_dialog" 2>/dev/null && wait "$pid_dialog" 2>/dev/null
+	fi
+
+	# Remove o log temporário
+	rm -f "$tmp_log"
+
+	evaluate_retval "$lretval" "$erro_fatal"
+	[[ -z "$erro_fatal" ]] && return "$lretval" || return "$erro_fatal"
+}
+
+sh_chroot_job_tail() {
+	local cmsg="$1"
+	local cjob="$2"
+	local erro_fatal="$3"
+	local lretval=0
+
+	last_msg="$cmsg"
+	msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
+
+	# Executa o comando no chroot e redireciona a saída para o arquivo de log e logger
+	chroot "$dir_install" "$shell" -c "$cjob" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER" &
+	local pid_chroot=$! # Obtém o PID do processo chroot
+
+	# Exibe o log em tempo real usando dialog --tailbox
+	dialog --title "Log de Instalação (Realtime)" --tailbox "$BOOTLOG" 20 80
+
+	# Aguarda o término do processo chroot
+	wait "$pid_chroot"
+	lretval=$?
+
+	evaluate_retval "$lretval" "$erro_fatal"
+	[[ -z "$erro_fatal" ]] && return "$lretval" || return "$erro_fatal"
+}
+
+# Função para exibir o log em tempo real
+exibir_log_realtime() {
+	dialog --title "Log de Instalação (Realtime)" --tailbox "$BOOTLOG" 20 80
+	#	# Exemplo de uso
+	#	(
+	#		# Executa a instalação em segundo plano
+	#		sh_chroot_job "Instalando pacote A..." "comando_de_instalacao_1" &
+	#
+	#		# Exibe o log em tempo real
+	#		exibir_log_realtime
+	#
+	#		# Aguarda o término da instalação
+	#		wait
+	#	)
 }
 
 fmt() {
@@ -1055,13 +1255,13 @@ sh_execcopia() {
 	PONT='|/—\' # Ponteiros de um hélice do lado direito
 	nVal=0
 
-#  sizeof() { du -s "$1" 2>/dev/null | cut -f1; }
-  sizeof() {
-    du -s --exclude=/run/miso --exclude=/proc --exclude=/sys \
-          --exclude=/dev --exclude=/run --exclude=/mnt \
-          --exclude=/media --exclude=/tmp "$1" 2>/dev/null | cut -f1
-  }
-  running() { ps "$1" | grep "$1" >/dev/null; }
+	#  sizeof() { du -s "$1" 2>/dev/null | cut -f1; }
+	sizeof() {
+		du -s --exclude=/run/miso --exclude=/proc --exclude=/sys \
+			--exclude=/dev --exclude=/run --exclude=/mnt \
+			--exclude=/media --exclude=/tmp "$1" 2>/dev/null | cut -f1
+	}
+	running() { ps "$1" | grep "$1" >/dev/null; }
 	TITLE="INSTALL"
 	#	INTERVALO=0.001
 	INTERVALO=0.5
@@ -1134,8 +1334,8 @@ sh_execcopia() {
 		done
 	)
 
-  sh_cmd_job "Criando diretório: $dir_install/mnt" "mkdir -p $dir_install/mnt; chmod 1777 $dir_install/mnt" "$err_not_fatal"
-  sh_cmd_job "Criando diretório: $dir_install/tmp" "mkdir -p $dir_install/tmp; chmod 1777 $dir_install/tmp" "$err_not_fatal"
+	sh_cmd_job "Criando diretório: $dir_install/mnt" "mkdir -p $dir_install/mnt; chmod 1777 $dir_install/mnt" "$err_not_fatal"
+	sh_cmd_job "Criando diretório: $dir_install/tmp" "mkdir -p $dir_install/tmp; chmod 1777 $dir_install/tmp" "$err_not_fatal"
 
 	return 0
 }
@@ -1529,6 +1729,49 @@ sh_initrd_adjust() {
 
 sh_grubinstall() {
 	local fileconf="$dir_install/etc/default/grub"
+	local GRUB_CMDLINE_LINUX_DEFAULT=$(printf "%s" "\
+splash \
+plymouth.enable=1 \
+loglevel=4 \
+libata.noacpi=1 \
+acpi=force \
+apm=power-off \
+nowatchdog \
+tsc=nowatchdog \
+cryptomgr.notests \
+no_timer_check \
+rcupdate.rcu_expedited=1 \
+intel_pstate=active \
+amd_pstate=active \
+cpuidle.governor=teo \
+split_lock_detect=off \
+clearcpuid=514 \
+transparent_hugepage=never \
+skew_tick=1 \
+intremap=off \
+nosoftlockup \
+audit=0 \
+nomce \
+systemd.show_status=auto \
+rd.udev.log_level=3 \
+apparmor=1 \
+security=apparmor \
+vconsole.font=Uni2-Fixed16 \
+intel_iommu=on \
+amd_iommu=on \
+tdx=on \
+nvme_load=yes \
+nouveau.modeset=1 \
+i915.modeset=1 \
+amdgpu.modeset=1 \
+radeon.si_support=0 \
+radeon.cik_support=0 \
+amdgpu.si_support=1 \
+amdgpu.cik_support=1 \
+nvidia.modeset=1 \
+nvidia_drm.modeset=1 \
+DEEPIN_GFXMODE= \
+module_blacklist=")
 
 	#	cat << EOF > "$fileconf"
 	cat >"$fileconf" <<EOF
@@ -1538,48 +1781,7 @@ GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="${xdistro^}"
 GRUB_TIMEOUT_STYLE=menu
 #GRUB_CMDLINE_LINUX_DEFAULT="splash loglevel=4 libata.noacpi=1 acpi=force apm=power-off nowatchdog tsc=nowatchdog cryptomgr.notests no_timer_check rcupdate.rcu_expedited=1 nouveau.modeset=1 rw nosoftlockup audit=0 nomce skew_tick=1 intremap=off intel_pstate=active amd_pstate=passive cpuidle.governor=teo split_lock_detect=off clearcpuid=514 transparent_hugepage=never loglevel=3 systemd.show_status=auto rd.udev.log_level=3 apparmor=1 security=apparmor vconsole.font=Uni2-Fixed16 intel_iommu=on tdx=on nvme_load=yes"
-GRUB_CMDLINE_LINUX_DEFAULT="splash \
-  plymouth.enable=1 \
-  loglevel=4 \
-  libata.noacpi=1 \
-  acpi=force \
-  apm=power-off \
-  nowatchdog \
-  tsc=nowatchdog \
-  cryptomgr.notests \
-  no_timer_check \
-  rcupdate.rcu_expedited=1 \
-  intel_pstate=active \
-  amd_pstate=active \
-  cpuidle.governor=teo \
-  split_lock_detect=off \
-  clearcpuid=514 \
-  transparent_hugepage=never \
-  skew_tick=1 \
-  intremap=off \
-  nosoftlockup \
-  audit=0 \
-  nomce \
-  systemd.show_status=auto \
-  rd.udev.log_level=3 \
-  apparmor=1 \
-  security=apparmor \
-  vconsole.font=Uni2-Fixed16 \
-  intel_iommu=on \
-  amd_iommu=on \
-  tdx=on \
-  nvme_load=yes \
-  nouveau.modeset=1 \
-  i915.modeset=1 \
-  amdgpu.modeset=1 \
-  radeon.si_support=0 \
-  radeon.cik_support=0 \
-  amdgpu.si_support=1 \
-  amdgpu.cik_support=1 \
-  nvidia.modeset=1 \
-  nvidia_drm.modeset=1 \
-  DEEPIN_GFXMODE= \
-  module_blacklist="
+GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT"
 GRUB_CMDLINE_LINUX=""
 GRUB_PRELOAD_MODULES="part_gpt part_msdos lvm btrfs"
 GRUB_TIMEOUT_STYLE=menu
@@ -1587,6 +1789,7 @@ GRUB_TERMINAL_INPUT=console
 GRUB_GFXMODE=1024x768,auto
 GRUB_GFXPAYLOAD_LINUX=keep
 GRUB_DISABLE_RECOVERY=false
+GRUB_ENABLE_CRYPTODISK=false
 EOF
 
 	if [[ "$xdistro" = @(mazonos|MAZON) ]]; then
@@ -1604,7 +1807,7 @@ EOF
 	if ((LOSPROBER)); then
 		echo "GRUB_DISABLE_OS_PROBER=false" >>"$dir_install/etc/default/grub"
 	else
-#		echo "GRUB_DISABLE_OS_PROBER=true" >>"$dir_install/etc/default/grub"
+		#		echo "GRUB_DISABLE_OS_PROBER=true" >>"$dir_install/etc/default/grub"
 		echo "GRUB_DISABLE_OS_PROBER=false" >>"$dir_install/etc/default/grub"
 	fi
 
@@ -1673,7 +1876,7 @@ sh_install_all_wm() {
 
 	sh_insert_in_chroot_installer
 	for pkg in "${_WM_TO_INSTALL[@]}"; do
-		sh_chroot_job "Aguarde alguns poucos minutos, instalando meta pacote #${count}: $pkg" \
+		sh_chroot_job_infobox "[INFO]Aguarde... instalando META PACOTE #${count}: $pkg" \
 			"pacman -Sy $pkg --noconfirm --overwrite \*" \
 			"$err_not_fatal"
 		((++count))
@@ -1726,7 +1929,7 @@ sh_install_remove_packages() {
 
 	for cfile in ${aFilesToRemove[@]}; do
 		if [[ -e "$cfile" ]]; then
-			sh_cmd_job "Removendo arquivos absoletos =>" "rm -f $cfile" "$err_not_fatal"
+			sh_cmd_job "Removendo arquivos absoleto => $cfile" "rm -f $cfile" "$err_not_fatal"
 		fi
 	done
 }
@@ -2362,6 +2565,7 @@ sh_choosewm() {
 	aWm[enlightenment]="Enlightenment desktop shell"
 	aWm[hyprland]="A highly customizable dynamic tiling Wayland compositor"
 	aWm[i3wm]="i3 is a tiling window manager inspired by wmii"
+	aWm[lxqt]="The 'Lightweight Qt Desktop Environment'"
 	aWm[wmaker]="An X11 window manager with a NEXTSTEP look and feel"
 	#	aWm[awesome]="Awesome"
 	#	aWm[blackbox]="Blackbox"
@@ -2369,7 +2573,6 @@ sh_choosewm() {
 	#	aWm[dwm]="Dwm"
 	#	aWm[fluxbox]="Fluxbox"
 	#	aWm[lxde]="The 'Lightweight X11 Desktop Environment'"
-	#	aWm[lxqt]="The 'Lightweight Qt Desktop Environment'"
 	#	aWm[mate]="Mate"
 	#	aWm[openbox]="Openbox"
 	#	aWm[plasma]="Kde Plasma-Desktop"
@@ -2390,7 +2593,6 @@ sh_choosewm() {
 	#		blackbox "${aWm[blackbox]}" "${aFlag[blackbox]}" \
 	#		fluxbox "${aWm[fluxbox]}" "${aFlag[fluxbox]}" \
 	#		lxde "${aWm[lxde]}" "${aFlag[lxde]}" \
-	#		lxqt "${aWm[lxqt]}" "${aFlag[lxqt]}" \
 	#		mate "${aWm[mate]}" "${aFlag[mate]}" \
 	#		openbox "${aWm[openbox]}" "${aFlag[openbox]}" \
 	#		sway "${aWm[sway]}" "${aFlag[sway]}" \
@@ -2408,6 +2610,7 @@ sh_choosewm() {
 		enlightenment "${aWm[enlightenment]}" "${aFlag[enlightenment]}" \
 		hyprland "${aWm[hyprland]}" "${aFlag[hyprland]}" \
 		i3wm "${aWm[i3wm]}" "${aFlag[i3wm]}" \
+		lxqt "${aWm[lxqt]}" "${aFlag[lxqt]}" \
 		wmaker "${aWm[wmaker]}" "${aFlag[wmaker]}" \
 		2>&1 >/dev/tty)
 
@@ -5418,117 +5621,117 @@ sh_checklive() {
 }
 
 sh_setup_Packages() {
-  local packagesToInstall="${PACKAGEDEP[@]}"
-  msg_info "Tentando instalar necessários pacotes"
-  sudo pacman -Sy --needed --quiet --noconfirm "${PACKAGEDEP[@]}" 1>/dev/null
+	local packagesToInstall="${PACKAGEDEP[@]}"
+	msg_info "Tentando instalar necessários pacotes"
+	sudo pacman -Sy --needed --quiet --noconfirm "${PACKAGEDEP[@]}" 1>/dev/null
 }
 
 sh_add_repo_into_pacman_conf() {
-  CONF_FILE="/etc/pacman.conf"
+	CONF_FILE="/etc/pacman.conf"
 
-  sh_msg_job "Adding repositories to /etc/pacman.conf ..."
-  add_repo() {
-    local repo_name="$1"
-    shift
-    local servers=("$@")
+	sh_msg_job "Adding repositories to /etc/pacman.conf ..."
+	add_repo() {
+		local repo_name="$1"
+		shift
+		local servers=("$@")
 
-    # Se o repositório já estiver presente, não adiciona
-    if grep -q "^\[$repo_name\]" "$CONF_FILE"; then
-      return
-    fi
+		# Se o repositório já estiver presente, não adiciona
+		if grep -q "^\[$repo_name\]" "$CONF_FILE"; then
+			return
+		fi
 
-    echo -e "\n[$repo_name]" >>"$CONF_FILE"
-    for server in "${servers[@]}"; do
-      echo "Server = $server" >>"$CONF_FILE"
-    done
-  }
+		echo -e "\n[$repo_name]" >>"$CONF_FILE"
+		for server in "${servers[@]}"; do
+			echo "Server = $server" >>"$CONF_FILE"
+		done
+	}
 
-  # Faz backup antes de modificar
-  cp -f "$CONF_FILE" "$CONF_FILE.bak"
+	# Faz backup antes de modificar
+	cp -f "$CONF_FILE" "$CONF_FILE.bak"
 
-  # Adiciona os repositórios, se necessário
-  #add_repo "community-stable" "https://repo.communitybig.org/stable/\$arch"
-  add_repo "community-testing" "https://repo.communitybig.org/testing/\$arch"
-  #add_repo "community-extra" "https://repo.communitybig.org/extra/\$arch"
-  #add_repo "chili-stable" "https://repo.chililinux.com/stable/\$arch" "https://repo2.chililinux.com/stable/\$arch"
-  #add_repo "chili-testing" "https://repo.chililinux.com/testing/\$arch" "https://repo2.chililinux.com/testing/\$arch"
-  #add_repo "chili-extra" "https://repo.chililinux.com/extra/\$arch" "https://repo2.chililinux.com/extra/\$arch"
-  #add_repo "chili-aur" "https://repo.chililinux.com/aur/\$arch" "https://repo2.chililinux.com/aur/\$arch"
-  sh_msg_job "Repositories added (if they didn't already exist)."
+	# Adiciona os repositórios, se necessário
+	#add_repo "community-stable" "https://repo.communitybig.org/stable/\$arch"
+	add_repo "community-testing" "https://repo.communitybig.org/testing/\$arch"
+	#add_repo "community-extra" "https://repo.communitybig.org/extra/\$arch"
+	#add_repo "chili-stable" "https://repo.chililinux.com/stable/\$arch" "https://repo2.chililinux.com/stable/\$arch"
+	#add_repo "chili-testing" "https://repo.chililinux.com/testing/\$arch" "https://repo2.chililinux.com/testing/\$arch"
+	#add_repo "chili-extra" "https://repo.chililinux.com/extra/\$arch" "https://repo2.chililinux.com/extra/\$arch"
+	#add_repo "chili-aur" "https://repo.chililinux.com/aur/\$arch" "https://repo2.chililinux.com/aur/\$arch"
+	sh_msg_job "Repositories added (if they didn't already exist)."
 
-  # Atualiza os repositórios
-  #sh_cmd_job "Aguarde alguns instantes, sincronizando repositorios..." \
-  #           "pacman -Sy &>/dev/null" \
-  #           "$err_not_fatal"
+	# Atualiza os repositórios
+	#sh_cmd_job "Aguarde alguns instantes, sincronizando repositorios..." \
+	#           "pacman -Sy &>/dev/null" \
+	#           "$err_not_fatal"
 }
 
 sh_checkUpdatePackages() {
-  local TMP_FILE="/tmp/$(basename "$0").restarted"
-  local PackagesToUpdate=('chili-install' 'chili-utils' 'gitrepo' 'comm-base-config')
+	local TMP_FILE="/tmp/$(basename "$0").restarted"
+	local PackagesToUpdate=('chili-install' 'chili-utils' 'gitrepo' 'comm-base-config')
 
-  # adiciona repositorios inexistentes no /etc/pacman.conf
-  sh_add_repo_into_pacman_conf
+	# adiciona repositorios inexistentes no /etc/pacman.conf
+	sh_add_repo_into_pacman_conf
 
-  if [[ ! -f "$TMP_FILE" ]]; then
-    if conf "** UPDATE **" "É recomendado sincronizar e atualizar os utilitários antes da instalação. \n\n${AMARELO}Deseja proceder ?"; then
-      sh_msg_job "Aguarde alguns instantes, sincronizando e atualizando..."
-      pacman -Sy --needed --noconfirm "${PackagesToUpdate[@]}" --overwrite \* &>/dev/null
-		  sh_msg_job "Reiniciando o script pela primeira vez..."
-      touch "$TMP_FILE"
-      exec "$0" "$@"
-    else
-      # se não atualizar então verifica dependencias
-      sh_checkDependencies
-    fi
-  fi
+	if [[ ! -f "$TMP_FILE" ]]; then
+		if conf "** UPDATE **" "É recomendado sincronizar e atualizar os utilitários antes da instalação. \n\n${AMARELO}Deseja proceder ?"; then
+			sh_msg_job "Aguarde alguns instantes, sincronizando e atualizando..."
+			pacman -Sy --needed --noconfirm "${PackagesToUpdate[@]}" --overwrite \* &>/dev/null
+			sh_msg_job "Reiniciando o script pela primeira vez..."
+			touch "$TMP_FILE"
+			exec "$0" "$@"
+		else
+			# se não atualizar então verifica dependencias
+			sh_checkDependencies
+		fi
+	fi
 }
 
 sh_check_internet() {
-  local url="8.8.8.8"  # Servidor DNS do Google, sempre online
-  local timeout=2      # Tempo limite reduzido para resposta rápida
-  local pipe_test="1"
+	local url="8.8.8.8" # Servidor DNS do Google, sempre online
+	local timeout=2     # Tempo limite reduzido para resposta rápida
+	local pipe_test="1"
 
-  if sh_cmd_job "Testando conexão com a internet..." \
-    "ping -c 1 -W $timeout $url >/dev/null 2>&1" \
-    "$err_not_fatal" "$pipe_test"; then
-    return 0
-  else
-    if conf "** INTERNET **" \
-      "Parece que não há uma rota disponível para a internet. \n\n${AMARELO}Deseja configurar um Wi-Fi?"; then
-      bash chili-wifi-config
-      return 0
-    fi
-    return 1
-  fi
+	if sh_cmd_job "Testando conexão com a internet..." \
+		"ping -c 1 -W $timeout $url >/dev/null 2>&1" \
+		"$err_not_fatal" "$pipe_test"; then
+		return 0
+	else
+		if conf "** INTERNET **" \
+			"Parece que não há uma rota disponível para a internet. \n\n${AMARELO}Deseja configurar um Wi-Fi?"; then
+			bash chili-wifi-config
+			return 0
+		fi
+		return 1
+	fi
 }
 
 sh_checkDependencies() {
-  local aBlock_files=()
-  local d
-  local errorFound=false
-  declare -a missing
+	local aBlock_files=()
+	local d
+	local errorFound=false
+	declare -a missing
 
-  for d in "${DEPENDENCIES[@]}"; do
-    if ! command -v "$d" &>/dev/null; then
-      log_err "${red}Error${reset}: $(gettext "Não foi possível encontrar o comando") ${cyan}'$d'${reset} -> $(gettext "instalar pacote") ${cyan}"${PACKAGEDEP[$d]}"${reset}"
-      missing+=("$d")
-      errorFound=true
-    fi
-  done
+	for d in "${DEPENDENCIES[@]}"; do
+		if ! command -v "$d" &>/dev/null; then
+			log_err "${red}Error${reset}: $(gettext "Não foi possível encontrar o comando") ${cyan}'$d'${reset} -> $(gettext "instalar pacote") ${cyan}"${PACKAGEDEP[$d]}"${reset}"
+			missing+=("$d")
+			errorFound=true
+		fi
+	done
 
-  if $errorFound; then
-    replicate '='
-    echo "${yellow}             $(gettext "IMPOSSÍVEL CONTINUAR")"
-    echo "${black}$(gettext "Este script precisa dos comandos listados acima")"
-    echo "${black}$(gettext "Instale-os e/ou verifique se eles estão em seu") ${red}\$PATH${reset}"
-    replicate '='
-    if readconf "Deseja instalar os pacotes necessários ?"; then
-      sh_setup_Packages
-      sh_checkDependencies #overload
-    else
-      die "Encerrando..."
-    fi
-  fi
+	if $errorFound; then
+		replicate '='
+		echo "${yellow}             $(gettext "IMPOSSÍVEL CONTINUAR")"
+		echo "${black}$(gettext "Este script precisa dos comandos listados acima")"
+		echo "${black}$(gettext "Instale-os e/ou verifique se eles estão em seu") ${red}\$PATH${reset}"
+		replicate '='
+		if readconf "Deseja instalar os pacotes necessários ?"; then
+			sh_setup_Packages
+			sh_checkDependencies #overload
+		else
+			die "Encerrando..."
+		fi
+	fi
 }
 export -f sh_checkDependencies
 
@@ -5582,6 +5785,7 @@ sh_install_wm() {
 		"hyprland") _WM_TO_INSTALL+=(comm-hyprland) ;;
 		"i3wm") _WM_TO_INSTALL+=(comm-i3wm) ;;
 		"wmaker") _WM_TO_INSTALL+=(comm-wmaker) ;;
+		"lxqt") _WM_TO_INSTALL+=(comm-lxqt) ;;
 		"awesome") ;;
 		"bspwm") ;;
 		"blackbox") ;;
@@ -5592,7 +5796,6 @@ sh_install_wm() {
 		"twm") ;;
 		"mate") ;;
 		"lxde") ;;
-		"lxqt") ;;
 		esac
 	done
 	sh_install_all_wm

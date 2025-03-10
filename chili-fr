@@ -5,7 +5,7 @@
 #  chili-fr - Wrapper lite para o qemu
 #  Created: 2019/12/13 - 00:00
 #  Altered: 2024/10/03 - 00:00
-#  Updated: qua 05 mar 2025 23:43:28 -03
+#  Updated: dom 09 mar 2025 18:10:08 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -42,7 +42,7 @@ export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 
 #system
 readonly APP="${0##*/}"
-readonly VERSION='2.3.5-20250305'
+readonly VERSION='2.3.9-20250309'
 readonly APPDESC='Wrapper lite para o qemu'
 readonly -a DEPENDENCIES=(
 	'tput'
@@ -830,8 +830,11 @@ chili-fr() {
 			((bootindex++))
 		else
 			msg_info "Anexando vdisk #${bootindex}: ${yellow}${img}"
-			qemu_options+=(-drive file="${img}",if=none,id=disk${bootindex},format=raw,cache=${cache_type})
-			qemu_options+=(-device virtio-blk,drive=disk${bootindex},bootindex=${bootindex})
+#			qemu_options+=(-drive file="${img}",if=none,id=disk${bootindex},format=raw,cache=${cache_type})
+#			qemu_options+=(-device virtio-blk,drive=disk${bootindex},bootindex=${bootindex})
+      qemu_options+=(-drive file="${img}",if=none,id=disk${bootindex},format=raw)
+      qemu_options+=(-device ahci,id=sata${bootindex})
+      qemu_options+=(-device ide-hd,drive=disk${bootindex},bus=sata${bootindex}.0,bootindex=${bootindex})
 			((bootindex++))
 		fi
 	done
@@ -1083,7 +1086,11 @@ if [[ $# > 0 ]]; then
 			if $bridge; then
 				qemu_options+=(-netdev bridge,id="$netdev_id",br=$iface_bridge)
 			else
-				qemu_options+=(-netdev user,id="$netdev_id",hostfwd=tcp::60022-:22)
+			  if $spice; then
+  				qemu_options+=(-netdev user,id="$netdev_id")
+  			else
+  				qemu_options+=(-netdev user,id="$netdev_id",hostfwd=tcp::60022-:22)
+  		  fi
 			fi
 			qemu_options+=(-device "$netdevice",netdev="$netdev_id")
 		done
@@ -1093,7 +1100,11 @@ if [[ $# > 0 ]]; then
 		if $bridge; then
 			qemu_options+=(-netdev bridge,id="$netdev_id",br=$iface_bridge)
 		else
-			qemu_options+=(-netdev user,id="$netdev_id",hostfwd=tcp::60022-:22)
+	    if $spice; then
+  		  qemu_options+=(-netdev user,id="$netdev_id")
+  		else
+  		  qemu_options+=(-netdev user,id="$netdev_id",hostfwd=tcp::60022-:22)
+  		fi
 		fi
 		qemu_options+=(-device "$netdevice",netdev="$netdev_id")
 		qemu_options+=(-device vhost-vsock-pci,id=vhost-vsock-pci0,guest-cid=555)
