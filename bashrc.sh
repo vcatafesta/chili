@@ -606,8 +606,9 @@ chili-count-vogal() {
 ddel2() { find . -iname $1 -print0 | xargs rm --verbose; }
 tolower() { find . -name "*$1*" | while read; do mv "$REPLY" "${REPLY,,}"; done; }
 toupper() { find . -name "*$1*" | while read; do mv "$REPLY" "${REPLY^^}"; done; }
-path() { echo -e "${PATH//:/\\n}"; }
-load() { source $1; }
+function my_path() { echo -e "${PATH//:/\\n}"; }; export -f my_path
+function path() { echo -e "${PATH//:/\\n}"; };export -f path
+function load() { source $1; }
 rdel() {
 	find . -iname "$1" -exec rm -f {} +
 }
