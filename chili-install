@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: seg 10 mar 2025 08:19:26 -04
+#  Updated: qua 12 mar 2025 13:09:34 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -41,7 +41,7 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob # Habilita padrões estendidos
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="5.3.10.20250310"
+declare -r _VERSION_="5.3.12.20250312"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
@@ -1730,6 +1730,7 @@ sh_initrd_adjust() {
 }
 
 sh_grubinstall() {
+  local WindowManager
 	local fileconf="$dir_install/etc/default/grub"
 	local GRUB_CMDLINE_LINUX_DEFAULT=$(printf "%s" "\
 splash \
@@ -1775,12 +1776,19 @@ nvidia_drm.modeset=1 \
 DEEPIN_GFXMODE= \
 module_blacklist=")
 
+WindowManager="${_WINDOWMANAGER[@]}"   # Converte array para string
+WindowManager="${WindowManager//tty/}" # Remove 'tty'
+WindowManager="${WindowManager//  / }" # Substitui espaços duplos por um único
+WindowManager="${WindowManager#"${WindowManager%%[![:space:]]*}"}" # Remove espaços à esquerda
+WindowManager="${WindowManager%"${WindowManager##*[![:space:]]}"}" # Remove espaços à direita
+GRUB_DISTRIBUTOR="${xdistro^} ${WindowManager^}"
+
 	#	cat << EOF > "$fileconf"
 	cat >"$fileconf" <<EOF
 # Begin /etc/default/grub
 GRUB_DEFAULT=saved
 GRUB_TIMEOUT=5
-GRUB_DISTRIBUTOR="${xdistro^}"
+GRUB_DISTRIBUTOR="${GRUB_DISTRIBUTOR}"
 GRUB_TIMEOUT_STYLE=menu
 #GRUB_CMDLINE_LINUX_DEFAULT="splash loglevel=4 libata.noacpi=1 acpi=force apm=power-off nowatchdog tsc=nowatchdog cryptomgr.notests no_timer_check rcupdate.rcu_expedited=1 nouveau.modeset=1 rw nosoftlockup audit=0 nomce skew_tick=1 intremap=off intel_pstate=active amd_pstate=passive cpuidle.governor=teo split_lock_detect=off clearcpuid=514 transparent_hugepage=never loglevel=3 systemd.show_status=auto rd.udev.log_level=3 apparmor=1 security=apparmor vconsole.font=Uni2-Fixed16 intel_iommu=on tdx=on nvme_load=yes"
 GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT"
@@ -1820,11 +1828,13 @@ EOF
 	} >>"$dir_install/boot/grub/grub.cfg"
 
 	sh_chroot_job "${cmsg_Instalando[$LC_DEFAULT]} GRUB i386-pc ${cmsg_Em[$LC_DEFAULT]} $_BOOTLOADER" \
-		"grub-install $_BOOTLOADER --target=i386-pc --recheck"
+		"grub-install $_BOOTLOADER --target=i386-pc --recheck" \
+    "$err_not_fatal"
 
 	if LEFI=$(sh_getBootEFI); then
 		sh_chroot_job "${cmsg_Instalando[$LC_DEFAULT]} GRUB EFI ${cmsg_Em[$LC_DEFAULT]} $_BOOTLOADER" \
-			"grub-install $_BOOTLOADER --target=$TARGET_EFI --efi-directory=/boot/efi --boot-directory=/boot --bootloader-id=$cnick --recheck"
+			"grub-install $_BOOTLOADER --target=$TARGET_EFI --efi-directory=/boot/efi --boot-directory=/boot --bootloader-id=$cnick --recheck" \
+      "$err_not_fatal"
 		sh_mkefiroaming
 	fi
 	sh_chroot_job "$cmsgGerando_arquivo_configuracao_do_grub" "grub-mkconfig -o /boot/grub/grub.cfg"
@@ -2601,6 +2611,7 @@ sh_choosewm() {
 	aWm[hyprland]="A highly customizable dynamic tiling Wayland compositor"
 	aWm[i3wm]="i3 is a tiling window manager inspired by wmii"
 	aWm[lxqt]="The 'Lightweight Qt Desktop Environment'"
+	aWm[mate]="The MATE Desktop Environment is the continuation of GNOME 2"
 	aWm[wmaker]="An X11 window manager with a NEXTSTEP look and feel"
 	#	aWm[awesome]="Awesome"
 	#	aWm[blackbox]="Blackbox"
@@ -2628,7 +2639,6 @@ sh_choosewm() {
 	#		blackbox "${aWm[blackbox]}" "${aFlag[blackbox]}" \
 	#		fluxbox "${aWm[fluxbox]}" "${aFlag[fluxbox]}" \
 	#		lxde "${aWm[lxde]}" "${aFlag[lxde]}" \
-	#		mate "${aWm[mate]}" "${aFlag[mate]}" \
 	#		openbox "${aWm[openbox]}" "${aFlag[openbox]}" \
 	#		sway "${aWm[sway]}" "${aFlag[sway]}" \
 	#		twm "${aWm[twm]}" "${aFlag[twm]}" \
@@ -2646,6 +2656,7 @@ sh_choosewm() {
 		hyprland "${aWm[hyprland]}" "${aFlag[hyprland]}" \
 		i3wm "${aWm[i3wm]}" "${aFlag[i3wm]}" \
 		lxqt "${aWm[lxqt]}" "${aFlag[lxqt]}" \
+    mate "${aWm[mate]}" "${aFlag[mate]}" \
 		wmaker "${aWm[wmaker]}" "${aFlag[wmaker]}" \
 		2>&1 >/dev/tty)
 
@@ -5819,8 +5830,9 @@ sh_install_wm() {
 		"enlightenment") _WM_TO_INSTALL+=(comm-enlightenment) ;;
 		"hyprland") _WM_TO_INSTALL+=(comm-hyprland) ;;
 		"i3wm") _WM_TO_INSTALL+=(comm-i3wm) ;;
-		"wmaker") _WM_TO_INSTALL+=(comm-wmaker) ;;
 		"lxqt") _WM_TO_INSTALL+=(comm-lxqt) ;;
+		"mate") _WM_TO_INSTALL+=(comm-mate) ;;
+		"wmaker") _WM_TO_INSTALL+=(comm-wmaker) ;;
 		"awesome") ;;
 		"bspwm") ;;
 		"blackbox") ;;

@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  t
-#  Created: 2025/03/03 - 18:35
-#  Altered: 2025/03/03 - 18:35
+#  chili-dd-test-read-block
+#  Created: 2025/03/13 - 10:31
+#  Altered: 2025/03/13 - 10:31
 #
 #  Copyright (c) 2025-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -31,7 +31,7 @@
 ##############################################################################
 #export LANGUAGE=pt_BR
 export TEXTDOMAINDIR=/usr/share/locale
-export TEXTDOMAIN=t
+export TEXTDOMAIN=chili-dd-test-read-block
 
 # Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
@@ -72,7 +72,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="1.0.0-20250303"
+declare _VERSION_="1.0.0-20250313"
 declare APPDESC="bash - Wraper for "
 declare distro="$(uname -n)"
 declare DEPENDENCIES=(tput)
@@ -80,11 +80,11 @@ declare dialogRcFile="/home/vcatafesta/.dialogrc"
 
 cleanup() { rm -f ""; }
 #trap cleanup EXIT
-MostraErro() { echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}";}
+MostraErro() { echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"; }
 trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
 
 sh_create_dialogrc() {
-  cat > "$dialogRcFile" <<EOF_DIALOGRC
+	cat >"$dialogRcFile" <<EOF_DIALOGRC
 screen_color = (white,black,off)
 dialog_color = (white,black,off)
 title_color = (cyan,black,on)
@@ -128,50 +128,42 @@ visit_items = off
 use_shadow = off
 use_colors = on
 EOF_DIALOGRC
-  export DIALOGRC="$dialogRcFile"
+	export DIALOGRC="$dialogRcFile"
 }
 
 # Testa se o terminal suporta caracteres gráficos estendidos
 sh_ascii_lines() {
-  #Isso força o dialog a usar caracteres ASCII básicos para as bordas.
-  #if [[ "$LANG" =~ 'UTF-8' ]]; then
-  if [[ "$(printf '\u250C')" =~ "┌" ]]; then
-    export NCURSES_NO_UTF8_ACS=1  # Terminal suporta ACS
-  else
-    export NCURSES_NO_UTF8_ACS=0  # Terminal NÃO suporta ACS
-  fi
-  }
+	#Isso força o dialog a usar caracteres ASCII básicos para as bordas.
+	#if [[ "$LANG" =~ 'UTF-8' ]]; then
+	if [[ "$(printf '\u250C')" =~ "┌" ]]; then
+		export NCURSES_NO_UTF8_ACS=1 # Terminal suporta ACS
+	else
+		export NCURSES_NO_UTF8_ACS=0 # Terminal NÃO suporta ACS
+	fi
+}
 
 sh_setEnvironment() {
-  [[ ! -e "$dialogRcFile" ]] && sh_create_dialogrc
-  sh_ascii_lines
+	[[ ! -e "$dialogRcFile" ]] && sh_create_dialogrc
+	sh_ascii_lines
 }
 
-check_uefi() {
-  if [ -d "/sys/firmware/efi" ]; then
-    echo "true"  # Saída capturada
-    return 0     # Código de saída
-  else
-    echo "false" # Saída capturada
-    return 1     # Código de saída
-  fi
-}
+sd="/dev/nvme0n1" # Substitua pelo seu disco de origem
+bs_values=("1M" "4M" "8M" "16M" "32M" "64M" "128M" "256M")
+best_bs=""
+best_speed=0
 
-if LEFI=$(check_uefi); then
-  echo "LEFI: $LEFI"  # Exibe "true" ou "false"
-  echo "O sistema está em UEFI."
-else
-  echo "LEFI: $LEFI"
-  echo "O sistema está em BIOS (Legacy)."
-fi
+echo "Testando diferentes valores de bs para $sd..."
+for bs in "${bs_values[@]}"; do
+	echo -e "\n🔹 Testando bs=$bs..."
+	speed=$( (ionice -c 1 -n 0 dd if="$sd" of=/dev/null bs=$bs count=256 iflag=fullblock 2>&1 | awk '/copied/ {print $(NF-1)}'))
 
-if $LEFI; then
-  echo ok
-fi
+	if [[ ! -z "$speed" ]]; then
+		echo "📈 Velocidade: $speed MB/s"
+		if (($(echo "$speed > $best_speed" | bc -l))); then
+			best_speed=$speed
+			best_bs=$bs
+		fi
+	fi
+done
 
-_WINDOWMANAGER='tty wmaker mate'
-
-# Remove "tty" se estiver presente
-_WINDOWMANAGER="${_WINDOWMANAGER//tty /}"
-
-echo "$_WINDOWMANAGER"
+echo -e "\n✅ Melhor bloco: $best_bs ($best_speed MB/s)"

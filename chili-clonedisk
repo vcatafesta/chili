@@ -8,7 +8,7 @@
 #
 #  Created: 2019/04/05
 #  Altered: 2022/10/14
-#  Updated: 2025/02/01
+#  Updated: qui 13 mar 2025 21:15:16 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -33,10 +33,10 @@
 #set -e
 #declare -r APP="${0##*/}"
 declare -r _APP_="chili-clonedisk"
-declare -r _VERSION_="5.2.02.20250202"
+declare -r _VERSION_="5.3.13.20250313"
 declare -gA Alanguage=([pt_BR]=0 [en_US]=1 [de_DE]=2 [fr_FR]=3 [es_ES]=4 [it_IT]=5)
 declare -gA Alocale=([0]=pt_BR [1]=en_US [2]=de_DE [3]=fr_FR [4]=es_ES [5]=it_IT)
-readonly DEPENDENCIES=(awk cat cut dd dialog grep lsblk pv sed tput which)
+readonly DEPENDENCIES=(awk cat cut dd ionice dialog grep lsblk pv sed tput which)
 dialogRcFile="$HOME/.dialogrc"
 
 #export LANGUAGE=en
@@ -492,6 +492,26 @@ $(printf "%${nlen}s$sep%-6s$sep%6s$sep%-6s$sep%-15s$sep%-30s" "DEVICE" "TRAN" "S
 	done
 }
 
+sh_backup_partitions() {
+  if [ $# -ge 2 ]; then
+    local disk="${1}"
+    local device="${2}"
+    local tmpdir="/tmp/$_APP_"
+    local cdatetime
+    local filetmp
+
+    cdatetime=$(sh_diahora)
+    filetmp="$tmpdir/${device}.$cdatetime.dump"
+    log_exec mkdir -p "$tmpdir"
+    log_exec sfdisk -d "$disk" >"$filetmp"
+    #  info "BACKUP DA TABELA DE PARTICOES"    \
+    #         "Dispositivo : $disk"              \
+    #         "  Backup on : ${filetmp}"         \
+    #        "$(replicate "=" 80)"               \
+    #         "$(cat $filetmp)"
+  fi
+}
+
 sh_choose_destination_disk() {
 	while true; do
 		#		sh_disk_info
@@ -582,6 +602,7 @@ $(printf "%${nlen}s$sep%-6s$sep%6s$sep%-6s$sep%-15s$sep%-30s" "DEVICE" "TRAN" "S
 	done
 }
 
+#			"${BOLD}${WHITE}${REVERSE}${cmsg_running_disk_cloning[LC_DEFAULT]} (dd if=$sd of=$sddest conv=notrunc,noerror,sync)${RESET}\n\n
 sh_domakeclone() {
 	local -i nchoice
 	mensagem "${cmsg_formatando_particao[$LC_DEFAULT]}: $sd TO $sddest"
@@ -591,7 +612,7 @@ sh_domakeclone() {
 			--title "${cmsg_running_disk_cloning[LC_DEFAULT]^^}" \
 			--colors \
 			--gauge \
-			"${BOLD}${WHITE}${REVERSE}${cmsg_running_disk_cloning[LC_DEFAULT]} (dd if=$sd of=$sddest conv=notrunc,noerror,sync)${RESET}\n\n
+			"${BOLD}${WHITE}${REVERSE}${cmsg_running_disk_cloning[LC_DEFAULT]} (ionice -c 1 -n 0 dd if=$sd of=$sddest bs=128M conv=notrunc,noerror,sync iflag=fullblock oflag=direct)${RESET}\n\n
 ${BLUE} ${cmsg_disco_origem[LC_DEFAULT]}: $DEVICE_SOURCE | $SIZE_SOURCE | $MODEL_SOURCE\n
 ${RED}${cmsg_disco_destino[LC_DEFAULT]}: $DEVICE_DESTINATION | $SIZE_DESTINATION | $MODEL_DESTINATION" \
 			10 100 0

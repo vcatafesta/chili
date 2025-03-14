@@ -320,7 +320,8 @@ sh_bashrc_configure() {
 		#alias dir="exa -la -g --icons --color=auto"
 		#alias dir="exa --long --header --git --all --icons"
 		#alias dir="exa -all --long --modified --group"
-		alias dir="exa -all --long --modified --group --icons --color=auto"
+		#alias dir="exa -all --long --modified --group --icons --color=auto"
+		alias dir='exa -all --long --modified --group --color=auto'
 	else
 		alias dir="ls -CF -la -h --color=auto --group-directories-first"
 	fi
