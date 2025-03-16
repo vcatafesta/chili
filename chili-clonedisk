@@ -8,7 +8,7 @@
 #
 #  Created: 2019/04/05
 #  Altered: 2022/10/14
-#  Updated: qui 13 mar 2025 21:15:16 -04
+#  Updated: dom 16 mar 2025 11:21:38 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -33,7 +33,7 @@
 #set -e
 #declare -r APP="${0##*/}"
 declare -r _APP_="chili-clonedisk"
-declare -r _VERSION_="5.3.13.20250313"
+declare -r _VERSION_="5.3.16.20250316"
 declare -gA Alanguage=([pt_BR]=0 [en_US]=1 [de_DE]=2 [fr_FR]=3 [es_ES]=4 [it_IT]=5)
 declare -gA Alocale=([0]=pt_BR [1]=en_US [2]=de_DE [3]=fr_FR [4]=es_ES [5]=it_IT)
 readonly DEPENDENCIES=(awk cat cut dd ionice dialog grep lsblk pv sed tput which)
@@ -52,68 +52,68 @@ shopt -s extglob
 
 # Testa se o terminal suporta caracteres gráficos estendidos
 sh_ascii-lines() {
-  #Isso força o dialog a usar caracteres ASCII básicos para as bordas.
-  #if [[ "$LANG" =~ 'UTF-8' ]]; then
-  if [[ "$(printf '\u250C')" =~ "┌" ]]; then
-    export NCURSES_NO_UTF8_ACS=1  # Terminal suporta ACS
-  else
-    export NCURSES_NO_UTF8_ACS=0  # Terminal NÃO suporta ACS
-  fi
+	#Isso força o dialog a usar caracteres ASCII básicos para as bordas.
+	#if [[ "$LANG" =~ 'UTF-8' ]]; then
+	if [[ "$(printf '\u250C')" =~ "┌" ]]; then
+		export NCURSES_NO_UTF8_ACS=1 # Terminal suporta ACS
+	else
+		export NCURSES_NO_UTF8_ACS=0 # Terminal NÃO suporta ACS
+	fi
 }
 
 cleanup() {
-  rm -f "$dialogRcFile"
+	rm -f "$dialogRcFile"
 }
 #trap cleanup EXIT
 
 sh_create_dialogrc() {
-  # Cria o arquivo .dialogrc com configurações de cores personalizadas
-  cat > "$dialogRcFile" <<-EOF
-  use_shadow = OFF
-  use_colors = ON
-  screen_color = (YELLOW,DEFAULT,OFF)
-  dialog_color = (WHITE,DEFAULT,OFF)
-  title_color = (YELLOW,DEFAULT,ON)
-  border_color = (WHITE,DEFAULT,ON)
-  button_active_color = (BLACK,YELLOW,ON)
-  button_inactive_color = (WHITE,DEFAULT,OFF)
-  button_key_active_color = (BLACK,YELLOW,ON)
-  button_key_inactive_color = (RED,DEFAULT,OFF)
-  button_label_active_color = (BLACK,YELLOW,ON)
-  button_label_inactive_color = (WHITE,DEFAULT,ON)
-  inputbox_color = (WHITE,DEFAULT,OFF)
-  inputbox_border_color = (WHITE,DEFAULT,OFF)
-  searchbox_color = (WHITE,DEFAULT,OFF)
-  searchbox_title_color = (YELLOW,DEFAULT,ON)
-  searchbox_border_color = (WHITE,DEFAULT,ON)
-  position_indicator_color = (YELLOW,DEFAULT,ON)
-  menubox_color = (WHITE,DEFAULT,OFF)
-  menubox_border_color = (WHITE,DEFAULT,ON)
-  item_color = (WHITE,DEFAULT,OFF)
-  item_selected_color = (BLACK,YELLOW,ON)
-  tag_color = (YELLOW,DEFAULT,ON)
-  tag_selected_color = (BLACK,YELLOW,ON)
-  tag_key_color = (RED,DEFAULT,OFF)
-  tag_key_selected_color = (RED,YELLOW,ON)
-  check_color = (WHITE,DEFAULT,OFF)
-  check_selected_color = (BLACK,YELLOW,ON)
-  uarrow_color = (YELLOW,DEFAULT,ON)
-  darrow_color = (YELLOW,DEFAULT,ON)
-  itemhelp_color = (WHITE,DEFAULT,OFF)
-  form_active_text_color = (WHITE,DEFAULT,ON)
-  form_text_color = (WHITE,DEFAULT,ON)
-  form_item_readonly_color = (WHITE,DEFAULT,ON)
-  gauge_color = (YELLOW,DEFAULT,ON)
-  border2_color = (WHITE,DEFAULT,ON)
-  inputbox_border2_color = (WHITE,DEFAULT,OFF)
-  searchbox_border2_color = (WHITE,DEFAULT,ON)
-  menubox_border2_color = (WHITE,DEFAULT,ON)
-EOF
-  export DIALOGRC="$dialogRcFile"
+	# Cria o arquivo .dialogrc com configurações de cores personalizadas
+	cat >"$dialogRcFile" <<-EOF
+		  use_shadow = OFF
+		  use_colors = ON
+		  screen_color = (YELLOW,DEFAULT,OFF)
+		  dialog_color = (WHITE,DEFAULT,OFF)
+		  title_color = (YELLOW,DEFAULT,ON)
+		  border_color = (WHITE,DEFAULT,ON)
+		  button_active_color = (BLACK,YELLOW,ON)
+		  button_inactive_color = (WHITE,DEFAULT,OFF)
+		  button_key_active_color = (BLACK,YELLOW,ON)
+		  button_key_inactive_color = (RED,DEFAULT,OFF)
+		  button_label_active_color = (BLACK,YELLOW,ON)
+		  button_label_inactive_color = (WHITE,DEFAULT,ON)
+		  inputbox_color = (WHITE,DEFAULT,OFF)
+		  inputbox_border_color = (WHITE,DEFAULT,OFF)
+		  searchbox_color = (WHITE,DEFAULT,OFF)
+		  searchbox_title_color = (YELLOW,DEFAULT,ON)
+		  searchbox_border_color = (WHITE,DEFAULT,ON)
+		  position_indicator_color = (YELLOW,DEFAULT,ON)
+		  menubox_color = (WHITE,DEFAULT,OFF)
+		  menubox_border_color = (WHITE,DEFAULT,ON)
+		  item_color = (WHITE,DEFAULT,OFF)
+		  item_selected_color = (BLACK,YELLOW,ON)
+		  tag_color = (YELLOW,DEFAULT,ON)
+		  tag_selected_color = (BLACK,YELLOW,ON)
+		  tag_key_color = (RED,DEFAULT,OFF)
+		  tag_key_selected_color = (RED,YELLOW,ON)
+		  check_color = (WHITE,DEFAULT,OFF)
+		  check_selected_color = (BLACK,YELLOW,ON)
+		  uarrow_color = (YELLOW,DEFAULT,ON)
+		  darrow_color = (YELLOW,DEFAULT,ON)
+		  itemhelp_color = (WHITE,DEFAULT,OFF)
+		  form_active_text_color = (WHITE,DEFAULT,ON)
+		  form_text_color = (WHITE,DEFAULT,ON)
+		  form_item_readonly_color = (WHITE,DEFAULT,ON)
+		  gauge_color = (YELLOW,DEFAULT,ON)
+		  border2_color = (WHITE,DEFAULT,ON)
+		  inputbox_border2_color = (WHITE,DEFAULT,OFF)
+		  searchbox_border2_color = (WHITE,DEFAULT,ON)
+		  menubox_border2_color = (WHITE,DEFAULT,ON)
+	EOF
+	export DIALOGRC="$dialogRcFile"
 }
 
 sh_configure() {
-  [[ ! -e "$dialogRcFile" ]] && sh_create_dialogrc
+	[[ ! -e "$dialogRcFile" ]] && sh_create_dialogrc
 	sh_ascii-lines
 	true=0
 	#	false=1
@@ -331,6 +331,24 @@ info() {
 		10 60
 }
 
+readconf() {
+	local msg="$1"
+	local color="${2:-${red}}"
+
+	echo -n -e "$color"
+	if [[ $LC_DEFAULT -eq 0 ]]; then
+		read -r -p "$msg [S/n]"
+	else
+		read -r -p "$msg [Y/n]"
+	fi
+	echo -n -e "$reset"
+	case "${REPLY^}" in
+	[SY]) return 0 ;;
+	"") return 0 ;;
+	*) return 1 ;;
+	esac
+}
+
 conf() {
 	xtitle="$1"
 	shift
@@ -361,6 +379,26 @@ confmulti() {
 		10 100
 	return $?
 }
+
+get() {
+	local row="$1"
+	local col="$2"
+	local prompt="$3"
+	local new_value="$4"
+	local old_value="$5"
+	local color="${Acores[box]}"
+
+	# setpos "$row" "$col"
+	printf "%s" "${reset}$color"
+	read -p "${prompt}${reverse}" -e -i "$old_value" "$new_value"
+	# tput sc # Salva a posição atual do cursor
+	echo -n -e "$reset"
+}
+
+row() { echo "$Prow"; }
+col() { echo "$Pcol"; }
+lastrow() { echo "$(tput lines)"; }
+lastcol() { echo "$(tput cols)"; }
 
 sh_checkdisk() {
 	local nchoice=0
@@ -429,7 +467,136 @@ sh_disk_info() {
 	#declare -p ARRAY_DSK_{DISKS,DEVICES,SIZE,TRAN,MODEL}
 }
 
-sh_choose_source_disk() {
+replicate() {
+	local char=${1:-'#'}
+	local nsize=${2:-$(tput cols)}
+	local line
+	printf -v line "%*s" "$nsize" && echo -e "${line// /$char}"
+}
+export -f replicate
+
+sh_clone_disk_to_image() {
+	local localtitle="${cmsg_disco_origem[$LC_DEFAULT]}"
+	local diskselected=""
+
+	sd=$(sh_list_disk "${localtitle}" "${diskselected}")
+	if [[ -n "$sd" ]]; then
+		sh_disk_info
+		DEVICE_SOURCE="$sd"
+		MODEL_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_MODEL")"
+		SIZE_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_SIZE")"
+		sh_Make_clone_disk_to_image
+	fi
+}
+
+sh_conf_image_name() {
+	local size
+	local model
+	local txtDiskName
+
+	DEVICE_SOURCE="$sd"
+	DEVICE_NAME="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_NAME")"
+	MODEL_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_MODEL")"
+	SIZE_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_SIZE")"
+	LABEL_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_LABEL")"
+	TRAN_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_TRAN")"
+
+	: "${DSK_NAME=1}"
+	: "${DSK_SIZE=2}"
+	: "${DSK_TRAN=3}"
+	: "${DSK_MODEL=4}"
+	: "${DSK_LABEL=5}"
+	: "${DSK_SERIAL=6}"
+	: "${DSK_PTTYPE=7}"
+	: "${DSK_FSTYPE=8}"
+
+  cvdisk_name="${DEVICE_SOURCE//\//_}"
+  cvdisk_name+=".raw"
+	while true; do
+		exec 3>&1
+		txtDiskName=$(${DIALOG} \
+			--default-item "$sd" \
+			--backtitle "$ccabec" \
+			--title "** CLONAR DISCO PARA IMAGEM **" \
+			--ok-label "${cmsg_Select[$LC_DEFAULT]}" \
+			--cancel-label "${cmsg_button_voltar[$LC_DEFAULT]}" \
+			--colors \
+			--insecure "$@" \
+			--mixedform "${cmsg_LABEL[$LC_DEFAULT]}" \
+			0 0 0 \
+			"Device                     : " 1 1 "$DEVICE_SOURCE" 1 28 20 0 2 \
+			"Name                       : " 2 1 "$DEVICE_NAME" 2 28 20 0 2 \
+			"Tran                       : " 3 1 "$TRAN_SOURCE" 3 28 20 0 2 \
+			"Label                      : " 4 1 "$LABEL_SOURCE" 4 28 20 0 2 \
+			"Modelo                     : " 5 1 "$MODEL_SOURCE" 5 28 20 0 2 \
+			"Tamanho                    : " 6 1 "$SIZE_SOURCE" 6 28 20 0 2 \
+			"Entre com o nome da imagem : " 7 1 "${cvdisk_name}" 7 28 40 0 0 \
+			2>&1 1>&3)
+
+		exit_status=$?
+		case $exit_status in
+		"$D_ESC" | "$D_CANCEL")
+			return 1
+			;;
+		"$D_OK")
+			mapfile -t aDiskName <<<"$txtDiskName"
+			cvdisk_name="${aDiskName[6]}"
+
+			if [[ -z "${cvdisk_name}" ]]; then
+				if ! conf "*** IMAGE NAME ***" "\nNome imagem inválida! Novamente?\n"; then
+					die "*** IMAGE NAME *** "
+				fi
+				sh_conf_image_name
+			fi
+
+			if test -e "$cvdisk_name" &>/dev/null; then
+				if conf " *** IMAGE NAME ***" "${RED}Imagem de disco '$cvdisk_name' já existe, escolha outro nome.\n\n ${YELLOW}Tentar novamente?"; then
+					continue
+				fi
+				return 1
+			fi
+			return 0
+			;;
+		esac
+		exec 3>&-
+	done
+  return 1
+}
+
+sh_Make_clone_disk_to_image() {
+	local -i nchoice
+
+	if sh_conf_image_name; then
+    if conf "${cwarning[$LC_DEFAULT]}" \
+"${BLUE}${cmsg_disco_origem[LC_DEFAULT]}:  $DEVICE_SOURCE | $SIZE_SOURCE | $MODEL_SOURCE \n\
+${RED}IMAGEM DESTINO : $cvdisk_name\n\n" \
+    "${BOLD}${WHITE}${cmsg_continuar_com_a_clonagem[$LC_DEFAULT]}?\n"; then
+			mensagem "${cmsg_formatando_particao[$LC_DEFAULT]}: $sd TO $cvdisk_name"
+			(pv -n "$sd" |
+        dd of=$cvdisk_name bs=128M conv=notrunc,noerror,sync iflag=fullblock oflag=direct) 2>&1 |
+				${DIALOG} \
+					--title "${cmsg_running_disk_cloning[LC_DEFAULT]^^}" \
+					--colors \
+					--gauge \
+					"${BOLD}${WHITE}${REVERSE}${cmsg_running_disk_cloning[LC_DEFAULT]} (ionice -c 1 -n 0 dd if=$sd of=$cvdisk_name bs=128M conv=notrunc,noerror,sync iflag=fullblock oflag=direct)${RESET}\n\n\
+${cmsg_disco_origem[LC_DEFAULT]}:  ${YELLOW}$DEVICE_SOURCE | $SIZE_SOURCE | $MODEL_SOURCE${RESET}\n\
+IMAGEM DESTINO: ${RED}$cvdisk_name" \
+					10 100 0
+			nchoice=$?
+			result=$(fdisk -l "$cvdisk_name")
+			message=$(printf "\n\n%s" "$result")
+			[[ $nchoice -eq 0 ]] && display_result "fdisk -l $cvdisk_name=" \
+				"${BOLD}${GREEN}${REVERSE}$(gettext "Clonagem concluída!")" \
+				"${RESET}${BOLD}${WHITE}$message"
+			return $nchoice
+		fi
+	fi
+}
+
+sh_list_disk() {
+	local localtitle="$1"
+	local diskselected="$2"
+
 	while true; do
 		sh_disk_info
 		local array=()
@@ -438,81 +605,123 @@ sh_choose_source_disk() {
 		local nc=0
 		local result
 		local nlen=0
+		local csrc
 
 		for i in "${ARRAY_DSK_DEVICES[@]}"; do
-			array[n++]="$i"
+			if [[ "${i}" = "${diskselected}" ]]; then
+				((++nc))
+				continue
+			fi
 			if ((nlen < ${#i})); then
 				nlen=${#i}
 			fi
-			array[n++]=$(printf "$sep%-6s$sep%6s$sep%-6s$sep%-15s$sep%-30s" \
+			array+=("$i" "$(printf "$sep%-6s$sep%6s$sep%-6s$sep%-20s$sep%-30s" \
 				"${ARRAY_DSK_TRAN[$nc]}" \
 				"${ARRAY_DSK_SIZE[$nc]}" \
 				"${ARRAY_DSK_PTTYPE[$nc]}" \
 				"${ARRAY_DSK_LABEL[$nc]}" \
-				"${ARRAY_DSK_MODEL[$nc]}")
-			((nc++))
+				"${ARRAY_DSK_MODEL[$nc]}")")
+			((++nc))
 		done
 		((nlen += 6))
-		sd=$(${DIALOG} \
-			--default-item "$sd" \
+
+		if [[ -z "$sd" ]]; then
+			csrc="(${cmsg_choose_origem[LC_DEFAULT]})"
+		else
+			csrc="$DEVICE_SOURCE | $SIZE_SOURCE | $MODEL_SOURCE"
+		fi
+
+		selected=$(${DIALOG} \
+			--default-item "$sddest" \
 			--backtitle "$ccabec" \
-			--clear \
-			--title "${cmsg_disco_origem[$LC_DEFAULT]}" \
+			--title "${localtitle}" \
 			--ok-label "${cmsg_Select[$LC_DEFAULT]}" \
-			--cancel-label "${cmsg_Sair[$LC_DEFAULT]}" \
+			--cancel-label "${cmsg_button_voltar[$LC_DEFAULT]}" \
 			--colors \
-			--extra-button --extra-label "${cmsg_info_disco[$LC_DEFAULT]}" \
-			--menu "${cmsg_LABEL[$LC_DEFAULT]}\n\n\
-$(printf "%${nlen}s$sep%-6s$sep%6s$sep%-6s$sep%-15s$sep%-30s" "DEVICE" "TRAN" "SIZE" "PTTYPE" "LABEL" "MODEL")" \
-			0 0 25 "${array[@]}" 2>&1 >/dev/tty)
+			--extra-button \
+			--extra-label "${cmsg_info_disco[$LC_DEFAULT]}" \
+			--menu "\
+${YELLOW}${cmsg_disco_origem[LC_DEFAULT]} : ${REVERSE}$csrc${RESET}\n
+${YELLOW}${cmsg_disco_destino[LC_DEFAULT]}: ${REVERSE}(${cmsg_choose_dest[LC_DEFAULT]})${RESET}\n
+$(replicate '_' 90)\n
+$(printf "%${nlen}s$sep%-6s$sep%6s$sep%-6s$sep%-20s$sep%-30s" "DEVICE" "TRAN" "SIZE" "PTTYPE" "LABEL" "MODEL")" \
+			25 0 25 "${array[@]}" 2>&1 >/dev/tty)
 
 		exit_status=$?
 		case $exit_status in
-		"$D_ESC" | "$D_CANCEL")
-			exit 0
+		"$D_ESC")
+			init
+			;;
+		"$D_CANCEL")
+			init
 			;;
 		3)
-
-			result0=$(smartctl -Hi "$sd")
-			result=$(fdisk -l "$sd")
+			result0=$(smartctl -Hi "$selected")
+			result=$(fdisk -l "$selected")
 			message=$(printf "\n\n%s\n\n%s" "$result0" "$result")
 			display_result "$cmsg_disco_origem" \
-				"${BOLD}${RED}${REVERSE}Info disk : $sd${RESET}" \
+				"${BOLD}${GREEN}${REVERSE}Info disk : $selected${RESET}" \
 				"${BOLD}${WHITE}$message"
 			continue
 			;;
 		esac
 
-		if [ -n "$sd" ]; then
-			DEVICE_SOURCE="$sd"
-			MODEL_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_MODEL")"
-			SIZE_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_SIZE")"
-			sh_choose_destination_disk
+		if [[ -n "$selected" ]]; then
+			echo "$selected"
+			break
 		fi
+		break
 	done
 }
 
-sh_backup_partitions() {
-  if [ $# -ge 2 ]; then
-    local disk="${1}"
-    local device="${2}"
-    local tmpdir="/tmp/$_APP_"
-    local cdatetime
-    local filetmp
+sh_choose_source_disk() {
+	local localtitle="${cmsg_disco_origem[$LC_DEFAULT]}"
+	local diskselected=""
 
-    cdatetime=$(sh_diahora)
-    filetmp="$tmpdir/${device}.$cdatetime.dump"
-    log_exec mkdir -p "$tmpdir"
-    log_exec sfdisk -d "$disk" >"$filetmp"
-    #  info "BACKUP DA TABELA DE PARTICOES"    \
-    #         "Dispositivo : $disk"              \
-    #         "  Backup on : ${filetmp}"         \
-    #        "$(replicate "=" 80)"               \
-    #         "$(cat $filetmp)"
-  fi
+	sd=$(sh_list_disk "${localtitle}" "${diskselected}")
+	if [[ -n "$sd" ]]; then
+		sh_disk_info
+		DEVICE_SOURCE="$sd"
+		MODEL_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_MODEL")"
+		SIZE_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_SIZE")"
+		sh_choose_destination_disk
+	fi
 }
 
 sh_choose_destination_disk() {
+	local localtitle="${cmsg_disco_destino[$LC_DEFAULT]}" \
+		local diskselected="$sd"
+
+	sddest=$(sh_list_disk "${localtitle}" "${diskselected}")
+	if [ "$sd" == "$sddest" ]; then
+		alerta "${cwarning[$LC_DEFAULT]}" "\n   \Z1${cmsg_disco_identico[$LC_DEFAULT]} \n\n      \Z4SOURCE DISK : \Z1\Zr$MODEL_SOURCE\ZR\n \Z4DISK DESTINATION : \Z1\Zr$MODEL_DESTINATION\ZR"
+		sh_choose_destination_disk
+	fi
+
+	if [[ -n "$sddest" ]]; then
+		sh_disk_info
+		DEVICE_DESTINATION="$sddest"
+		MODEL_DESTINATION="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sddest]}" "$DSK_MODEL")"
+		NAME_DESTINATION="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sddest]}" "$DSK_NAME")"
+		SIZE_DESTINATION="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sddest]}" "$DSK_SIZE")"
+
+		if [[ "$(sh_toBytes "$SIZE_SOURCE")" -gt "$(sh_toBytes "$SIZE_DESTINATION")" ]]; then
+			if ! conf "${YELLOW}${cwarning[$LC_DEFAULT]}" \
+				"\n${BOLD}${RED}${REVERSE}$(gettext "O disco de DESTINO é menor que o disco de ORIGEM")${RESET}\n\n" \
+				"${BOLD}${WHITE}$(gettext "Prosseguir?")"; then
+				continue
+			fi
+		fi
+		sh_backup_partitions "$sddest" "$NAME_DESTINATION"
+		sh_checkdisk
+		local nmontada=$?
+		if [ $nmontada = 1 ]; then
+			alerta "CHOOSEDISK" "${cmsg_nec_dismount[LC_DEFAULT]}"
+		fi
+		sh_confclone
+	fi
+	return
+
 	while true; do
 		#		sh_disk_info
 		local array=()
@@ -602,6 +811,26 @@ $(printf "%${nlen}s$sep%-6s$sep%6s$sep%-6s$sep%-15s$sep%-30s" "DEVICE" "TRAN" "S
 	done
 }
 
+sh_backup_partitions() {
+	if [ $# -ge 2 ]; then
+		local disk="${1}"
+		local device="${2}"
+		local tmpdir="/tmp/$_APP_"
+		local cdatetime
+		local filetmp
+
+		cdatetime=$(sh_diahora)
+		filetmp="$tmpdir/${device}.$cdatetime.dump"
+		log_exec mkdir -p "$tmpdir"
+		log_exec sfdisk -d "$disk" >"$filetmp"
+		#  info "BACKUP DA TABELA DE PARTICOES"    \
+		#         "Dispositivo : $disk"              \
+		#         "  Backup on : ${filetmp}"         \
+		#        "$(replicate "=" 80)"               \
+		#         "$(cat $filetmp)"
+	fi
+}
+
 #			"${BOLD}${WHITE}${REVERSE}${cmsg_running_disk_cloning[LC_DEFAULT]} (dd if=$sd of=$sddest conv=notrunc,noerror,sync)${RESET}\n\n
 sh_domakeclone() {
 	local -i nchoice
@@ -612,15 +841,15 @@ sh_domakeclone() {
 			--title "${cmsg_running_disk_cloning[LC_DEFAULT]^^}" \
 			--colors \
 			--gauge \
-			"${BOLD}${WHITE}${REVERSE}${cmsg_running_disk_cloning[LC_DEFAULT]} (ionice -c 1 -n 0 dd if=$sd of=$sddest bs=128M conv=notrunc,noerror,sync iflag=fullblock oflag=direct)${RESET}\n\n
-${BLUE} ${cmsg_disco_origem[LC_DEFAULT]}: $DEVICE_SOURCE | $SIZE_SOURCE | $MODEL_SOURCE\n
-${RED}${cmsg_disco_destino[LC_DEFAULT]}: $DEVICE_DESTINATION | $SIZE_DESTINATION | $MODEL_DESTINATION" \
+			"${BOLD}${WHITE}${REVERSE}${cmsg_running_disk_cloning[LC_DEFAULT]} (ionice -c 1 -n 0 dd if=$sd of=$sddest bs=128M conv=notrunc,noerror,sync iflag=fullblock oflag=direct)${RESET}\n\n\
+${cmsg_disco_origem[LC_DEFAULT]}:  ${YELLOW}$DEVICE_SOURCE | $SIZE_SOURCE | $MODEL_SOURCE${RESET}\n\
+${cmsg_disco_destino[LC_DEFAULT]}: ${RED}$DEVICE_DESTINATION | $SIZE_DESTINATION | $MODEL_DESTINATION" \
 			10 100 0
 	nchoice=$?
 	result=$(fdisk -l "$sddest")
 	message=$(printf "\n\n%s" "$result")
 	[[ $nchoice -eq 0 ]] && display_result "fdisk -l $sddest" \
-		"${BOLD}${RED}${REVERSE}$(gettext "Clonagem concluída!")" \
+		"${BOLD}${GREEN}${REVERSE}$(gettext "Clonagem concluída!")" \
 		"${RESET}${BOLD}${WHITE}$message"
 	return $nchoice
 }
@@ -662,7 +891,7 @@ sh_choose_source_partition() {
 			--extra-button --extra-label "${cmsg_info_disco[$LC_DEFAULT]}" \
 			--menu "${cmsg_LABEL[$LC_DEFAULT]}\n\n\
 $(printf "%${nlen}s$sep%-6s$sep%6s$sep%-6s$sep%-25s$sep%-30s" "DEVICE" "TRAN" "SIZE" "PTTYPE" "LABEL" "MODEL")" \
-			0 0 25 "${array[@]}" 2>&1 >/dev/tty)
+			25 0 25 "${array[@]}" 2>&1 >/dev/tty)
 
 		exit_status=$?
 		case $exit_status in
@@ -690,11 +919,10 @@ $(printf "%${nlen}s$sep%-6s$sep%6s$sep%-6s$sep%-25s$sep%-30s" "DEVICE" "TRAN" "S
 	done
 }
 
-
 sh_confclone() {
 	if conf "${cwarning[$LC_DEFAULT]}" \
-		"\n${cmsg_todos_os_dados_serao_perdidos[$LC_DEFAULT]}\n\n" \
-		"${BLUE} ${cmsg_disco_origem[LC_DEFAULT]}: $DEVICE_SOURCE | $SIZE_SOURCE | $MODEL_SOURCE \n" \
+		"\n${cmsg_todos_os_dados_serao_perdidos[$LC_DEFAULT]}\n\n""\
+${BLUE} ${cmsg_disco_origem[LC_DEFAULT]}:  $DEVICE_SOURCE | $SIZE_SOURCE | $MODEL_SOURCE \n" \
 		"${RED}${cmsg_disco_destino[LC_DEFAULT]}: $DEVICE_DESTINATION | $SIZE_DESTINATION | $MODEL_DESTINATION\n\n" \
 		"${BOLD}${WHITE}${cmsg_continuar_com_a_clonagem[$LC_DEFAULT]}?\n"; then
 		sh_domakeclone
@@ -723,7 +951,7 @@ sh_Language() {
 	cLB6=$(gettext "Use")
 	cLB7=$(gettext "para alternar entre os botões")
 	cLB8=$(gettext "para selecionar")
-	cmsg_LABEL[pt_BR]="$cLB1${RED} ↑ $cLB2$RESET $cLB3 ${RED}↓ $cLB4$RESET $cLB5\n$cLB6${RED} TAB${RESET} $cLB7${RED} ENTER${RESET} $cLB8"
+	cmsg_LABEL[pt_BR]="$cLB1${BLUE} ↑ $cLB2$RESET $cLB3 ${BLUE}↓ $cLB4$RESET $cLB5\n$cLB6${BLUE} TAB${RESET} $cLB7${BLUE} ENTER${RESET} $cLB8"
 
 	cmsg_disco_identico[pt_BR]=$(gettext "Disco ORIGEM e DESTINO não podem ser o mesmo")
 	cmsg_formatando_particao[pt_BR]=$(gettext "Formatando partição")
@@ -823,7 +1051,7 @@ sh_checkDependencies() {
 	local cmd
 
 	for cmd in "${DEPENDENCIES[@]}"; do
-		log_msg "$(gettext "Checando dependencias :") $cmd"
+		log_msg "$(gettext "Check :") ${green}${cmd}${rst}"
 		if ! which "$cmd" &>/dev/null; then
 			log_msg "$(gettext "ERRO: não encontrei o comando:") ${cyan}'$cmd'${reset}"
 			errorFound=1
@@ -849,26 +1077,35 @@ $(gettext "Caso contrário, você não poderá usar as ferramentas de partição
 	fi
 }
 
+sh_execute_iso2usb() {
+	if command -v chili-iso2usb >/dev/null; then
+		bash chili-iso2usb
+	fi
+}
+
 sh_choose_clone_type() {
-  while true; do
-    clone_type=$(${DIALOG} \
-      --stdout \
-      --keep-tite \
-      --aspect 20 \
-      --clear \
-      --default-item "$LC_DEFAULT" \
-      --backtitle "$ccabec" \
-      --colors \
-      --clear \
-      --title "Choose Type" \
-			--ok-label "${cmsg_Select[$LC_DEFAULT]}" \
-			--cancel-label "${cmsg_Sair[$LC_DEFAULT]}" \
-      --menu "\n$(gettext "Escolha o tipo de clone"):" \
-      0 80 0 \
-      0 "$(gettext "Clonar Disco para Disco")" \
-      1 "$(gettext "Clonar Partição para Partição")" \
-      2 "$(gettext "Clonar Imagem Disco para Partição")" \
-      3 "$(gettext "Gravar ISO para Disco")")
+	while true; do
+		clone_type=$(
+			${DIALOG} \
+				--stdout \
+				--keep-tite \
+				--aspect 20 \
+				--clear \
+				--default-item "$LC_DEFAULT" \
+				--backtitle "$ccabec" \
+				--colors \
+				--title "MENU" \
+				--ok-label "${cmsg_Select[$LC_DEFAULT]}" \
+				--cancel-label "${cmsg_Sair[$LC_DEFAULT]}" \
+				--menu "${cmsg_LABEL[$LC_DEFAULT]}\n\n${YELLOW}$(gettext "Escolha o tipo de clone"):${RESET}" \
+				10 80 0 \
+				0 "$(gettext "Clonar Disco para Disco")" \
+				1 "$(gettext "Clonar Partição para Partição")" \
+				2 "$(gettext "Clonar Disco para Imagem")" \
+				3 "$(gettext "Clonar Imagem Disco para Partição")" \
+				4 "$(gettext "Gravar ISO para Disco")" \
+				5 "$(gettext "Listar Discos")"
+		)
 
 		exit_status=$?
 		case $exit_status in
@@ -876,11 +1113,14 @@ sh_choose_clone_type() {
 			exit 0
 			;;
 		esac
-    case $clone_type in
-    0) sh_choose_source_disk;;
-    1) sh_choose_source_partition "ORIGEM";;
-    esac
-  done
+		case $clone_type in
+		0) sh_choose_source_disk ;;
+		1) sh_choose_source_partition "ORIGEM" ;;
+		2) sh_clone_disk_to_image ;;
+		4) sh_execute_iso2usb ;;
+		5) sh_list_disk ;;
+		esac
+	done
 }
 
 sh_configure
