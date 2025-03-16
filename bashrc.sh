@@ -1992,18 +1992,28 @@ gpullupstream() {
 export -f gpullupstream
 
 getbranch() {
-	local branch
-	local red=$(tput bold)$(tput setaf 196)
-	local cyan=$(tput setaf 6)
-	local reset=$(tput sgr0)
+  local branch
+  local red=$(tput bold)$(tput setaf 196)
+  local cyan=$(tput setaf 6)
+  local reset=$(tput sgr0)
 
-	# Check if 'main' branch exists
-	if git rev-parse --verify origin/main >/dev/null 2>&1; then
-		branch="main"
-	elif git rev-parse --verify origin/master >/dev/null 2>&1; then
-		branch="master"
-	fi
-	echo "$branch"
+  # Verifica primeiro se há um branch remoto
+  if git rev-parse --verify origin/main >/dev/null 2>&1; then
+    branch="main"
+  elif git rev-parse --verify origin/master >/dev/null 2>&1; then
+    branch="master"
+  else
+    # Se não encontrar no remoto, tenta pegar o branch local atual
+    branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+  fi
+
+  # Se ainda estiver vazio, retorna mensagem de erro
+  if [[ -z "$branch" ]]; then
+    echo "${red}Nenhum branch principal encontrado${reset}" >&2
+    return 1
+  fi
+
+  echo "$branch"
 }
 export -f getbranch
 

@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: qua 12 mar 2025 13:09:34 -04
+#  Updated: dom 16 mar 2025 01:57:07 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -41,7 +41,7 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob # Habilita padrões estendidos
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="5.3.12.20250312"
+declare -r _VERSION_="5.3.16.20250316"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
@@ -362,6 +362,7 @@ sh_confDistro() {
 	fi
 	# common vars
 	cdistro="${Adistro[cdistro]}"
+	cnick="${Adistro[cnick]}"
 	site="${Adistro[ptcom]}"
 	xemail="${Adistro[contato]}"
 	chostname="${Adistro[chost]}"

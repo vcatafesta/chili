@@ -317,7 +317,7 @@ sh_setrand() {
 	local x y
 
 	# 	aVmode=('1080' '1080' '1080')
-	aHmode=('2560 1080' '1920 1080' '1680 1080' '1366 768')
+	aHmode=('2560 1080' '1920 1080' '1680 1080' '1366 768' '1024 768' '800 600')
 	aRefresh=('33' '44' '50' '60' '75')
 
 	for x in "${aHmode[@]}"; do
@@ -369,5 +369,6 @@ sh_setEnvironment
 sh_setconf
 sh_setvarcolors
 sh_checkDependencies
+#sh_setdevboy
 sh_getoutput
 sh_setrand
