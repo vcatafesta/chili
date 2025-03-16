@@ -508,7 +508,7 @@ sh_clone_disk_to_image() {
 		DEVICE_SOURCE="$sd"
 		MODEL_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_MODEL")"
 		SIZE_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_SIZE")"
-		sh_Make_clone_disk_to_image
+		sh_make_clone_disk_to_image
 	fi
 }
 
@@ -523,15 +523,6 @@ sh_conf_image_name() {
 	SIZE_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_SIZE")"
 	LABEL_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_LABEL")"
 	TRAN_SOURCE="$(sh_splitarray "${AARRAY_DSK_DEVICES[$sd]}" "$DSK_TRAN")"
-
-	: "${DSK_NAME=1}"
-	: "${DSK_SIZE=2}"
-	: "${DSK_TRAN=3}"
-	: "${DSK_MODEL=4}"
-	: "${DSK_LABEL=5}"
-	: "${DSK_SERIAL=6}"
-	: "${DSK_PTTYPE=7}"
-	: "${DSK_FSTYPE=8}"
 
   cvdisk_name="${DEVICE_SOURCE//\//_}"  # Substitui todas as barras por "_"
   cvdisk_name="${cvdisk_name#_}.raw"    # Remove o primeiro "_" e adiciona ".raw"
@@ -586,7 +577,7 @@ sh_conf_image_name() {
   return 1
 }
 
-sh_Make_clone_disk_to_image() {
+sh_make_clone_disk_to_image() {
 	local -i nchoice
 
 	if sh_conf_image_name; then
@@ -597,7 +588,7 @@ IMAGEM DESTINO : ${RED}$cvdisk_name\n\n" \
       sh_start_time_elapsed
 			mensagem "${cmsg_formatando_particao[$LC_DEFAULT]}: $sd TO $cvdisk_name"
 			(pv -n "$sd" |
-        dd of=$cvdisk_name bs=32M conv=notrunc,noerror,sync iflag=fullblock oflag=direct) 2>&1 |
+        ionice -c1 -n0 dd of=$cvdisk_name bs=4M conv=notrunc,noerror,sync) 2>&1 |
 				${DIALOG} \
 					--title "${cmsg_running_disk_cloning[LC_DEFAULT]^^}" \
 					--colors \
