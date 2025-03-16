@@ -305,16 +305,16 @@ alerta() {
 		0 0
 }
 
+#		--no-nl-expand \
+
 display_result() {
 	local xtitle="$1"
 	shift
-
-	dialog \
+	${DIALOG} \
 		--title "$xtitle" \
 		--backtitle "$ccabec" \
 		--colors \
 		--beep \
-		--no-nl-expand \
 		--no-cr-wrap \
 		--no-collapse \
 		--msgbox "$*" \
@@ -475,6 +475,29 @@ replicate() {
 }
 export -f replicate
 
+sh_time_elapsed() {
+  local end_time=$(date +%s)                # Obtém o tempo de término em segundos desde a época Unix
+  local duration=$((end_time - start_time)) # Calcula a duração em segundos
+  local hours=$((duration / 3600))
+  local minutes=$(((duration % 3600) / 60))
+  local seconds=$((duration % 60))
+
+  # Formatar os valores para terem sempre dois dígitos
+  hours=$(printf "%02d" $hours)
+  minutes=$(printf "%02d" $minutes)
+  seconds=$(printf "%02d" $seconds)
+  echo "$hours:$minutes:$seconds"
+}
+
+sh_start_time_elapsed() {
+  start_datetime=$(date)
+  start_time=$(date +%s)
+}
+
+sh_end_time_elapsed() {
+  end_datetime=$(date)
+}
+
 sh_clone_disk_to_image() {
 	local localtitle="${cmsg_disco_origem[$LC_DEFAULT]}"
 	local diskselected=""
@@ -510,8 +533,8 @@ sh_conf_image_name() {
 	: "${DSK_PTTYPE=7}"
 	: "${DSK_FSTYPE=8}"
 
-  cvdisk_name="${DEVICE_SOURCE//\//_}"
-  cvdisk_name+=".raw"
+  cvdisk_name="${DEVICE_SOURCE//\//_}"  # Substitui todas as barras por "_"
+  cvdisk_name="${cvdisk_name#_}.raw"    # Remove o primeiro "_" e adiciona ".raw"
 	while true; do
 		exec 3>&1
 		txtDiskName=$(${DIALOG} \
@@ -568,26 +591,32 @@ sh_Make_clone_disk_to_image() {
 
 	if sh_conf_image_name; then
     if conf "${cwarning[$LC_DEFAULT]}" \
-"${BLUE}${cmsg_disco_origem[LC_DEFAULT]}:  $DEVICE_SOURCE | $SIZE_SOURCE | $MODEL_SOURCE \n\
-${RED}IMAGEM DESTINO : $cvdisk_name\n\n" \
-    "${BOLD}${WHITE}${cmsg_continuar_com_a_clonagem[$LC_DEFAULT]}?\n"; then
+"${cmsg_disco_origem[LC_DEFAULT]}: ${GREEN}$DEVICE_SOURCE | $SIZE_SOURCE | $MODEL_SOURCE${RESET}\n\
+IMAGEM DESTINO : ${RED}$cvdisk_name\n\n" \
+    "${BOLD}${YELLOW}${cmsg_continuar_com_a_clonagem[$LC_DEFAULT]}?\n"; then
+      sh_start_time_elapsed
 			mensagem "${cmsg_formatando_particao[$LC_DEFAULT]}: $sd TO $cvdisk_name"
 			(pv -n "$sd" |
-        dd of=$cvdisk_name bs=128M conv=notrunc,noerror,sync iflag=fullblock oflag=direct) 2>&1 |
+        dd of=$cvdisk_name bs=32M conv=notrunc,noerror,sync iflag=fullblock oflag=direct) 2>&1 |
 				${DIALOG} \
 					--title "${cmsg_running_disk_cloning[LC_DEFAULT]^^}" \
 					--colors \
 					--gauge \
-					"${BOLD}${WHITE}${REVERSE}${cmsg_running_disk_cloning[LC_DEFAULT]} (ionice -c 1 -n 0 dd if=$sd of=$cvdisk_name bs=128M conv=notrunc,noerror,sync iflag=fullblock oflag=direct)${RESET}\n\n\
-${cmsg_disco_origem[LC_DEFAULT]}:  ${YELLOW}$DEVICE_SOURCE | $SIZE_SOURCE | $MODEL_SOURCE${RESET}\n\
-IMAGEM DESTINO: ${RED}$cvdisk_name" \
+"${BOLD}${WHITE}${REVERSE}${cmsg_running_disk_cloning[LC_DEFAULT]} (ionice -c 1 -n 0 dd if=$sd of=$cvdisk_name bs=32M conv=notrunc,noerror,sync iflag=fullblock oflag=direct)${RESET}\n\n\
+${cmsg_disco_origem[LC_DEFAULT]}: ${YELLOW}$DEVICE_SOURCE | $SIZE_SOURCE | $MODEL_SOURCE${RESET}\n\
+IMAGEM DESTINO : ${RED}$cvdisk_name" \
 					10 100 0
 			nchoice=$?
+      sh_end_time_elapsed
 			result=$(fdisk -l "$cvdisk_name")
 			message=$(printf "\n\n%s" "$result")
-			[[ $nchoice -eq 0 ]] && display_result "fdisk -l $cvdisk_name=" \
-				"${BOLD}${GREEN}${REVERSE}$(gettext "Clonagem concluída!")" \
-				"${RESET}${BOLD}${WHITE}$message"
+			[[ $nchoice -eq 0 ]] && display_result \
+        "fdisk -l $cvdisk_name"\
+        "${BOLD}${GREEN}${REVERSE}$(gettext "Clonagem concluída!")"\n\
+				"${RESET}${BOLD}${WHITE}$message\n\n" \
+        "Start Date time  : ${BLUE}$start_datetime${RESET}\n" \
+        "Finish Date Time : ${BLUE}$end_datetime${RESET}\n" \
+        "Time elapsed     : ${GREEN}$(sh_time_elapsed)${RESET}\n"
 			return $nchoice
 		fi
 	fi
