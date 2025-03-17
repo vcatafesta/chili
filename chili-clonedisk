@@ -1037,12 +1037,38 @@ if [[ $1 = "-v" || $1 = "--version" || $1 = "-V" ]]; then
 	exit 0
 fi
 
-sh_checkroot() {
+sh_checkrootOLD() {
 	[[ $1 = "-Qq" ]] && return
 	if [ "$(id -u)" != "0" ]; then
 		printf "${red}%s\n" "$(gettext "erro: Você não pode executar esta operação a menos que seja root!")"
 		exit 1
 	fi
+}
+
+sh_checkroot() {
+  if [[ "$(id -u)" != "0" ]]; then
+    elevate_to_root "$@"
+  fi
+  ccabec+=' [root]'
+}
+
+log_err() {
+  printf " %b %s\\n" "${CROSS}" "${*}"
+}
+
+elevate_to_root() {
+  log_err "This script must be run as root. Elevating privileges..."
+
+  # Tenta usar sudo primeiro (caso esteja configurado)
+  if command -v sudo >/dev/null 2>&1; then
+    exec sudo bash "$0" "$@"
+  fi
+
+  # Se sudo falhar, tenta su
+  if command -v su >/dev/null 2>&1; then
+    exec su -c "$0 $*"
+  fi
+  die "Error: Unable to elevate privileges. Run manually as root."
 }
 
 DOT() {
@@ -1172,8 +1198,8 @@ while true; do
 	*) break ;;
 	esac
 done
-sh_checkDependencies "${DEPENDENCIES[*]}"
 sh_checkroot "$@"
+sh_checkDependencies "${DEPENDENCIES[*]}"
 #init "$@"
 sh_choose_clone_type
 sh_choose_source_disk
