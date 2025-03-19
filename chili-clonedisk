@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 #shellcheck disable=SC2154,SC2016,SC2034,SC2059
-
+#
+#rsync -aAXv /mnt/ /lfs/evili/ --exclude={"/dev/*","/proc/*","/sys/*","/tmp/*","/run/*","/mnt/*","/lost+found"}
+#
 #  chili-clonedisk - utility written in bash to clone disks
 #  Chili GNU/Linux - https://github.com/vcatafesta/ChiliOS
 #  Chili GNU/Linux - https://chililinux.com
@@ -318,7 +320,7 @@ display_result() {
 		--no-cr-wrap \
 		--no-collapse \
 		--msgbox "$*" \
-		0 0
+		25 100
 }
 
 info() {
@@ -588,12 +590,12 @@ IMAGEM DESTINO : ${RED}$cvdisk_name\n\n" \
       sh_start_time_elapsed
 			mensagem "${cmsg_formatando_particao[$LC_DEFAULT]}: $sd TO $cvdisk_name"
 			(pv -n "$sd" |
-        ionice -c1 -n0 dd of=$cvdisk_name bs=4M conv=notrunc,noerror,sync) 2>&1 |
+        dd of=$cvdisk_name bs=4M conv=notrunc,noerror,sync) 2>&1 |
 				${DIALOG} \
 					--title "${cmsg_running_disk_cloning[LC_DEFAULT]^^}" \
 					--colors \
 					--gauge \
-"${BOLD}${WHITE}${REVERSE}${cmsg_running_disk_cloning[LC_DEFAULT]} (ionice -c 1 -n 0 dd if=$sd of=$cvdisk_name bs=32M conv=notrunc,noerror,sync iflag=fullblock oflag=direct)${RESET}\n\n\
+"${BOLD}${WHITE}${REVERSE}${cmsg_running_disk_cloning[LC_DEFAULT]} (dd if=$sd of=$cvdisk_name bs=32M conv=notrunc,noerror,sync iflag=fullblock oflag=direct)${RESET}\n\n\
 ${cmsg_disco_origem[LC_DEFAULT]}: ${YELLOW}$DEVICE_SOURCE | $SIZE_SOURCE | $MODEL_SOURCE${RESET}\n\
 IMAGEM DESTINO : ${RED}$cvdisk_name" \
 					10 100 0
@@ -676,9 +678,9 @@ $(printf "%${nlen}s$sep%-6s$sep%6s$sep%-6s$sep%-20s$sep%-30s" "DEVICE" "TRAN" "S
 			init
 			;;
 		3)
-			result0=$(smartctl -Hi "$selected")
 			result=$(fdisk -l "$selected")
-			message=$(printf "\n\n%s\n\n%s" "$result0" "$result")
+			result0=$(smartctl --all "$selected")
+			message=$(printf "\n\n%s\n\n%s" "$result" "$result0")
 			display_result "$cmsg_disco_origem" \
 				"${BOLD}${GREEN}${REVERSE}Info disk : $selected${RESET}" \
 				"${BOLD}${WHITE}$message"
@@ -861,7 +863,7 @@ sh_domakeclone() {
 			--title "${cmsg_running_disk_cloning[LC_DEFAULT]^^}" \
 			--colors \
 			--gauge \
-			"${BOLD}${WHITE}${REVERSE}${cmsg_running_disk_cloning[LC_DEFAULT]} (ionice -c 1 -n 0 dd if=$sd of=$sddest bs=128M conv=notrunc,noerror,sync iflag=fullblock oflag=direct)${RESET}\n\n\
+			"${BOLD}${WHITE}${REVERSE}${cmsg_running_disk_cloning[LC_DEFAULT]} (dd if=$sd of=$sddest bs=128M conv=notrunc,noerror,sync iflag=fullblock oflag=direct)${RESET}\n\n\
 ${cmsg_disco_origem[LC_DEFAULT]}:  ${YELLOW}$DEVICE_SOURCE | $SIZE_SOURCE | $MODEL_SOURCE${RESET}\n\
 ${cmsg_disco_destino[LC_DEFAULT]}: ${RED}$DEVICE_DESTINATION | $SIZE_DESTINATION | $MODEL_DESTINATION" \
 			10 100 0

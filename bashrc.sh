@@ -1808,37 +1808,36 @@ gpull() {
   local cyan=$(tput setaf 6)
   local blue=$(tput setaf 4)
   local reset=$(tput sgr0)
-  local mainbranch="main"
+  local mainbranch="$(getbranch)"
 
   # Mensagem inicial
-  echo "${blue}Iniciando git pull...${reset}"
+  log_wait_msg "${red}Iniciando git pull in ${yellow}${mainbranch}'${reset}"
 
   # Configura o credential helper para armazenar as credenciais
   git config credential.helper store
 
   # Troca para o branch principal
-  echo "${cyan}Trocando para o branch $mainbranch...${reset}"
+  echo "::${cyan}Trocando para o branch $mainbranch...${reset}"
   git checkout "$mainbranch" || {
-    echo "${red}Erro: Não foi possível trocar para o branch $mainbranch.${reset}"
+    echo "::${red}Erro: Não foi possível trocar para o branch $mainbranch.${reset}"
     return 1
   }
 
   # Verifica se o upstream está configurado
   if git remote | grep -q upstream; then
-    echo "${cyan}Upstream detectado. Mesclando alterações do upstream...${reset}"
+    echo "::${cyan}Upstream detectado. Mesclando alterações do upstream...${reset}"
     git pull --no-ff upstream "$mainbranch" || {
-      echo "${red}Erro: Não foi possível mesclar as alterações do upstream.${reset}"
+      echo "::${red}Erro: Não foi possível mesclar as alterações do upstream.${reset}"
       return 1
     }
   else
-    echo "${cyan}Upstream não detectado. Mesclando alterações do origin...${reset}"
+    echo "::${cyan}Upstream não detectado. Mesclando alterações do origin...${reset}"
     git pull --no-ff origin "$mainbranch" || {
-      echo "${red}Erro: Não foi possível mesclar as alterações do origin.${reset}"
+      echo "::${red}Erro: Não foi possível mesclar as alterações do origin.${reset}"
       return 1
     }
   fi
-
-  echo "${blue}Git pull concluído com sucesso!${reset}"
+  echo "::${blue}Git pull concluído com sucesso!${reset}"
 }
 export -f gpull
 
@@ -1997,6 +1996,8 @@ getbranch() {
   local cyan=$(tput setaf 6)
   local reset=$(tput sgr0)
 
+#  branch=$(git remote show origin | awk '/HEAD branch/ {print $NF}')
+
   # Verifica primeiro se há um branch remoto
   if git rev-parse --verify origin/main >/dev/null 2>&1; then
     branch="main"
@@ -2012,7 +2013,6 @@ getbranch() {
     echo "${red}Nenhum branch principal encontrado${reset}" >&2
     return 1
   fi
-
   echo "$branch"
 }
 export -f getbranch

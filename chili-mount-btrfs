@@ -63,6 +63,16 @@ light_blue=$(tput setaf 12)
 light_magenta=$(tput setaf 13)
 light_cyan=$(tput setaf 14)
 bright_white=$(tput setaf 15)
+COL_NC='\e[0m' # No Color
+COL_LIGHT_GREEN='\e[1;32m'
+COL_LIGHT_RED='\e[1;31m'
+TICK="${white}[${COL_LIGHT_GREEN}✓${COL_NC}${white}]"
+CROSS="${white}[${COL_LIGHT_RED}✗${COL_NC}${white}]"
+INFO="[i]"
+# shellcheck disable=SC2034
+DONE="${COL_LIGHT_GREEN} done!${COL_NC}"
+OVER="\\r\\033[K"
+DOTPREFIX="  ${black}::${reset} "
 
 #debug
 export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset}'
@@ -131,26 +141,58 @@ EOF_DIALOGRC
 	export DIALOGRC="$dialogRcFile"
 }
 
-# Testa se o terminal suporta caracteres gráficos estendidos
-sh_ascii_lines() {
-	#Isso força o dialog a usar caracteres ASCII básicos para as bordas.
-	#if [[ "$LANG" =~ 'UTF-8' ]]; then
-	if [[ "$(printf '\u250C')" =~ "┌" ]]; then
-		export NCURSES_NO_UTF8_ACS=1 # Terminal suporta ACS
+msg() {
+	local msg="$1"
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	echo -e "==>${cyan}running: ${yellow}${msg}${reset}"
+}
+export -f msg
+
+msg_ok() {
+	local msg="$1"
+	msg="$(sed 's/<[^>]*>//g' <<<"$msg")" # Remove as tags HTML
+	echo -e "==>${cyan}feito: ${green}${msg}${reset}"
+}
+export -f msg_ok
+
+msg_run() {
+	local msg="$1"
+	echo -e "==>${cyan}running: ${yellow}${msg}${reset}"
+	eval "$msg"
+}
+export -f msg_run
+
+die() {
+	local msg=$1
+	shift
+	printf "  %b %s\\n" "${CROSS}" "${red}${msg}${reset}"
+	exit 1
+}
+
+log_err() {
+	printf "  %b %s\\n" "${CROSS}" "${*}"
+}
+
+log_msg() {
+	local retval="${PIPESTATUS[0]}"
+	local pcount=$#
+
+	((pcount >= 2)) && {
+		retval=$1
+		shift
+	}
+	if [[ $retval -eq 0 ]]; then
+		printf " %b %s\\n" "${TICK}" "${*}"
 	else
-		export NCURSES_NO_UTF8_ACS=0 # Terminal NÃO suporta ACS
+		printf " %b %s\\n" "${CROSS}" "${*}"
 	fi
 }
 
-sh_setEnvironment() {
-	[[ ! -e "$dialogRcFile" ]] && sh_create_dialogrc
-	sh_ascii_lines
-}
+################################################################################################
 
 # Verifica se os argumentos foram passados
 if [[ -z "$1" || -z "$2" || -z "$3" ]]; then
-	echo "Uso: $0 <partition> <partition_efi> <ponto de montagem>"
-	exit 1
+	die "Uso: $0 <partition> <partition_efi> <ponto de montagem>"
 fi
 
 _part="$1"
@@ -159,37 +201,31 @@ _dir_install="$3"
 
 # Verifica se a partição existe
 if [[ ! -e "$_part" ]]; then
-	echo "Erro: A partição '$_part' não existe!"
-	exit 1
+	die "Erro: A partição '$_part' não existe!"
 fi
 
 # Verifica se o diretório de instalação existe, se não, tenta criá-lo
 if [[ ! -d "$_dir_install" ]]; then
-	echo "Criando diretório '$_dir_install'..."
+	msg "Criando diretório '$_dir_install'..."
 	sudo mkdir -p "$_dir_install" || {
-		echo "Erro ao criar '$_dir_install'"
-		exit 1
+		die "Erro ao criar '$_dir_install'"
 	}
 fi
 
 # Lista de subvolumes a montar
-subvolumes=(
-	"@"
-	"@home"
-	"@cache"
-	"@log"
-	"@swapfc"
-)
+declare -a subvolumes=("@" "@home" "@cache" "@log" "@swapfc")
+declare -a mountpoint=('' 'home' 'var/cache' 'var/log' 'swapfc')
 
 # Monta cada subvolume
+nc=0
 for subvol in "${subvolumes[@]}"; do
-	mount_point="$_dir_install/${subvol//@/}" # Remove '@' para formar o caminho correto
+	mount_point="$_dir_install/${mountpoint[nc]}"
 	sudo mkdir -p "$mount_point"
-	echo "Montando $_part em $mount_point com subvolume=$subvol..."
-	sudo mount -o compress=zstd,subvol=$subvol "$_part" "$mount_point" || {
-		echo "Erro ao montar $subvol em $mount_point!"
-		exit 1
-	}
+	msg "Montando $_part em $mount_point com subvolume=$subvol..."
+  sudo mount -o compress=zstd,subvol=$subvol "$_part" "$mount_point" || {
+    die "Erro ao montar $subvol em $mount_point!"
+  }
+	((++nc))
 done
-sudo mount "$_part_efi" "$dir_install/boot/efi"
-echo "✅ Montagem concluída com sucesso!"
+msg_run "sudo mount $_part_efi $_dir_install/boot/efi"
+msg_ok "✅ Montagem concluída com sucesso!"
