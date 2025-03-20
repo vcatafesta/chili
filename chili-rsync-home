@@ -218,7 +218,7 @@ mensagem() {
 		--title "$ctitle" \
 		--backtitle "$ccabec" \
 		--infobox "$*" \
-		10 60
+		3 60
 }
 
 function human_to_bytes() {
@@ -319,10 +319,12 @@ sh_execcopia() {
 
 			# Exibe o progresso
 			LASTFILE=$(tail -n1 "$log")
-			${DIALOG} --colors \
+			${DIALOG} \
+			  --colors \
 				--title $TITLE \
 				--gauge "$MSG           							\nFalta ${BOLD}${YELLOW}$((100 - PERCENTAGEM))%${RESET} para completar a tarefa ${AZUL}${PONT:nval:1}\ZB\Zn \
-           							\n\nDestino    : ${BOLD}${YELLOW}$DESTINO${RESET}
+           							\n\nOrigem     : ${BOLD}${YELLOW}$ORIGEM${RESET}
+           							\nDestino    : ${BOLD}${YELLOW}$DESTINO${RESET}
            							\nTotal      :	"$(numfmt --grouping $TOTAL)" \
            							\nCopiado    : ${GREEN}${REVERSE}"$(numfmt --grouping $COPIADO_DESTINO)"${RESET}\
            							\nArquivo    :	${LASTFILE}\
@@ -337,3 +339,4 @@ sh_execcopia() {
 
 sh_checkroot
 sh_execcopia
+echo
