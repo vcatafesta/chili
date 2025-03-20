@@ -257,7 +257,11 @@ sh_execcopia() {
 
 	# Função para calcular o tamanho de diretórios
 	sizeof() {
-		du -sb "$1" 2>/dev/null | cut -f1
+		du -sb  \
+		  --exclude=.chili-fr \
+		  --exclude=__w \
+		  "$1" \
+		  2>/dev/null | cut -f1
 	}
 
 	# Função para verificar se o processo está rodando
@@ -286,7 +290,11 @@ sh_execcopia() {
 	[ -e "$log" ] && rm -f "$log"
 
 	# Inicia o processo de rsync em segundo plano
-	rsync -aAXv "$ORIGEM" "$DESTINO" 1>&2 >"$log" &
+	rsync -aAXv \
+    "$ORIGEM" "$DESTINO" \
+    --exclude=.chili-fr \
+    --exclude=__w \
+    1>&2 >"$log" &
 	export CPPID=$!
 
 	# Calcula o progresso com base no que já foi copiado
