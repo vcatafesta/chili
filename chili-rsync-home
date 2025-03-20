@@ -1,0 +1,331 @@
+#!/usr/bin/env bash
+# -*- coding: utf-8 -*-
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+#
+#  chili-rsync-home
+#  Created: 2025/03/19 - 14:07
+#  Altered: 2025/03/19 - 14:07
+#
+#  Copyright (c) 2025-2025, Vilmar Catafesta <vcatafesta@gmail.com>
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AS IS'' AND ANY EXPRESS OR
+#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
+#export LANGUAGE=pt_BR
+export TEXTDOMAINDIR=/usr/share/locale
+export TEXTDOMAIN=chili-rsync-home
+
+declare -r _APP_="${0##*/}"
+declare -r _VERSION_="5.3.16.20250316"
+declare -r DIALOG=dialog
+
+# Definir a variável de controle para restaurar a formatação original
+reset=$(tput sgr0)
+
+# Definir os estilos de texto como variáveis
+bold=$(tput bold)
+underline=$(tput smul)   # Início do sublinhado
+nounderline=$(tput rmul) # Fim do sublinhado
+reverse=$(tput rev)      # Inverte as cores de fundo e texto
+
+# Definir as cores ANSI como variáveis
+black=$(tput bold)$(tput setaf 0)
+red=$(tput bold)$(tput setaf 196)
+green=$(tput bold)$(tput setaf 2)
+yellow=$(tput bold)$(tput setaf 3)
+blue=$(tput setaf 4)
+pink=$(tput setaf 5)
+magenta=$(tput setaf 5)
+cyan=$(tput setaf 6)
+white=$(tput setaf 7)
+gray=$(tput setaf 8)
+orange=$(tput setaf 202)
+purple=$(tput setaf 125)
+violet=$(tput setaf 61)
+light_red=$(tput setaf 9)
+light_green=$(tput setaf 10)
+light_yellow=$(tput setaf 11)
+light_blue=$(tput setaf 12)
+light_magenta=$(tput setaf 13)
+light_cyan=$(tput setaf 14)
+bright_white=$(tput setaf 15)
+
+# dialog colors
+REVERSE="\Zr"
+UNDERLINE="\Zu"
+BOLD="\Zb"
+RESET="\Zn"
+BLACK="\Z0"
+YELLOW="\Z3"
+AMARELO="\Zb\Z3"
+WHITE="\Z7"
+BLUE="\Z4"
+AZUL="\Zb\Z4"
+CYAN="\Z6"
+RED="\Z1"
+GREEN="\Z2"
+MAGENTA="\Z5"
+
+[[ -z "${COLUMNS}" ]] && COLUMNS=$(stty size)
+COLUMNS=${COLUMNS##* }
+[[ "${COLUMNS}" = "0" ]] && COLUMNS=80
+COL=$((COLUMNS - 8))
+SET_COL="\\033[${COL}G" # at the $COL char
+CURS_ZERO="\\033[0G"
+COL_NC='\e[0m' # No Color
+COL_LIGHT_GREEN='\e[1;32m'
+COL_LIGHT_RED='\e[1;31m'
+TICK="${white}[${COL_LIGHT_GREEN}✓${COL_NC}${white}]"
+CROSS="${white}[${COL_LIGHT_RED}✗${COL_NC}${white}]"
+INFO="[i]"
+# shellcheck disable=SC2034
+DONE="${COL_LIGHT_GREEN} done!${COL_NC}"
+OVER="\\r\\033[K"
+DOTPREFIX="  ${black}::${reset} "
+
+#debug
+export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset}'
+#set -x
+#set -e
+shopt -s extglob
+
+#system
+declare APP="${0##*/}"
+declare _VERSION_="1.0.0-20250319"
+declare APPDESC="bash - Wraper for "
+declare distro="$(uname -n)"
+declare DEPENDENCIES=(tput)
+declare dialogRcFile="/home/vcatafesta/.dialogrc"
+
+cleanup() { rm -f ""; }
+#trap cleanup EXIT
+MostraErro() { echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"; }
+trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
+
+sh_create_dialogrc() {
+	cat >"$dialogRcFile" <<EOF_DIALOGRC
+screen_color = (white,black,off)
+dialog_color = (white,black,off)
+title_color = (cyan,black,on)
+border_color = dialog_color
+shadow_color = (black,black,on)
+button_inactive_color = dialog_color
+button_key_inactive_color = dialog_color
+button_label_inactive_color = dialog_color
+button_active_color = (white,cyan,on)
+button_key_active_color = button_active_color
+button_label_active_color = (black,cyan,on)
+tag_key_selected_color = (white,cyan,on)
+item_selected_color = tag_key_selected_color
+form_text_color = (BLUE,black,ON)
+form_item_readonly_color = (green,black,on)
+itemhelp_color = (white,cyan,off)
+inputbox_color = dialog_color
+inputbox_border_color = dialog_color
+searchbox_color = dialog_color
+searchbox_title_color = title_color
+searchbox_border_color = border_color
+position_indicator_color = title_color
+menubox_color = dialog_color
+menubox_border_color = border_color
+item_color = dialog_color
+tag_color = title_color
+tag_selected_color = button_label_active_color
+tag_key_color = button_key_inactive_color
+check_color = dialog_color
+check_selected_color = button_active_color
+uarrow_color = screen_color
+darrow_color = screen_color
+form_active_text_color = button_active_color
+gauge_color = title_color
+border2_color = dialog_color
+searchbox_border2_color = dialog_color
+menubox_border2_color = dialog_color
+separate_widget = ''
+tab_len = 0
+visit_items = off
+use_shadow = off
+use_colors = on
+EOF_DIALOGRC
+	export DIALOGRC="$dialogRcFile"
+}
+
+# Testa se o terminal suporta caracteres gráficos estendidos
+sh_ascii_lines() {
+	#Isso força o dialog a usar caracteres ASCII básicos para as bordas.
+	#if [[ "$LANG" =~ 'UTF-8' ]]; then
+	if [[ "$(printf '\u250C')" =~ "┌" ]]; then
+		export NCURSES_NO_UTF8_ACS=1 # Terminal suporta ACS
+	else
+		export NCURSES_NO_UTF8_ACS=0 # Terminal NÃO suporta ACS
+	fi
+}
+
+sh_setEnvironment() {
+	[[ ! -e "$dialogRcFile" ]] && sh_create_dialogrc
+	sh_ascii_lines
+}
+
+sh_checkroot() {
+	if [[ "$(id -u)" != "0" ]]; then
+		elevate_to_root "$@"
+	fi
+	ccabec+='root'
+}
+
+elevate_to_root() {
+	log_err "This script must be run as root. Elevating privileges..."
+
+	# Tenta usar sudo primeiro (caso esteja configurado)
+	if command -v sudo >/dev/null 2>&1; then
+		exec sudo bash "$0" "$@"
+	fi
+
+	# Se sudo falhar, tenta su
+	if command -v su >/dev/null 2>&1; then
+		exec su -c "$0 $*"
+	fi
+
+	die "Error: Unable to elevate privileges. Run manually as root."
+}
+
+log_err() {
+	printf " %b %s\\n" "${CROSS}" "${*}"
+}
+
+mensagem() {
+	dialog \
+		--colors \
+		--no-collapse \
+		--title "$ctitle" \
+		--backtitle "$ccabec" \
+		--infobox "$*" \
+		10 60
+}
+
+function human_to_bytes() {
+  local size="$1"
+  [[ -z "$size" ]] && size="0"
+  local lastletter=${size:0-1}
+  local count=0
+  local upper=${lastletter^^}
+
+  size=${size/$lastletter/$upper}
+  LC_ALL=C numfmt --from=iec "$size"
+  return "$?"
+}
+export -f human_to_bytes
+
+function human_to_size() {
+  human_to_bytes "$1"
+  return "$?"
+}
+export human_to_size
+
+function size_to_human() {
+  local size="$1"
+  [[ -z "$size" ]] && size="0"
+  LC_ALL=C numfmt --to=si "$size"
+  return "$?"
+}
+export -f size_to_human
+
+sh_execcopia() {
+	ORIGEM="/home/"
+	DESTINO="/mnt/xraydisk/home/"
+	DEST="$DESTINO"
+	PONT='|/—\' # Ponteiros de um hélice do lado direito
+	nVal=0
+
+	# Função para calcular o tamanho de diretórios
+	sizeof() {
+		du -sb "$1" 2>/dev/null | cut -f1
+	}
+
+	# Função para verificar se o processo está rodando
+	running() { ps "$1" | grep "$1" >/dev/null; }
+	TITLE="chili-rsync-home"
+	INTERVALO=0.5
+	DIR_DESTINO="$DESTINO/${ORIGEM##*/}"
+	MSG="Aguarde, copiando... if=$ORIGEM of=$DESTINO"
+
+	mensagem "Aguarde, computando arquivos para copiar..."
+
+	# Calcula o tamanho total da origem (em blocos)
+	TOTAL=$(sizeof "$ORIGEM")
+#	TOTAL=$((TOTAL + 1024000)) # Ajuste para garantir que o total tenha uma margem
+	TOTALMB=$((TOTAL / 1024))
+
+	# Calcula o tamanho atual do destino (quanto já foi copiado)
+#	COPIADO_DESTINO=$(sizeof "$DESTINO")
+#	COPIADO_DESTINOMB=$((COPIADO_DESTINO / 1024)) # Convertendo para MB
+
+#	COPIADO_ORIGEM=$(sizeof "$ORIGEM")
+#	COPIADO_ORIGEMMB=$((COPIADO_ORIGEM / 1024))
+
+	# Exibe o log de inicialização
+	log="/tmp/${_APP_}.log"
+	[ -e "$log" ] && rm -f "$log"
+
+	# Inicia o processo de rsync em segundo plano
+	rsync -aAXv "$ORIGEM" "$DESTINO" 1>&2 >"$log" &
+	export CPPID=$!
+
+	# Calcula o progresso com base no que já foi copiado
+	(
+		while running "$CPPID"; do
+			# Verifica quanto foi copiado até o momento para o destino
+			COPIADO_ORIGEM=$(sizeof "$ORIGEM")
+			COPIADO_ORIGEMMB=$((COPIADO_ORIGEM / 1024))
+			COPIADO_DESTINO=$(sizeof "$DESTINO")
+			COPIADO_DESTINOMB=$((COPIADO_DESTINO / 1024))
+
+			# Calcular a diferença entre a origem e o destino
+			RESTANTE=$((COPIADO_ORIGEMMB - COPIADO_DESTINOMB)) # Quanto ainda falta para copiar
+
+			# Calcular a porcentagem de progresso
+			if ((TOTAL > 0)); then
+#				PERCENTAGEM=$((COPIADO_DESTINOMB * 100 / TOTALMB)) # Porcentagem do que foi copiado
+				PERCENTAGEM=$((COPIADO_DESTINO * 100 / TOTAL)) # Porcentagem do que foi copiado
+			else
+				PERCENTAGEM=0
+			fi
+
+			# Exibe o progresso
+			LASTFILE=$(tail -n1 "$log")
+			${DIALOG} --colors \
+				--title $TITLE \
+				--gauge "$MSG           							\nFalta ${BOLD}${YELLOW}$((100 - PERCENTAGEM))%${RESET} para completar a tarefa ${AZUL}${PONT:nval:1}\ZB\Zn \
+           							\n\nDestino    : ${BOLD}${YELLOW}$DESTINO${RESET}
+           							\nTotal      :	"$(numfmt --grouping $TOTAL)" \
+           							\nCopiado    : ${GREEN}${REVERSE}"$(numfmt --grouping $COPIADO_DESTINO)"${RESET}\
+           							\nArquivo    :	${LASTFILE}\
+           							\n" 13 130 0 <<<$PERCENTAGEM
+
+			((nval++))
+		done
+	)
+
+	return 0
+}
+
+sh_checkroot
+sh_execcopia
