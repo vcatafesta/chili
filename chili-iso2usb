@@ -1,48 +1,48 @@
-#!/bin/bash
-# Chili iso2usb - Utility to write iso file to pendrive/device
-# Copyright (c) 2019-2022, Vilmar Catafesta <vcatafesta@gmail.com>
-# All rights reserved.
+#!/usr/bin/env bash
 #
-# Created: 2019/06/14
-# Altered: 2022/05/26
+#  chili-iso2usb - Utility to write iso file to pendrive/device
+#  Created: 2019/06/14
+#  Altered: 2024/10/26
+#  Updated: sáb 29 mar 2025 00:03:07 -04
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-# 3. The name of the copyright holders or contributors may not be used to
-#    endorse or promote products derived from this software without
-#    specific prior written permission.
+#  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
+#  All rights reserved.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-# PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
-# HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-#########################################################################
-_VERSION_="1.5.20230319"
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AS IS'' AND ANY EXPRESS OR
+#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
+_VERSION_="1.6.20250329"
 readonly DEPENDENCIES=(yad dialog dd sed grep cat awk fdisk blkid)
 
 check_deps() {
-	local errorFound=0
+	local errorFound=false
 	declare -a missing
 
 	for f in "${DEPENDENCIES[@]}"; do
-		[[ -z $(command -v $f) ]] && missing+=($f) && errorFound=1 && printf "ERRO: não encontrei o comando '$f'\n"
+		if [[ -z $(command -v "$f") ]]; then
+			missing+=("$f")
+			errorFound=true
+			printf "%s\n" "ERRO: não encontrei o comando '$f'"
+		fi
 	done
-	#[[ ${#missing[@]} -ne 0 ]]
-	if (($errorFound)); then
+	if $errorFound; then
 		echo "---IMPOSSÍVEL CONTINUAR---"
 		echo "Esse script necessita dos comandos listados acima" >&2
 		echo "Instale-os e/ou verifique se estão no seu \$PATH" >&2
@@ -51,8 +51,9 @@ check_deps() {
 }
 
 yad_message() {
-	msg="$1"
-	txt="<b><big>$1</big></b>"
+	local msg="$1"
+
+	txt="<b><big>$msg</big></b>"
 	yad "${comargs[@]}" --image=gtk-dialog-info --text="$txt" --button="Done":1
 }
 
@@ -66,16 +67,15 @@ info() {
 }
 
 sh_initvars() {
-	# choosedisk
-	: ${ARRAY_DSK_DEVICES=()}
-	: ${ARRAY_DSK_DISKS=()}
-	: ${ARRAY_DSK_SIZE=()}
-	: ${ARRAY_DSK_MODEL=()}
-	: ${ARRAY_DSK_TRAN=()}
-	: ${ARRAY_DSK_LABEL=()}
-	sep='\xe2\x94\x82'
-
-	app="Chili iso2usb $_VERSION_"
+	declare -x COMARGS
+	: "${ARRAY_DSK_DEVICES=()}"
+	: "${ARRAY_DSK_DISKS=()}"
+	: "${ARRAY_DSK_SIZE=()}"
+	: "${ARRAY_DSK_MODEL=()}"
+	: "${ARRAY_DSK_TRAN=()}"
+	: "${ARRAY_DSK_LABEL=()}"
+	: sep='\xe2\x94\x82'
+	app="chili-iso2usb $_VERSION_"
 	comargs=(
 		--title="$app"
 		--center
@@ -84,13 +84,10 @@ sh_initvars() {
 		--text-align=center
 		--buttons-layout=center
 		--borders=10
-		--image=/opt/chili-iso2usb/src/pendrive.png
+		--image=/usr/share/pixmaps/pendrive.png
 	)
 
-	declare -x COMARGS=$(printf "%q " "${comargs[@]}")
-	gcomargs=($(printf "%s " "${COMARGS}"))
-	# echo "${#gcomargs[@]} elements in gcomargs"
-
+	COMARGS=$(printf "%q " "${comargs[@]}")
 	LINGUA=$(echo "$LANG" | cut -c1-2)
 	case $LINGUA in
 	pt)
@@ -133,23 +130,27 @@ sh_initvars() {
 }
 
 sh_chooseiso() {
+	local result
+
 	isofile=$(zenity \
 		--file-selection \
 		--title="${MSG[0]}" \
-		--filename=$HOME/ \
+		--filename="$HOME"/ \
 		--file-filter=*.iso)
-	[ $? -eq 0 ] || exit 0
+	result="$?"
+	[[ "$result" -eq 0 ]] || exit 0
 }
 
 sh_disk_info() {
 	unset ARRAY_DSK_{DISKS,DEVICES,SIZE,TRAN,MODEL,LABEL}
 	local {NAME,PATH,SIZE,TRAN,MODEL,LABEL}_
-	while read line; do
+
+	while read -r line; do
 		eval "${line//=/_=}"
-		ARRAY_DSK_DISKS+=($NAME_)
-		ARRAY_DSK_DEVICES+=($PATH_)
-		ARRAY_DSK_SIZE+=($SIZE_)
-		ARRAY_DSK_TRAN+=(${TRAN_:-blk})
+		ARRAY_DSK_DISKS+=("$NAME_")
+		ARRAY_DSK_DEVICES+=("$PATH_")
+		ARRAY_DSK_SIZE+=("$SIZE_")
+		ARRAY_DSK_TRAN+=("${TRAN_:-blk}")
 		ARRAY_DSK_MODEL+=("${MODEL_:-unknown}")
 		ARRAY_DSK_LABEL+=("${LABEL_:-none}")
 	done < <(lsblk -Pao TYPE,NAME,PATH,SIZE,TRAN,MODEL,LABEL | grep usb)
@@ -157,13 +158,12 @@ sh_disk_info() {
 
 sh_choosedisk() {
 	sh_disk_info
-	export USBDSK=()
 	local i
-	local n=0
 	local nc=0
+	USBDSK=()
+	export USBDSK
 
 	for blkdsk in "${ARRAY_DSK_DEVICES[@]}"; do
-		#		USBDSK+="$(printf "%s$sep%-6s$sep%6s$sep%-30s\n" "$blkdsk" "${ARRAY_DSK_TRAN[$nc]}" "${ARRAY_DSK_SIZE[$nc]}" "${ARRAY_DSK_MODEL[$nc]}")!"
 		USBDSK+="$blkdsk ${ARRAY_DSK_TRAN[$nc]} ${ARRAY_DSK_SIZE[$nc]} ${ARRAY_DSK_MODEL[$nc]} ${ARRAY_DSK_LABEL[$nc]}!"
 		((nc++))
 	done
@@ -172,22 +172,26 @@ sh_choosedisk() {
 sh_write() {
 	local i=0
 	local l=0
-	local xtemp=$(mktemp)
-	local sectorsize=$(fdisk -s "$isofile")
-	(while [ $l -lt $sectorsize ]; do
-		echo "dd if=${isofile} of=${sd} bs=8192000 count=1 skip=$i seek=$i oflag=direct" >$xtemp
-		dd if=$isofile of=${sd} bs=8192000 count=1 skip=$i seek=$i oflag=direct >>$xtemp 2>&1
-		[ $? -ne 0 ] && break
-		rm $xtemp
-		i=$(($i + 1))
-		l=$(($l + 8000))
-		q=$(($l * 100 / $sectorsize))
+	local xtemp
+	local sectorsize
+
+	xtemp="$(mktemp)"
+	sectorsize=$(fdisk -s "$isofile")
+	(while [[ $l -lt "$sectorsize" ]]; do
+		echo "dd if=$isofile of=$sd bs=8192000 count=1 skip=$i seek=$i oflag=direct" >"$xtemp"
+		if ! dd if="$isofile" of="${sd}" bs=8192000 count=1 skip="$i" seek="$i" oflag=direct >>"$xtemp" 2>&1; then
+			break
+		fi
+		rm "$xtemp"
+		i=$(("$i" + 1))
+		l=$(("$l" + 8000))
+		q=$(("$l" * 100 / "$sectorsize"))
 		echo -e "$q \n#""${MSG[10]}"" : $q %"
 	done) | zenity --progress --width 650 --auto-close --title "${MSG[11]}" "$isofile"
 
-	if [ -f $xtemp ]; then
-		zenity --error --text="$(cat $xtemp)"
-		rm $xtemp
+	if [[ -f "$xtemp" ]]; then
+		zenity --error --text="$(cat "$xtemp")"
+		rm "$xtemp"
 		exit 1
 	else
 		sync
@@ -207,7 +211,7 @@ sh_main() {
 			--button="Go!:2"
 			--form
 			--columns=1
-			--field="Device:":CB "$USBDSK"
+			--field="Device:":CB "${USBDSK[*]}"
 			--field="ISO File::FL"
 		)
 		result=$(yad "${cmdmain[@]}")
@@ -220,8 +224,11 @@ sh_main() {
 			;;
 		1) exit 0 ;;
 		2)
-			export sd=$(echo "${result}" | cut -d"|" -f1 | awk '{print $1}')
-			export isofile=$(echo "${result}" | cut -d"|" -f2)
+			sd=$(echo "${result}" | cut -d"|" -f1 | awk '{print $1}')
+			isofile=$(echo "${result}" | cut -d"|" -f2)
+			export sd
+			export isofile
+
 			if [[ $isofile == "" ]]; then
 				yad_message "${MSG[0]}"
 				continue
@@ -235,8 +242,7 @@ sh_main() {
 		esac
 	done
 }
-colddir=$PWD
+
 check_deps
 sh_initvars
 sh_main
-cd $colddir

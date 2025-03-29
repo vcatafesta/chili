@@ -10,7 +10,7 @@
 #
 #  Created: 2019/04/05 - 23:02 -04
 #  Altered: 2024/12/09 - 01:56 -04
-#  Updated: dom 16 mar 2025 01:57:07 -04
+#  Updated: qui 27 mar 2025 05:16:59 -04
 #
 #  Copyright (c) 2019-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #
@@ -41,7 +41,7 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 shopt -s extglob # Habilita padrões estendidos
 
 declare -r _APP_="${0##*/}"
-declare -r _VERSION_="5.3.16.20250316"
+declare -r _VERSION_="5.3.27.20250327"
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncounter=0
@@ -656,6 +656,44 @@ sh_cmd_job() {
 	return "$lretval"
 }
 
+sh_cmd_job_infobox() {
+	local cmsg="$1"
+	local cjob="$2"
+	local erro_fatal="$3"
+	local lretval=0
+
+	# Cria um log temporário exclusivo
+	local tmp_log=$(mktemp)
+
+	# Executa o comando localmente e captura o código de saída
+	eval "$cjob" >"$tmp_log" 2>&1 &
+	local pid_job=$!
+
+	# Exibe o log em tempo real usando dialog --infobox
+	if ((grafico)); then
+		while kill -0 "$pid_job" 2>/dev/null; do
+			${DIALOG} \
+			  --no-collapse \
+			  --colors \
+				--title "$cmsg - Log (Realtime)" \
+				--backtitle "$ctitle" \
+				--infobox "$(tail -n 13 "$tmp_log")" \
+				15 100
+      sleep 0.3
+		done
+	fi
+
+	# Aguarda o término do comando e captura o código de saída
+	wait "$pid_job"
+	lretval=$?
+
+	# Remove o log temporário
+	rm -f "$tmp_log"
+
+	# Avalia o resultado da execução
+	[[ -z "$erro_fatal" ]] && return "$lretval" || return "$erro_fatal"
+}
+
 msg_info() {
 	local msg="$1"
 	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
@@ -717,47 +755,6 @@ sh_chroot_job_msg() {
 			--no-ok \          # Desabilita o botão "OK"
 		--no-cancel \       # Desabilita o botão "Cancelar"
 		--no-close &        # Impede que o usuário feche a janela
-		local pid_dialog=$! # Obtém o PID do dialog
-	fi
-
-	# Aguarda o término do processo chroot
-	wait "$pid_chroot"
-	lretval=$?
-
-	# Fecha o dialog após o término do chroot
-	if ((grafico)); then
-		kill "$pid_dialog" 2>/dev/null # Fecha o dialog
-		wait "$pid_dialog" 2>/dev/null # Aguarda o término do dialog
-	fi
-
-	evaluate_retval "$lretval" "$erro_fatal"
-	[[ -z "$erro_fatal" ]] && return "$lretval" || return "$erro_fatal"
-}
-
-sh_chroot_job_tailbox() {
-	local cmsg="$1"
-	local cjob="$2"
-	local erro_fatal="$3"
-	local lretval=0
-
-	last_msg="$cmsg"
-	msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
-
-	# Executa o comando no chroot e redireciona a saída para o arquivo de log e logger
-	chroot "$dir_install" "$shell" -c "$cjob" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER" &
-	local pid_chroot=$! # Obtém o PID do processo chroot
-
-	# Exibe o log em tempo real usando dialog --tailbox (se estiver em modo gráfico)
-	if ((grafico)); then
-		(
-			while kill -0 "$pid_chroot" 2>/dev/null; do
-				# Mantém o dialog aberto enquanto o processo chroot estiver em execução
-				dialog \
-					--title "Log de Instalação (Realtime)" \
-					--tailbox "$BOOTLOG" 20 80
-				sleep 1 # Evita que o loop consuma muita CPU
-			done
-		) &
 		local pid_dialog=$! # Obtém o PID do dialog
 	fi
 
@@ -855,49 +852,9 @@ sh_chroot_job_infobox() {
 	[[ -z "$erro_fatal" ]] && return "$lretval" || return "$erro_fatal"
 }
 
-sh_chroot_job_tail() {
-	local cmsg="$1"
-	local cjob="$2"
-	local erro_fatal="$3"
-	local lretval=0
-
-	last_msg="$cmsg"
-	msg "INFO" "$last_msg" "$(log_info_msg "$last_msg")"
-
-	# Executa o comando no chroot e redireciona a saída para o arquivo de log e logger
-	chroot "$dir_install" "$shell" -c "$cjob" 2>&1 | tee -i -a "$BOOTLOG" >"$LOGGER" &
-	local pid_chroot=$! # Obtém o PID do processo chroot
-
-	# Exibe o log em tempo real usando dialog --tailbox
-	dialog --title "Log de Instalação (Realtime)" --tailbox "$BOOTLOG" 20 80
-
-	# Aguarda o término do processo chroot
-	wait "$pid_chroot"
-	lretval=$?
-
-	evaluate_retval "$lretval" "$erro_fatal"
-	[[ -z "$erro_fatal" ]] && return "$lretval" || return "$erro_fatal"
-}
-
-# Função para exibir o log em tempo real
-exibir_log_realtime() {
-	dialog --title "Log de Instalação (Realtime)" --tailbox "$BOOTLOG" 20 80
-	#	# Exemplo de uso
-	#	(
-	#		# Executa a instalação em segundo plano
-	#		sh_chroot_job "Instalando pacote A..." "comando_de_instalacao_1" &
-	#
-	#		# Exibe o log em tempo real
-	#		exibir_log_realtime
-	#
-	#		# Aguarda o término da instalação
-	#		wait
-	#	)
-}
-
 fmt() {
-	printf "${bold}${yellow}%03d/%03d${reset}" "$ncounter" "$njobs"
-	return $?
+  printf "${bold}${yellow}%03d/%03d${reset}" "$ncounter" "$njobs"
+  return $?
 }
 
 unfmt() {
@@ -1032,7 +989,7 @@ info() {
 		--backtitle "$ccabec" \
 		--ok-label "${cmsg_ok[$LC_DEFAULT]}" \
 		--msgbox "$*" \
-		10 60
+		0 0
 }
 
 display_info() {
@@ -2390,6 +2347,7 @@ sh_getNvme() {
 	tran="$(sh_splitarray "${AARRAY_DSK_DEVICES[$_DEVICE]}" 3)"
 	case "$tran" in
 	nvme) echo 'p' ;;
+	mmc) echo 'p' ;;
 	loop) echo 'p' ;;
 	lvm) echo 'p' ;;
 	*) echo '' ;;
@@ -2602,7 +2560,7 @@ sh_choosewm() {
 
 	if [[ "$_SOURCE" = "local" ]]; then
 		alerta "$ccabec" "Instalação escolhida foi via local/ISO, não é necessário alterar nada aqui"
-		_WINDOWMANAGER='tty'
+		_WINDOWMANAGER=('tty')
 		LWM=$true
 		return
 	fi
@@ -2613,15 +2571,14 @@ sh_choosewm() {
 	aWm[i3wm]="i3 is a tiling window manager inspired by wmii"
 	aWm[lxqt]="The 'Lightweight Qt Desktop Environment'"
 	aWm[mate]="The MATE Desktop Environment is the continuation of GNOME 2"
+	aWm[openbox]="Highly configurable and lightweight X11 window manager"
 	aWm[wmaker]="An X11 window manager with a NEXTSTEP look and feel"
 	#	aWm[awesome]="Awesome"
 	#	aWm[blackbox]="Blackbox"
 	#	aWm[bspwm]="Tiling window manager based on binary space partitioning"
 	#	aWm[dwm]="Dwm"
-	#	aWm[fluxbox]="Fluxbox"
+	# aWm[fluxbox]="A lightweight and highly-configurable window manager"
 	#	aWm[lxde]="The 'Lightweight X11 Desktop Environment'"
-	#	aWm[mate]="Mate"
-	#	aWm[openbox]="Openbox"
 	#	aWm[plasma]="Kde Plasma-Desktop"
 	#	aWm[sway]="Sway"
 	#	aWm[twm]="Twm"
@@ -2634,13 +2591,13 @@ sh_choosewm() {
 		aFlag[$x]='on'
 	done
 
+  #		tty "${aWm[tty]}" "${aFlag[tty]}" \
 	#		awesome "${aWm[awesome]}" "${aFlag[awesome]}" \
 	#		bspwm "${aWm[bspwm]}" "${aFlag[bspwm]}" \
 	#		dwm "${aWm[dwm]}" "${aFlag[dwm]}" \
 	#		blackbox "${aWm[blackbox]}" "${aFlag[blackbox]}" \
-	#		fluxbox "${aWm[fluxbox]}" "${aFlag[fluxbox]}" \
+  #   fluxbox "${aWm[fluxbox]}" "${aFlag[fluxbox]}" \
 	#		lxde "${aWm[lxde]}" "${aFlag[lxde]}" \
-	#		openbox "${aWm[openbox]}" "${aFlag[openbox]}" \
 	#		sway "${aWm[sway]}" "${aFlag[sway]}" \
 	#		twm "${aWm[twm]}" "${aFlag[twm]}" \
 	wm=$(${DIALOG} \
@@ -2652,12 +2609,12 @@ sh_choosewm() {
 		--ok-label "${cmsg_Aceitar[$LC_DEFAULT]}" \
 		--checklist "${cmsg_LBL_check[$LC_DEFAULT]}" \
 		0 0 0 \
-		tty "${aWm[tty]}" "${aFlag[tty]}" \
 		enlightenment "${aWm[enlightenment]}" "${aFlag[enlightenment]}" \
 		hyprland "${aWm[hyprland]}" "${aFlag[hyprland]}" \
 		i3wm "${aWm[i3wm]}" "${aFlag[i3wm]}" \
 		lxqt "${aWm[lxqt]}" "${aFlag[lxqt]}" \
     mate "${aWm[mate]}" "${aFlag[mate]}" \
+    openbox "${aWm[openbox]}" "${aFlag[openbox]}" \
 		wmaker "${aWm[wmaker]}" "${aFlag[wmaker]}" \
 		2>&1 >/dev/tty)
 
@@ -2676,7 +2633,8 @@ sh_choosewm() {
 	#	else
 	#		LCUSTOM=false
 	#	fi
-	_WINDOWMANAGER=($(strtoarray "$wm"))
+	_WINDOWMANAGER=('tty')
+	_WINDOWMANAGER+=($(strtoarray "$wm"))
 	if grep -qi hyprland <<<"${_WINDOWMANAGER[@]}"; then
 		HYPRLAND=$true
 	fi
@@ -2849,7 +2807,7 @@ sh_chooseDisk() {
 			--extra-button --extra-label "${cmsg_Configurar}" \
 			--menu "${cmsg_LABEL}\n\n\
 $(printf "%${nlen}s$sep%-4s$sep%-6s$sep%6s$sep%-6s$sep%-15s$sep%-30s" "DEVICE" "BOOT" "TRAN" "SIZE" "PTTYPE" "LABEL" "MODEL")" \
-			0 0 25 "${array[@]}" 2>&1 >/dev/tty)
+			0 0 0 "${array[@]}" 2>&1 >/dev/tty)
 
 		exit_status=$?
 		case $exit_status in
@@ -2990,6 +2948,26 @@ sh_choosePartition() {
 		local dsk
 
 		LPARTITION=$false
+
+		if [[ "${#ARRAY_PART_DEVICES[@]}" -eq 0 ]]; then
+#  info "${cmsg_TitleFileSystem[LC_DEFAULT]}"  "\
+#${BOLD}${RED}ERROR:${RESET} No partition has been defined in the system\n
+#Create it or define:\n
+#  - disk table  : gpt\n
+#  - partition 1 : bios mbr\n
+#  - partition 2 : fat esp\n
+#  - partition 3 : linux\n"
+
+  info "${cmsg_TitleFileSystem[LC_DEFAULT]}"  "\
+${BOLD}${RED}ERRO:${RESET} Nenhuma partição foi definida no sistema.\n\n
+Para corrigir, use o menu disco/configurar e crie as partições necessárias ou defina-as da seguinte forma:\n
+  -  Tabela de partições: gpt\n
+  -  Partição 1: BIOS (mbr) — usada para compatibilidade de boot legacy\n
+  -  Partição 2: ESP (fat) — partição EFI para boot em sistemas UEFI\n
+  -  Partição 3: Linux — onde o sistema operacional será instalado\n"
+      return 1
+		fi
+
 		for i in "${ARRAY_PART_DEVICES[@]}"; do
 			array[n++]="$i"
 			if ((nlen < ${#i})); then
@@ -4906,7 +4884,7 @@ sh_setLanguage() {
 		"Disque de test"
 		"Disco de prueba"
 		"Disco di prova")'
-		'cmsg_ContinuarParticionamento=("Continuar com o particionamento em"
+		'cmsg_ContinuarParticionamento=("Continuar com o particionamento automático em"
 		"Continue with partitioning on"
 		"Fahren Sie mit Partitionierung fort"
 		"Continuer avec le partitionnement sur"
@@ -5721,8 +5699,10 @@ sh_checkUpdatePackages() {
 
 	if [[ ! -f "$TMP_FILE" ]]; then
 		if conf "** UPDATE **" "É recomendado sincronizar e atualizar os utilitários antes da instalação. \n\n${AMARELO}Deseja proceder ?"; then
-			sh_msg_job "Aguarde alguns instantes, sincronizando e atualizando..."
-			pacman -Sy --needed --noconfirm "${PackagesToUpdate[@]}" --overwrite \* &>/dev/null
+#			sh_msg_job "Aguarde alguns instantes, sincronizando e atualizando..."
+#			pacman -Sy --needed --noconfirm "${PackagesToUpdate[@]}" --overwrite \* &>/dev/null
+      sh_cmd_job_infobox "Aguarde alguns instantes, sincronizando e atualizando..." \
+        "pacman -Syu --needed --noconfirm --overwrite \*"
 			sh_msg_job "Reiniciando o script pela primeira vez..."
 			touch "$TMP_FILE"
 			exec "$0" "$@"
@@ -5833,16 +5813,15 @@ sh_install_wm() {
 		"i3wm") _WM_TO_INSTALL+=(comm-i3wm) ;;
 		"lxqt") _WM_TO_INSTALL+=(comm-lxqt) ;;
 		"mate") _WM_TO_INSTALL+=(comm-mate) ;;
+		"openbox") _WM_TO_INSTALL+=(comm-openbox) ;;
 		"wmaker") _WM_TO_INSTALL+=(comm-wmaker) ;;
 		"awesome") ;;
 		"bspwm") ;;
 		"blackbox") ;;
 		"dwm") ;;
 		"fluxbox") ;;
-		"openbox") ;;
 		"sway") ;;
 		"twm") ;;
-		"mate") ;;
 		"lxde") ;;
 		esac
 	done
@@ -5876,9 +5855,9 @@ sh_install() {
 	fi
 	grafico=$oldgrafico
 	sh_disk_part_info
-	if ! ((LVM)); then
-		notconf "*** LVM ***" "\n\n${BOLD}${WHITE}Configurar LVM ?" || { sh_confLvm || sh_cancelLiveInstall "$@"; }
-	fi
+#	if ! ((LVM)); then
+#		notconf "*** LVM ***" "\n\n${BOLD}${WHITE}Configurar LVM ?" || { sh_confLvm || sh_cancelLiveInstall "$@"; }
+#	fi
 	if ! ((LGRUB)); then
 		notconf "*** BOOTLOADER ***" "${cmsg_LayoutAtual[$LC_DEFAULT]}:\n\n" \
 			"Bootloader : (${_DISKTABLE}) : ${RED}${AConfDisk[_BOOTLOADER]} | $(sh_splitarray "${AARRAY_DSK_DEVICES[$_BOOTLOADER]}" 2) | $(sh_splitarray "${AARRAY_DSK_DEVICES[$_BOOTLOADER]}" 4)${RESET}" \
@@ -5910,7 +5889,7 @@ sh_install() {
 	sh_update_keymap
 	sh_update_Xkeymap
 	sh_update_timezone
-	sh_tuning_tcp
+#	sh_tuning_tcp
 	sh_change_pam_d
 	sh_install_remove_packages
 	if $isArchLike && $liveOS; then
@@ -5984,22 +5963,23 @@ sh_main_menu() {
 			--extra-button --extra-label "${cmsg_Definicoes[$LC_DEFAULT]}" \
 			--title "$_APP_ - ${cmsg_MenuInstalacao[$LC_DEFAULT]} $(sh_getparamfile)" \
 			--menu "\n${cmsg_LABEL[$LC_DEFAULT]}" \
-			24 00 23 \
+			25 00 23 \
 			Auto "$cmsgInstalacao_Automatica" \
 			"${cmsg_Disco[$LC_DEFAULT]}" "${cmsg_descDisco[LC_DEFAULT]}" \
-			"BootLoader" "${cmsg_descBootLoader[LC_DEFAULT]}" \
+			"BootLoader" "${cmsg_descBootLoader[LC_DEFAULT]} (GRUB)" \
 			FileSystem "${cmsg_descFileSystem[LC_DEFAULT]}" \
 			"${cmsg_Teclado[$LC_DEFAULT]}" "${cmsg_descTeclado[LC_DEFAULT]}" \
 			"Timezone" "${cmsg_descTimezone[LC_DEFAULT]}" \
-			"Wifi" "${cmsg_descWifi[LC_DEFAULT]}" \
 			"Wm" "${cmsg_descWm[LC_DEFAULT]}" \
 			"Extra" "${cmsg_descExtra[LC_DEFAULT]}" \
 			"${cmsg_Instalar[$LC_DEFAULT]}" "${cmsg_descInstalar[$LC_DEFAULT]}" \
+			'↑↓' '↓↑' \
+			"Wifi" "${cmsg_descWifi[LC_DEFAULT]}" \
 			"Fde" "Full-Disk Encryption + Lvm (optional)" \
 			"Lvm" "Logical Volume Management (optional)" \
 			"Vg" "Delete/Clear Volume Group (VG) from LVM (optional)" \
 			"Chroot" "$cinitbind" \
-			"Clonedisk" "Util Clonedisk")
+			"Clonedisk" "Utilitário para Clonar Disco")
 
 		exit_status=$?
 		case $exit_status in
@@ -6021,11 +6001,12 @@ sh_main_menu() {
 		"BootLoader") sh_setBootLoader && [ -n "$LGRUB" ] && DEFITEM="FileSystem" ;;
 		"FileSystem") sh_choosePartition && [ -n "$LPARTITION" ] && DEFITEM="${cmsg_Teclado[$LC_DEFAULT]}" ;;
 		"${cmsg_Teclado[$LC_DEFAULT]}") sh_chooseKeymap && [ -n "$LKEYMAP" ] && DEFITEM="Timezone" ;;
-		"Timezone") sh_chooseTimezone && [ -n "$LTIMEZONE" ] && DEFITEM="Wifi" ;;
-		"Wifi") bash chili-wifi-config && DEFITEM="Wm" ;;
+		"Timezone") sh_chooseTimezone && [ -n "$LTIMEZONE" ] && DEFITEM="Wm" ;;
 		"Wm") sh_choosewm && [ -n "$LWM" ] && DEFITEM="Extra" ;;
 		"Extra") sh_confadduser && [ -n "$LEXTRA" ] && DEFITEM="${cmsg_Instalar[$LC_DEFAULT]}" ;;
 		"${cmsg_Instalar[$LC_DEFAULT]}") sh_install ;;
+    '↑↓') DEFITEM="${cmsg_Instalar[$LC_DEFAULT]}" ;;
+		"Wifi") bash chili-wifi-config && DEFITEM="${cmsg_Instalar[$LC_DEFAULT]}" ;;
 		"Fde") sh_confLvm && [ -n "$LFDE" ] && DEFITEM="${cmsg_Instalar[$LC_DEFAULT]}" ;;
 		"Lvm") sh_confLvm && [ -n "$LVM" ] && DEFITEM="${cmsg_Instalar[$LC_DEFAULT]}" ;;
 		"Vg") sh_chooseVg ;;
