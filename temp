@@ -1,0 +1,693 @@
+acpid                               # A daemon for delivering ACPI power management events with netlink support
+adafruit-boards-udev                # udev rule for adafruit boards
+adapta-gtk-theme                    # An adaptive Gtk+ theme based on Material Design Guidelines
+adobe-source-han-sans-cn-fonts      # Adobe Source Han Sans Subset OTF - Simplified Chinese OpenType/CFF fonts
+adobe-source-han-sans-jp-fonts      # Adobe Source Han Sans Subset OTF - Japanese OpenType/CFF fonts
+adobe-source-han-sans-kr-fonts      # Adobe Source Han Sans Subset OTF - Korean OpenType/CFF fonts
+adobe-source-sans-pro-fonts         # (Descrição não encontrada)
+adw-gtk-theme                       # The theme from libadwaita ported to GTK-3
+allow-input-accelerometer-udev      # Add uaccess tag to any accelerometer device, like nintendo switch pro controller
+android-tools                       # Android platform tools
+appimagelauncher                    # (Descrição não encontrada)
+apple-superdrive-udev               # udev rule that allows the Apple USB SuperDrive to function
+appmenu-gtk-module                  # Application Menu GTK+ Module
+arc-gtk-theme                       # A flat theme with transparent elements for GTK 2,3,4 and Gnome-Shell
+arc-icon-theme                      # Arc icon theme. Official releases only.
+auto-tweaks-browser                 # Auto optimize brave, chromium, epiphany, falkon, firefox, google-chrome, opera and vivaldi
+avrisp-udev                         # udev rules for AVR ISP Atmel programmer
+baobab                              # A graphical directory tree analyzer
+beauty-icon-theme                   # Icons BeautyFolders
+bibata-cursor-theme                 # Material Based Cursor Theme
+bigbashview                         # BigBashView is a python app to run Bash+HTML in a Desktop WebView
+bigcontrolcenter-base               # Base files and libs to bigcontrolcenter interfaces
+bigicons-papient                    # Package icons for biglinux based in Papirus and Fluent
+biglinux-grub-restore               # Restore your installed system
+biglinux-mime                       # Scriipt to solve some problems with sudo in KDE
+biglinux-systemd-swap               # Script for creating hybrid swap space from zram swaps, swap files and swap partitions - biglinux fork
+biglinux-webapps                    # Installs and removes BigLinux WebApps
+bigocrpdf                           # The simplest way to apply OCR to your PDF files, making it possible to search and copy texts from scanned files.
+big-store                           # A friendly interface using bigbashview and that uses a large part of pamac resources to offer users a practical and simple interface
+bitbox-udev                         # Udev rules to connect bitbox01 and bitbox02 hardware wallets to your linux box
+blueberry                           # Bluetooth configuration tool
+blueman                             # GTK+ Bluetooth Manager
+bluez                               # Daemons for the bluetooth protocol stack
+bluez-cups                          # CUPS printer backend for Bluetooth printers
+bluez-utils                         # Development and debugging utilities for the bluetooth protocol stack
+breeze-icons                        # Breeze icon theme
+btchip-udev                         # Udev rules to connect BTChip wallet to your linux box
+cantarell-fonts                     # Humanist sans serif font
+capitaine-cursors                   # An x-cursor theme inspired by macOS and based on KDE Breeze
+chili-base-config                   # Package configuration BASE/SERVER
+chili-install                       # Instalador TUI guiado/automatizado para Linux
+chili-nano-config                   # Custom nano configuration for ChiliLinux
+chili-restore-config                # Central de controle para restaurar configurações de ambiente e aplicativos
+chili-utils                         # Pacote de utilitários para GNU/Linux
+chili-webapps                       # Installs and removes WebApps
+comm-gnome-config                   # Package configuration Desktop Gnome
+comm-settings-gnome                 # Essential package to Community GNOME session
+comm-shell-orchis                   # Orchis Shell Theme Suite for BigCommunity
+comm-wallpapers-gnome               # set of wallpapers for Gnome
+compsize                            # Calculate compression ratio of a set of files on Btrfs
+conky                               # Light-weight system monitor for X, Wayland, and other things, too
+conky-manager2                      # GUI for managing Conky config files with options to browse and edit themes
+crazyflie-udev                      # udev rules for Crazyflie by bitcraze.
+crazyradio-udev                     # udev rules for Crazyradio by bitcraze.
+cups                                # OpenPrinting CUPS - daemon package
+cups-pdf                            # PDF printer for cups
+custom-tweaks                       # Adds specific information to be executed
+dconf-editor                        # GSettings editor for GNOME
+debtap-mod                          # Convert and install .deb packages
+dmidecode                           # Desktop Management Interface table related utilities
+ds4-disable-led                     # Disable led to playstation 4 joystick.
+duckypad-udev                       # Udev rules for duckypad
+ecrire                              # EFL Simple Text editor
+eog                                 # Eye of Gnome
+espeak-ng                           # Multi-lingual software speech synthesizer
+fatresize                           # A utility to resize FAT filesystems using libparted
+file-roller                         # Create and modify archives
+firefox                             # Fast, Private & Safe Web Browser
+fprintd                             # D-Bus service to access fingerprint readers
+fragments                           # BitTorrent client for GNOME
+fwupd                               # Simple daemon to allow session software to update firmware
+game-devices-udev                   # Udev rules for controllers
+gamemode                            # A daemon/lib combo that allows games to request a set of optimisations be temporarily applied to the host OS
+gapless                             # Play your music elegantly (AKA
+gdk-pixbuf-xlib                     # Deprecated Xlib integration for GdkPixbuf
+gdm                                 # Display manager and login screen
+geoclue                             # Modular geoinformation service built on the D-Bus messaging system
+gnome-bluetooth-3.0                 # GNOME Bluetooth Subsystem
+gnome-browser-connector             # Native browser connector for integration with extensions.gnome.org
+gnome-calculator                    # GNOME Scientific calculator
+gnome-calendar                      # Simple and beautiful calendar application designed to perfectly fit the GNOME desktop
+gnome-characters                    # A character map application
+gnome-clocks                        # Clocks applications for GNOME
+gnome-color-manager                 # GNOME Color Profile Tools
+gnome-control-center                # GNOME's main interface to configure various aspects of the desktop
+gnome-disk-utility                  # Disk Management Utility for GNOME
+gnome-extra                         # (Descrição não encontrada)
+gnome-font-viewer                   # A font viewer utility for GNOME
+gnome-keyring                       # Stores passwords and encryption keys
+gnome-menus                         # GNOME menu specifications
+gnome-network-displays              # Miracast implementation for GNOME
+gnome-online-accounts               # Single sign-on framework for GNOME
+gnome-remote-desktop                # GNOME Remote Desktop server
+gnome-session                       # The GNOME Session Handler
+gnome-shell-extension-appindicator  # AppIndicator/KStatusNotifierItem support for GNOME Shell
+gnome-shell-extension-arc-menu      # Application menu extension for GNOME Shell
+gnome-shell-extension-blur-my-shell # Extension that adds a blur look to different parts of the GNOME Shell
+gnome-shell-extension-dash-to-dock  # A dock for the GNOME Shell
+gnome-shell-extension-dash-to-panel # Extension for GNOME shell to combine the dash and main panel
+gnome-shell-extension-gsconnect     # KDE Connect implementation with GNOME Shell integration
+gnome-shell-extension-legacy-theme-auto-switcher # Change the GTK3 theme to light/dark variant based on the system color scheme on GNOME 42
+gnome-shell-extension-pano          # Next-gen Clipboard Manager for GNOME Shell (forked from -git package)
+gnome-shell-extensions              # Extensions for GNOME shell, including classic mode
+gnome-system-monitor                # View current processes and monitor system state
+gnome-text-editor                   # A simple text editor for the GNOME desktop
+gnome-themes-extra                  # Extra Themes for GNOME Applications
+gnome-tweaks                        # Graphical interface for advanced GNOME 3 settings (Tweak Tool)
+gnome-user-share                    # Easy to use user-level file sharing for GNOME
+gnome-video-effects                 # Collection of GStreamer effects for GNOME
+gnome-weather                       # Access current weather conditions and forecasts
+gparted                             # A Partition Magic clone, frontend to GNU Parted
+grilo-plugins                       # A collection of plugins for the Grilo framework
+grub-btrfs                          # Include btrfs snapshots in GRUB boot options
+grub-btrfs-timeshift                # Fix to timeshift and refresh grub configuration after new snapshot
+gtk-engine-murrine                  # GTK2 engine to make your desktop look like a 'murrina', an italian word meaning the art glass works done by Venicians glass blowers.
+gvfs                                # Virtual filesystem implementation for GIO
+gvfs-afc                            # Virtual filesystem implementation for GIO - AFC backend (Apple mobile devices)
+gvfs-dnssd                          # Virtual filesystem implementation for GIO - DNS-SD and WebDAV backend (macOS file sharing)
+gvfs-goa                            # Virtual filesystem implementation for GIO - Gnome Online Accounts backend (e.g. OwnCloud)
+gvfs-google                         # Virtual filesystem implementation for GIO - Google Drive backend
+gvfs-gphoto2                        # Virtual filesystem implementation for GIO - gphoto2 backend (PTP camera, MTP media player)
+gvfs-mtp                            # Virtual filesystem implementation for GIO - MTP backend (Android, media player)
+gvfs-nfs                            # Virtual filesystem implementation for GIO - NFS backend
+gvfs-onedrive                       # Virtual filesystem implementation for GIO - Microsoft OneDrive backend
+gvfs-smb                            # Virtual filesystem implementation for GIO - SMB/CIFS backend (Windows file sharing)
+gvfs-wsdd                           # Virtual filesystem implementation for GIO - Web Services Dynamic Discovery backend (Windows discovery)
+hplip                               # Drivers for HP DeskJet, OfficeJet, Photosmart, Business Inkjet and some LaserJet
+htop                                # Interactive process viewer
+inxi                                # Full featured CLI system information tool
+ipp-usb                             # allows using the IPP protocol, normally designed for network printers, to be used with USB printers as well
+keepkey-udev                        # Udev rules to connect a keepkey hardware wallet to your linux box
+lib32-fontconfig                    # Library for configuring and customizing font access
+lib32-gettext                       # GNU internationalization library (32-bit)
+lib32-glu                           # Mesa OpenGL utility library (32 bits)
+lib32-lcms2                         # Small-footprint color management engine, version 2 (32-bit)
+lib32-libcups                       # The CUPS Printing System - client libraries (32-bit)
+lib32-libice                        # X11 Inter-Client Exchange library (32-bit)
+lib32-libjpeg6-turbo                # libjpeg derivative with accelerated baseline JPEG compression and decompression
+lib32-libltdl                       # A generic library support script (32-bit)
+lib32-libpcap                       # A system-independent interface for user-level packet capture (32-bit)
+lib32-libpng12                      # A collection of routines used to create PNG format graphics files
+lib32-libpulse                      # A featureful, general-purpose sound server (32-bit client libraries)
+lib32-libva-intel-driver            # VA-API implementation for Intel G45 and HD Graphics family (32-bit)
+lib32-libxcomposite                 # X11 Composite extension library (32-bit)
+lib32-libxinerama                   # X11 Xinerama extension library (32-bit)
+lib32-libxrandr                     # X11 RandR extension library (32-bit)
+lib32-libxslt                       # XML stylesheet transformation library (32-bit)
+lib32-libxxf86vm                    # X11 XFree86 video mode extension library (32-bit)
+lib32-mesa                          # Open-source OpenGL drivers - 32-bit
+lib32-mesa-utils                    # Essential Mesa utilities (32-bit)
+lib32-mesa-vdpau                    # (Descrição não encontrada)
+lib32-mpg123                        # Console based real time MPEG Audio Player for Layer 1, 2 and 3 (32-bit)
+lib32-nss-mdns                      # glibc plugin providing host name resolution via mDNS (32-bit)
+lib32-openal                        # Cross-platform 3D audio library, software implementation (32-bit)
+lib32-pipewire-jack                 # Low-latency audio/video router and processor - 32-bit - JACK support
+lib32-sdl12-compat                  # SDL 1.2 runtime compatibility library using SDL 2.0
+lib32-sdl2-compat                   # An SDL2 compatibility layer that uses SDL3 behind the scenes - 32-bit
+lib32-v4l-utils                     # Userspace tools and conversion library for Video 4 Linux (32-bit)
+libappindicator-gtk3                # Allow applications to extend a menu via Ayatana indicators in Unity, KDE or Systray (GTK+ 3 library)
+libdnet                             # A simplified, portable interface to several low-level networking routines
+libmspack                           # A library for Microsoft compression formats
+libreoffice-fresh-pt-br             # Portuguese (Brasil) language pack for LibreOffice Fresh
+libva-vdpau-driver                  # VDPAU backend for VA API
+libxxf86vm                          # X11 XFree86 video mode extension library
+lightdm                             # A lightweight display manager
+lightdm-gtk-greeter                 # GTK+ greeter for LightDM
+lightdm-settings                    # A configuration tool for the LightDM display manager
+lightdm-slick-greeter               # A slick-looking LightDM greeter
+loupe                               # A simple image viewer for GNOME
+lxdm                                # Lightweight X11 Display Manager
+malcontent                          # Parental control support for applications
+manjaro-printer                     # Manjaro meta package for complete printing support
+manjaro-settings-samba              # Adds an smb.conf file for Manjaro and enables samba
+memtest86+                          # Advanced memory diagnostic tool legacy BIOS version
+memtest86+-efi                      # Advanced memory diagnostic tool EFI version
+mesa                                # Open-source OpenGL drivers
+mkinitcpio                          # Modular initramfs image creation utility
+mkinitcpio-nfs-utils                # ipconfig and nfsmount tools for NFS root support in mkinitcpio
+modemmanager                        # Mobile broadband modem management service
+mooltipass-udev                     # Udev rules to connect Mooltipass devices
+mtools                              # A collection of utilities to access MS-DOS disks
+mtpfs                               # A FUSE filesystem that supports reading and writing from any MTP device
+mutter                              # Window manager and compositor for GNOME
+nautilus                            # Default file manager for GNOME
+nautilus-admin                      # Extension for Nautilus to do administrative operations
+nautilus-empty-file                 # Provides context menu 'New Document' functionality for Nautilus
+nautilus-image-converter            # Nautilus extension to rotate/resize image files
+nautilus-share                      # Nautilus extension to share folder using Samba
+nbd                                 # tools for network block devices, allowing you to use remote block devices over TCP/IP
+networkmanager                      # Network connection manager and user applications
+network-manager-applet              # Applet for managing network connections
+network-manager-disable-random-mac  # Just fix problem with some internet devices
+networkmanager-openvpn              # NetworkManager VPN plugin for OpenVPN
+networkmanager-pptp                 # NetworkManager VPN plugin for PPTP
+network-manager-prefer-ipv4-dns     # Just fix problem with some internet providers
+networkmanager-vpnc                 # NetworkManager VPN plugin for VPNC
+nintendo-udev                       # udev rules for Nintendo Joy-Cons and Pro Controllers
+noto-fonts-emoji                    # Google Noto emoji fonts
+noto-fonts-lite                     # Google Noto TTF fonts (lite version)
+noto-nerd-fonts-lite                # Google Noto TTF fonts (nerd lite version)
+nss-mdns                            # glibc plugin providing host name resolution via mDNS
+ntp                                 # Network Time Protocol reference implementation
+numlockx                            # Turns on the numlock key in X11.
+numworks-udev                       # udev rules to connect the Numworks calculator to your linux box
+nx-udev                             # udev rule allowing communication with the Nintendo Switch without root
+onlykey-udev                        # OnlyKey udev rules
+openresolv                          # resolv.conf management framework (resolvconf)
+openrgb-udev-rules                  # UDEV rules for OpenRGB Flatpak and Appimage.
+openssh                             # SSH protocol implementation for remote login, command execution and file transfer
+open-vm-tools                       # The Open Virtual Machine Tools (open-vm-tools) are the open source implementation of VMware Tools
+orca                                # Screen reader for individuals who are blind or visually impaired
+osc-udev-storage                    # None
+p7zip                               # (Descrição não encontrada)
+packagekit                          # A system designed to make installation and updates of packages easier
+pamac-flatpak-plugin                # (Descrição não encontrada)
+pamac-updates-menu                  # Add in system menu entry to update system
+papers                              # Document viewer for PDF and other document formats aimed at the GNOME desktop
+paru                                # Feature packed AUR helper
+pavucontrol                         # PulseAudio Volume Control
+perl-file-mimeinfo                  # Determine file type, includes mimeopen and mimetype
+pipewire                            # Low-latency audio/video router and processor
+pipewire-alsa                       # Low-latency audio/video router and processor - ALSA configuration
+pipewire-biglinux-config            # Pipewire configuration to better audio compatibility
+pipewire-jack                       # Low-latency audio/video router and processor - JACK replacement
+pipewire-pulse                      # Low-latency audio/video router and processor - PulseAudio replacement
+plank                               # Elegant, simple, clean dock
+power-profiles-daemon               # Makes power profiles handling available over D-Bus
+powertop                            # A tool to diagnose issues with power consumption and power management
+python-nautilus                     # (Descrição não encontrada)
+python-pillow                       # Python Imaging Library (PIL) fork
+python-pip                          # The PyPA recommended tool for installing Python packages
+python-pyqt5                        # A set of Python bindings for the Qt5 toolkit
+python-pysmbc                       # Python 3 bindings for libsmbclient
+acpid                               # A daemon for delivering ACPI power management events with netlink support
+adafruit-boards-udev                # udev rule for adafruit boards
+adapta-gtk-theme                    # An adaptive Gtk+ theme based on Material Design Guidelines
+adobe-source-han-sans-cn-fonts      # Adobe Source Han Sans Subset OTF - Simplified Chinese OpenType/CFF fonts
+adobe-source-han-sans-jp-fonts      # Adobe Source Han Sans Subset OTF - Japanese OpenType/CFF fonts
+adobe-source-han-sans-kr-fonts      # Adobe Source Han Sans Subset OTF - Korean OpenType/CFF fonts
+adobe-source-sans-pro-fonts         # (Descrição não encontrada)
+adw-gtk-theme                       # The theme from libadwaita ported to GTK-3
+allow-input-accelerometer-udev      # Add uaccess tag to any accelerometer device, like nintendo switch pro controller
+android-tools                       # Android platform tools
+appimagelauncher                    # (Descrição não encontrada)
+apple-superdrive-udev               # udev rule that allows the Apple USB SuperDrive to function
+appmenu-gtk-module                  # Application Menu GTK+ Module
+arc-gtk-theme                       # A flat theme with transparent elements for GTK 2,3,4 and Gnome-Shell
+arc-icon-theme                      # Arc icon theme. Official releases only.
+auto-tweaks-browser                 # Auto optimize brave, chromium, epiphany, falkon, firefox, google-chrome, opera and vivaldi
+avrisp-udev                         # udev rules for AVR ISP Atmel programmer
+baobab                              # A graphical directory tree analyzer
+beauty-icon-theme                   # Icons BeautyFolders
+bibata-cursor-theme                 # Material Based Cursor Theme
+bigbashview                         # BigBashView is a python app to run Bash+HTML in a Desktop WebView
+bigcontrolcenter-base               # Base files and libs to bigcontrolcenter interfaces
+bigicons-papient                    # Package icons for biglinux based in Papirus and Fluent
+biglinux-grub-restore               # Restore your installed system
+biglinux-mime                       # Scriipt to solve some problems with sudo in KDE
+biglinux-systemd-swap               # Script for creating hybrid swap space from zram swaps, swap files and swap partitions - biglinux fork
+biglinux-webapps                    # Installs and removes BigLinux WebApps
+bigocrpdf                           # The simplest way to apply OCR to your PDF files, making it possible to search and copy texts from scanned files.
+big-store                           # A friendly interface using bigbashview and that uses a large part of pamac resources to offer users a practical and simple interface
+bitbox-udev                         # Udev rules to connect bitbox01 and bitbox02 hardware wallets to your linux box
+blueberry                           # Bluetooth configuration tool
+blueman                             # GTK+ Bluetooth Manager
+bluez                               # Daemons for the bluetooth protocol stack
+bluez-cups                          # CUPS printer backend for Bluetooth printers
+bluez-utils                         # Development and debugging utilities for the bluetooth protocol stack
+breeze-icons                        # Breeze icon theme
+btchip-udev                         # Udev rules to connect BTChip wallet to your linux box
+cantarell-fonts                     # Humanist sans serif font
+capitaine-cursors                   # An x-cursor theme inspired by macOS and based on KDE Breeze
+chili-base-config                   # Package configuration BASE/SERVER
+chili-install                       # Instalador TUI guiado/automatizado para Linux
+chili-nano-config                   # Custom nano configuration for ChiliLinux
+chili-restore-config                # Central de controle para restaurar configurações de ambiente e aplicativos
+chili-utils                         # Pacote de utilitários para GNU/Linux
+chili-webapps                       # Installs and removes WebApps
+comm-gnome-config                   # Package configuration Desktop Gnome
+comm-settings-gnome                 # Essential package to Community GNOME session
+comm-shell-orchis                   # Orchis Shell Theme Suite for BigCommunity
+comm-wallpapers-gnome               # set of wallpapers for Gnome
+compsize                            # Calculate compression ratio of a set of files on Btrfs
+conky                               # Light-weight system monitor for X, Wayland, and other things, too
+conky-manager2                      # GUI for managing Conky config files with options to browse and edit themes
+crazyflie-udev                      # udev rules for Crazyflie by bitcraze.
+crazyradio-udev                     # udev rules for Crazyradio by bitcraze.
+cups                                # OpenPrinting CUPS - daemon package
+cups-pdf                            # PDF printer for cups
+custom-tweaks                       # Adds specific information to be executed
+dconf-editor                        # GSettings editor for GNOME
+debtap-mod                          # Convert and install .deb packages
+dmidecode                           # Desktop Management Interface table related utilities
+ds4-disable-led                     # Disable led to playstation 4 joystick.
+duckypad-udev                       # Udev rules for duckypad
+ecrire                              # EFL Simple Text editor
+eog                                 # Eye of Gnome
+espeak-ng                           # Multi-lingual software speech synthesizer
+fatresize                           # A utility to resize FAT filesystems using libparted
+file-roller                         # Create and modify archives
+firefox                             # Fast, Private & Safe Web Browser
+fprintd                             # D-Bus service to access fingerprint readers
+fragments                           # BitTorrent client for GNOME
+fwupd                               # Simple daemon to allow session software to update firmware
+game-devices-udev                   # Udev rules for controllers
+gamemode                            # A daemon/lib combo that allows games to request a set of optimisations be temporarily applied to the host OS
+gapless                             # Play your music elegantly (AKA
+gdk-pixbuf-xlib                     # Deprecated Xlib integration for GdkPixbuf
+gdm                                 # Display manager and login screen
+geoclue                             # Modular geoinformation service built on the D-Bus messaging system
+gnome-bluetooth-3.0                 # GNOME Bluetooth Subsystem
+gnome-browser-connector             # Native browser connector for integration with extensions.gnome.org
+gnome-calculator                    # GNOME Scientific calculator
+gnome-calendar                      # Simple and beautiful calendar application designed to perfectly fit the GNOME desktop
+1 acpid                               # A daemon for delivering ACPI power management events with netlink support
+acpid                               # A daemon for delivering ACPI power management events with netlink support
+2 adafruit-boards-udev                # udev rule for adafruit boards
+adafruit-boards-udev                # udev rule for adafruit boards
+3 adapta-gtk-theme                    # An adaptive Gtk+ theme based on Material Design Guidelines
+adapta-gtk-theme                    # An adaptive Gtk+ theme based on Material Design Guidelines
+4 adobe-source-han-sans-cn-fonts      # Adobe Source Han Sans Subset OTF - Simplified Chinese OpenType/CFF fonts
+adobe-source-han-sans-cn-fonts      # Adobe Source Han Sans Subset OTF - Simplified Chinese OpenType/CFF fonts
+5 adobe-source-han-sans-jp-fonts      # Adobe Source Han Sans Subset OTF - Japanese OpenType/CFF fonts
+adobe-source-han-sans-jp-fonts      # Adobe Source Han Sans Subset OTF - Japanese OpenType/CFF fonts
+6 adobe-source-han-sans-kr-fonts      # Adobe Source Han Sans Subset OTF - Korean OpenType/CFF fonts
+adobe-source-han-sans-kr-fonts      # Adobe Source Han Sans Subset OTF - Korean OpenType/CFF fonts
+7 adobe-source-sans-pro-fonts         # 
+adobe-source-sans-pro-fonts         # (Descrição não encontrada)
+8 adw-gtk-theme                       # The theme from libadwaita ported to GTK-3
+adw-gtk-theme                       # The theme from libadwaita ported to GTK-3
+9 allow-input-accelerometer-udev      # Add uaccess tag to any accelerometer device, like nintendo switch pro controller
+allow-input-accelerometer-udev      # Add uaccess tag to any accelerometer device, like nintendo switch pro controller
+10 android-tools                       # Android platform tools
+android-tools                       # Android platform tools
+11 appimagelauncher                    # 
+appimagelauncher                    # (Descrição não encontrada)
+12 apple-superdrive-udev               # udev rule that allows the Apple USB SuperDrive to function
+apple-superdrive-udev               # udev rule that allows the Apple USB SuperDrive to function
+13 appmenu-gtk-module                  # Application Menu GTK+ Module
+appmenu-gtk-module                  # Application Menu GTK+ Module
+14 arc-gtk-theme                       # A flat theme with transparent elements for GTK 2,3,4 and Gnome-Shell
+arc-gtk-theme                       # A flat theme with transparent elements for GTK 2,3,4 and Gnome-Shell
+15 arc-icon-theme                      # Arc icon theme. Official releases only.
+arc-icon-theme                      # Arc icon theme. Official releases only.
+16 auto-tweaks-browser                 # Auto optimize brave, chromium, epiphany, falkon, firefox, google-chrome, opera and vivaldi
+auto-tweaks-browser                 # Auto optimize brave, chromium, epiphany, falkon, firefox, google-chrome, opera and vivaldi
+17 avrisp-udev                         # udev rules for AVR ISP Atmel programmer
+avrisp-udev                         # udev rules for AVR ISP Atmel programmer
+18 baobab                              # A graphical directory tree analyzer
+baobab                              # A graphical directory tree analyzer
+19 beauty-icon-theme                   # Icons BeautyFolders
+beauty-icon-theme                   # Icons BeautyFolders
+20 bibata-cursor-theme                 # Material Based Cursor Theme
+bibata-cursor-theme                 # Material Based Cursor Theme
+21 bigbashview                         # BigBashView is a python app to run Bash+HTML in a Desktop WebView
+bigbashview                         # BigBashView is a python app to run Bash+HTML in a Desktop WebView
+22 bigcontrolcenter-base               # Base files and libs to bigcontrolcenter interfaces
+bigcontrolcenter-base               # Base files and libs to bigcontrolcenter interfaces
+23 bigicons-papient                    # Package icons for biglinux based in Papirus and Fluent
+bigicons-papient                    # Package icons for biglinux based in Papirus and Fluent
+24 biglinux-grub-restore               # Restore your installed system
+biglinux-grub-restore               # Restore your installed system
+25 biglinux-mime                       # Scriipt to solve some problems with sudo in KDE
+biglinux-mime                       # Scriipt to solve some problems with sudo in KDE
+26 biglinux-systemd-swap               # Script for creating hybrid swap space from zram swaps, swap files and swap partitions - biglinux fork
+biglinux-systemd-swap               # Script for creating hybrid swap space from zram swaps, swap files and swap partitions - biglinux fork
+acpid                               # A daemon for delivering ACPI power management events with netlink support
+adafruit-boards-udev                # udev rule for adafruit boards
+adapta-gtk-theme                    # An adaptive Gtk+ theme based on Material Design Guidelines
+adobe-source-han-sans-cn-fonts      # Adobe Source Han Sans Subset OTF - Simplified Chinese OpenType/CFF fonts
+adobe-source-han-sans-jp-fonts      # Adobe Source Han Sans Subset OTF - Japanese OpenType/CFF fonts
+adobe-source-han-sans-kr-fonts      # Adobe Source Han Sans Subset OTF - Korean OpenType/CFF fonts
+adobe-source-sans-pro-fonts         # (Descrição não encontrada)
+adw-gtk-theme                       # The theme from libadwaita ported to GTK-3
+allow-input-accelerometer-udev      # Add uaccess tag to any accelerometer device, like nintendo switch pro controller
+android-tools                       # Android platform tools
+appimagelauncher                    # (Descrição não encontrada)
+apple-superdrive-udev               # udev rule that allows the Apple USB SuperDrive to function
+appmenu-gtk-module                  # Application Menu GTK+ Module
+arc-gtk-theme                       # A flat theme with transparent elements for GTK 2,3,4 and Gnome-Shell
+arc-icon-theme                      # Arc icon theme. Official releases only.
+auto-tweaks-browser                 # Auto optimize brave, chromium, epiphany, falkon, firefox, google-chrome, opera and vivaldi
+avrisp-udev                         # udev rules for AVR ISP Atmel programmer
+baobab                              # A graphical directory tree analyzer
+beauty-icon-theme                   # Icons BeautyFolders
+bibata-cursor-theme                 # Material Based Cursor Theme
+bigbashview                         # BigBashView is a python app to run Bash+HTML in a Desktop WebView
+bigcontrolcenter-base               # Base files and libs to bigcontrolcenter interfaces
+bigicons-papient                    # Package icons for biglinux based in Papirus and Fluent
+biglinux-grub-restore               # Restore your installed system
+biglinux-mime                       # Scriipt to solve some problems with sudo in KDE
+biglinux-systemd-swap               # Script for creating hybrid swap space from zram swaps, swap files and swap partitions - biglinux fork
+biglinux-webapps                    # Installs and removes BigLinux WebApps
+bigocrpdf                           # The simplest way to apply OCR to your PDF files, making it possible to search and copy texts from scanned files.
+big-store                           # A friendly interface using bigbashview and that uses a large part of pamac resources to offer users a practical and simple interface
+bitbox-udev                         # Udev rules to connect bitbox01 and bitbox02 hardware wallets to your linux box
+blueberry                           # Bluetooth configuration tool
+blueman                             # GTK+ Bluetooth Manager
+bluez                               # Daemons for the bluetooth protocol stack
+bluez-cups                          # CUPS printer backend for Bluetooth printers
+bluez-utils                         # Development and debugging utilities for the bluetooth protocol stack
+breeze-icons                        # Breeze icon theme
+btchip-udev                         # Udev rules to connect BTChip wallet to your linux box
+cantarell-fonts                     # Humanist sans serif font
+capitaine-cursors                   # An x-cursor theme inspired by macOS and based on KDE Breeze
+chili-base-config                   # Package configuration BASE/SERVER
+chili-install                       # Instalador TUI guiado/automatizado para Linux
+chili-nano-config                   # Custom nano configuration for ChiliLinux
+chili-restore-config                # Central de controle para restaurar configurações de ambiente e aplicativos
+chili-utils                         # Pacote de utilitários para GNU/Linux
+chili-webapps                       # Installs and removes WebApps
+comm-gnome-config                   # Package configuration Desktop Gnome
+comm-settings-gnome                 # Essential package to Community GNOME session
+comm-shell-orchis                   # Orchis Shell Theme Suite for BigCommunity
+comm-wallpapers-gnome               # set of wallpapers for Gnome
+compsize                            # Calculate compression ratio of a set of files on Btrfs
+conky                               # Light-weight system monitor for X, Wayland, and other things, too
+conky-manager2                      # GUI for managing Conky config files with options to browse and edit themes
+crazyflie-udev                      # udev rules for Crazyflie by bitcraze.
+crazyradio-udev                     # udev rules for Crazyradio by bitcraze.
+cups                                # OpenPrinting CUPS - daemon package
+cups-pdf                            # PDF printer for cups
+custom-tweaks                       # Adds specific information to be executed
+dconf-editor                        # GSettings editor for GNOME
+debtap-mod                          # Convert and install .deb packages
+dmidecode                           # Desktop Management Interface table related utilities
+ds4-disable-led                     # Disable led to playstation 4 joystick.
+duckypad-udev                       # Udev rules for duckypad
+ecrire                              # EFL Simple Text editor
+eog                                 # Eye of Gnome
+espeak-ng                           # Multi-lingual software speech synthesizer
+fatresize                           # A utility to resize FAT filesystems using libparted
+file-roller                         # Create and modify archives
+firefox                             # Fast, Private & Safe Web Browser
+fprintd                             # D-Bus service to access fingerprint readers
+fragments                           # BitTorrent client for GNOME
+fwupd                               # Simple daemon to allow session software to update firmware
+game-devices-udev                   # Udev rules for controllers
+gamemode                            # A daemon/lib combo that allows games to request a set of optimisations be temporarily applied to the host OS
+gapless                             # Play your music elegantly (AKA
+gdk-pixbuf-xlib                     # Deprecated Xlib integration for GdkPixbuf
+gdm                                 # Display manager and login screen
+geoclue                             # Modular geoinformation service built on the D-Bus messaging system
+gnome-bluetooth-3.0                 # GNOME Bluetooth Subsystem
+gnome-browser-connector             # Native browser connector for integration with extensions.gnome.org
+gnome-calculator                    # GNOME Scientific calculator
+gnome-calendar                      # Simple and beautiful calendar application designed to perfectly fit the GNOME desktop
+gnome-characters                    # A character map application
+gnome-clocks                        # Clocks applications for GNOME
+gnome-color-manager                 # GNOME Color Profile Tools
+gnome-control-center                # GNOME's main interface to configure various aspects of the desktop
+gnome-disk-utility                  # Disk Management Utility for GNOME
+gnome-extra                         # (Descrição não encontrada)
+gnome-font-viewer                   # A font viewer utility for GNOME
+gnome-keyring                       # Stores passwords and encryption keys
+gnome-menus                         # GNOME menu specifications
+gnome-network-displays              # Miracast implementation for GNOME
+gnome-online-accounts               # Single sign-on framework for GNOME
+gnome-remote-desktop                # GNOME Remote Desktop server
+gnome-session                       # The GNOME Session Handler
+gnome-shell-extension-appindicator  # AppIndicator/KStatusNotifierItem support for GNOME Shell
+gnome-shell-extension-arc-menu      # Application menu extension for GNOME Shell
+gnome-shell-extension-blur-my-shell # Extension that adds a blur look to different parts of the GNOME Shell
+gnome-shell-extension-dash-to-dock  # A dock for the GNOME Shell
+gnome-shell-extension-dash-to-panel # Extension for GNOME shell to combine the dash and main panel
+gnome-shell-extension-gsconnect     # KDE Connect implementation with GNOME Shell integration
+gnome-shell-extension-legacy-theme-auto-switcher # Change the GTK3 theme to light/dark variant based on the system color scheme on GNOME 42
+gnome-shell-extension-pano          # Next-gen Clipboard Manager for GNOME Shell (forked from -git package)
+gnome-shell-extensions              # Extensions for GNOME shell, including classic mode
+gnome-system-monitor                # View current processes and monitor system state
+gnome-text-editor                   # A simple text editor for the GNOME desktop
+gnome-themes-extra                  # Extra Themes for GNOME Applications
+gnome-tweaks                        # Graphical interface for advanced GNOME 3 settings (Tweak Tool)
+gnome-user-share                    # Easy to use user-level file sharing for GNOME
+gnome-video-effects                 # Collection of GStreamer effects for GNOME
+gnome-weather                       # Access current weather conditions and forecasts
+gparted                             # A Partition Magic clone, frontend to GNU Parted
+grilo-plugins                       # A collection of plugins for the Grilo framework
+grub-btrfs                          # Include btrfs snapshots in GRUB boot options
+grub-btrfs-timeshift                # Fix to timeshift and refresh grub configuration after new snapshot
+gtk-engine-murrine                  # GTK2 engine to make your desktop look like a 'murrina', an italian word meaning the art glass works done by Venicians glass blowers.
+gvfs                                # Virtual filesystem implementation for GIO
+gvfs-afc                            # Virtual filesystem implementation for GIO - AFC backend (Apple mobile devices)
+gvfs-dnssd                          # Virtual filesystem implementation for GIO - DNS-SD and WebDAV backend (macOS file sharing)
+gvfs-goa                            # Virtual filesystem implementation for GIO - Gnome Online Accounts backend (e.g. OwnCloud)
+gvfs-google                         # Virtual filesystem implementation for GIO - Google Drive backend
+gvfs-gphoto2                        # Virtual filesystem implementation for GIO - gphoto2 backend (PTP camera, MTP media player)
+gvfs-mtp                            # Virtual filesystem implementation for GIO - MTP backend (Android, media player)
+gvfs-nfs                            # Virtual filesystem implementation for GIO - NFS backend
+gvfs-onedrive                       # Virtual filesystem implementation for GIO - Microsoft OneDrive backend
+gvfs-smb                            # Virtual filesystem implementation for GIO - SMB/CIFS backend (Windows file sharing)
+gvfs-wsdd                           # Virtual filesystem implementation for GIO - Web Services Dynamic Discovery backend (Windows discovery)
+hplip                               # Drivers for HP DeskJet, OfficeJet, Photosmart, Business Inkjet and some LaserJet
+htop                                # Interactive process viewer
+inxi                                # Full featured CLI system information tool
+ipp-usb                             # allows using the IPP protocol, normally designed for network printers, to be used with USB printers as well
+keepkey-udev                        # Udev rules to connect a keepkey hardware wallet to your linux box
+lib32-fontconfig                    # Library for configuring and customizing font access
+lib32-gettext                       # GNU internationalization library (32-bit)
+lib32-glu                           # Mesa OpenGL utility library (32 bits)
+lib32-lcms2                         # Small-footprint color management engine, version 2 (32-bit)
+lib32-libcups                       # The CUPS Printing System - client libraries (32-bit)
+lib32-libice                        # X11 Inter-Client Exchange library (32-bit)
+lib32-libjpeg6-turbo                # libjpeg derivative with accelerated baseline JPEG compression and decompression
+lib32-libltdl                       # A generic library support script (32-bit)
+lib32-libpcap                       # A system-independent interface for user-level packet capture (32-bit)
+lib32-libpng12                      # A collection of routines used to create PNG format graphics files
+lib32-libpulse                      # A featureful, general-purpose sound server (32-bit client libraries)
+lib32-libva-intel-driver            # VA-API implementation for Intel G45 and HD Graphics family (32-bit)
+lib32-libxcomposite                 # X11 Composite extension library (32-bit)
+lib32-libxinerama                   # X11 Xinerama extension library (32-bit)
+lib32-libxrandr                     # X11 RandR extension library (32-bit)
+lib32-libxslt                       # XML stylesheet transformation library (32-bit)
+lib32-libxxf86vm                    # X11 XFree86 video mode extension library (32-bit)
+lib32-mesa                          # Open-source OpenGL drivers - 32-bit
+lib32-mesa-utils                    # Essential Mesa utilities (32-bit)
+lib32-mesa-vdpau                    # (Descrição não encontrada)
+lib32-mpg123                        # Console based real time MPEG Audio Player for Layer 1, 2 and 3 (32-bit)
+lib32-nss-mdns                      # glibc plugin providing host name resolution via mDNS (32-bit)
+lib32-openal                        # Cross-platform 3D audio library, software implementation (32-bit)
+lib32-pipewire-jack                 # Low-latency audio/video router and processor - 32-bit - JACK support
+lib32-sdl12-compat                  # SDL 1.2 runtime compatibility library using SDL 2.0
+lib32-sdl2-compat                   # An SDL2 compatibility layer that uses SDL3 behind the scenes - 32-bit
+lib32-v4l-utils                     # Userspace tools and conversion library for Video 4 Linux (32-bit)
+libappindicator-gtk3                # Allow applications to extend a menu via Ayatana indicators in Unity, KDE or Systray (GTK+ 3 library)
+libdnet                             # A simplified, portable interface to several low-level networking routines
+libmspack                           # A library for Microsoft compression formats
+libreoffice-fresh-pt-br             # Portuguese (Brasil) language pack for LibreOffice Fresh
+libva-vdpau-driver                  # VDPAU backend for VA API
+libxxf86vm                          # X11 XFree86 video mode extension library
+lightdm                             # A lightweight display manager
+lightdm-gtk-greeter                 # GTK+ greeter for LightDM
+lightdm-settings                    # A configuration tool for the LightDM display manager
+lightdm-slick-greeter               # A slick-looking LightDM greeter
+loupe                               # A simple image viewer for GNOME
+lxdm                                # Lightweight X11 Display Manager
+malcontent                          # Parental control support for applications
+manjaro-printer                     # Manjaro meta package for complete printing support
+manjaro-settings-samba              # Adds an smb.conf file for Manjaro and enables samba
+memtest86+                          # Advanced memory diagnostic tool legacy BIOS version
+memtest86+-efi                      # Advanced memory diagnostic tool EFI version
+mesa                                # Open-source OpenGL drivers
+mkinitcpio                          # Modular initramfs image creation utility
+mkinitcpio-nfs-utils                # ipconfig and nfsmount tools for NFS root support in mkinitcpio
+modemmanager                        # Mobile broadband modem management service
+mooltipass-udev                     # Udev rules to connect Mooltipass devices
+mtools                              # A collection of utilities to access MS-DOS disks
+mtpfs                               # A FUSE filesystem that supports reading and writing from any MTP device
+mutter                              # Window manager and compositor for GNOME
+nautilus                            # Default file manager for GNOME
+nautilus-admin                      # Extension for Nautilus to do administrative operations
+nautilus-empty-file                 # Provides context menu 'New Document' functionality for Nautilus
+nautilus-image-converter            # Nautilus extension to rotate/resize image files
+nautilus-share                      # Nautilus extension to share folder using Samba
+nbd                                 # tools for network block devices, allowing you to use remote block devices over TCP/IP
+networkmanager                      # Network connection manager and user applications
+network-manager-applet              # Applet for managing network connections
+network-manager-disable-random-mac  # Just fix problem with some internet devices
+networkmanager-openvpn              # NetworkManager VPN plugin for OpenVPN
+networkmanager-pptp                 # NetworkManager VPN plugin for PPTP
+network-manager-prefer-ipv4-dns     # Just fix problem with some internet providers
+networkmanager-vpnc                 # NetworkManager VPN plugin for VPNC
+nintendo-udev                       # udev rules for Nintendo Joy-Cons and Pro Controllers
+noto-fonts-emoji                    # Google Noto emoji fonts
+noto-fonts-lite                     # Google Noto TTF fonts (lite version)
+noto-nerd-fonts-lite                # Google Noto TTF fonts (nerd lite version)
+nss-mdns                            # glibc plugin providing host name resolution via mDNS
+ntp                                 # Network Time Protocol reference implementation
+numlockx                            # Turns on the numlock key in X11.
+numworks-udev                       # udev rules to connect the Numworks calculator to your linux box
+nx-udev                             # udev rule allowing communication with the Nintendo Switch without root
+onlykey-udev                        # OnlyKey udev rules
+openresolv                          # resolv.conf management framework (resolvconf)
+openrgb-udev-rules                  # UDEV rules for OpenRGB Flatpak and Appimage.
+openssh                             # SSH protocol implementation for remote login, command execution and file transfer
+open-vm-tools                       # The Open Virtual Machine Tools (open-vm-tools) are the open source implementation of VMware Tools
+orca                                # Screen reader for individuals who are blind or visually impaired
+osc-udev-storage                    # None
+p7zip                               # (Descrição não encontrada)
+packagekit                          # A system designed to make installation and updates of packages easier
+pamac-flatpak-plugin                # (Descrição não encontrada)
+pamac-updates-menu                  # Add in system menu entry to update system
+papers                              # Document viewer for PDF and other document formats aimed at the GNOME desktop
+paru                                # Feature packed AUR helper
+pavucontrol                         # PulseAudio Volume Control
+perl-file-mimeinfo                  # Determine file type, includes mimeopen and mimetype
+pipewire                            # Low-latency audio/video router and processor
+pipewire-alsa                       # Low-latency audio/video router and processor - ALSA configuration
+pipewire-biglinux-config            # Pipewire configuration to better audio compatibility
+pipewire-jack                       # Low-latency audio/video router and processor - JACK replacement
+pipewire-pulse                      # Low-latency audio/video router and processor - PulseAudio replacement
+plank                               # Elegant, simple, clean dock
+power-profiles-daemon               # Makes power profiles handling available over D-Bus
+powertop                            # A tool to diagnose issues with power consumption and power management
+python-nautilus                     # (Descrição não encontrada)
+python-pillow                       # Python Imaging Library (PIL) fork
+python-pip                          # The PyPA recommended tool for installing Python packages
+python-pyqt5                        # A set of Python bindings for the Qt5 toolkit
+python-pysmbc                       # Python 3 bindings for libsmbclient
+qadwaitadecorations-qt6             # Qt6 decoration plugin implementing Adwaita-like client-side decorations
+qemu-guest-agent                    # QEMU Guest Agent
+qt5-quickcontrols2                  # Next generation user interface controls based on Qt Quick
+qt6-svg                             # Classes for displaying the contents of SVG files
+qt6-wayland                         # Provides APIs for Wayland
+retroarch-tweaks                    # Tweaks to retroarch enable download and updates for cores and shaders.
+rhvoice-brazilian-portuguese-complementary-dict-biglinux # Better TTS in Brazilian Portuguese
+rhvoice-voice-evgeniy-eng           # Rhvoice evgeniy-eng voice for english language
+rhvoice-voice-leticia-f123          # Rhvoice leticia-f123 voice for brazilian-portuguese language
+rpmtoarch                           # Convert and install .rpm packages
+rustdesk-bin                        # Yet another remote desktop software, written in Rust. Works out of the box, no configuration required.
+rygel                               # UPnP AV MediaServer and MediaRenderer
+samsung-unified-driver              # Samsung Unified Linux Driver for printers and scanners.
+sane-airscan                        # SANE - SANE backend for AirScan (eSCL) and WSD document scanners
+sassc                               # C implementation of Sass CSS preprocessor
+sddm                                # QML based X11 and Wayland display manager
+showtime                            # Video player for GNOME
+signal-hound-udev                   # Udev rule for Signal Hound BB60, SM200, SM435, and VSG60
+simple-scan                         # Simple scanning utility
+simplescreenrecorder                # A feature-rich screen recorder that supports X11 and OpenGL.
+speech-dispatcher                   # High-level device independent layer for speech synthesis interface
+splix                               # CUPS drivers for SPL (Samsung Printer Language) printers
+sshfs                               # FUSE client based on the SSH File Transfer Protocol
+stadia-controller-udev              # Udev rules to connect the Stadia Controller to your linux box
+steam                               # Valve's digital software delivery system
+sync-gnome-theme-to-qt              # Sync Gnome theme to QT
+sysctl-network                      # Sysctl file to improve network configuration and other tweaks to network
+system-config-printer               # A CUPS printer configuration tool and status applet
+system-config-printer-jobs          # Add option to see jobs in system menu
+thermald                            # The Linux Thermal Daemon program from 01.org
+timeshift                           # A system restore utility for Linux
+tracker3-miners                     # (Descrição não encontrada)
+trezor-udev                         # Udev rules to connect trezor hardware wallets to your linux box
+ttf-droid                           # General-purpose fonts released by Google as part of Android
+ttf-fira-mono                       # Mozilla's monospace typeface designed for Firefox OS
+ttf-inconsolata                     # Monospace font for pretty code listings and for the terminal
+ttf-inconsolata-go-nerd             # Patched font Inconsolata Go from nerd fonts library
+ttf-inconsolata-lgc-nerd            # Patched font Inconsolata LGC from nerd fonts library
+ttf-inconsolata-nerd                # Patched font Inconsolata from nerd fonts library
+ttf-indic-otf                       # Indic Opentype Fonts collection
+ttf-liberation                      # Font family which aims at metric compatibility with Arial, Times New Roman, and Courier New
+ttf-roboto                          # Google's signature family of fonts
+ttf-roboto-mono                     # A monospaced addition to the Roboto type family.
+ttf-roboto-slab                     # Roboto Slab is a slab serif addition to the Roboto type family.
+tts-biglinux                        # Text to speech with graphical configuration and very easy to use
+udiskie                             # Removable disk automounter using udisks
+unarchiver                          # unar and lsar
+uriparser                           # uriparser is a strictly RFC 3986 compliant URI parsing library. uriparser is cross-platform, fast, supports Unicode
+usbasp-udev                         # udev rules for USBasp Atmel AVR programmer
+usb-dirty-pages-udev                # Use udev to specify dirty pages for usb devices
+usb_modeswitch                      # Activating switchable USB devices on Linux.
+usbtinyisp-udev                     # udev rules for USBtinyISP AVR programmer
+virtualbox-guest-utils              # VirtualBox Guest userspace utilities
+vlc                                 # Multi-platform MPEG, VCD/DVD, and DivX player
+waybar                              # Highly customizable Wayland bar for Sway and Wlroots based compositors
+wayland                             # A computer display server protocol
+wayland-protocols                   # Specifications of extended Wayland protocols
+wayland-utils                       # Wayland tools to display information about current compositor
+wireplumber                         # Session / policy manager implementation for PipeWire
+wlroots                             # Modular Wayland compositor library
+wlr-randr                           # Utility to manage outputs of a Wayland compositor
+xdg-desktop-portal-gtk              # A backend implementation for xdg-desktop-portal using GTK
+xdg-user-dirs-gtk                   # Creates user dirs and asks to relocalize them
+xf86-input-elographics              # X.org Elographics TouchScreen input driver
+xf86-input-evdev                    # X.org evdev input driver
+xf86-input-libinput                 # Generic input driver for the X.Org server based on libinput
+xf86-input-synaptics                # Synaptics driver for notebook touchpads
+xf86-input-vmmouse                  # X.org VMWare Mouse input driver
+xf86-input-void                     # X.org void input driver
+xf86-input-wacom                    # X.Org Wacom tablet driver
+xf86-video-amdgpu                   # X.org amdgpu video driver
+xf86-video-ati                      # X.org ati video driver
+xf86-video-dummy                    # X.org dummy video driver
+xf86-video-fbdev                    # X.org framebuffer video driver
+xf86-video-intel                    # X.org Intel i810/i830/i915/945G/G965+ video drivers
+xf86-video-nouveau                  # Open Source 3D acceleration driver for nVidia cards
+xf86-video-qxl                      # Xorg X11 qxl video driver
+xf86-video-sis                      # X.org SiS video driver
+xf86-video-sisusb                   # X.org SiS USB video driver
+xf86-video-vesa                     # X.org vesa video driver
+xf86-video-vmware                   # X.org vmware video driver
+xf86-video-voodoo                   # X.org 3dfx Voodoo1/Voodoo2 2D video driver
+xfce4-terminal                      # A modern terminal emulator primarily for the Xfce desktop environment
+xorg-mkfontscale                    # Create an index of scalable font files for X
+xorg-server                         # Xorg X server
+xorg-twm                            # Tab Window Manager for the X Window System
+xorg-xinit                          # X.Org initialisation program
+xorg-xkill                          # Kill a client by its X resource
+xorg-xrandr                         # Primitive command line interface to RandR extension
+xorg-xrdb                           # X server resource database utility
+xorg-xsetroot                       # Classic X utility to set your root window background to a given pattern or color
+xorg-xwayland                       # run X clients under wayland
+xterm                               # X Terminal Emulator
+zensu                               # A simple gksu replacement using kdialog, yad or zenity

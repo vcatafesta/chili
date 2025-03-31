@@ -1,0 +1,496 @@
+#!/usr/bin/env bash
+# -*- coding: utf-8 -*-
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+#
+#  t
+#  Created: 2025/03/30 - 23:09
+#  Altered: 2025/03/30 - 23:09
+#
+#  Copyright (c) 2025-2025, Vilmar Catafesta <vcatafesta@gmail.com>
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AS IS'' AND ANY EXPRESS OR
+#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
+#export LANGUAGE=pt_BR
+export TEXTDOMAINDIR=/usr/share/locale
+export TEXTDOMAIN=t
+
+# Definir a variável de controle para restaurar a formatação original
+reset=$(tput sgr0)
+
+# Definir os estilos de texto como variáveis
+bold=$(tput bold)
+underline=$(tput smul)   # Início do sublinhado
+nounderline=$(tput rmul) # Fim do sublinhado
+reverse=$(tput rev)      # Inverte as cores de fundo e texto
+
+# Definir as cores ANSI como variáveis
+black=$(tput bold)$(tput setaf 0)
+red=$(tput bold)$(tput setaf 196)
+green=$(tput bold)$(tput setaf 2)
+yellow=$(tput bold)$(tput setaf 3)
+blue=$(tput setaf 4)
+pink=$(tput setaf 5)
+magenta=$(tput setaf 5)
+cyan=$(tput setaf 6)
+white=$(tput setaf 7)
+gray=$(tput setaf 8)
+orange=$(tput setaf 202)
+purple=$(tput setaf 125)
+violet=$(tput setaf 61)
+light_red=$(tput setaf 9)
+light_green=$(tput setaf 10)
+light_yellow=$(tput setaf 11)
+light_blue=$(tput setaf 12)
+light_magenta=$(tput setaf 13)
+light_cyan=$(tput setaf 14)
+bright_white=$(tput setaf 15)
+
+#debug
+export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset}'
+#set -x
+#set -e
+shopt -s extglob
+
+#system
+declare APP="${0##*/}"
+declare _VERSION_="1.0.0-20250330"
+declare APPDESC=" - Wraper for "
+declare distro="$(uname -n)"
+declare DEPENDENCIES=(tput)
+declare dialogRcFile="/home/vcatafesta/.dialogrc"
+
+cleanup() { rm -f ""; }
+#trap cleanup EXIT
+MostraErro() { echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}";}
+trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
+
+sh_create_dialogrc() {
+  cat > "$dialogRcFile" <<EOF_DIALOGRC
+screen_color = (white,black,off)
+dialog_color = (white,black,off)
+title_color = (cyan,black,on)
+border_color = dialog_color
+shadow_color = (black,black,on)
+button_inactive_color = dialog_color
+button_key_inactive_color = dialog_color
+button_label_inactive_color = dialog_color
+button_active_color = (white,cyan,on)
+button_key_active_color = button_active_color
+button_label_active_color = (black,cyan,on)
+tag_key_selected_color = (white,cyan,on)
+item_selected_color = tag_key_selected_color
+form_text_color = (BLUE,black,ON)
+form_item_readonly_color = (green,black,on)
+itemhelp_color = (white,cyan,off)
+inputbox_color = dialog_color
+inputbox_border_color = dialog_color
+searchbox_color = dialog_color
+searchbox_title_color = title_color
+searchbox_border_color = border_color
+position_indicator_color = title_color
+menubox_color = dialog_color
+menubox_border_color = border_color
+item_color = dialog_color
+tag_color = title_color
+tag_selected_color = button_label_active_color
+tag_key_color = button_key_inactive_color
+check_color = dialog_color
+check_selected_color = button_active_color
+uarrow_color = screen_color
+darrow_color = screen_color
+form_active_text_color = button_active_color
+gauge_color = title_color
+border2_color = dialog_color
+searchbox_border2_color = dialog_color
+menubox_border2_color = dialog_color
+separate_widget = ''
+tab_len = 0
+visit_items = off
+use_shadow = off
+use_colors = on
+EOF_DIALOGRC
+  export DIALOGRC="$dialogRcFile"
+}
+
+# Testa se o terminal suporta caracteres gráficos estendidos
+sh_ascii_lines() {
+  #Isso força o dialog a usar caracteres ASCII básicos para as bordas.
+  #if [[ "$LANG" =~ 'UTF-8' ]]; then
+  if [[ "$(printf '\u250C')" =~ "┌" ]]; then
+    export NCURSES_NO_UTF8_ACS=1  # Terminal suporta ACS
+  else
+    export NCURSES_NO_UTF8_ACS=0  # Terminal NÃO suporta ACS
+  fi
+  }
+
+sh_setEnvironment() {
+  [[ ! -e "$dialogRcFile" ]] && sh_create_dialogrc
+  sh_ascii_lines
+}
+
+#!/bin/bash
+# Array com todos os pacotes (adicione todos conforme sua lista original)
+packages=(
+  gnome-extra
+  capitaine-cursors
+  beauty-icon-theme
+  xorg-server
+  xorg-xinit
+  xorg-xrandr
+  xorg-xsetroot
+  xorg-xrdb
+  wlroots
+  xorg-xwayland
+  wayland
+  wayland-utils
+  wlr-randr
+  xfce4-terminal
+  xterm
+  acpid
+  bluez
+  blueman
+  fprintd
+  geoclue
+  packagekit
+  networkmanager
+  modemmanager
+  network-manager-applet
+  pavucontrol
+  pipewire
+  wireplumber
+  pipewire-pulse
+  pipewire-alsa
+  pipewire-jack
+  lxdm
+  lightdm
+  lightdm-slick-greeter
+  lightdm-settings
+  lightdm-gtk-greeter
+  sddm
+  gdm
+  waybar
+  firefox
+  auto-tweaks-browser
+  big-store
+  bigcontrolcenter-base
+  chili-base-config
+  chili-webapps
+  chili-restore-config
+  chili-utils
+  chili-install
+  chili-nano-config
+  bigbashview
+  timeshift
+  grub-btrfs-timeshift
+  grub-btrfs
+  cups
+  cups-pdf
+  system-config-printer
+  splix
+  samsung-unified-driver
+  bigocrpdf
+  bluez-cups
+  paru
+  ecrire
+  gnome-disk-utility
+  gvfs
+  gvfs-afc
+  gvfs-dnssd
+  gvfs-goa
+  gvfs-google
+  gvfs-gphoto2
+  gvfs-mtp
+  gvfs-nfs
+  gvfs-onedrive
+  gvfs-smb
+  gvfs-wsdd
+  conky
+  conky-manager2
+  plank
+  libreoffice-fresh-pt-br
+  eog
+  simplescreenrecorder
+  adapta-gtk-theme
+  arc-gtk-theme
+  arc-icon-theme
+  vlc
+  ttf-fira-mono
+  ttf-inconsolata
+  ttf-inconsolata-go-nerd
+  ttf-inconsolata-lgc-nerd
+  ttf-inconsolata-nerd
+  noto-fonts-emoji
+  ttf-droid
+  ttf-indic-otf
+  ttf-liberation
+  adobe-source-han-sans-cn-fonts
+  adobe-source-han-sans-jp-fonts
+  adobe-source-han-sans-kr-fonts
+  adobe-source-sans-pro-fonts
+  cantarell-fonts
+  noto-fonts-lite
+  noto-nerd-fonts-lite
+  ttf-roboto
+  ttf-roboto-mono
+  ttf-roboto-slab
+  libxxf86vm
+  xf86-video-amdgpu
+  xf86-video-ati
+  xf86-input-elographics
+  xf86-input-evdev
+  xf86-input-libinput
+  xf86-input-synaptics
+  xf86-input-vmmouse
+  xf86-input-void
+  xf86-input-wacom
+  xf86-video-dummy
+  xf86-video-fbdev
+  xf86-video-intel
+  xf86-video-nouveau
+  xf86-video-qxl
+  xf86-video-sisusb
+  xf86-video-vesa
+  xf86-video-vmware
+  xf86-video-voodoo
+  lib32-libxxf86vm
+  xf86-video-sis
+  gparted
+  nbd
+  mkinitcpio
+  mkinitcpio-nfs-utils
+  biglinux-grub-restore
+  memtest86+
+  memtest86+-efi
+  adw-gtk-theme
+  baobab
+  blueberry
+  dconf-editor
+  file-roller
+  fragments
+  gapless
+  gnome-bluetooth-3.0
+  gnome-browser-connector
+  gnome-calculator
+  gnome-calendar
+  gnome-characters
+  gnome-clocks
+  gnome-color-manager
+  gnome-control-center
+  gnome-font-viewer
+  gnome-keyring
+  gnome-menus
+  gnome-network-displays
+  gnome-online-accounts
+  gnome-remote-desktop
+  gnome-session
+  gnome-system-monitor
+  gnome-text-editor
+  gnome-tweaks
+  gnome-user-share
+  gnome-video-effects
+  gnome-weather
+  loupe
+  malcontent
+  mutter
+  nautilus
+  nautilus-admin
+  nautilus-empty-file
+  nautilus-image-converter
+  nautilus-share
+  papers
+  power-profiles-daemon
+  python-nautilus
+  rygel
+  showtime
+  simple-scan
+  sync-gnome-theme-to-qt
+  tracker3-miners
+  xdg-user-dirs-gtk
+  custom-tweaks
+  gnome-shell-extension-arc-menu
+  gnome-shell-extension-appindicator
+  gnome-shell-extension-blur-my-shell
+  gnome-shell-extension-dash-to-dock
+  gnome-shell-extension-dash-to-panel
+  gnome-shell-extension-gsconnect
+  gnome-shell-extension-legacy-theme-auto-switcher
+  gnome-shell-extension-pano
+  gnome-shell-extensions
+  lib32-libva-intel-driver
+  lib32-mesa
+  lib32-mesa-vdpau
+  libva-vdpau-driver
+  lib32-mesa-utils
+  mesa
+  lib32-fontconfig
+  lib32-gettext
+  lib32-glu
+  lib32-lcms2
+  lib32-libcups
+  lib32-libice
+  lib32-libjpeg6-turbo
+  lib32-libltdl
+  lib32-libpcap
+  lib32-libpng12
+  lib32-libpulse
+  lib32-libxcomposite
+  lib32-libxinerama
+  lib32-libxrandr
+  lib32-libxslt
+  lib32-mpg123
+  lib32-nss-mdns
+  lib32-openal
+  lib32-pipewire-jack
+  lib32-sdl12-compat
+  lib32-sdl2-compat
+  lib32-v4l-utils
+  network-manager-disable-random-mac
+  network-manager-prefer-ipv4-dns
+  networkmanager-openvpn
+  networkmanager-pptp
+  networkmanager-vpnc
+  nss-mdns
+  ntp
+  open-vm-tools
+  openresolv
+  openssh
+  qemu-guest-agent
+  sysctl-network
+  usb_modeswitch
+  python-pillow
+  python-pip
+  python-pyqt5
+  appimagelauncher
+  appmenu-gtk-module
+  biglinux-mime
+  biglinux-webapps
+  dmidecode
+  espeak-ng
+  htop
+  inxi
+  libappindicator-gtk3
+  orca
+  p7zip
+  perl-file-mimeinfo
+  pipewire-biglinux-config
+  powertop
+  python-pysmbc
+  speech-dispatcher
+  unarchiver
+  xdg-desktop-portal-gtk
+  zensu
+  tts-biglinux
+  rhvoice-voice-leticia-f123
+  rhvoice-brazilian-portuguese-complementary-dict-biglinux
+  rhvoice-voice-evgeniy-eng
+  fwupd
+  android-tools
+  biglinux-systemd-swap
+  compsize
+  debtap-mod
+  hplip
+  ipp-usb
+  manjaro-printer
+  pamac-updates-menu
+  pamac-flatpak-plugin
+  qt5-quickcontrols2
+  qt6-wayland
+  rpmtoarch
+  sane-airscan
+  system-config-printer-jobs
+  thermald
+  virtualbox-guest-utils
+  comm-shell-orchis
+  bibata-cursor-theme
+  breeze-icons
+  gnome-themes-extra
+  gtk-engine-murrine
+  qadwaitadecorations-qt6
+  qt6-svg
+  bigicons-papient
+  sassc
+  adafruit-boards-udev
+  allow-input-accelerometer-udev
+  apple-superdrive-udev
+  avrisp-udev
+  bitbox-udev
+  btchip-udev
+  crazyflie-udev
+  crazyradio-udev
+  duckypad-udev
+  game-devices-udev
+  keepkey-udev
+  mooltipass-udev
+  nintendo-udev
+  numworks-udev
+  nx-udev
+  onlykey-udev
+  openrgb-udev-rules
+  osc-udev-storage
+  signal-hound-udev
+  stadia-controller-udev
+  trezor-udev
+  usb-dirty-pages-udev
+  usbasp-udev
+  usbtinyisp-udev
+  comm-gnome-config
+  comm-settings-gnome
+  comm-wallpapers-gnome
+  ds4-disable-led
+  retroarch-tweaks
+  bluez-utils
+  sshfs
+  numlockx
+  xorg-mkfontscale
+  xorg-twm
+  xorg-xkill
+  wayland-protocols
+  libdnet
+  gdk-pixbuf-xlib
+  uriparser
+  libmspack
+  fatresize
+  gamemode
+  grilo-plugins
+  manjaro-settings-samba
+  mtools
+  mtpfs
+  rustdesk-bin
+  steam
+  udiskie
+)
+
+# Ordena os pacotes alfabeticamente
+IFS=$'\n' sorted_packages=($(printf "%s\n" "${packages[@]}" | sort))
+unset IFS
+
+# Para cada pacote, consulta a descrição via pacman -Si e imprime no formato desejado.
+count=0
+for pkg in "${sorted_packages[@]}"; do
+  desc=$(LC_ALL=C pacman -Si "$pkg" 2>/dev/null | awk -F': ' '/^Description/{print $2; exit}')
+  printf "%d %-35s # %s\n" "$((++count))" "$pkg" "$desc"
+  if [ -n "$desc" ]; then
+    printf "%-35s # %s\n" "$pkg" "$desc" >>temp
+  else
+    printf "%-35s # (Descrição não encontrada)\n" "$pkg" >>temp
+  fi
+done
